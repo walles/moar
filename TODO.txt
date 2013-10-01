@@ -1,0 +1,50 @@
+Moar is a pager.  It's designed to be easy to use and just do the
+right thing without any configuration.
+
+TODO (in some order):
+* Just pass stuff through if stdout is not a terminal.
+
+* Handle the terminal window getting resized.
+
+* Enable file input.
+
+* Enable stdin input.
+
+* Enable continuous position display with everything we know (lines
+  visible, percentages, like less).
+
+* Enable exiting using q (restores screen) or ^c (doesn't restore
+  screen).
+
+* Enable up / down using arrow keys.
+
+* Enable up / down using page-up and page-down keys.
+
+* Enable up / down using whatever less uses.
+
+* Enable home / end using home / end keys.
+
+* Enable home / end using < and >.
+
+* Enable sideways scrolling using arrow keys.
+
+* Enable ordinary search using /
+
+* Find next using n
+
+* Find previous using N
+
+* Interactive search using /, n and N
+
+* Interactive search using ^s and ^r like in Emacs
+
+* Highlight all matches while searching
+
+* Enable displaying ANSI-colored input
+
+* Enable filtered input, start with zcat as a filter
+
+* Enable source code highlighting by pre-filtering using some
+  highlighter.
+
+* Enable out-of-file visualization with ~ like less.
