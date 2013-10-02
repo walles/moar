@@ -17,17 +17,23 @@ class Moar
     end
 
     setpos((lines - 5) / 2, (cols - 10) / 2)
-    addstr("Hit any key")
+    addstr("Hit any key, or q to quit")
   end
 
   def run
     init_screen
+    noecho
+
     begin
       crmode
       draw_screen()
 
       refresh
-      getch
+      while true
+        key = getch()
+        break if key == ?q.ord
+        addstr("key=#{key}\n")
+      end
     ensure
       close_screen
     end

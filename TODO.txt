@@ -2,6 +2,8 @@ Moar is a pager.  It's designed to be easy to use and just do the
 right thing without any configuration.
 
 TODO (in some order):
+* Enable exiting using ^c (doesn't restore screen).
+
 * Just pass stuff through if stdout is not a terminal.
 
 * Handle the terminal window getting resized.
@@ -12,9 +14,6 @@ TODO (in some order):
 
 * Enable continuous position display with everything we know (lines
   visible, percentages, like less).
-
-* Enable exiting using q (restores screen) or ^c (doesn't restore
-  screen).
 
 * Enable up / down using arrow keys.
 
@@ -48,3 +47,7 @@ TODO (in some order):
   highlighter.
 
 * Enable out-of-file visualization with ~ like less.
+
+
+DONE:
+* Enable exiting using q (restores screen)
