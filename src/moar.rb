@@ -11,13 +11,18 @@ class Moar
   end
 
   def draw_screen()
+    clear()
     setpos(0, 0)
-    @lines.each do |line|
+
+    first_line = 0
+    last_line = lines - 2
+    @lines[first_line..last_line].each do |line|
       addstr(line)
     end
 
-    setpos((lines - 5) / 2, (cols - 10) / 2)
-    addstr("Hit any key, or q to quit")
+    addstr("Lines #{first_line + 1}-#{last_line + 1}")
+
+    refresh()
   end
 
   def run
@@ -26,13 +31,16 @@ class Moar
 
     begin
       crmode
-      draw_screen()
-
-      refresh
       while true
+        draw_screen()
+
         key = getch()
-        break if key == ?q.ord
-        addstr("key=#{key}\n")
+        case key
+        when ?q.ord
+          break
+        when KEY_RESIZE
+          draw_screen()
+        end
       end
     ensure
       close_screen

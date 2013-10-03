@@ -2,14 +2,7 @@ Moar is a pager.  It's designed to be easy to use and just do the
 right thing without any configuration.
 
 TODO (in some order):
-* Handle the terminal window getting resized.
-
-* Enable file input.
-
-* Enable stdin input.
-
-* Enable continuous position display with everything we know (lines
-  visible, percentages, like less).
+* Print info line in inverse video
 
 * Enable up / down using arrow keys.
 
@@ -22,6 +15,13 @@ TODO (in some order):
 * Enable home / end using < and >.
 
 * Enable sideways scrolling using arrow keys.
+
+* Enable file input.
+
+* Enable stdin input.
+
+* Enable continuous position display with everything we know (lines
+  visible, percentages, like less).
 
 * Enable ordinary search using /
 
@@ -51,3 +51,5 @@ TODO (in some order):
 
 DONE:
 * Enable exiting using q (restores screen)
+
+* Handle the terminal window getting resized.
