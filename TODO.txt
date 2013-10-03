@@ -2,7 +2,9 @@ Moar is a pager.  It's designed to be easy to use and just do the
 right thing without any configuration.
 
 TODO (in some order):
-* Enable up / down using arrow keys.
+* Prevent pressing down past the last line of the file.
+
+* Enable out-of-file visualization with ~ like less.
 
 * Enable up / down using page-up and page-down keys.
 
@@ -40,8 +42,6 @@ TODO (in some order):
 * Enable source code highlighting by pre-filtering using some
   highlighter.
 
-* Enable out-of-file visualization with ~ like less.
-
 * Enable exiting using ^c (doesn't restore screen).
 
 * Just pass stuff through if stdout is not a terminal.
@@ -53,3 +53,5 @@ DONE:
 * Handle the terminal window getting resized.
 
 * Print info line in inverse video
+
+* Enable up / down using arrow keys.
