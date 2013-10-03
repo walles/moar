@@ -14,12 +14,14 @@ class Moar
     clear()
     setpos(0, 0)
 
+    attrset(A_NORMAL)
     first_line = 0
     last_line = lines - 2
     @lines[first_line..last_line].each do |line|
       addstr(line)
     end
 
+    attrset(A_REVERSE)
     addstr("Lines #{first_line + 1}-#{last_line + 1}")
 
     refresh()
