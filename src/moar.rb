@@ -13,6 +13,13 @@ class Moar
   end
 
   def draw_screen()
+    # @first_line must not be closer than lines-2 from the end
+    max_first_line = @lines.size - (lines - 1)
+    @first_line = [@first_line, max_first_line].min()
+
+    # @first_line cannot be negative
+    @first_line = [0, @first_line].max()
+
     clear()
     setpos(0, 0)
 
@@ -49,8 +56,6 @@ class Moar
         when Key::UP
           @first_line -= 1
         end
-
-        @first_line = 0 if @first_line < 0
 
         @last_key = key
       end

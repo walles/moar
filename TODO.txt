@@ -2,8 +2,6 @@ Moar is a pager.  It's designed to be easy to use and just do the
 right thing without any configuration.
 
 TODO (in some order):
-* Prevent pressing down past the last line of the file.
-
 * Enable out-of-file visualization with ~ like less.
 
 * Enable up / down using page-up and page-down keys.
@@ -55,3 +53,5 @@ DONE:
 * Print info line in inverse video
 
 * Enable up / down using arrow keys.
+
+* Prevent pressing down past the last line of the file.
