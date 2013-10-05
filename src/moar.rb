@@ -69,7 +69,7 @@ class Moar
           draw_screen()
         when Key::DOWN
           @first_line += 1
-        when Key::NPAGE
+        when Key::NPAGE, ' '[0]
           @first_line += lines - 1
         when Key::PPAGE
           @first_line -= lines - 1
