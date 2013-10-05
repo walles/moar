@@ -37,6 +37,7 @@ class Moar
     status = "Lines #{@first_line + 1}-"
     status += "#{[@lines.size, last_line + 1].min()}"
     status += "/#{@lines.size}"
+    status += ", last key=#{@last_key}"
     addstr(status)
 
     refresh()
