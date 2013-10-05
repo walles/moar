@@ -2,13 +2,7 @@ Moar is a pager.  It's designed to be easy to use and just do the
 right thing without any configuration.
 
 TODO (in some order):
-* Enable out-of-file visualization with ~ like less.
-
 * Enable up / down using page-up and page-down keys.
-
-* Enable up / down using whatever less uses.
-
-* Enable home / end using home / end keys.
 
 * Enable home / end using < and >.
 
@@ -44,6 +38,12 @@ TODO (in some order):
 
 * Just pass stuff through if stdout is not a terminal.
 
+* Enable up / down using whatever less uses.
+
+* Enable home / end using home / end keys.
+
+* Just do nothing if our input is of zero length
+
 
 DONE:
 * Enable exiting using q (restores screen)
@@ -55,3 +55,5 @@ DONE:
 * Enable up / down using arrow keys.
 
 * Prevent pressing down past the last line of the file.
+
+* Enable out-of-file visualization with ~ like less.

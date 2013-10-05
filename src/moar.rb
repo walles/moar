@@ -25,12 +25,19 @@ class Moar
 
     attrset(A_NORMAL)
     last_line = @first_line + lines - 2
-    @lines[@first_line..last_line].each do |line|
-      addstr(line)
+    for line_number in @first_line..last_line do
+      if line_number < @lines.size
+        addstr(@lines[line_number])
+      else
+        addstr("~\n")
+      end
     end
 
     attrset(A_REVERSE)
-    addstr("Lines #{@first_line + 1}-#{last_line + 1}, key=#{@last_key}")
+    status = "Lines #{@first_line + 1}-"
+    status += "#{[@lines.size, last_line + 1].min()}"
+    status += "/#{@lines.size}"
+    addstr(status)
 
     refresh()
   end
@@ -65,4 +72,4 @@ class Moar
   end
 end
 
-Moar.new(__FILE__).run()
+Moar.new(ARGV[0]).run()
