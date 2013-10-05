@@ -34,9 +34,17 @@ class Moar
     end
 
     attrset(A_REVERSE)
+
     status = "Lines #{@first_line + 1}-"
-    status += "#{[@lines.size, last_line + 1].min()}"
+
+    last_displayed_line = [@lines.size, last_line + 1].min()
+    status += "#{last_displayed_line}"
+
     status += "/#{@lines.size}"
+
+    percent_displayed =
+      ((100 * last_displayed_line) / @lines.size()).floor()
+    status += " #{percent_displayed}%"
     status += ", last key=#{@last_key}"
     addstr(status)
 

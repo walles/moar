@@ -2,8 +2,7 @@ Moar is a pager.  It's designed to be easy to use and just do the
 right thing without any configuration.
 
 TODO (in some order):
-* Enable continuous position display with everything we know (lines
-  visible, percentages, like less).
+* Enable stdin input.
 
 * Enable ordinary search using /
 
@@ -40,8 +39,6 @@ TODO (in some order):
 
 * Enable sideways scrolling using arrow keys.
 
-* Enable stdin input.
-
 
 DONE:
 * Enable exiting using q (restores screen)
@@ -61,3 +58,6 @@ DONE:
 * Enable home / end using < and >.
 
 * Enable file input.
+
+* Enable continuous position display with everything we know (lines
+  visible, percentages, like less).
