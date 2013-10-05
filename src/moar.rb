@@ -60,6 +60,14 @@ class Moar
           draw_screen()
         when Key::DOWN
           @first_line += 1
+        when Key::NPAGE
+          @first_line += lines - 1
+        when Key::PPAGE
+          @first_line -= lines - 1
+        when ?<.ord
+          @first_line = 0
+        when ?>.ord
+          @first_line = @lines.size()
         when Key::UP
           @first_line -= 1
         end
