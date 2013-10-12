@@ -2,7 +2,7 @@ Moar is a pager.  It's designed to be easy to use and just do the
 right thing without any configuration.
 
 TODO (in some order):
-* Enable stdin input.
+* Enable pass-through operation unless $stdout.isatty()
 
 * Enable ordinary search using /
 
@@ -39,6 +39,11 @@ TODO (in some order):
 
 * Enable sideways scrolling using arrow keys.
 
+* Enable 'h' or '?' for help
+
+* Report command line errors, think about when to use $stdin for input
+  vs what commands we accept
+
 
 DONE:
 * Enable exiting using q (restores screen)
@@ -61,3 +66,5 @@ DONE:
 
 * Enable continuous position display with everything we know (lines
   visible, percentages, like less).
+
+* Enable stdin input.

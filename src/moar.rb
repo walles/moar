@@ -7,8 +7,7 @@ class Moar
 
   def initialize(file)
     @first_line = 0
-    @file = file
-    @lines = IO.readlines(file)
+    @lines = file.readlines
     @last_key = 0
   end
 
@@ -89,4 +88,14 @@ class Moar
   end
 end
 
-Moar.new(ARGV[0]).run()
+if $stdin.isatty()
+  File.open(ARGV[0], "r") do |file|
+    Moar.new(file).run()
+  end
+else
+  # Switch around some fds to enable us to read the former stdin and
+  # curses to read the "real" stdin.
+  stream = $stdin.clone()
+  $stdin.reopen($stdout)
+  Moar.new(stream).run()
+end
