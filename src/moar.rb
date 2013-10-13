@@ -2,6 +2,33 @@
 
 require "curses"
 
+class LineEditor
+  include Curses
+
+  attr_reader :string
+  attr_reader :cursor_position
+
+  def initialize()
+    @done = false
+    @string = ''
+    @cursor_position = 0
+  end
+
+  def enter_char(char)
+    case char
+    when Key::ENTER
+      @done = true
+    else
+      @string << char.chr
+      @cursor_position += 1
+    end
+  end
+
+  def done?()
+    return @done
+  end
+end
+
 class Moar
   include Curses
 
@@ -88,7 +115,10 @@ class Moar
   end
 end
 
-if $stdin.isatty()
+if __FILE__ != $0
+  # We're being required, probably due to unit testing.
+  # Do nothing.
+elsif $stdin.isatty()
   File.open(ARGV[0], "r") do |file|
     Moar.new(file).run()
   end
