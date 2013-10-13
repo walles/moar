@@ -2,7 +2,6 @@ Moar is a pager.  It's designed to be easy to use and just do the
 right thing without any configuration.
 
 TODO (in some order):
-* Enable pass-through operation unless $stdout.isatty()
 
 * Enable ordinary search using /
 
@@ -43,6 +42,11 @@ TODO (in some order):
 
 * Report command line errors, think about when to use $stdin for input
   vs what commands we accept
+
+* Make sure we can properly render all lines of /etc/php.ini.default
+  without the bottom-of-the-screen prompt moving around.
+
+* Enable pass-through operation unless $stdout.isatty()
 
 
 DONE:
