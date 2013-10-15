@@ -23,6 +23,9 @@ class TestLineEditor < Test::Unit::TestCase
     assert_add(test_me, ?a.ord, 'a', 1, false)
     assert_add(test_me, ?b.ord, 'ab', 2, false)
     assert_add(test_me, ?c.ord, 'abc', 3, false)
-    assert_add(test_me, Key::ENTER, 'abc', 3, true)
+
+    # 10 == RETURN on a Powerbook.  Key::ENTER is something else,
+    # don't know why they aren't one and the same.
+    assert_add(test_me, 10, 'abc', 3, true)
   end
 end

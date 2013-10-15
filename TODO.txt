@@ -5,9 +5,13 @@ TODO (in some order):
 
 * Enable ordinary search using /
 
+* Highlight search hits using reverse video
+
 * Find next using n
 
 * Find previous using N
+
+* Handle search hits to the right of the right screen edge
 
 * Interactive search using /, n and N
 

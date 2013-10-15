@@ -16,7 +16,7 @@ class LineEditor
 
   def enter_char(char)
     case char
-    when Key::ENTER
+    when 10  # 10=RETURN on a Powerbook
       @done = true
     else
       @string << char.chr
@@ -36,6 +36,32 @@ class Moar
     @first_line = 0
     @lines = file.readlines
     @last_key = 0
+    @done = false
+
+    # Mode can be :viewing and :searching
+    @mode = :viewing
+  end
+
+  def add_view_status()
+    status = "Lines #{@first_line + 1}-"
+
+    last_displayed_line = [@lines.size, @last_line + 1].min()
+    status += "#{last_displayed_line}"
+
+    status += "/#{@lines.size}"
+
+    percent_displayed =
+      ((100 * last_displayed_line) / @lines.size()).floor()
+    status += " #{percent_displayed}%"
+    status += ", last key=#{@last_key}"
+
+    attrset(A_REVERSE)
+    addstr(status)
+  end
+
+  def add_search_status()
+    status = "/#{@line_editor.string}"
+    addstr(status)
   end
 
   def draw_screen()
@@ -50,8 +76,8 @@ class Moar
     setpos(0, 0)
 
     attrset(A_NORMAL)
-    last_line = @first_line + lines - 2
-    for line_number in @first_line..last_line do
+    @last_line = @first_line + lines - 2
+    for line_number in @first_line..@last_line do
       if line_number < @lines.size
         addstr(@lines[line_number])
       else
@@ -59,22 +85,41 @@ class Moar
       end
     end
 
-    attrset(A_REVERSE)
-
-    status = "Lines #{@first_line + 1}-"
-
-    last_displayed_line = [@lines.size, last_line + 1].min()
-    status += "#{last_displayed_line}"
-
-    status += "/#{@lines.size}"
-
-    percent_displayed =
-      ((100 * last_displayed_line) / @lines.size()).floor()
-    status += " #{percent_displayed}%"
-    status += ", last key=#{@last_key}"
-    addstr(status)
+    case @mode
+    when :viewing
+      add_view_status()
+    when :searching
+      add_search_status()
+    else
+      abort("ERROR: Unsupported mode of operation <#{@mode}>")
+    end
 
     refresh()
+  end
+
+  def handle_view_keypress(key)
+    case key
+    when ?q.ord
+      @done = true
+    when ?/.ord
+      @mode = :searching
+      @line_editor = LineEditor.new()
+    when Key::RESIZE
+      # Do nothing; draw_screen() will be called anyway between all
+      # keypresses
+    when Key::DOWN
+      @first_line += 1
+    when Key::NPAGE, ' '[0]
+      @first_line += lines - 1
+    when Key::PPAGE
+      @first_line -= lines - 1
+    when ?<.ord
+      @first_line = 0
+    when ?>.ord
+      @first_line = @lines.size()
+    when Key::UP
+      @first_line -= 1
+    end
   end
 
   def run
@@ -84,27 +129,21 @@ class Moar
 
     begin
       crmode
-      while true
+      while !@done
         draw_screen()
 
         key = getch()
-        case key
-        when ?q.ord
-          break
-        when Key::RESIZE
-          draw_screen()
-        when Key::DOWN
-          @first_line += 1
-        when Key::NPAGE, ' '[0]
-          @first_line += lines - 1
-        when Key::PPAGE
-          @first_line -= lines - 1
-        when ?<.ord
-          @first_line = 0
-        when ?>.ord
-          @first_line = @lines.size()
-        when Key::UP
-          @first_line -= 1
+        case @mode
+        when :viewing
+          handle_view_keypress(key)
+        when :searching
+          @line_editor.enter_char(key)
+          if @line_editor.done?
+            @mode = :viewing
+            @line_editor = nil
+          end
+        else
+          abort("ERROR: Unsupported mode of operation <#{@mode}>")
         end
 
         @last_key = key
