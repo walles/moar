@@ -18,6 +18,9 @@ class LineEditor
     case char
     when 10  # 10=RETURN on a Powerbook
       @done = true
+    when 127 # 127=BACKSPACE on a Powerbook
+      @string = @string[0..-2]
+      @cursor_position -= 1
     else
       @string << char.chr
       @cursor_position += 1

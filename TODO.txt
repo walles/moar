@@ -5,7 +5,17 @@ TODO (in some order):
 
 * Enable ordinary search using /
 
+* Do a regexp search if the search term is a valid regexp, otherwise
+  just use it as a substring.
+
 * Highlight search hits using reverse video
+
+* Make the search case sensitive only if it contains any capital
+  letters.  This goes for both regexps and non-regexps.
+
+* Make sure we get the line length right even with unicode characters
+  present in the lines.  Verify by looking at where the truncation
+  markers end up.
 
 * Find next using n
 
@@ -93,3 +103,5 @@ DONE:
 * Handle all kinds of line endings.
 
 * Handle files missing an ending newline.
+
+* Handle hitting BACKSPACE in the search field

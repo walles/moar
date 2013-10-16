@@ -24,8 +24,12 @@ class TestLineEditor < Test::Unit::TestCase
     assert_add(test_me, ?b.ord, 'ab', 2, false)
     assert_add(test_me, ?c.ord, 'abc', 3, false)
 
+    # 127 = BACKSPACE on a Powerbook.  Key::BACKSPACE is something
+    # else, don't know why they aren't one and the same.
+    assert_add(test_me, 127, 'ab', 2, false)
+
     # 10 == RETURN on a Powerbook.  Key::ENTER is something else,
     # don't know why they aren't one and the same.
-    assert_add(test_me, 10, 'abc', 3, true)
+    assert_add(test_me, 10, 'ab', 2, true)
   end
 end
