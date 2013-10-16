@@ -63,20 +63,49 @@ class Moar
   end
 
   def add_search_status()
-    status = "/#{@line_editor.string}"
+    status = "/#{@search_editor.string}"
     addstr(status)
   end
 
   def add_line(screen_line, line)
     attrset(A_NORMAL)
     setpos(screen_line, 0)
+    clrtoeol()
 
-    if line.length <= cols
-      addstr(line)
-    else
-      line = line[0..(cols - 2)]
-      addstr(line)
+    # Higlight search matches
+    remaining = line
+    printed_chars = 0
+    if @search_editor && @search_editor.string.length > 0
+      while true
+        (head, match, tail) = remaining.partition(@search_editor.string)
+        if match.empty?
+          break
+        end
+        remaining = tail
 
+        addstr(head)
+        printed_chars += head.length
+        attrset(A_REVERSE)
+        addstr(match)
+        printed_chars += match.length
+        attrset(A_NORMAL)
+
+        if printed_chars > cols
+          break
+        end
+      end
+    end
+
+    # Print non-matching end of the line
+    if printed_chars <= cols
+      addstr(remaining)
+      printed_chars += remaining.length
+    end
+
+    # Print a continuation character if we've printed outside the
+    # window
+    if printed_chars > cols
+      setpos(screen_line, cols - 1)
       attrset(A_REVERSE)
       addstr(">")
     end
@@ -90,8 +119,6 @@ class Moar
     # @first_line cannot be negative
     @first_line = [0, @first_line].max()
 
-    clear()
-
     screen_line = 0
     @last_line = @first_line + lines - 2
     for line_number in @first_line..@last_line do
@@ -104,6 +131,7 @@ class Moar
     end
 
     setpos(lines - 1, 0)
+    clrtoeol()
     case @mode
     when :viewing
       add_view_status()
@@ -122,7 +150,7 @@ class Moar
       @done = true
     when ?/.ord
       @mode = :searching
-      @line_editor = LineEditor.new()
+      @search_editor = LineEditor.new()
     when Key::RESIZE
       # Do nothing; draw_screen() will be called anyway between all
       # keypresses
@@ -156,10 +184,9 @@ class Moar
         when :viewing
           handle_view_keypress(key)
         when :searching
-          @line_editor.enter_char(key)
-          if @line_editor.done?
+          @search_editor.enter_char(key)
+          if @search_editor.done?
             @mode = :viewing
-            @line_editor = nil
           end
         else
           abort("ERROR: Unsupported mode of operation <#{@mode}>")

@@ -3,7 +3,14 @@ right thing without any configuration.
 
 TODO (in some order):
 
-* Enable ordinary search using /
+* Typing backspace in the line editor when it's empty should make the
+  line editor say "done".
+
+* Scroll down if we have no search hit on the current screen
+
+* Somehow indicate if we have no search hits at all
+
+* Write "/ to search" somewhere in the status field
 
 * Do a regexp search if the search term is a valid regexp, otherwise
   just use it as a substring.
@@ -21,11 +28,11 @@ TODO (in some order):
 
 * Find previous using N
 
+* Scroll down one line on RETURN
+
 * Enable sideways scrolling using arrow keys.
 
 * Handle search hits to the right of the right screen edge
-
-* Interactive search using /, n and N
 
 * Interactive search using ^s and ^r like in Emacs
 
@@ -105,3 +112,5 @@ DONE:
 * Handle files missing an ending newline.
 
 * Handle hitting BACKSPACE in the search field
+
+* Interactive search using /
