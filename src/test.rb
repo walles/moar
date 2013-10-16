@@ -32,4 +32,11 @@ class TestLineEditor < Test::Unit::TestCase
     # don't know why they aren't one and the same.
     assert_add(test_me, 10, 'ab', 2, true)
   end
+
+  # Verify that we become done after backspacing out of an empty
+  # line
+  def test_done_on_empty_backspace()
+    test_me = LineEditor.new()
+    assert_add(test_me, 127, '', 0, true)
+  end
 end

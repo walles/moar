@@ -3,9 +3,6 @@ right thing without any configuration.
 
 TODO (in some order):
 
-* Typing backspace in the line editor when it's empty should make the
-  line editor say "done".
-
 * Scroll down if we have no search hit on the current screen
 
 * Somehow indicate if we have no search hits at all
@@ -114,3 +111,6 @@ DONE:
 * Handle hitting BACKSPACE in the search field
 
 * Interactive search using /
+
+* Typing backspace in the line editor when it's empty should make the
+  line editor say "done".

@@ -21,10 +21,16 @@ class LineEditor
     when 127 # 127=BACKSPACE on a Powerbook
       @string = @string[0..-2]
       @cursor_position -= 1
+
+      if @cursor_position < 0 && @string.empty?
+        @done = true
+      end
     else
       @string << char.chr
       @cursor_position += 1
     end
+    @cursor_position = [@cursor_position, 0].min
+    @cursor_position = [@cursor_position, @string.length].max
   end
 
   def done?()
