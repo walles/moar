@@ -64,6 +64,21 @@ class Moar
     addstr(status)
   end
 
+  def add_line(screen_line, line)
+    attrset(A_NORMAL)
+    setpos(screen_line, 0)
+
+    if line.length <= cols
+      addstr(line)
+    else
+      line = line[0..(cols - 2)]
+      addstr(line)
+
+      attrset(A_REVERSE)
+      addstr(">")
+    end
+  end
+
   def draw_screen()
     # @first_line must not be closer than lines-2 from the end
     max_first_line = @lines.size - (lines - 1)
@@ -73,18 +88,19 @@ class Moar
     @first_line = [0, @first_line].max()
 
     clear()
-    setpos(0, 0)
 
-    attrset(A_NORMAL)
+    screen_line = 0
     @last_line = @first_line + lines - 2
     for line_number in @first_line..@last_line do
       if line_number < @lines.size
-        addstr(@lines[line_number])
+        add_line(screen_line, @lines[line_number].strip)
       else
         addstr("~\n")
       end
+      screen_line += 1
     end
 
+    setpos(lines - 1, 0)
     case @mode
     when :viewing
       add_view_status()

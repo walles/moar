@@ -11,6 +11,8 @@ TODO (in some order):
 
 * Find previous using N
 
+* Enable sideways scrolling using arrow keys.
+
 * Handle search hits to the right of the right screen edge
 
 * Interactive search using /, n and N
@@ -36,11 +38,7 @@ TODO (in some order):
 
 * Just do nothing if our input is of zero length
 
-* Handle all kinds of line endings.
-
 * Enable up / down using the mouse wheel.
-
-* Enable sideways scrolling using arrow keys.
 
 * Enable 'h' or '?' for help
 
@@ -51,6 +49,14 @@ TODO (in some order):
   without the bottom-of-the-screen prompt moving around.
 
 * Enable pass-through operation unless $stdout.isatty()
+
+* Change out-of-file visualization to writing <END> after the end of
+  the file and leaving the rest of the screen blank.
+
+* Doing moar.rb on an arbitrary binary should put all
+  line-continuation markers at the rightmost column.  This really
+  means our truncation code must work even with things like tabs and
+  various control characters.
 
 
 DONE:
@@ -76,3 +82,14 @@ DONE:
   visible, percentages, like less).
 
 * Enable stdin input.
+
+* Truncate lines that are longer than the screen width
+
+* Make sure we can print all the way into the rightmost column of the
+  screen when truncating too long lines.  We should strip() lines
+  before we print them and manually move the cursor to the next line
+  after each.
+
+* Handle all kinds of line endings.
+
+* Handle files missing an ending newline.
