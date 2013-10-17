@@ -3,9 +3,11 @@ right thing without any configuration.
 
 TODO (in some order):
 
-* Scroll down if we have no search hit on the current screen
+* Scroll down if we have no search hits on the current screen
 
-* Somehow indicate if we have no search hits at all
+* Somehow indicate if we have no search hits in the entire document
+
+* Wrap search if we have search hits above but not below
 
 * Write "/ to search" somewhere in the status field
 
