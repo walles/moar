@@ -54,7 +54,7 @@ class Moar
   def add_view_status()
     status = "Lines #{@first_line + 1}-"
 
-    last_displayed_line = [@lines.size, @last_line + 1].min()
+    last_displayed_line = visible_line_numbers.last + 1
     status += "#{last_displayed_line}"
 
     status += "/#{@lines.size}"
@@ -117,7 +117,8 @@ class Moar
     end
   end
 
-  def draw_screen()
+  # Return the range of line numbers that are visible on the screen
+  def visible_line_numbers()
     # @first_line must not be closer than lines-2 from the end
     max_first_line = @lines.size - (lines - 1)
     @first_line = [@first_line, max_first_line].min()
@@ -125,17 +126,30 @@ class Moar
     # @first_line cannot be negative
     @first_line = [0, @first_line].max()
 
+    last_line = @first_line + lines - 2
+    last_line = [@lines.size - 1, last_line].min()
+
+    return @first_line..last_line
+  end
+
+  def draw_screen()
     screen_line = 0
-    @last_line = @first_line + lines - 2
-    for line_number in @first_line..@last_line do
-      if line_number < @lines.size
-        add_line(screen_line, @lines[line_number].strip)
-      else
-        addstr("~\n")
-      end
+
+    # Draw lines
+    visible_line_numbers.each do |line_number|
+      add_line(screen_line, @lines[line_number].strip)
       screen_line += 1
     end
 
+    # Draw filling after EOF
+    while screen_line < (lines - 1)
+      setpos(screen_line, 0)
+      clrtoeol()
+      addstr("~")
+      screen_line += 1
+    end
+
+    # Draw status line
     setpos(lines - 1, 0)
     clrtoeol()
     case @mode
