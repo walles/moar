@@ -142,10 +142,17 @@ class Moar
     end
 
     # Draw filling after EOF
+    if screen_line < (lines - 1)
+      setpos(screen_line, 0)
+      clrtoeol()
+      attrset(A_REVERSE)
+      addstr("---")
+      screen_line += 1
+    end
+
     while screen_line < (lines - 1)
       setpos(screen_line, 0)
       clrtoeol()
-      addstr("~")
       screen_line += 1
     end
 

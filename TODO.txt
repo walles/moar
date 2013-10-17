@@ -66,9 +66,6 @@ TODO (in some order):
 
 * Enable pass-through operation unless $stdout.isatty()
 
-* Change out-of-file visualization to writing <END> after the end of
-  the file and leaving the rest of the screen blank.
-
 * Doing moar.rb on an arbitrary binary should put all
   line-continuation markers at the rightmost column.  This really
   means our truncation code must work even with things like tabs and
@@ -116,3 +113,6 @@ DONE:
 
 * Typing backspace in the line editor when it's empty should make the
   line editor say "done".
+
+* Change out-of-file visualization to writing --- after the end of the
+  file and leaving the rest of the screen blank.
