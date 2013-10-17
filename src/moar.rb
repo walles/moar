@@ -8,7 +8,7 @@ class LineEditor
   attr_reader :string
   attr_reader :cursor_position
 
-  def initialize()
+  def initialize
     @done = false
     @string = ''
     @cursor_position = 0
@@ -33,7 +33,7 @@ class LineEditor
     @cursor_position = [@cursor_position, @string.length].max
   end
 
-  def done?()
+  def done?
     return @done
   end
 end
@@ -51,7 +51,7 @@ class Moar
     @mode = :viewing
   end
 
-  def add_view_status()
+  def add_view_status
     status = "Lines #{@first_line + 1}-"
 
     last_displayed_line = visible_line_numbers.last + 1
@@ -60,7 +60,7 @@ class Moar
     status += "/#{@lines.size}"
 
     percent_displayed =
-      ((100 * last_displayed_line) / @lines.size()).floor()
+      ((100 * last_displayed_line) / @lines.size).floor
     status += " #{percent_displayed}%"
     status += ", last key=#{@last_key}"
 
@@ -68,7 +68,7 @@ class Moar
     addstr(status)
   end
 
-  def add_search_status()
+  def add_search_status
     status = "/#{@search_editor.string}"
     addstr(status)
   end
@@ -76,7 +76,7 @@ class Moar
   def add_line(screen_line, line)
     attrset(A_NORMAL)
     setpos(screen_line, 0)
-    clrtoeol()
+    clrtoeol
 
     # Higlight search matches
     remaining = line
@@ -118,21 +118,21 @@ class Moar
   end
 
   # Return the range of line numbers that are visible on the screen
-  def visible_line_numbers()
+  def visible_line_numbers
     # @first_line must not be closer than lines-2 from the end
     max_first_line = @lines.size - (lines - 1)
-    @first_line = [@first_line, max_first_line].min()
+    @first_line = [@first_line, max_first_line].min
 
     # @first_line cannot be negative
-    @first_line = [0, @first_line].max()
+    @first_line = [0, @first_line].max
 
     last_line = @first_line + lines - 2
-    last_line = [@lines.size - 1, last_line].min()
+    last_line = [@lines.size - 1, last_line].min
 
     return @first_line..last_line
   end
 
-  def draw_screen()
+  def draw_screen
     screen_line = 0
 
     # Draw lines
@@ -144,7 +144,7 @@ class Moar
     # Draw filling after EOF
     if screen_line < (lines - 1)
       setpos(screen_line, 0)
-      clrtoeol()
+      clrtoeol
       attrset(A_REVERSE)
       addstr("---")
       screen_line += 1
@@ -152,23 +152,23 @@ class Moar
 
     while screen_line < (lines - 1)
       setpos(screen_line, 0)
-      clrtoeol()
+      clrtoeol
       screen_line += 1
     end
 
     # Draw status line
     setpos(lines - 1, 0)
-    clrtoeol()
+    clrtoeol
     case @mode
     when :viewing
-      add_view_status()
+      add_view_status
     when :searching
-      add_search_status()
+      add_search_status
     else
       abort("ERROR: Unsupported mode of operation <#{@mode}>")
     end
 
-    refresh()
+    refresh
   end
 
   def handle_view_keypress(key)
@@ -177,7 +177,7 @@ class Moar
       @done = true
     when ?/.ord
       @mode = :searching
-      @search_editor = LineEditor.new()
+      @search_editor = LineEditor.new
     when Key::RESIZE
       # Do nothing; draw_screen() will be called anyway between all
       # keypresses
@@ -190,7 +190,7 @@ class Moar
     when ?<.ord
       @first_line = 0
     when ?>.ord
-      @first_line = @lines.size()
+      @first_line = @lines.size
     when Key::UP
       @first_line -= 1
     end
@@ -204,9 +204,9 @@ class Moar
     begin
       crmode
       while !@done
-        draw_screen()
+        draw_screen
 
-        key = getch()
+        key = getch
         case @mode
         when :viewing
           handle_view_keypress(key)
@@ -230,14 +230,14 @@ end
 if __FILE__ != $0
   # We're being required, probably due to unit testing.
   # Do nothing.
-elsif $stdin.isatty()
+elsif $stdin.isatty
   File.open(ARGV[0], "r") do |file|
-    Moar.new(file).run()
+    Moar.new(file).run
   end
 else
   # Switch around some fds to enable us to read the former stdin and
   # curses to read the "real" stdin.
-  stream = $stdin.clone()
+  stream = $stdin.clone
   $stdin.reopen($stdout)
-  Moar.new(stream).run()
+  Moar.new(stream).run
 end
