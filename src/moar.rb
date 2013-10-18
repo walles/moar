@@ -178,6 +178,8 @@ class Moar
     when ?/.ord
       @mode = :searching
       @search_editor = LineEditor.new
+    when ?n.ord
+      full_search
     when Key::RESIZE
       # Do nothing; draw_screen() will be called anyway between all
       # keypresses

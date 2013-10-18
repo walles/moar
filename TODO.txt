@@ -3,8 +3,6 @@ right thing without any configuration.
 
 TODO (in some order):
 
-* Find next using n
-
 * Find previous using N
 
 * Somehow indicate if we have no search hits in the entire document
@@ -118,3 +116,5 @@ DONE:
 * Scroll down if we have no search hits on the current screen
 
 * Wrap search if we have search hits above but not below
+
+* Find next using n
