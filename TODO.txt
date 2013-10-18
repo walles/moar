@@ -3,8 +3,6 @@ right thing without any configuration.
 
 TODO (in some order):
 
-* Find previous using N
-
 * Somehow indicate if we have no search hits in the entire document
 
 * Indicate when we're wrapping the search
@@ -13,8 +11,6 @@ TODO (in some order):
 
 * Do a regexp search if the search term is a valid regexp, otherwise
   just use it as a substring.
-
-* Highlight search hits using reverse video
 
 * Make the search case sensitive only if it contains any capital
   letters.  This goes for both regexps and non-regexps.
@@ -56,9 +52,6 @@ TODO (in some order):
 
 * Report command line errors, think about when to use $stdin for input
   vs what commands we accept
-
-* Make sure we can properly render all lines of /etc/php.ini.default
-  without the bottom-of-the-screen prompt moving around.
 
 * Enable pass-through operation unless $stdout.isatty()
 
@@ -118,3 +111,10 @@ DONE:
 * Wrap search if we have search hits above but not below
 
 * Find next using n
+
+* Highlight search hits using reverse video
+
+* Make sure we can properly render all lines of /etc/php.ini.default
+  without the bottom-of-the-screen prompt moving around.
+
+* Find previous using N

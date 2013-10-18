@@ -180,6 +180,8 @@ class Moar
       @search_editor = LineEditor.new
     when ?n.ord
       full_search
+    when ?N.ord
+      full_search_backwards
     when Key::RESIZE
       # Do nothing; draw_screen() will be called anyway between all
       # keypresses
@@ -199,21 +201,36 @@ class Moar
   end
 
   # Get a certain line number on-screen
-  def show_line(line_number)
-    @first_line = line_number
+  def show_line(line_number, direction)
+    if direction == :forwards
+      @first_line = line_number
+    elsif direction == :backwards
+      # When searching backwards, put the line last on the screen
+      @first_line = line_number - lines + 2
+    end
   end
 
-  # Search the given line numbers and scroll the view to show the
-  # first match.
+  # Search the given line number ranges and scroll the view to show
+  # the first match.
   #
   # Returns true if found and scrolled, false otherwise.
-  def search_lines(first, last)
-    return false unless first <= last
+  def search_ranges(first_range, second_range, direction)
+    [first_range, second_range].each do |range|
+      next unless range
 
-    (first..last).each do |line_number|
-      if @lines[line_number].index(@search_editor.string)
-        show_line(line_number)
-        return true
+      first = range.first
+      last = range.last
+
+      line_numbers = first.upto(last)
+      if last < first
+        line_numbers = first.downto(last)
+      end
+
+      line_numbers.each do |line_number|
+        if @lines[line_number].index(@search_editor.string)
+          show_line(line_number, direction)
+          return true
+        end
       end
     end
 
@@ -229,12 +246,38 @@ class Moar
     # current screen
     first_not_visible = visible_line_numbers.last + 1
     last_line = @lines.size - 1
-    return if search_lines(first_not_visible, last_line)
+    first_range = first_not_visible..last_line
+    first_range = nil unless first_not_visible <= last_line
 
     # Wrap the search and search from the beginning until the last
     # not-visible line before the current screen
     last_not_visible = visible_line_numbers.first - 1
-    return if search_lines(0, last_not_visible)
+    second_range = 0..last_not_visible
+    second_range = nil unless last_not_visible >= 0
+
+    search_ranges(first_range, second_range, :forwards)
+  end
+
+  # Search the full document backwards and scroll to show the first
+  # hit
+  def full_search_backwards
+    return unless @search_editor
+    return if @search_editor.string.empty?
+
+    # Start searching from the last non-visible line above the visible
+    # screen
+    last_not_visible = visible_line_numbers.first - 1
+    first_range = last_not_visible..0
+    first_range = nil unless last_not_visible >= 0
+
+    # Wrap the search and continue searching at the last line up to
+    # the first not visible line below the current screen
+    first_not_visible = visible_line_numbers.last + 1
+    last_line = @lines.size - 1
+    second_range = last_line..first_not_visible
+    second_range = nil unless first_not_visible <= last_line
+
+    search_ranges(first_range, second_range, :backwards)
   end
 
   def full_search_required?
