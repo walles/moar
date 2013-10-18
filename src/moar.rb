@@ -196,6 +196,56 @@ class Moar
     end
   end
 
+  # Get a certain line number on-screen
+  def show_line(line_number)
+    @first_line = line_number
+  end
+
+  # Search the given line numbers and scroll the view to show the
+  # first match.
+  #
+  # Returns true if found and scrolled, false otherwise.
+  def search_lines(first, last)
+    return false unless first <= last
+
+    (first..last).each do |line_number|
+      if @lines[line_number].index(@search_editor.string)
+        show_line(line_number)
+        return true
+      end
+    end
+
+    return false
+  end
+
+  # Search the full document and scroll to show the first hit
+  def full_search
+    return unless @search_editor
+    return if @search_editor.string.empty?
+
+    # Start searching from the first not-visible line after the
+    # current screen
+    first_not_visible = visible_line_numbers.last + 1
+    last_line = @lines.size - 1
+    return if search_lines(first_not_visible, last_line)
+
+    # Wrap the search and search from the beginning until the last
+    # not-visible line before the current screen
+    last_not_visible = visible_line_numbers.first - 1
+    return if search_lines(0, last_not_visible)
+  end
+
+  def full_search_required?
+    return false unless @search_editor
+    return false if @search_editor.string.empty?
+
+    @lines[visible_line_numbers].each do |line|
+      return false if line.index(@search_editor.string)
+    end
+
+    return true
+  end
+
   def run
     init_screen
     noecho
@@ -212,6 +262,9 @@ class Moar
           handle_view_keypress(key)
         when :searching
           @search_editor.enter_char(key)
+          if full_search_required?
+            full_search
+          end
           if @search_editor.done?
             @mode = :viewing
           end
