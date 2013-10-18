@@ -201,20 +201,27 @@ class Moar
   end
 
   # Get a certain line number on-screen
-  def show_line(line_number, direction)
-    if direction == :forwards
-      @first_line = line_number
-    elsif direction == :backwards
-      # When searching backwards, put the line last on the screen
-      @first_line = line_number - lines + 2
+  def show_line(line_number)
+    new_first_line = line_number
+
+    # Move at least one screen away from where we were
+    if new_first_line < visible_line_numbers.first
+      new_first_line =
+        [new_first_line, visible_line_numbers.first - lines + 1].min
     end
+    if new_first_line > visible_line_numbers.last
+      new_first_line =
+        [new_first_line, visible_line_numbers.last + 1].max
+    end
+
+    @first_line = new_first_line
   end
 
   # Search the given line number ranges and scroll the view to show
   # the first match.
   #
   # Returns true if found and scrolled, false otherwise.
-  def search_ranges(first_range, second_range, direction)
+  def search_ranges(first_range, second_range)
     [first_range, second_range].each do |range|
       next unless range
 
@@ -228,7 +235,7 @@ class Moar
 
       line_numbers.each do |line_number|
         if @lines[line_number].index(@search_editor.string)
-          show_line(line_number, direction)
+          show_line(line_number)
           return true
         end
       end
@@ -255,7 +262,7 @@ class Moar
     second_range = 0..last_not_visible
     second_range = nil unless last_not_visible >= 0
 
-    search_ranges(first_range, second_range, :forwards)
+    search_ranges(first_range, second_range)
   end
 
   # Search the full document backwards and scroll to show the first
@@ -277,7 +284,7 @@ class Moar
     second_range = last_line..first_not_visible
     second_range = nil unless first_not_visible <= last_line
 
-    search_ranges(first_range, second_range, :backwards)
+    search_ranges(first_range, second_range)
   end
 
   def full_search_required?
