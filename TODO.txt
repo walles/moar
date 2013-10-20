@@ -3,9 +3,17 @@ right thing without any configuration.
 
 TODO (in some order):
 
-* Somehow indicate if we have no search hits in the entire document
+* Indicate when we're wrapping the search while pressing n.  The way
+  to do this is to:
+  * If we have no hits below the current screen, move to the last
+    line.
+  * If we're already at the last line, wrap the search.
 
-* Indicate when we're wrapping the search
+* Indicate when we're wrapping the search while pressing N.  The way
+  to do this is to:
+  * If we have no hits above the current screen, move to the first
+    line.
+  * If we're already at the first line, wrap the search.
 
 * Write "/ to search" somewhere in the status field
 
@@ -16,6 +24,9 @@ TODO (in some order):
   letters.  This goes for both regexps and non-regexps.
 
 * Make sure we can search for unicode characters
+
+* Make sure searching for an upper case unicode character turns on
+  case sensitive search.
 
 * Make sure we get the line length right even with unicode characters
   present in the lines.  Verify by looking at where the truncation

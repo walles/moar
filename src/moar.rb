@@ -54,13 +54,12 @@ class Moar
   def add_view_status
     status = "Lines #{@first_line + 1}-"
 
-    last_displayed_line = visible_line_numbers.last + 1
-    status += "#{last_displayed_line}"
+    status += "#{last_line + 1}"
 
     status += "/#{@lines.size}"
 
     percent_displayed =
-      ((100 * last_displayed_line) / @lines.size).floor
+      (100 * (last_line + 1) / @lines.size).floor
     status += " #{percent_displayed}%"
     status += ", last key=#{@last_key}"
 
@@ -117,8 +116,7 @@ class Moar
     end
   end
 
-  # Return the range of line numbers that are visible on the screen
-  def visible_line_numbers
+  def first_line
     # @first_line must not be closer than lines-2 from the end
     max_first_line = @lines.size - (lines - 1)
     @first_line = [@first_line, max_first_line].min
@@ -126,17 +124,35 @@ class Moar
     # @first_line cannot be negative
     @first_line = [0, @first_line].max
 
-    last_line = @first_line + lines - 2
-    last_line = [@lines.size - 1, last_line].min
+    return @first_line
+  end
 
-    return @first_line..last_line
+  # Compute the last line given a first line
+  def last_line(my_first_line = nil)
+    my_first_line = first_line unless my_first_line
+
+    # my_first_line must not be closer than lines-2 from the end
+    max_first_line = @lines.size - (lines - 1)
+    my_first_line = [my_first_line, max_first_line].min
+
+    # my_first_line cannot be negative
+    my_first_line = [0, my_first_line].max
+
+    return_me = my_first_line + lines - 2
+    return_me = [@lines.size - 1, return_me].min
+
+    return return_me
+  end
+
+  def last_line=(new_last_line)
+    @first_line = new_last_line - lines + 2
   end
 
   def draw_screen
     screen_line = 0
 
     # Draw lines
-    visible_line_numbers.each do |line_number|
+    (first_line..last_line).each do |line_number|
       add_line(screen_line, @lines[line_number].strip)
       screen_line += 1
     end
@@ -188,9 +204,9 @@ class Moar
     when Key::DOWN
       @first_line += 1
     when Key::NPAGE, ' '[0]
-      @first_line += lines - 1
+      @first_line = last_line + 1
     when Key::PPAGE
-      @first_line -= lines - 1
+      self.last_line = first_line - 1
     when ?<.ord
       @first_line = 0
     when ?>.ord
@@ -205,13 +221,18 @@ class Moar
     new_first_line = line_number
 
     # Move at least one screen away from where we were
-    if new_first_line < visible_line_numbers.first
-      new_first_line =
-        [new_first_line, visible_line_numbers.first - lines + 1].min
+    if new_first_line < first_line
+      # Moving up
+      if last_line(new_first_line) >= first_line
+        self.last_line = first_line - 1
+        return
+      end
     end
-    if new_first_line > visible_line_numbers.last
+
+    if new_first_line > last_line
+      # Moving down
       new_first_line =
-        [new_first_line, visible_line_numbers.last + 1].max
+        [new_first_line, last_line + 1].max
     end
 
     @first_line = new_first_line
@@ -251,14 +272,14 @@ class Moar
 
     # Start searching from the first not-visible line after the
     # current screen
-    first_not_visible = visible_line_numbers.last + 1
-    last_line = @lines.size - 1
-    first_range = first_not_visible..last_line
-    first_range = nil unless first_not_visible <= last_line
+    first_not_visible = last_line + 1
+
+    first_range = first_not_visible..(@lines.size - 1)
+    first_range = nil unless first_not_visible <= (@lines.size - 1)
 
     # Wrap the search and search from the beginning until the last
     # not-visible line before the current screen
-    last_not_visible = visible_line_numbers.first - 1
+    last_not_visible = first_line - 1
     second_range = 0..last_not_visible
     second_range = nil unless last_not_visible >= 0
 
@@ -273,16 +294,15 @@ class Moar
 
     # Start searching from the last non-visible line above the visible
     # screen
-    last_not_visible = visible_line_numbers.first - 1
+    last_not_visible = first_line - 1
     first_range = last_not_visible..0
     first_range = nil unless last_not_visible >= 0
 
     # Wrap the search and continue searching at the last line up to
     # the first not visible line below the current screen
-    first_not_visible = visible_line_numbers.last + 1
-    last_line = @lines.size - 1
-    second_range = last_line..first_not_visible
-    second_range = nil unless first_not_visible <= last_line
+    first_not_visible = last_line + 1
+    second_range = (@lines.size - 1)..first_not_visible
+    second_range = nil unless first_not_visible <= (@lines.size - 1)
 
     search_ranges(first_range, second_range)
   end
@@ -291,7 +311,7 @@ class Moar
     return false unless @search_editor
     return false if @search_editor.string.empty?
 
-    @lines[visible_line_numbers].each do |line|
+    @lines[first_line..last_line].each do |line|
       return false if line.index(@search_editor.string)
     end
 
