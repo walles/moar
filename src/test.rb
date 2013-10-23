@@ -1,8 +1,9 @@
 #!/usr/bin/ruby
 
-require "#{File.dirname(__FILE__)}/moar.rb"
-
+require 'pathname'
 require "test/unit"
+
+require "#{Pathname(__FILE__).realpath.dirname}/moar.rb"
 
 class TestLineEditor < Test::Unit::TestCase
   include Curses
