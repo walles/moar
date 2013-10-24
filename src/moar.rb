@@ -56,36 +56,121 @@ class Terminal
     super
   end
 
-  def cols
-    super
-  end
-
-  def attrset(attributes)
-    super(attributes)
-  end
-
-  def addstr(string)
-    super(string)
-  end
-
-  def setpos(line, col)
-    super(line, col)
-  end
-
-  def clrtoeol
-    super
-  end
-
-  def refresh
-    super
-  end
-
   def getch
     super
+  end
+
+  def add_search_status(moar)
+    status = "/#{moar.search_editor.string}"
+    addstr(status)
+  end
+
+  def add_line(moar, screen_line, line)
+    attrset(Curses::A_NORMAL)
+    setpos(screen_line, 0)
+    clrtoeol
+
+    # Higlight search matches
+    remaining = line
+    printed_chars = 0
+    if moar.search_editor && moar.search_editor.string.length > 0
+      while true
+        (head, match, tail) = remaining.partition(moar.search_editor.string)
+        if match.empty?
+          break
+        end
+        remaining = tail
+
+        addstr(head)
+        printed_chars += head.length
+        attrset(A_REVERSE)
+        addstr(match)
+        printed_chars += match.length
+        attrset(A_NORMAL)
+
+        if printed_chars > cols
+          break
+        end
+      end
+    end
+
+    # Print non-matching end of the line
+    if printed_chars <= cols
+      addstr(remaining)
+      printed_chars += remaining.length
+    end
+
+    # Print a continuation character if we've printed outside the
+    # window
+    if printed_chars > cols
+      setpos(screen_line, cols - 1)
+      attrset(Curses::A_REVERSE)
+      addstr(">")
+    end
+  end
+
+  def add_view_status(moar)
+    status = "Lines #{moar.first_line + 1}-"
+
+    status += "#{moar.last_line + 1}"
+
+    status += "/#{moar.lines.size}"
+
+    percent_displayed =
+      (100 * (moar.last_line + 1) / moar.lines.size).floor
+    status += " #{percent_displayed}%"
+    status += ", last key=#{moar.last_key}"
+
+    attrset(Curses::A_REVERSE)
+    addstr(status)
+  end
+
+  def draw_screen(moar)
+    screen_line = 0
+
+    # Draw lines
+    (moar.first_line..moar.last_line).each do |line_number|
+      add_line(moar, screen_line, moar.lines[line_number].strip)
+      screen_line += 1
+    end
+
+    # Draw filling after EOF
+    if screen_line < (lines - 1)
+      setpos(screen_line, 0)
+      clrtoeol
+      attrset(A_REVERSE)
+      addstr("---")
+      screen_line += 1
+    end
+
+    while screen_line < (lines - 1)
+      setpos(screen_line, 0)
+      clrtoeol
+      screen_line += 1
+    end
+
+    # Draw status line
+    setpos(lines - 1, 0)
+    clrtoeol
+    case moar.mode
+    when :viewing
+      add_view_status(moar)
+    when :searching
+      add_search_status(moar)
+    else
+      abort("ERROR: Unsupported mode of operation <#{@mode}>")
+    end
+
+    refresh
   end
 end
 
 class Moar
+  attr_reader :lines
+  attr_reader :search_editor
+  attr_reader :mode
+  attr_reader :last_key
+
   def initialize(file)
     @terminal = Terminal.new
     @first_line = 0
@@ -95,71 +180,6 @@ class Moar
 
     # Mode can be :viewing and :searching
     @mode = :viewing
-  end
-
-  def add_view_status
-    status = "Lines #{@first_line + 1}-"
-
-    status += "#{last_line + 1}"
-
-    status += "/#{@lines.size}"
-
-    percent_displayed =
-      (100 * (last_line + 1) / @lines.size).floor
-    status += " #{percent_displayed}%"
-    status += ", last key=#{@last_key}"
-
-    @terminal.attrset(Curses::A_REVERSE)
-    @terminal.addstr(status)
-  end
-
-  def add_search_status
-    status = "/#{@search_editor.string}"
-    @terminal.addstr(status)
-  end
-
-  def add_line(screen_line, line)
-    @terminal.attrset(Curses::A_NORMAL)
-    @terminal.setpos(screen_line, 0)
-    @terminal.clrtoeol
-
-    # Higlight search matches
-    remaining = line
-    printed_chars = 0
-    if @search_editor && @search_editor.string.length > 0
-      while true
-        (head, match, tail) = remaining.partition(@search_editor.string)
-        if match.empty?
-          break
-        end
-        remaining = tail
-
-        @terminal.addstr(head)
-        printed_chars += head.length
-        @terminal.attrset(Curses::A_REVERSE)
-        @terminal.addstr(match)
-        printed_chars += match.length
-        @terminal.attrset(Curses::A_NORMAL)
-
-        if printed_chars > @terminal.cols
-          break
-        end
-      end
-    end
-
-    # Print non-matching end of the line
-    if printed_chars <= @terminal.cols
-      @terminal.addstr(remaining)
-      printed_chars += remaining.length
-    end
-
-    # Print a continuation character if we've printed outside the
-    # window
-    if printed_chars > @terminal.cols
-      @terminal.setpos(screen_line, @terminal.cols - 1)
-      @terminal.attrset(Curses::A_REVERSE)
-      @terminal.addstr(">")
-    end
   end
 
   def first_line
@@ -192,45 +212,6 @@ class Moar
 
   def last_line=(new_last_line)
     @first_line = new_last_line - @terminal.lines + 2
-  end
-
-  def draw_screen
-    screen_line = 0
-
-    # Draw lines
-    (first_line..last_line).each do |line_number|
-      add_line(screen_line, @lines[line_number].strip)
-      screen_line += 1
-    end
-
-    # Draw filling after EOF
-    if screen_line < (@terminal.lines - 1)
-      @terminal.setpos(screen_line, 0)
-      @terminal.clrtoeol
-      @terminal.attrset(Curses::A_REVERSE)
-      @terminal.addstr("---")
-      screen_line += 1
-    end
-
-    while screen_line < (@terminal.lines - 1)
-      @terminal.setpos(screen_line, 0)
-      @terminal.clrtoeol
-      screen_line += 1
-    end
-
-    # Draw status line
-    @terminal.setpos(@terminal.lines - 1, 0)
-    @terminal.clrtoeol
-    case @mode
-    when :viewing
-      add_view_status
-    when :searching
-      add_search_status
-    else
-      abort("ERROR: Unsupported mode of operation <#{@mode}>")
-    end
-
-    @terminal.refresh
   end
 
   def handle_view_keypress(key)
@@ -367,7 +348,7 @@ class Moar
   def run
     begin
       while !@done
-        draw_screen
+        @terminal.draw_screen(self)
 
         key = @terminal.getch
         case @mode
