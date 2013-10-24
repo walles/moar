@@ -38,10 +38,56 @@ class LineEditor
   end
 end
 
-class Moar
+class Terminal
   include Curses
 
+  def initialize
+    init_screen
+    noecho
+    stdscr.keypad(true)
+    crmode
+  end
+
+  def close
+    close_screen
+  end
+
+  def lines
+    super
+  end
+
+  def cols
+    super
+  end
+
+  def attrset(attributes)
+    super(attributes)
+  end
+
+  def addstr(string)
+    super(string)
+  end
+
+  def setpos(line, col)
+    super(line, col)
+  end
+
+  def clrtoeol
+    super
+  end
+
+  def refresh
+    super
+  end
+
+  def getch
+    super
+  end
+end
+
+class Moar
   def initialize(file)
+    @terminal = Terminal.new
     @first_line = 0
     @lines = file.readlines
     @last_key = 0
@@ -63,19 +109,19 @@ class Moar
     status += " #{percent_displayed}%"
     status += ", last key=#{@last_key}"
 
-    attrset(A_REVERSE)
-    addstr(status)
+    @terminal.attrset(Curses::A_REVERSE)
+    @terminal.addstr(status)
   end
 
   def add_search_status
     status = "/#{@search_editor.string}"
-    addstr(status)
+    @terminal.addstr(status)
   end
 
   def add_line(screen_line, line)
-    attrset(A_NORMAL)
-    setpos(screen_line, 0)
-    clrtoeol
+    @terminal.attrset(Curses::A_NORMAL)
+    @terminal.setpos(screen_line, 0)
+    @terminal.clrtoeol
 
     # Higlight search matches
     remaining = line
@@ -88,37 +134,37 @@ class Moar
         end
         remaining = tail
 
-        addstr(head)
+        @terminal.addstr(head)
         printed_chars += head.length
-        attrset(A_REVERSE)
-        addstr(match)
+        @terminal.attrset(Curses::A_REVERSE)
+        @terminal.addstr(match)
         printed_chars += match.length
-        attrset(A_NORMAL)
+        @terminal.attrset(Curses::A_NORMAL)
 
-        if printed_chars > cols
+        if printed_chars > @terminal.cols
           break
         end
       end
     end
 
     # Print non-matching end of the line
-    if printed_chars <= cols
-      addstr(remaining)
+    if printed_chars <= @terminal.cols
+      @terminal.addstr(remaining)
       printed_chars += remaining.length
     end
 
     # Print a continuation character if we've printed outside the
     # window
-    if printed_chars > cols
-      setpos(screen_line, cols - 1)
-      attrset(A_REVERSE)
-      addstr(">")
+    if printed_chars > @terminal.cols
+      @terminal.setpos(screen_line, @terminal.cols - 1)
+      @terminal.attrset(Curses::A_REVERSE)
+      @terminal.addstr(">")
     end
   end
 
   def first_line
     # @first_line must not be closer than lines-2 from the end
-    max_first_line = @lines.size - (lines - 1)
+    max_first_line = @lines.size - (@terminal.lines - 1)
     @first_line = [@first_line, max_first_line].min
 
     # @first_line cannot be negative
@@ -132,20 +178,20 @@ class Moar
     my_first_line = first_line unless my_first_line
 
     # my_first_line must not be closer than lines-2 from the end
-    max_first_line = @lines.size - (lines - 1)
+    max_first_line = @lines.size - (@terminal.lines - 1)
     my_first_line = [my_first_line, max_first_line].min
 
     # my_first_line cannot be negative
     my_first_line = [0, my_first_line].max
 
-    return_me = my_first_line + lines - 2
+    return_me = my_first_line + @terminal.lines - 2
     return_me = [@lines.size - 1, return_me].min
 
     return return_me
   end
 
   def last_line=(new_last_line)
-    @first_line = new_last_line - lines + 2
+    @first_line = new_last_line - @terminal.lines + 2
   end
 
   def draw_screen
@@ -158,23 +204,23 @@ class Moar
     end
 
     # Draw filling after EOF
-    if screen_line < (lines - 1)
-      setpos(screen_line, 0)
-      clrtoeol
-      attrset(A_REVERSE)
-      addstr("---")
+    if screen_line < (@terminal.lines - 1)
+      @terminal.setpos(screen_line, 0)
+      @terminal.clrtoeol
+      @terminal.attrset(Curses::A_REVERSE)
+      @terminal.addstr("---")
       screen_line += 1
     end
 
-    while screen_line < (lines - 1)
-      setpos(screen_line, 0)
-      clrtoeol
+    while screen_line < (@terminal.lines - 1)
+      @terminal.setpos(screen_line, 0)
+      @terminal.clrtoeol
       screen_line += 1
     end
 
     # Draw status line
-    setpos(lines - 1, 0)
-    clrtoeol
+    @terminal.setpos(@terminal.lines - 1, 0)
+    @terminal.clrtoeol
     case @mode
     when :viewing
       add_view_status
@@ -184,7 +230,7 @@ class Moar
       abort("ERROR: Unsupported mode of operation <#{@mode}>")
     end
 
-    refresh
+    @terminal.refresh
   end
 
   def handle_view_keypress(key)
@@ -198,20 +244,20 @@ class Moar
       full_search
     when ?N.ord
       full_search_backwards
-    when Key::RESIZE
+    when Curses::Key::RESIZE
       # Do nothing; draw_screen() will be called anyway between all
       # keypresses
-    when Key::DOWN
+    when Curses::Key::DOWN
       @first_line += 1
-    when Key::NPAGE, ' '[0]
+    when Curses::Key::NPAGE, ' '[0]
       @first_line = last_line + 1
-    when Key::PPAGE
+    when Curses::Key::PPAGE
       self.last_line = first_line - 1
     when ?<.ord
       @first_line = 0
     when ?>.ord
       @first_line = @lines.size
-    when Key::UP
+    when Curses::Key::UP
       @first_line -= 1
     end
   end
@@ -319,16 +365,11 @@ class Moar
   end
 
   def run
-    init_screen
-    noecho
-    stdscr.keypad(true)
-
     begin
-      crmode
       while !@done
         draw_screen
 
-        key = getch
+        key = @terminal.getch
         case @mode
         when :viewing
           handle_view_keypress(key)
@@ -347,7 +388,7 @@ class Moar
         @last_key = key
       end
     ensure
-      close_screen
+      @terminal.close
     end
   end
 end
