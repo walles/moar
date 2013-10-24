@@ -41,3 +41,25 @@ class TestLineEditor < Test::Unit::TestCase
     assert_add(test_me, 127, '', 0, true)
   end
 end
+
+class MockTerminal
+  # We can display two lines
+  def lines; 2 end
+end
+
+class TestMoar < Test::Unit::TestCase
+  def test_line_methods
+    # This method assumes the MockTerminal can display two lines
+    terminal = MockTerminal.new
+    test_me = Moar.new(['1', '2', '3', '4'], terminal)
+
+    assert_equal(0, test_me.first_line)
+    assert_equal(1, test_me.last_line)
+
+    assert_equal(2, test_me.last_line(1))
+
+    test_me.last_line = 2
+    assert_equal(1, test_me.first_line)
+    assert_equal(2, test_me.last_line)
+  end
+end

@@ -174,10 +174,15 @@ class Moar
   attr_reader :mode
   attr_reader :last_key
 
-  def initialize(file)
-    @terminal = Terminal.new
+  def initialize(file, terminal = Terminal.new)
+    @terminal = terminal
     @first_line = 0
-    @lines = file.readlines
+    if file.respond_to? '[]'
+      # We got an array, used for unit testing
+      @lines = file
+    else
+      @lines = file.readlines
+    end
     @last_key = 0
     @done = false
 
