@@ -52,8 +52,11 @@ class Terminal
     close_screen
   end
 
+  # Return the number of lines of content this terminal can show.
+  # This is generally the number of actual screen lines minus one for
+  # the status line.
   def lines
-    super
+    return super - 1
   end
 
   def getch
@@ -135,7 +138,7 @@ class Terminal
     end
 
     # Draw filling after EOF
-    if screen_line < (lines - 1)
+    if screen_line < lines
       setpos(screen_line, 0)
       clrtoeol
       attrset(A_REVERSE)
@@ -143,14 +146,14 @@ class Terminal
       screen_line += 1
     end
 
-    while screen_line < (lines - 1)
+    while screen_line < lines
       setpos(screen_line, 0)
       clrtoeol
       screen_line += 1
     end
 
     # Draw status line
-    setpos(lines - 1, 0)
+    setpos(lines, 0)
     clrtoeol
     case moar.mode
     when :viewing
@@ -184,7 +187,7 @@ class Moar
 
   def first_line
     # @first_line must not be closer than lines-2 from the end
-    max_first_line = @lines.size - (@terminal.lines - 1)
+    max_first_line = @lines.size - @terminal.lines
     @first_line = [@first_line, max_first_line].min
 
     # @first_line cannot be negative
@@ -198,20 +201,20 @@ class Moar
     my_first_line = first_line unless my_first_line
 
     # my_first_line must not be closer than lines-2 from the end
-    max_first_line = @lines.size - (@terminal.lines - 1)
+    max_first_line = @lines.size - @terminal.lines
     my_first_line = [my_first_line, max_first_line].min
 
     # my_first_line cannot be negative
     my_first_line = [0, my_first_line].max
 
-    return_me = my_first_line + @terminal.lines - 2
+    return_me = my_first_line + @terminal.lines - 1
     return_me = [@lines.size - 1, return_me].min
 
     return return_me
   end
 
   def last_line=(new_last_line)
-    @first_line = new_last_line - @terminal.lines + 2
+    @first_line = new_last_line - @terminal.lines + 1
   end
 
   def handle_view_keypress(key)
