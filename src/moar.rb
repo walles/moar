@@ -257,7 +257,7 @@ class Moar
     when Curses::Key::RESIZE
       # Do nothing; draw_screen() will be called anyway between all
       # keypresses
-    when Curses::Key::DOWN
+    when Curses::Key::DOWN, 10  # 10=RETURN on a Powerbook
       @first_line += 1
       @mode = :viewing
     when Curses::Key::UP

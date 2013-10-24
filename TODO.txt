@@ -3,13 +3,12 @@ right thing without any configuration.
 
 TODO (before using it myself)
 -----------------------------
-* Scroll down one line on RETURN
-
 * Enable displaying ANSI-colored input
 
 
 TODO (before github)
 --------------------
+
 
 TODO (before trying to get others to use it)
 --------------------------------------------
@@ -131,3 +130,5 @@ DONE
 * Indicate when we're wrapping the search while pressing N.
 
 * Highlight all matches while searching
+
+* Scroll down one line on RETURN
