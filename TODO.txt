@@ -3,18 +3,6 @@ right thing without any configuration.
 
 TODO (in some order):
 
-* Indicate when we're wrapping the search while pressing n.  The way
-  to do this is to:
-  * If we have no hits below the current screen, move to the last
-    line.
-  * If we're already at the last line, wrap the search.
-
-* Indicate when we're wrapping the search while pressing N.  The way
-  to do this is to:
-  * If we have no hits above the current screen, move to the first
-    line.
-  * If we're already at the first line, wrap the search.
-
 * Write "/ to search" somewhere in the status field
 
 * Do a regexp search if the search term is a valid regexp, otherwise
@@ -129,3 +117,7 @@ DONE:
   without the bottom-of-the-screen prompt moving around.
 
 * Find previous using N
+
+* Indicate when we're wrapping the search while pressing n.
+
+* Indicate when we're wrapping the search while pressing N.

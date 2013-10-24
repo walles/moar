@@ -68,8 +68,14 @@ class Terminal
     addstr(status)
   end
 
+  def add_notfound_status(moar)
+    status = "Not found: #{moar.search_editor.string}"
+    attrset(A_REVERSE)
+    addstr(status)
+  end
+
   def add_line(moar, screen_line, line)
-    attrset(Curses::A_NORMAL)
+    attrset(A_NORMAL)
     setpos(screen_line, 0)
     clrtoeol
 
@@ -107,7 +113,7 @@ class Terminal
     # window
     if printed_chars > cols
       setpos(screen_line, cols - 1)
-      attrset(Curses::A_REVERSE)
+      attrset(A_REVERSE)
       addstr(">")
     end
   end
@@ -124,7 +130,7 @@ class Terminal
     status += " #{percent_displayed}%"
     status += ", last key=#{moar.last_key}"
 
-    attrset(Curses::A_REVERSE)
+    attrset(A_REVERSE)
     addstr(status)
   end
 
@@ -160,6 +166,8 @@ class Terminal
       add_view_status(moar)
     when :searching
       add_search_status(moar)
+    when :notfound
+      add_notfound_status(moar)
     else
       abort("ERROR: Unsupported mode of operation <#{@mode}>")
     end
@@ -222,6 +230,19 @@ class Moar
     @first_line = new_last_line - @terminal.lines + 1
   end
 
+  def find_next(direction = :forwards)
+    return unless @search_editor
+    return if @search_editor.string.empty?
+
+    hit = full_search(@search_editor.string, direction)
+    if hit
+      show_line(hit)
+      @mode = :viewing
+    else
+      @mode = :notfound
+    end
+  end
+
   def handle_view_keypress(key)
     case key
     when ?q.ord
@@ -230,24 +251,30 @@ class Moar
       @mode = :searching
       @search_editor = LineEditor.new
     when ?n.ord
-      full_search
+      find_next(:forwards)
     when ?N.ord
-      full_search_backwards
+      find_next(:backwards)
     when Curses::Key::RESIZE
       # Do nothing; draw_screen() will be called anyway between all
       # keypresses
     when Curses::Key::DOWN
       @first_line += 1
-    when Curses::Key::NPAGE, ' '[0]
-      @first_line = last_line + 1
-    when Curses::Key::PPAGE
-      self.last_line = first_line - 1
-    when ?<.ord
-      @first_line = 0
-    when ?>.ord
-      @first_line = @lines.size
+      @mode = :viewing
     when Curses::Key::UP
       @first_line -= 1
+      @mode = :viewing
+    when Curses::Key::NPAGE, ' '[0]
+      @first_line = last_line + 1
+      @mode = :viewing
+    when Curses::Key::PPAGE
+      self.last_line = first_line - 1
+      @mode = :viewing
+    when ?<.ord
+      @first_line = 0
+      @mode = :viewing
+    when ?>.ord
+      @first_line = @lines.size
+      @mode = :viewing
     end
   end
 
@@ -273,73 +300,48 @@ class Moar
     @first_line = new_first_line
   end
 
-  # Search the given line number ranges and scroll the view to show
-  # the first match.
+  # Search the given line number range.
   #
-  # Returns true if found and scrolled, false otherwise.
-  def search_ranges(first_range, second_range)
-    [first_range, second_range].each do |range|
-      next unless range
+  # Returns the line number of the first hit, or nil if nothing was
+  # found.
+  def search_range(first, last, find_me)
+    line_numbers = first.upto(last)
+    if last < first
+      line_numbers = first.downto(last)
+    end
 
-      first = range.first
-      last = range.last
-
-      line_numbers = first.upto(last)
-      if last < first
-        line_numbers = first.downto(last)
-      end
-
-      line_numbers.each do |line_number|
-        if @lines[line_number].index(@search_editor.string)
-          show_line(line_number)
-          return true
-        end
+    line_numbers.each do |line_number|
+      if @lines[line_number].index(find_me)
+        return line_number
       end
     end
 
-    return false
+    return nil
   end
 
-  # Search the full document and scroll to show the first hit
-  def full_search
-    return unless @search_editor
-    return if @search_editor.string.empty?
+  # Search the full document and return the line number of the first
+  # hit, or nil if nothing was found
+  def full_search(find_me, direction = :forwards)
+    from = nil
+    to = nil
 
-    # Start searching from the first not-visible line after the
-    # current screen
-    first_not_visible = last_line + 1
+    if direction == :forwards
+      to = @lines.size - 1
+      if @mode == :notfound
+        from = 0
+      else
+        from = last_line + 1
+      end
+    else
+      to = 0
+      if @mode == :notfound
+        from = @lines.size - 1
+      else
+        from = first_line - 1
+      end
+    end
 
-    first_range = first_not_visible..(@lines.size - 1)
-    first_range = nil unless first_not_visible <= (@lines.size - 1)
-
-    # Wrap the search and search from the beginning until the last
-    # not-visible line before the current screen
-    last_not_visible = first_line - 1
-    second_range = 0..last_not_visible
-    second_range = nil unless last_not_visible >= 0
-
-    search_ranges(first_range, second_range)
-  end
-
-  # Search the full document backwards and scroll to show the first
-  # hit
-  def full_search_backwards
-    return unless @search_editor
-    return if @search_editor.string.empty?
-
-    # Start searching from the last non-visible line above the visible
-    # screen
-    last_not_visible = first_line - 1
-    first_range = last_not_visible..0
-    first_range = nil unless last_not_visible >= 0
-
-    # Wrap the search and continue searching at the last line up to
-    # the first not visible line below the current screen
-    first_not_visible = last_line + 1
-    second_range = (@lines.size - 1)..first_not_visible
-    second_range = nil unless first_not_visible <= (@lines.size - 1)
-
-    search_ranges(first_range, second_range)
+    return search_range(from, to, find_me)
   end
 
   def full_search_required?
@@ -360,12 +362,13 @@ class Moar
 
         key = @terminal.getch
         case @mode
-        when :viewing
+        when :viewing, :notfound
           handle_view_keypress(key)
         when :searching
           @search_editor.enter_char(key)
           if full_search_required?
-            full_search
+            hit = full_search(@search_editor.string)
+            show_line(hit) if hit
           end
           if @search_editor.done?
             @mode = :viewing
