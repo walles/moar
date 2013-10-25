@@ -139,7 +139,7 @@ class Terminal
 
     # Draw lines
     (moar.first_line..moar.last_line).each do |line_number|
-      add_line(moar, screen_line, moar.lines[line_number].strip)
+      add_line(moar, screen_line, moar.lines[line_number].rstrip)
       screen_line += 1
     end
 
