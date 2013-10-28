@@ -93,6 +93,7 @@ end
 
 class Terminal
   include Curses
+  include AnsiUtils
 
   def initialize
     init_screen
@@ -132,34 +133,29 @@ class Terminal
     setpos(screen_line, 0)
     clrtoeol
 
-    # Higlight search matches
-    remaining = line
-    printed_chars = 0
     if moar.search_editor && moar.search_editor.string.length > 0
-      while true
-        (head, match, tail) = remaining.partition(moar.search_editor.string)
-        if match.empty?
-          break
-        end
-        remaining = tail
-
-        addstr(head)
-        printed_chars += head.length
-        attrset(A_REVERSE)
-        addstr(match)
-        printed_chars += match.length
-        attrset(A_NORMAL)
-
-        if printed_chars > cols
-          break
-        end
-      end
+      line = highlight(line, moar.search_editor.string)
     end
 
-    # Print non-matching end of the line
-    if printed_chars <= cols
-      addstr(remaining)
-      printed_chars += remaining.length
+    # Higlight search matches
+    printed_chars = 0
+    tokenize(line) do |code, text|
+      case code
+      when nil
+        # This case intentionally left blank
+      when ''
+        attrset(A_NORMAL)
+      when '1m'
+        attron(A_BOLD)
+      when '7m'
+        attron(A_REVERSE)
+      when '27m'
+        attroff(A_REVERSE)
+      end
+      addstr(text)
+
+      printed_chars += text.length
+      break if printed_chars > cols
     end
 
     # Print a continuation character if we've printed outside the
