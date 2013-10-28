@@ -38,7 +38,7 @@ class LineEditor
   end
 end
 
-module AnsiTokenizer
+module AnsiUtils
   PATTERN = /#{27.chr}\[([0-9;]*m)/
 
   # Input: A string
@@ -61,6 +61,33 @@ module AnsiTokenizer
       string = tail
     end
     block.call(last_match, string)
+  end
+
+  # Input:
+  #  A base string, optionally containing ANSI escape codes to put
+  #  highlights in
+  #
+  #  Something to highlight
+  #
+  # Return:
+  #  The base string with the highlights highlighted in reverse video
+  def highlight(base, highlight)
+    left = base
+    return_me = ""
+
+    while true
+      (head, match, tail) = left.partition(highlight)
+      break if match.empty?
+
+      return_me += head
+      return_me += "#{27.chr}[7m"  # Reverse video
+      return_me += match
+      return_me += "#{27.chr}[27m" # Non-reversed video
+
+      left = tail
+    end
+
+    return return_me + left
   end
 end
 

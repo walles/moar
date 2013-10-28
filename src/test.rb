@@ -82,8 +82,11 @@ class TestMoar < Test::Unit::TestCase
   end
 end
 
-class TestAnsiTokenizer < Test::Unit::TestCase
-  include AnsiTokenizer
+class TestAnsiUtils < Test::Unit::TestCase
+  include AnsiUtils
+
+  R = "#{27.chr}[7m"  # REVERSE
+  N = "#{27.chr}[27m" # NORMAL
 
   def test_tokenize_empty()
     count = 0
@@ -153,5 +156,40 @@ class TestAnsiTokenizer < Test::Unit::TestCase
     end
 
     assert_equal([[nil, "apa"], ["1m", ""], ["2m", "gris"]], tokens)
+  end
+
+  def test_highlight_nothing()
+    assert_equal("1234", highlight("1234", "5"))
+
+    string = "#{27.chr}1mapa#{27.chr}2mgris#{27.chr}3m"
+    assert_equal(string, highlight(string, "aardvark"))
+  end
+
+  def test_highlight_undecorated()
+    assert_equal("a#{R}p#{N}a",
+                 highlight("apa", "p"))
+    assert_equal("#{R}ap#{N}a",
+                 highlight("apa", "ap"))
+    assert_equal("a#{R}pa#{N}",
+                 highlight("apa", "pa"))
+    assert_equal("#{R}apa#{N}",
+                 highlight("apa", "apa"))
+
+    assert_equal("#{R}a#{N}p#{R}a#{N}",
+                 highlight("apa", "a"))
+  end
+
+  def test_highlight_decorated()
+    string = "apa#{27.chr}[31mgris#{27.chr}[32morm"
+
+    assert_equal("#{R}apa#{N}#{27.chr}[31mgris#{27.chr}[32morm",
+                 highlight(string, "apa"))
+    assert_equal("apa#{27.chr}[31m#{R}gris#{N}#{27.chr}[32morm",
+                 highlight(string, "gris"))
+    assert_equal("apa#{27.chr}[31mgris#{27.chr}[32m#{R}orm#{N}",
+                 highlight(string, "orm"))
+
+    assert_equal("apa#{27.chr}[31mg#{R}r#{N}is#{27.chr}[32mo#{R}r#{N}m",
+                 highlight(string, "r"))
   end
 end
