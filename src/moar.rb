@@ -380,6 +380,9 @@ class Moar
         from = 0
       else
         from = last_line + 1
+        if from >= @lines.size
+          from = @lines.size - 1
+        end
       end
     else
       to = 0
@@ -387,6 +390,9 @@ class Moar
         from = @lines.size - 1
       else
         from = first_line - 1
+        if from < 0
+          from = 0
+        end
       end
     end
 

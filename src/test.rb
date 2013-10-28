@@ -79,6 +79,16 @@ class TestMoar < Test::Unit::TestCase
 
     assert_equal(2, test_me.full_search('2'))
     assert(!test_me.full_search('1'))
+    assert_equal(2, test_me.full_search('2'))
+  end
+
+  def test_full_search_at_bottom
+    # This method assumes the MockTerminal can display two lines
+    terminal = MockTerminal.new
+    test_me = Moar.new(['0', '1'], terminal)
+
+    assert_equal(1, test_me.full_search('1'))
+    assert_equal(1, test_me.full_search('1'))
   end
 end
 
