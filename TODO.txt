@@ -3,7 +3,10 @@ right thing without any configuration.
 
 TODO (before using it myself)
 -----------------------------
-* Enable displaying ANSI-colored input
+* Enable displaying the output of "git diff"
+ * Arrow down through the whole file, then arrow up again
+ * Page down through the whole file, then page up again
+ * Search highlighting
 
 
 TODO (before github)
@@ -33,6 +36,11 @@ TODO (before trying to get others to use it)
 
 TODO (bonus)
 ------------
+* Enable displaying a man page
+ * Arrow down through the whole file, then arrow up again
+ * Page down through the whole file, then page up again
+ * Search highlighting
+
 * Make the search case sensitive only if it contains any capital
   letters.  This goes for both regexps and non-regexps.
 

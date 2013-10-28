@@ -38,6 +38,32 @@ class LineEditor
   end
 end
 
+module AnsiTokenizer
+  PATTERN = /#{27.chr}\[([0-9;]*m)/
+
+  # Input: A string
+  #
+  # The string is divided into pairs of ansi escape codes and the text
+  # following each of them.  The pairs are passed one by one into the
+  # block.
+  def tokenize(string, &block)
+    last_match = nil
+    while true
+      (head, match, tail) = string.partition(PATTERN)
+      break if match.empty?
+      match = $1
+
+      if last_match || !head.empty?
+        block.call(last_match, head)
+      end
+      last_match = match
+
+      string = tail
+    end
+    block.call(last_match, string)
+  end
+end
+
 class Terminal
   include Curses
 

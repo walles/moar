@@ -81,3 +81,77 @@ class TestMoar < Test::Unit::TestCase
     assert(!test_me.full_search('1'))
   end
 end
+
+class TestAnsiTokenizer < Test::Unit::TestCase
+  include AnsiTokenizer
+
+  def test_tokenize_empty()
+    count = 0
+    tokenize("") do |code, text|
+      count += 1
+      assert_equal(1, count)
+
+      assert_equal(nil, code)
+      assert_equal("", text)
+    end
+  end
+
+  def test_tokenize_uncolored()
+    count = 0
+    tokenize("apa") do |code, text|
+      count += 1
+      assert_equal(1, count)
+
+      assert_equal(nil, code)
+      assert_equal("apa", text)
+    end
+  end
+
+  def test_tokenize_color_at_start()
+    tokens = []
+    tokenize("#{27.chr}[31mapa") do |code, text|
+      tokens << [code, text]
+    end
+
+    assert_equal([["31m", "apa"]], tokens)
+  end
+
+  def test_tokenize_color_middle()
+    tokens = []
+    tokenize("flaska#{27.chr}[1mapa") do |code, text|
+      tokens << [code, text]
+    end
+
+    assert_equal([[nil, "flaska"],
+                  ["1m", "apa"]], tokens)
+  end
+
+  def test_tokenize_color_end()
+    tokens = []
+    tokenize("flaska#{27.chr}[m") do |code, text|
+      tokens << [code, text]
+    end
+
+    assert_equal([[nil, "flaska"], ["m", ""]], tokens)
+  end
+
+  def test_tokenize_color_many()
+    tokens = []
+    tokenize("#{27.chr}[1mapa#{27.chr}[2mgris#{27.chr}[3m") do |code, text|
+      tokens << [code, text]
+    end
+
+    assert_equal([["1m", "apa"],
+                  ["2m", "gris"],
+                  ["3m", ""]], tokens)
+  end
+
+  def test_tokenize_consecutive_colors()
+    tokens = []
+    tokenize("apa#{27.chr}[1m#{27.chr}[2mgris") do |code, text|
+      tokens << [code, text]
+    end
+
+    assert_equal([[nil, "apa"], ["1m", ""], ["2m", "gris"]], tokens)
+  end
+end
