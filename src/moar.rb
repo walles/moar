@@ -294,14 +294,14 @@ class Moar
 
   def handle_view_keypress(key)
     case key
-    when ?q.ord
+    when 'q'
       @done = true
-    when ?/.ord
+    when '/'
       @mode = :searching
       @search_editor = LineEditor.new
-    when ?n.ord
+    when 'n'
       find_next(:forwards)
-    when ?N.ord
+    when 'N'
       find_next(:backwards)
     when Curses::Key::RESIZE
       # Do nothing; draw_screen() will be called anyway between all
@@ -318,10 +318,10 @@ class Moar
     when Curses::Key::PPAGE
       self.last_line = first_line - 1
       @mode = :viewing
-    when ?<.ord
+    when '<'
       @first_line = 0
       @mode = :viewing
-    when ?>.ord
+    when '>'
       @first_line = @lines.size
       @mode = :viewing
     end
