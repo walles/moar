@@ -3,7 +3,7 @@ right thing without any configuration.
 
 TODO (before using it myself)
 -----------------------------
-* Enable displaying the output of "git diff"
+* Enable displaying colorized output from "git diff"
  * Arrow down through the whole file, then arrow up again
  * Page down through the whole file, then page up again
  * Search highlighting
@@ -15,6 +15,9 @@ TODO (before github)
 
 TODO (before trying to get others to use it)
 --------------------------------------------
+* Print warnings to stderr after the run, for example if we aren't
+  using color support because of a too-old version of Ruby.
+
 * Do a regexp search if the search term is a valid regexp, otherwise
   just use it as a substring.
 

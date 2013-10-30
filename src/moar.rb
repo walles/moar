@@ -95,10 +95,19 @@ class Terminal
   include Curses
   include AnsiUtils
 
+  def colorized?
+    if @colorized == nil
+      @colorized = respond_to?("use_default_colors")
+    end
+    return @colorized
+  end
+
   def initialize
     init_screen
-    start_color
-    use_default_colors
+    if colorized?
+      start_color
+      use_default_colors
+    end
 
     noecho
     stdscr.keypad(true)
@@ -180,7 +189,7 @@ class Terminal
         foreground = COLOR_GREEN
       end
 
-      if foreground != old_foreground || background != old_background
+      if colorized? && foreground != old_foreground || background != old_background
         attron(get_color_pair(foreground, background))
 
         old_foreground = foreground
@@ -329,14 +338,14 @@ class Moar
 
   def handle_view_keypress(key)
     case key
-    when 'q'
+    when 'q', ?q.ord
       @done = true
-    when '/'
+    when '/', ?/.ord
       @mode = :searching
       @search_editor = LineEditor.new
-    when 'n'
+    when 'n', ?n.ord
       find_next(:forwards)
-    when 'N'
+    when 'N', ?N.ord
       find_next(:backwards)
     when Curses::Key::RESIZE
       # Do nothing; draw_screen() will be called anyway between all
@@ -353,10 +362,10 @@ class Moar
     when Curses::Key::PPAGE
       self.last_line = first_line - 1
       @mode = :viewing
-    when '<'
+    when '<', ?<.ord
       @first_line = 0
       @mode = :viewing
-    when '>'
+    when '>', ?>.ord
       @first_line = @lines.size
       @mode = :viewing
     end
