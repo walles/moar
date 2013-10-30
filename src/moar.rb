@@ -182,8 +182,10 @@ class Terminal
       case code
       when nil
         # This case intentionally left blank
-      when ''
+      when 'm'
         attrset(A_NORMAL)
+        foreground = -1
+        background = -1
       when '1m'
         attron(A_BOLD)
       when '7m'
