@@ -97,9 +97,28 @@ class Terminal
 
   def initialize
     init_screen
+    start_color
+    use_default_colors
+
     noecho
     stdscr.keypad(true)
     crmode
+
+    @color_pairs = {}
+    @next_color_pair_number = 1
+  end
+
+  def get_color_pair(foreground, background)
+    pair = @color_pairs[[foreground, background]]
+    unless pair
+      pair = @next_color_pair_number
+      @next_color_pair_number += 1
+
+      init_pair(pair, foreground, background)
+      @color_pairs[[foreground, background]] = pair
+    end
+
+    return color_pair(pair)
   end
 
   def close
@@ -139,6 +158,10 @@ class Terminal
 
     # Higlight search matches
     printed_chars = 0
+    foreground = -1
+    background = -1
+    old_foreground = -1
+    old_background = -1
     tokenize(line) do |code, text|
       case code
       when nil
@@ -151,7 +174,19 @@ class Terminal
         attron(A_REVERSE)
       when '27m'
         attroff(A_REVERSE)
+      when '31m'
+        foreground = COLOR_RED
+      when '32m'
+        foreground = COLOR_GREEN
       end
+
+      if foreground != old_foreground || background != old_background
+        attron(get_color_pair(foreground, background))
+
+        old_foreground = foreground
+        old_background = background
+      end
+
       addstr(text)
 
       printed_chars += text.length
