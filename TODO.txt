@@ -15,9 +15,6 @@ TODO (before github)
 
 TODO (before trying to get others to use it)
 --------------------------------------------
-* Print warnings to stderr after the run, for example if we aren't
-  using color support because of a too-old version of Ruby.
-
 * Do a regexp search if the search term is a valid regexp, otherwise
   just use it as a substring.
 
@@ -39,6 +36,9 @@ TODO (before trying to get others to use it)
 
 TODO (bonus)
 ------------
+* Try to find a newer Ruby version if needed for color support and
+  exec() with that instead if available.
+
 * Enable displaying a man page
  * Arrow down through the whole file, then arrow up again
  * Page down through the whole file, then page up again
@@ -143,3 +143,6 @@ DONE
 * Highlight all matches while searching
 
 * Scroll down one line on RETURN
+
+* Print warnings to stderr after the run, for example if we aren't
+  using color support because of a too-old version of Ruby.

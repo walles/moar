@@ -95,18 +95,24 @@ class Terminal
   include Curses
   include AnsiUtils
 
+  attr_reader :warnings
+
   def colorized?
     if @colorized == nil
-      @colorized = respond_to?("use_default_colors")
+      @colorized = Curses.respond_to?("use_default_colors")
     end
     return @colorized
   end
 
   def initialize
+    @warnings = []
+
     init_screen
     if colorized?
       start_color
       use_default_colors
+    else
+      @warnings << "WARNING: Need a newer Ruby version for color support, currently running Ruby #{RUBY_VERSION}"
     end
 
     noecho
@@ -480,6 +486,10 @@ class Moar
       end
     ensure
       @terminal.close
+
+      @terminal.warnings.each do |warning|
+        $stderr.puts warning
+      end
     end
   end
 end
