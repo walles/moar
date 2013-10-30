@@ -6,8 +6,9 @@ TODO (before using it myself)
 * Make stdin input work even on newer (than 1.8) versions of
   Ruby. Apparently
   [this patch](http://svn.ruby-lang.org/cgi-bin/viewvc.cgi/trunk/io.c?r1=7641&r2=7649&diff_format=h)
-  is the reason it doesn't work. It was supposedly reverted in Ruby
-  1.8 but is still there for Ruby 2.0.
+  is the reason it doesn't
+  work. [Reported to the Ruby issue tracker](https://bugs.ruby-lang.org/issues/9067),
+  let's see how that goes.
 
 * Enable displaying colorized output from "git diff"
  * Arrow down through the whole file, then arrow up again
