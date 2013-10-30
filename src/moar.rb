@@ -192,10 +192,22 @@ class Terminal
         attron(A_REVERSE)
       when '27m'
         attroff(A_REVERSE)
+      when '30m'
+        foreground = COLOR_BLACK
       when '31m'
         foreground = COLOR_RED
       when '32m'
         foreground = COLOR_GREEN
+      when '33m'
+        foreground = COLOR_YELLOW
+      when '34m'
+        foreground = COLOR_BLUE
+      when '35m'
+        foreground = COLOR_MAGENTA
+      when '36m'
+        foreground = COLOR_CYAN
+      when '37m'
+        foreground = COLOR_WHITE
       else
         @warnings << "Unsupported ANSI code \"#{code}\""
       end
