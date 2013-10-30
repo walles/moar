@@ -1,5 +1,6 @@
 #!/usr/bin/ruby
 
+require "set"
 require "curses"
 
 class LineEditor
@@ -105,7 +106,7 @@ class Terminal
   end
 
   def initialize
-    @warnings = []
+    @warnings = Set.new
 
     init_screen
     if colorized?
@@ -193,6 +194,8 @@ class Terminal
         foreground = COLOR_RED
       when '32m'
         foreground = COLOR_GREEN
+      else
+        @warnings << "Unsupported ANSI code \"#{code}\""
       end
 
       if colorized? && foreground != old_foreground || background != old_background
@@ -487,7 +490,7 @@ class Moar
     ensure
       @terminal.close
 
-      @terminal.warnings.each do |warning|
+      @terminal.warnings.sort.each do |warning|
         $stderr.puts warning
       end
     end
