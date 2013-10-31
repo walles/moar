@@ -159,6 +159,7 @@ class Terminal
   end
 
   def add_search_status(moar)
+    attrset(A_NORMAL)
     status = "/#{moar.search_editor.string}"
     addstr(status)
   end
