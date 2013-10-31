@@ -522,6 +522,6 @@ else
   # Switch around some fds to enable us to read the former stdin and
   # curses to read the "real" stdin.
   stream = $stdin.clone
-  $stdin.reopen($stdout)
+  $stdin.reopen(IO.new(1, "r+"))
   Moar.new(stream).run
 end

@@ -1,21 +1,6 @@
 Moar is a pager.  It's designed to be easy to use and just do the
 right thing without any configuration.
 
-TODO (before using it myself)
------------------------------
-* Make stdin input work even on newer (than 1.8) versions of
-  Ruby. Apparently
-  [this patch](http://svn.ruby-lang.org/cgi-bin/viewvc.cgi/trunk/io.c?r1=7641&r2=7649&diff_format=h)
-  is the reason it doesn't
-  work. [Reported to the Ruby issue tracker](https://bugs.ruby-lang.org/issues/9067),
-  let's see how that goes.
-
-* Enable displaying colorized output from "git diff"
- * Arrow down through the whole file, then arrow up again
- * Page down through the whole file, then page up again
- * Search highlighting
-
-
 TODO (before trying to get others to use it)
 --------------------------------------------
 * Do a regexp search if the search term is a valid regexp, otherwise
@@ -149,3 +134,15 @@ DONE
 
 * Print warnings to stderr after the run, for example if we aren't
   using color support because of a too-old version of Ruby.
+
+* Make stdin input work even on newer (than 1.8) versions of
+  Ruby. Apparently
+  [this patch](http://svn.ruby-lang.org/cgi-bin/viewvc.cgi/trunk/io.c?r1=7641&r2=7649&diff_format=h)
+  is the reason it doesn't
+  work. [Reported to the Ruby issue tracker](https://bugs.ruby-lang.org/issues/9067),
+  let's see how that goes.
+
+* Enable displaying colorized output from "git diff"
+ * Arrow down through the whole file, then arrow up again
+ * Page down through the whole file, then page up again
+ * Search highlighting
