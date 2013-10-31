@@ -27,8 +27,14 @@ class LineEditor
         @done = true
       end
     else
-      @string << char.chr
-      @cursor_position += 1
+      begin
+        @string << char.chr
+        @cursor_position += 1
+      rescue RangeError
+        # These errors intentionally ignored; it's better to do
+        # nothing than to crash if we get an unexpected / unsupported
+        # keypress.
+      end
     end
     @cursor_position = [@cursor_position, 0].min
     @cursor_position = [@cursor_position, @string.length].max

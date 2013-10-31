@@ -34,6 +34,11 @@ class TestLineEditor < Test::Unit::TestCase
     assert_add(test_me, 10, 'ab', 2, true)
   end
 
+  def test_out_of_range_char()
+    test_me = LineEditor.new()
+    assert_add(test_me, 42462124635, '', 0, false)
+  end
+
   # Verify that we become done after backspacing out of an empty
   # line
   def test_done_on_empty_backspace()
