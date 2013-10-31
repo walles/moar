@@ -235,15 +235,21 @@ class Terminal
   end
 
   def add_view_status(moar)
-    status = "Lines #{moar.first_line + 1}-"
+    status = nil
+    if moar.lines.size > 0
+      status = "Lines #{moar.first_line + 1}-"
 
-    status += "#{moar.last_line + 1}"
+      status += "#{moar.last_line + 1}"
 
-    status += "/#{moar.lines.size}"
+      status += "/#{moar.lines.size}"
 
-    percent_displayed =
-      (100 * (moar.last_line + 1) / moar.lines.size).floor
-    status += " #{percent_displayed}%"
+      percent_displayed =
+        (100 * (moar.last_line + 1) / moar.lines.size).floor
+      status += " #{percent_displayed}%"
+    else
+      status = "Lines 0-0/0"
+    end
+
     status += ", last key=#{moar.last_key}"
 
     attrset(A_REVERSE)
