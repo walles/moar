@@ -1,7 +1,7 @@
 #!/usr/bin/ruby
 
 require 'pathname'
-require "test/unit"
+require 'test/unit'
 
 require "#{Pathname(__FILE__).realpath.dirname}/moar.rb"
 
@@ -100,8 +100,8 @@ end
 class TestAnsiUtils < Test::Unit::TestCase
   include AnsiUtils
 
-  R = "#{27.chr}[7m"  # REVERSE
-  N = "#{27.chr}[27m" # NORMAL
+  R = "#{ESC}[7m"  # REVERSE
+  N = "#{ESC}[27m" # NORMAL
 
   def test_tokenize_empty()
     count = 0
@@ -127,7 +127,7 @@ class TestAnsiUtils < Test::Unit::TestCase
 
   def test_tokenize_color_at_start()
     tokens = []
-    tokenize("#{27.chr}[31mapa") do |code, text|
+    tokenize("#{ESC}[31mapa") do |code, text|
       tokens << [code, text]
     end
 
@@ -136,7 +136,7 @@ class TestAnsiUtils < Test::Unit::TestCase
 
   def test_tokenize_color_middle()
     tokens = []
-    tokenize("flaska#{27.chr}[1mapa") do |code, text|
+    tokenize("flaska#{ESC}[1mapa") do |code, text|
       tokens << [code, text]
     end
 
@@ -146,7 +146,7 @@ class TestAnsiUtils < Test::Unit::TestCase
 
   def test_tokenize_color_end()
     tokens = []
-    tokenize("flaska#{27.chr}[m") do |code, text|
+    tokenize("flaska#{ESC}[m") do |code, text|
       tokens << [code, text]
     end
 
@@ -155,7 +155,7 @@ class TestAnsiUtils < Test::Unit::TestCase
 
   def test_tokenize_color_many()
     tokens = []
-    tokenize("#{27.chr}[1mapa#{27.chr}[2mgris#{27.chr}[3m") do |code, text|
+    tokenize("#{ESC}[1mapa#{ESC}[2mgris#{ESC}[3m") do |code, text|
       tokens << [code, text]
     end
 
@@ -166,7 +166,7 @@ class TestAnsiUtils < Test::Unit::TestCase
 
   def test_tokenize_consecutive_colors()
     tokens = []
-    tokenize("apa#{27.chr}[1m#{27.chr}[2mgris") do |code, text|
+    tokenize("apa#{ESC}[1m#{ESC}[2mgris") do |code, text|
       tokens << [code, text]
     end
 
@@ -176,7 +176,7 @@ class TestAnsiUtils < Test::Unit::TestCase
   def test_highlight_nothing()
     assert_equal("1234", highlight("1234", "5"))
 
-    string = "#{27.chr}1mapa#{27.chr}2mgris#{27.chr}3m"
+    string = "#{ESC}1mapa#{ESC}2mgris#{ESC}3m"
     assert_equal(string, highlight(string, "aardvark"))
   end
 
@@ -195,16 +195,23 @@ class TestAnsiUtils < Test::Unit::TestCase
   end
 
   def test_highlight_decorated()
-    string = "apa#{27.chr}[31mgris#{27.chr}[32morm"
+    string = "apa#{ESC}[31mgris#{ESC}[32morm"
 
-    assert_equal("#{R}apa#{N}#{27.chr}[31mgris#{27.chr}[32morm",
+    assert_equal("#{R}apa#{N}#{ESC}[31mgris#{ESC}[32morm",
                  highlight(string, "apa"))
-    assert_equal("apa#{27.chr}[31m#{R}gris#{N}#{27.chr}[32morm",
+    assert_equal("apa#{ESC}[31m#{R}gris#{N}#{ESC}[32morm",
                  highlight(string, "gris"))
-    assert_equal("apa#{27.chr}[31mgris#{27.chr}[32m#{R}orm#{N}",
+    assert_equal("apa#{ESC}[31mgris#{ESC}[32m#{R}orm#{N}",
                  highlight(string, "orm"))
 
-    assert_equal("apa#{27.chr}[31mg#{R}r#{N}is#{27.chr}[32mo#{R}r#{N}m",
+    assert_equal("apa#{ESC}[31mg#{R}r#{N}is#{ESC}[32mo#{R}r#{N}m",
                  highlight(string, "r"))
+  end
+
+  def test_dont_highlight_ansi_codes()
+    string = "3#{ESC}[3m3"
+
+    assert_equal("#{R}3#{N}#{ESC}[3m#{R}3#{N}",
+                 highlight(string, "3"))
   end
 end

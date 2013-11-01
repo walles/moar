@@ -46,7 +46,8 @@ class LineEditor
 end
 
 module AnsiUtils
-  PATTERN = /#{27.chr}\[([0-9;]*m)/
+  ESC = 27.chr
+  PATTERN = /#{ESC}\[([0-9;]*m)/
 
   # Input: A string
   #
@@ -79,22 +80,28 @@ module AnsiUtils
   # Return:
   #  The base string with the highlights highlighted in reverse video
   def highlight(base, highlight)
-    left = base
     return_me = ""
 
-    while true
-      (head, match, tail) = left.partition(highlight)
-      break if match.empty?
+    tokenize(base) do |code, text|
+      return_me += "#{ESC}[#{code}" if code
+      left = text
 
-      return_me += head
-      return_me += "#{27.chr}[7m"  # Reverse video
-      return_me += match
-      return_me += "#{27.chr}[27m" # Non-reversed video
+      while true
+        (head, match, tail) = left.partition(highlight)
+        break if match.empty?
 
-      left = tail
+        return_me += head
+        return_me += "#{ESC}[7m"  # Reverse video
+        return_me += match
+        return_me += "#{ESC}[27m" # Non-reversed video
+
+        left = tail
+      end
+
+      return_me += left
     end
 
-    return return_me + left
+    return return_me
   end
 end
 
