@@ -3,8 +3,11 @@ right thing without any configuration.
 
 TODO (before trying to get others to use it)
 --------------------------------------------
-* Do a regexp search if the search term is a valid regexp, otherwise
-  just use it as a substring.
+* Use the same algorithm for highlighting as for determining which
+  lines match.
+
+* Make the search case sensitive only if it contains any capital
+  letters.
 
 * Make sure we can search for unicode characters
 
@@ -12,18 +15,31 @@ TODO (before trying to get others to use it)
   present in the lines.  Verify by looking at where the truncation
   markers end up.
 
+* Make sure searching won't match part of a multi-byte unicode
+  character.
+
 * Enable sideways scrolling using arrow keys.
 
 * Handle search hits to the right of the right screen edge
 
 * Enable 'h' or '?' for help
 
-* Report command line errors, think about when to use $stdin for input
-  vs what commands we accept
+* Report command line errors, think about different command line
+  requirements depending on whether we're piping input into moar.rb or
+  listing input files on the command line.
 
 
 TODO (bonus)
 ------------
+* Do a regexp search if the search term is a valid regexp, otherwise
+  just use it as a substring.
+
+* Lazy load big / slow streams
+
+* Add a search history
+
+* Add search line editing
+
 * Try to find a newer Ruby version if needed for color support and
   exec() with that instead if available.
 
@@ -33,7 +49,7 @@ TODO (bonus)
  * Search highlighting
 
 * Make the search case sensitive only if it contains any capital
-  letters.  This goes for both regexps and non-regexps.
+  letters, for both regexps and non-regexps.
 
 * Make sure searching for an upper case unicode character turns on
   case sensitive search.

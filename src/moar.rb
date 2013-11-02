@@ -489,12 +489,7 @@ class Moar
   def full_search_required?
     return false unless @search_editor
     return false if @search_editor.string.empty?
-
-    @lines[first_line..last_line].each do |line|
-      return false if line.index(@search_editor.string)
-    end
-
-    return true
+    return !search_range(first_line, last_line, @search_editor.string)
   end
 
   def run
