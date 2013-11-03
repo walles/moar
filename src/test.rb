@@ -13,6 +13,12 @@ class TestLineEditor < Test::Unit::TestCase
     assert_equal(string, test_me.string, "string")
     assert_equal(cursor_pos, test_me.cursor_position, "cursor position")
     assert_equal(done, test_me.done?, "done")
+
+    if string.empty?
+      assert(test_me.empty?)
+    else
+      assert(!test_me.empty?)
+    end
   end
 
   def test_basic()

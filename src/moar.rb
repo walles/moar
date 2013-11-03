@@ -43,6 +43,10 @@ class LineEditor
   def done?
     return @done
   end
+
+  def empty?
+    return @string.empty?
+  end
 end
 
 # A string containing ANSI escape codes
@@ -336,6 +340,7 @@ class Moar
   attr_reader :last_key
 
   def initialize(file, terminal = Terminal.new)
+    @search_editor = LineEditor.new
     @terminal = terminal
     @first_line = 0
     if file.respond_to? '[]'
@@ -390,8 +395,7 @@ class Moar
   end
 
   def find_next(direction = :forwards)
-    return unless @search_editor
-    return if @search_editor.string.empty?
+    return if @search_editor.empty?
 
     hit = full_search(@search_editor.string, direction)
     if hit
@@ -510,8 +514,7 @@ class Moar
   end
 
   def full_search_required?
-    return false unless @search_editor
-    return false if @search_editor.string.empty?
+    return false if @search_editor.empty?
     return !search_range(first_line, last_line, @search_editor.string)
   end
 
