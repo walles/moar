@@ -45,17 +45,23 @@ class LineEditor
   end
 end
 
-module AnsiUtils
+# A string containing ANSI escape codes
+class AnsiString
   ESC = 27.chr
   PATTERN = /#{ESC}\[([0-9;]*m)/
+
+  def initialize(string)
+    @string = string
+  end
 
   # Input: A string
   #
   # The string is divided into pairs of ansi escape codes and the text
   # following each of them.  The pairs are passed one by one into the
   # block.
-  def tokenize(string, &block)
+  def tokenize(&block)
     last_match = nil
+    string = @string
     while true
       (head, match, tail) = string.partition(PATTERN)
       break if match.empty?
@@ -79,10 +85,10 @@ module AnsiUtils
   #
   # Return:
   #  The base string with the highlights highlighted in reverse video
-  def highlight(base, highlight)
+  def highlight(highlight)
     return_me = ""
 
-    tokenize(base) do |code, text|
+    tokenize do |code, text|
       return_me += "#{ESC}[#{code}" if code
       left = text
 
@@ -101,13 +107,24 @@ module AnsiUtils
       return_me += left
     end
 
-    return return_me
+    return AnsiString.new(return_me)
+  end
+
+  def include?(search_term)
+    tokenize do |code, text|
+      return true if text.index(search_term)
+    end
+
+    return false
+  end
+
+  def to_str
+    return @string
   end
 end
 
 class Terminal
   include Curses
-  include AnsiUtils
 
   attr_reader :warnings
 
@@ -183,7 +200,7 @@ class Terminal
     clrtoeol
 
     if moar.search_editor && moar.search_editor.string.length > 0
-      line = highlight(line, moar.search_editor.string)
+      line = line.highlight(moar.search_editor.string)
     end
 
     # Higlight search matches
@@ -192,7 +209,7 @@ class Terminal
     background = -1
     old_foreground = -1
     old_background = -1
-    tokenize(line) do |code, text|
+    line.tokenize do |code, text|
       case code
       when nil
         # This case intentionally left blank
@@ -275,7 +292,7 @@ class Terminal
 
     # Draw lines
     (moar.first_line..moar.last_line).each do |line_number|
-      add_line(moar, screen_line, moar.lines[line_number].rstrip)
+      add_line(moar, screen_line, moar.lines[line_number])
       screen_line += 1
     end
 
@@ -323,9 +340,15 @@ class Moar
     @first_line = 0
     if file.respond_to? '[]'
       # We got an array, used for unit testing
-      @lines = file
+      @lines = []
+      file.each do |line|
+        lines << AnsiString.new(line.rstrip)
+      end
     else
-      @lines = file.readlines
+      @lines = []
+      file.each_line do |line|
+        lines << AnsiString.new(line.rstrip)
+      end
     end
     @last_key = 0
     @done = false
@@ -447,7 +470,7 @@ class Moar
     end
 
     line_numbers.each do |line_number|
-      if @lines[line_number].index(find_me)
+      if @lines[line_number].include?(find_me)
         return line_number
       end
     end

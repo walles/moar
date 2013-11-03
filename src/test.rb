@@ -77,6 +77,15 @@ class TestMoar < Test::Unit::TestCase
     assert(!test_me.search_range(0, 3, '4'))
   end
 
+  def test_search_range_with_ansi_escapes
+    terminal = MockTerminal.new
+    test_me = Moar.new(["#{27.chr}[mapa"])
+    assert_equal(0, test_me.search_range(0, 0, 'apa'))
+    assert_nil(test_me.search_range(0, 0, 'kalas'))
+    assert_nil(test_me.search_range(0, 0, 'm'), "'m' is part of the escape code and should be ignored")
+    assert_nil(test_me.search_range(0, 0, 'mapa'))
+  end
+
   def test_full_search
     # This method assumes the MockTerminal can display two lines
     terminal = MockTerminal.new
@@ -97,15 +106,14 @@ class TestMoar < Test::Unit::TestCase
   end
 end
 
-class TestAnsiUtils < Test::Unit::TestCase
-  include AnsiUtils
-
+class TestAnsiString < Test::Unit::TestCase
+  ESC = 27.chr
   R = "#{ESC}[7m"  # REVERSE
   N = "#{ESC}[27m" # NORMAL
 
   def test_tokenize_empty()
     count = 0
-    tokenize("") do |code, text|
+    AnsiString.new("").tokenize do |code, text|
       count += 1
       assert_equal(1, count)
 
@@ -116,7 +124,7 @@ class TestAnsiUtils < Test::Unit::TestCase
 
   def test_tokenize_uncolored()
     count = 0
-    tokenize("apa") do |code, text|
+    AnsiString.new("apa").tokenize do |code, text|
       count += 1
       assert_equal(1, count)
 
@@ -127,7 +135,7 @@ class TestAnsiUtils < Test::Unit::TestCase
 
   def test_tokenize_color_at_start()
     tokens = []
-    tokenize("#{ESC}[31mapa") do |code, text|
+    AnsiString.new("#{ESC}[31mapa").tokenize do |code, text|
       tokens << [code, text]
     end
 
@@ -136,7 +144,7 @@ class TestAnsiUtils < Test::Unit::TestCase
 
   def test_tokenize_color_middle()
     tokens = []
-    tokenize("flaska#{ESC}[1mapa") do |code, text|
+    AnsiString.new("flaska#{ESC}[1mapa").tokenize do |code, text|
       tokens << [code, text]
     end
 
@@ -146,7 +154,7 @@ class TestAnsiUtils < Test::Unit::TestCase
 
   def test_tokenize_color_end()
     tokens = []
-    tokenize("flaska#{ESC}[m") do |code, text|
+    AnsiString.new("flaska#{ESC}[m").tokenize do |code, text|
       tokens << [code, text]
     end
 
@@ -155,7 +163,7 @@ class TestAnsiUtils < Test::Unit::TestCase
 
   def test_tokenize_color_many()
     tokens = []
-    tokenize("#{ESC}[1mapa#{ESC}[2mgris#{ESC}[3m") do |code, text|
+    AnsiString.new("#{ESC}[1mapa#{ESC}[2mgris#{ESC}[3m").tokenize do |code, text|
       tokens << [code, text]
     end
 
@@ -166,11 +174,15 @@ class TestAnsiUtils < Test::Unit::TestCase
 
   def test_tokenize_consecutive_colors()
     tokens = []
-    tokenize("apa#{ESC}[1m#{ESC}[2mgris") do |code, text|
+    AnsiString.new("apa#{ESC}[1m#{ESC}[2mgris").tokenize do |code, text|
       tokens << [code, text]
     end
 
     assert_equal([[nil, "apa"], ["1m", ""], ["2m", "gris"]], tokens)
+  end
+
+  def highlight(base, search_term)
+    return AnsiString.new(base).highlight(search_term).to_str
   end
 
   def test_highlight_nothing()
@@ -213,5 +225,12 @@ class TestAnsiUtils < Test::Unit::TestCase
 
     assert_equal("#{R}3#{N}#{ESC}[3m#{R}3#{N}",
                  highlight(string, "3"))
+  end
+
+  def test_include?
+    test_me = AnsiString.new("#{27.chr}[mapa")
+    assert(test_me.include?('apa'))
+    assert(!test_me.include?('m'), "'m' is part of the escape code and should be ignored")
+    assert(!test_me.include?('mapa'))
   end
 end

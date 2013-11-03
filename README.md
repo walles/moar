@@ -3,9 +3,6 @@ right thing without any configuration.
 
 TODO (before trying to get others to use it)
 --------------------------------------------
-* Use the same algorithm for highlighting as for determining which
-  lines match.
-
 * Make the search case sensitive only if it contains any capital
   letters.
 
@@ -31,6 +28,8 @@ TODO (before trying to get others to use it)
 
 TODO (bonus)
 ------------
+* Start at a certain line if run as "moar.rb file.txt:42"
+
 * Do a regexp search if the search term is a valid regexp, otherwise
   just use it as a substring.
 
@@ -162,3 +161,6 @@ DONE
  * Arrow down through the whole file, then arrow up again
  * Page down through the whole file, then page up again
  * Search highlighting
+
+* Use the same algorithm for highlighting as for determining which
+  lines match.
