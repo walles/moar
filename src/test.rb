@@ -51,6 +51,20 @@ class TestLineEditor < Test::Unit::TestCase
     test_me = LineEditor.new()
     assert_add(test_me, 127, '', 0, true)
   end
+
+  def test_regexp
+    # Only lower case chars => case insensitive regexp
+    assert_equal(/apa/i, LineEditor.new("apa").regexp)
+
+    # Valid regexp => regexp
+    assert_equal(/[mos]/i, LineEditor.new("[mos]").regexp)
+
+    # Invalid regexp => string search
+    assert_equal(/\[mos/i, LineEditor.new("[mos").regexp)
+
+    # One upper case char => case sensitive regexp
+    assert_equal(/Apa/, LineEditor.new("Apa").regexp)
+  end
 end
 
 class MockTerminal

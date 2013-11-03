@@ -4,14 +4,16 @@ require "set"
 require "curses"
 
 class LineEditor
+  UPPER = /.*[[:upper:]].*/
+
   include Curses
 
   attr_reader :string
   attr_reader :cursor_position
 
-  def initialize
+  def initialize(initial_string = "")
     @done = false
-    @string = ''
+    @string = initial_string
     @cursor_position = 0
   end
 
@@ -38,6 +40,19 @@ class LineEditor
     end
     @cursor_position = [@cursor_position, 0].min
     @cursor_position = [@cursor_position, @string.length].max
+  end
+
+  def regexp
+    options = Regexp::IGNORECASE
+    if @string =~ UPPER
+      options = nil
+    end
+
+    begin
+      return Regexp.new(@string, options)
+    rescue RegexpError
+      return Regexp.new(Regexp.quote(@string), options)
+    end
   end
 
   def done?
@@ -203,8 +218,8 @@ class Terminal
     setpos(screen_line, 0)
     clrtoeol
 
-    if moar.search_editor && moar.search_editor.string.length > 0
-      line = line.highlight(moar.search_editor.string)
+    unless moar.search_editor.empty?
+      line = line.highlight(moar.search_editor.regexp)
     end
 
     # Higlight search matches
@@ -397,7 +412,7 @@ class Moar
   def find_next(direction = :forwards)
     return if @search_editor.empty?
 
-    hit = full_search(@search_editor.string, direction)
+    hit = full_search(@search_editor.regexp, direction)
     if hit
       show_line(hit)
       @mode = :viewing
@@ -515,7 +530,7 @@ class Moar
 
   def full_search_required?
     return false if @search_editor.empty?
-    return !search_range(first_line, last_line, @search_editor.string)
+    return !search_range(first_line, last_line, @search_editor.regexp)
   end
 
   def run
@@ -530,7 +545,7 @@ class Moar
         when :searching
           @search_editor.enter_char(key)
           if full_search_required?
-            hit = full_search(@search_editor.string)
+            hit = full_search(@search_editor.regexp)
             show_line(hit) if hit
           end
           if @search_editor.done?

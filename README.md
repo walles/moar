@@ -3,9 +3,6 @@ right thing without any configuration.
 
 TODO (before trying to get others to use it)
 --------------------------------------------
-* Make the search case sensitive only if it contains any capital
-  letters.
-
 * Make sure we can search for unicode characters
 
 * Make sure we get the line length right even with unicode characters
@@ -30,9 +27,6 @@ TODO (bonus)
 ------------
 * Start at a certain line if run as "moar.rb file.txt:42"
 
-* Do a regexp search if the search term is a valid regexp, otherwise
-  just use it as a substring.
-
 * Lazy load big / slow streams
 
 * Add a search history
@@ -46,9 +40,6 @@ TODO (bonus)
  * Arrow down through the whole file, then arrow up again
  * Page down through the whole file, then page up again
  * Search highlighting
-
-* Make the search case sensitive only if it contains any capital
-  letters, for both regexps and non-regexps.
 
 * Make sure searching for an upper case unicode character turns on
   case sensitive search.
@@ -164,3 +155,12 @@ DONE
 
 * Use the same algorithm for highlighting as for determining which
   lines match.
+
+* Make the search case sensitive only if it contains any capital
+  letters.
+
+* Do a regexp search if the search term is a valid regexp, otherwise
+  just use it as a substring.
+
+* Make the search case sensitive only if it contains any capital
+  letters, for both regexps and non-regexps.
