@@ -79,7 +79,7 @@ class TestMoar < Test::Unit::TestCase
 
   def test_search_range_with_ansi_escapes
     terminal = MockTerminal.new
-    test_me = Moar.new(["#{27.chr}[mapa"])
+    test_me = Moar.new(["#{27.chr}[mapa"], terminal)
     assert_equal(0, test_me.search_range(0, 0, 'apa'))
     assert_nil(test_me.search_range(0, 0, 'kalas'))
     assert_nil(test_me.search_range(0, 0, 'm'), "'m' is part of the escape code and should be ignored")
