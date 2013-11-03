@@ -534,6 +534,8 @@ class Moar
   end
 
   def run
+    crash = nil
+
     begin
       while !@done
         @terminal.draw_screen(self)
@@ -557,16 +559,27 @@ class Moar
 
         @last_key = key
       end
+    rescue Exception => e
+      crash = e
     ensure
       @terminal.close
 
       @terminal.warnings.sort.each do |warning|
         $stderr.puts warning
       end
-      unless @terminal.warnings.empty?
-        $stderr.puts
-        $stderr.puts "Please report to https://github.com/walles/moar/issues"
+
+      if crash
+        $stderr.puts unless @terminal.warnings.empty?
+        $stderr.puts(crash.message)
+        $stderr.puts("  " + crash.backtrace.join("\n  "))
       end
+
+      if crash || !@terminal.warnings.empty?
+        $stderr.puts
+        $stderr.puts "Please report issues to https://github.com/walles/moar/issues"
+      end
+
+      exit 1 if crash
     end
   end
 end

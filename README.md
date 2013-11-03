@@ -3,8 +3,6 @@ right thing without any configuration.
 
 TODO (before trying to get others to use it)
 --------------------------------------------
-* If we crash with a stacktrace, print an URL where it can be reported
-
 * Enable sideways scrolling using arrow keys.
 
 * Make sure we can search for unicode characters
@@ -169,3 +167,5 @@ DONE
 
 * If we print warnings at the end, also print an URL where they can be
   reported.
+
+* If we crash with a stacktrace, print an URL where it can be reported
