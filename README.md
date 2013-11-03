@@ -3,6 +3,10 @@ right thing without any configuration.
 
 TODO (before trying to get others to use it)
 --------------------------------------------
+* If we crash with a stacktrace, print an URL where it can be reported
+
+* Enable sideways scrolling using arrow keys.
+
 * Make sure we can search for unicode characters
 
 * Make sure we get the line length right even with unicode characters
@@ -11,8 +15,6 @@ TODO (before trying to get others to use it)
 
 * Make sure searching won't match part of a multi-byte unicode
   character.
-
-* Enable sideways scrolling using arrow keys.
 
 * Handle search hits to the right of the right screen edge
 
@@ -164,3 +166,6 @@ DONE
 
 * Make the search case sensitive only if it contains any capital
   letters, for both regexps and non-regexps.
+
+* If we print warnings at the end, also print an URL where they can be
+  reported.

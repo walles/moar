@@ -563,6 +563,10 @@ class Moar
       @terminal.warnings.sort.each do |warning|
         $stderr.puts warning
       end
+      unless @terminal.warnings.empty?
+        $stderr.puts
+        $stderr.puts "Please report to https://github.com/walles/moar/issues"
+      end
     end
   end
 end
