@@ -1,6 +1,25 @@
 Moar is a pager.  It's designed to be easy to use and just do the
 right thing without any configuration.
 
+Issues are tracked [here](https://github.com/walles/moar/issues).
+
+Being easy to use includes:
+
+* [Less](http://www.greenwoodsoftware.com/less/) compatible key
+  bindings
+
+Doing the right thing includes:
+
+* Supports displaying ANSI color coded texts (like the output from
+  "git diff" for example)
+* Search is interactive
+* Search becomes case sensitive if you add any UPPER CASE characters
+  to your search terms
+* [Regexp](http://en.wikipedia.org/wiki/Regular_expression#Basic_concepts)
+  search if your search string is a valid regexp
+* The position in the file is always shown
+
+
 TODO (before trying to get others to use it)
 --------------------------------------------
 * Enable sideways scrolling using arrow keys.
