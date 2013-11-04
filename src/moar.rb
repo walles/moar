@@ -129,6 +129,31 @@ class AnsiString
     return AnsiString.new(return_me)
   end
 
+  # Return a substring starting at index start_index
+  def substring(start_index)
+    return self if start_index == 0
+
+    string = ""
+    seen = 0
+    tokenize do |code, text|
+      string += "#{ESC}[#{code}" if code
+
+      if seen < start_index
+        start_index_in_current_text = start_index - seen
+        if start_index_in_current_text >= 0
+          subtext = text[start_index_in_current_text..-1]
+          string += subtext if subtext
+        end
+      else
+        string += text
+      end
+
+      seen += text.length
+    end
+
+    return AnsiString.new(string)
+  end
+
   def include?(search_term)
     tokenize do |code, text|
       return true if text.index(search_term)
@@ -228,7 +253,7 @@ class Terminal
     background = -1
     old_foreground = -1
     old_background = -1
-    line.tokenize do |code, text|
+    line.substring(moar.first_column).tokenize do |code, text|
       case code
       when nil
         # This case intentionally left blank
@@ -282,6 +307,12 @@ class Terminal
       attrset(A_REVERSE)
       addstr(">")
     end
+
+    if moar.first_column > 0
+      setpos(screen_line, 0)
+      attrset(A_REVERSE)
+      addstr("<")
+    end
   end
 
   def add_view_status(moar)
@@ -300,7 +331,11 @@ class Terminal
       status = "Lines 0-0/0"
     end
 
-    status += ", last key=#{moar.last_key}"
+    if moar.first_column > 0
+      status += "  Column #{moar.first_column}"
+    end
+
+    status += "  Last key=#{moar.last_key}"
 
     attrset(A_REVERSE)
     addstr(status)
@@ -353,11 +388,13 @@ class Moar
   attr_reader :search_editor
   attr_reader :mode
   attr_reader :last_key
+  attr_reader :first_column
 
   def initialize(file, terminal = Terminal.new)
     @search_editor = LineEditor.new
     @terminal = terminal
     @first_line = 0
+    @first_column = 0
     if file.respond_to? '[]'
       # We got an array, used for unit testing
       @lines = []
@@ -441,6 +478,13 @@ class Moar
     when Curses::Key::UP
       @first_line -= 1
       @mode = :viewing
+    when Curses::Key::RIGHT
+      @first_column += 16
+      @mode = :viewing
+    when Curses::Key::LEFT
+      @first_column -= 16
+      @first_column = 0 if @first_column < 0
+      @mode = :viewing
     when Curses::Key::NPAGE, ' '[0]
       @first_line = last_line + 1
       @mode = :viewing
@@ -449,9 +493,11 @@ class Moar
       @mode = :viewing
     when '<', ?<.ord
       @first_line = 0
+      @first_column = 0
       @mode = :viewing
     when '>', ?>.ord
       @first_line = @lines.size
+      @first_column = 0
       @mode = :viewing
     end
   end

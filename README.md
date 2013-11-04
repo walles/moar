@@ -22,7 +22,9 @@ Doing the right thing includes:
 
 TODO (before trying to get others to use it)
 --------------------------------------------
-* Enable sideways scrolling using arrow keys.
+* Warn about any unhandled keypresses during search.
+
+* Handle search hits to the right of the right screen edge
 
 * Make sure we can search for unicode characters
 
@@ -33,13 +35,19 @@ TODO (before trying to get others to use it)
 * Make sure searching won't match part of a multi-byte unicode
   character.
 
-* Handle search hits to the right of the right screen edge
-
 * Enable 'h' or '?' for help
+
+* Enable --help for help
+
+* Enable --version for version information.
+
+* Make sure version information is printed if there are warnings.
 
 * Report command line errors, think about different command line
   requirements depending on whether we're piping input into moar.rb or
   listing input files on the command line.
+
+* Make it possible to install system-wide using "rake install".
 
 
 TODO (bonus)
@@ -188,3 +196,5 @@ DONE
   reported.
 
 * If we crash with a stacktrace, print an URL where it can be reported
+
+* Enable sideways scrolling using arrow keys.

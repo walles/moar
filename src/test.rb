@@ -253,4 +253,41 @@ class TestAnsiString < Test::Unit::TestCase
     assert(!test_me.include?('m'), "'m' is part of the escape code and should be ignored")
     assert(!test_me.include?('mapa'))
   end
+
+  def test_plain_substring
+    assert_equal('', AnsiString.new('').substring(0).to_str)
+    assert_equal('', AnsiString.new('').substring(5).to_str)
+
+    assert_equal('01234', AnsiString.new('01234').substring(0).to_str)
+    assert_equal('234', AnsiString.new('01234').substring(2).to_str)
+    assert_equal('', AnsiString.new('01234').substring(5).to_str)
+  end
+
+  def test_ansi_substring
+    test_me =
+      AnsiString.new("#{ESC}[33m012#{ESC}[34m345#{ESC}[35m678")
+
+    assert_equal("#{ESC}[33m012#{ESC}[34m345#{ESC}[35m678",
+                 test_me.substring(0).to_str)
+    assert_equal("#{ESC}[33m12#{ESC}[34m345#{ESC}[35m678",
+                 test_me.substring(1).to_str)
+    assert_equal("#{ESC}[33m2#{ESC}[34m345#{ESC}[35m678",
+                 test_me.substring(2).to_str)
+    assert_equal("#{ESC}[33m#{ESC}[34m345#{ESC}[35m678",
+                 test_me.substring(3).to_str)
+    assert_equal("#{ESC}[33m#{ESC}[34m45#{ESC}[35m678",
+                 test_me.substring(4).to_str)
+    assert_equal("#{ESC}[33m#{ESC}[34m5#{ESC}[35m678",
+                 test_me.substring(5).to_str)
+    assert_equal("#{ESC}[33m#{ESC}[34m#{ESC}[35m678",
+                 test_me.substring(6).to_str)
+    assert_equal("#{ESC}[33m#{ESC}[34m#{ESC}[35m78",
+                 test_me.substring(7).to_str)
+    assert_equal("#{ESC}[33m#{ESC}[34m#{ESC}[35m8",
+                 test_me.substring(8).to_str)
+    assert_equal("#{ESC}[33m#{ESC}[34m#{ESC}[35m",
+                 test_me.substring(9).to_str)
+    assert_equal("#{ESC}[33m#{ESC}[34m#{ESC}[35m",
+                 test_me.substring(10).to_str)
+  end
 end
