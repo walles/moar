@@ -9,12 +9,14 @@ class LineEditor
   include Curses
 
   attr_reader :string
+  attr_reader :warnings
   attr_reader :cursor_position
 
   def initialize(initial_string = "")
     @done = false
     @string = initial_string
     @cursor_position = 0
+    @warnings = Set.new
   end
 
   def enter_char(char)
@@ -36,6 +38,7 @@ class LineEditor
         # These errors intentionally ignored; it's better to do
         # nothing than to crash if we get an unexpected / unsupported
         # keypress.
+        @warnings << "WARNING: Unhandled key while searching: #{char}"
       end
     end
     @cursor_position = [@cursor_position, 0].min
@@ -610,17 +613,21 @@ class Moar
     ensure
       @terminal.close
 
-      @terminal.warnings.sort.each do |warning|
+      warnings = Set.new
+      warnings.merge(@terminal.warnings)
+      warnings.merge(@search_editor.warnings)
+
+      warnings.sort.each do |warning|
         $stderr.puts warning
       end
 
       if crash
-        $stderr.puts unless @terminal.warnings.empty?
+        $stderr.puts unless warnings.empty?
         $stderr.puts(crash.message)
         $stderr.puts("  " + crash.backtrace.join("\n  "))
       end
 
-      if crash || !@terminal.warnings.empty?
+      if crash || !warnings.empty?
         $stderr.puts
         $stderr.puts "Please report issues to https://github.com/walles/moar/issues"
       end

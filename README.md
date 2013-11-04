@@ -22,9 +22,10 @@ Doing the right thing includes:
 
 TODO (before trying to get others to use it)
 --------------------------------------------
-* Warn about any unhandled keypresses during search.
-
-* Handle search hits to the right of the right screen edge
+* Handle search hits to the right of the right screen edge. Searching
+  forwards should move first right, then to the left edge and
+  down. Searching backwards should move first left, then up and to the
+  right edge (if needed for showing search hits).
 
 * Make sure we can search for unicode characters
 
@@ -198,3 +199,5 @@ DONE
 * If we crash with a stacktrace, print an URL where it can be reported
 
 * Enable sideways scrolling using arrow keys.
+
+* Warn about any unhandled keypresses during search.
