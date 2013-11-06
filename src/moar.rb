@@ -1,8 +1,10 @@
 #!/usr/bin/ruby
 
-require "set"
-require "curses"
+require 'set'
+require 'curses'
 
+# Editor for a line of text that can return its contents while
+# editing. Needed for interactive search.
 class LineEditor
   UPPER = /.*[[:upper:]].*/
 
@@ -12,7 +14,7 @@ class LineEditor
   attr_reader :warnings
   attr_reader :cursor_position
 
-  def initialize(initial_string = "")
+  def initialize(initial_string = '')
     @done = false
     @string = initial_string
     @cursor_position = 0
@@ -47,9 +49,7 @@ class LineEditor
 
   def regexp
     options = Regexp::IGNORECASE
-    if @string =~ UPPER
-      options = nil
-    end
+    options = nil if @string =~ UPPER
 
     begin
       return Regexp.new(@string, options)
@@ -87,7 +87,7 @@ class AnsiString
     while true
       (head, match, tail) = string.partition(PATTERN)
       break if match.empty?
-      match = $1
+      match = Regexp.last_match[1]
 
       if last_match || !head.empty?
         block.call(last_match, head)
@@ -108,7 +108,7 @@ class AnsiString
   # Return:
   #  The base string with the highlights highlighted in reverse video
   def highlight(highlight)
-    return_me = ""
+    return_me = ''
 
     tokenize do |code, text|
       return_me += "#{ESC}[#{code}" if code
@@ -136,7 +136,7 @@ class AnsiString
   def substring(start_index)
     return self if start_index == 0
 
-    string = ""
+    string = ''
     seen = 0
     tokenize do |code, text|
       string += "#{ESC}[#{code}" if code
@@ -170,14 +170,15 @@ class AnsiString
   end
 end
 
+# Displays the contents of a Moar instance
 class Terminal
   include Curses
 
   attr_reader :warnings
 
   def colorized?
-    if @colorized == nil
-      @colorized = Curses.respond_to?("use_default_colors")
+    if @colorized.nil?
+      @colorized = Curses.respond_to?('use_default_colors')
     end
     return @colorized
   end
@@ -190,7 +191,9 @@ class Terminal
       start_color
       use_default_colors
     else
-      @warnings << "WARNING: Need a newer Ruby version for color support, currently running Ruby #{RUBY_VERSION}"
+      @warnings <<
+        'WARNING: Need a newer Ruby version for color support, ' +
+        "currently running Ruby #{RUBY_VERSION}"
     end
 
     noecho
@@ -290,11 +293,13 @@ class Terminal
         @warnings << "Unsupported ANSI code \"#{code}\""
       end
 
-      if colorized? && foreground != old_foreground || background != old_background
-        attron(get_color_pair(foreground, background))
+      if colorized?
+        if foreground != old_foreground || background != old_background
+          attron(get_color_pair(foreground, background))
 
-        old_foreground = foreground
-        old_background = background
+          old_foreground = foreground
+          old_background = background
+        end
       end
 
       addstr(text)
@@ -308,13 +313,13 @@ class Terminal
     if printed_chars > cols
       setpos(screen_line, cols - 1)
       attrset(A_REVERSE)
-      addstr(">")
+      addstr('>')
     end
 
     if moar.first_column > 0
       setpos(screen_line, 0)
       attrset(A_REVERSE)
-      addstr("<")
+      addstr('<')
     end
   end
 
@@ -331,7 +336,7 @@ class Terminal
         (100 * (moar.last_line + 1) / moar.lines.size).floor
       status += " #{percent_displayed}%"
     else
-      status = "Lines 0-0/0"
+      status = 'Lines 0-0/0'
     end
 
     if moar.first_column > 0
@@ -358,7 +363,7 @@ class Terminal
       setpos(screen_line, 0)
       clrtoeol
       attrset(A_REVERSE)
-      addstr("---")
+      addstr('---')
       screen_line += 1
     end
 
@@ -386,7 +391,11 @@ class Terminal
   end
 end
 
+# The pager logic is in this class; and it's displayed by the Terminal
+# class
 class Moar
+  BUGURL = 'https://github.com/walles/moar/issues'
+
   attr_reader :lines
   attr_reader :search_editor
   attr_reader :mode
@@ -462,15 +471,24 @@ class Moar
   end
 
   def handle_view_keypress(key)
+    # For Ruby 1.8 compatibility
+    begin
+      key = key.chr
+    rescue => e
+      # RangeErrors can happen for non-letter keys and are
+      # intentionally ignored
+      raise unless e.is_a? RangeError
+    end
+
     case key
-    when 'q', ?q.ord
+    when 'q'
       @done = true
-    when '/', ?/.ord
+    when '/'
       @mode = :searching
       @search_editor = LineEditor.new
-    when 'n', ?n.ord
+    when 'n'
       find_next(:forwards)
-    when 'N', ?N.ord
+    when 'N'
       find_next(:backwards)
     when Curses::Key::RESIZE
       # Do nothing; draw_screen() will be called anyway between all
@@ -494,13 +512,24 @@ class Moar
     when Curses::Key::PPAGE
       self.last_line = first_line - 1
       @mode = :viewing
-    when '<', ?<.ord
+    when '<'
       @first_line = 0
       @first_column = 0
       @mode = :viewing
-    when '>', ?>.ord
+    when '>'
       @first_line = @lines.size
       @first_column = 0
+      @mode = :viewing
+    end
+  end
+
+  def handle_search_keypress(key)
+    @search_editor.enter_char(key)
+    if full_search_required?
+      hit = full_search(@search_editor.regexp)
+      show_line(hit) if hit
+    end
+    if @search_editor.done?
       @mode = :viewing
     end
   end
@@ -582,33 +611,30 @@ class Moar
     return !search_range(first_line, last_line, @search_editor.regexp)
   end
 
+  def mainloop
+    until @done
+      @terminal.draw_screen(self)
+
+      key = @terminal.getch
+      case @mode
+      when :viewing, :notfound
+        handle_view_keypress(key)
+      when :searching
+        handle_search_keypress(key)
+      else
+        abort("ERROR: Unsupported mode of operation <#{@mode}>")
+      end
+
+      @last_key = key
+    end
+  end
+
   def run
     crash = nil
 
     begin
-      while !@done
-        @terminal.draw_screen(self)
-
-        key = @terminal.getch
-        case @mode
-        when :viewing, :notfound
-          handle_view_keypress(key)
-        when :searching
-          @search_editor.enter_char(key)
-          if full_search_required?
-            hit = full_search(@search_editor.regexp)
-            show_line(hit) if hit
-          end
-          if @search_editor.done?
-            @mode = :viewing
-          end
-        else
-          abort("ERROR: Unsupported mode of operation <#{@mode}>")
-        end
-
-        @last_key = key
-      end
-    rescue Exception => e
+      mainloop
+    rescue => e
       crash = e
     ensure
       @terminal.close
@@ -623,13 +649,13 @@ class Moar
 
       if crash
         $stderr.puts unless warnings.empty?
-        $stderr.puts(crash.message)
-        $stderr.puts("  " + crash.backtrace.join("\n  "))
+        $stderr.puts("#{crash.class}: #{crash.message}")
+        $stderr.puts('  ' + crash.backtrace.join("\n  "))
       end
 
       if crash || !warnings.empty?
         $stderr.puts
-        $stderr.puts "Please report issues to https://github.com/walles/moar/issues"
+        $stderr.puts "Please report issues to #{BUGURL}"
       end
 
       exit 1 if crash
@@ -637,17 +663,17 @@ class Moar
   end
 end
 
-if __FILE__ != $0
+if __FILE__ != $PROGRAM_NAME
   # We're being required, probably due to unit testing.
   # Do nothing.
 elsif $stdin.isatty
-  File.open(ARGV[0], "r") do |file|
+  File.open(ARGV[0], 'r') do |file|
     Moar.new(file).run
   end
 else
   # Switch around some fds to enable us to read the former stdin and
   # curses to read the "real" stdin.
   stream = $stdin.clone
-  $stdin.reopen(IO.new(1, "r+"))
+  $stdin.reopen(IO.new(1, 'r+'))
   Moar.new(stream).run
 end
