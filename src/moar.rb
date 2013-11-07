@@ -373,7 +373,7 @@ class Terminal
       when '37m'
         foreground = COLOR_WHITE
       else
-        @warnings << "Unsupported ANSI code \"#{code}\""
+        @warnings << "WARNING: Unsupported ANSI code \"#{code}\""
       end
 
       if colorized?
