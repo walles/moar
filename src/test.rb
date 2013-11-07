@@ -135,8 +135,13 @@ end
 # Test our string-with-ANSI-control-codes class
 class TestAnsiString < Test::Unit::TestCase
   ESC = 27.chr
+  BS = 8.chr  # Backspace
   R = "#{ESC}[7m"  # REVERSE
   N = "#{ESC}[27m" # NORMAL
+  BOLD = "#{ESC}[1m"
+  NONBOLD = "#{ESC}[22m"
+  UNDERLINE = "#{ESC}[4m"
+  NONUNDERLINE = "#{ESC}[24m"
 
   def test_tokenize_empty
     count = 0
@@ -298,5 +303,26 @@ class TestAnsiString < Test::Unit::TestCase
                  test_me.substring(9).to_str)
     assert_equal("#{ESC}[33m#{ESC}[34m#{ESC}[35m",
                  test_me.substring(10).to_str)
+  end
+
+  def test_manpage_bold
+    assert_equal("a#{BOLD}b#{NONBOLD}c",
+                 AnsiString.new("ab#{BS}bc").to_str)
+    assert_equal("a#{BOLD}bc#{NONBOLD}d",
+                 AnsiString.new("ab#{BS}bc#{BS}cd").to_str)
+  end
+
+  def test_manpage_underline
+    assert_equal("a#{UNDERLINE}b#{NONUNDERLINE}c",
+                 AnsiString.new("a_#{BS}bc").to_str)
+    assert_equal("a#{UNDERLINE}bc#{NONUNDERLINE}d",
+                 AnsiString.new("a_#{BS}b_#{BS}cd").to_str)
+  end
+
+  def test_manpage_bold_and_underline
+    assert_equal("a#{BOLD}#{UNDERLINE}b#{NONUNDERLINE}#{NONBOLD}c",
+                 AnsiString.new("a_#{BS}b#{BS}bc").to_str)
+    assert_equal("a#{BOLD}#{UNDERLINE}bc#{NONUNDERLINE}#{NONBOLD}d",
+                 AnsiString.new("a_#{BS}b#{BS}b_#{BS}c#{BS}cd").to_str)
   end
 end

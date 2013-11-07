@@ -31,11 +31,6 @@ TODO (before trying to get others to use it)
 * Make sure searching won't match part of a multi-byte unicode
   character.
 
-* Enable displaying a man page
- * Arrow down through the whole file, then arrow up again
- * Page down through the whole file, then page up again
- * Search highlighting
-
 * Enable 'h' or '?' for help
 
 * Enable --help for help
@@ -201,3 +196,8 @@ DONE
 * Enable sideways scrolling using arrow keys.
 
 * Warn about any unhandled keypresses during search.
+
+* Enable displaying a man page
+ * Arrow down through the whole file, then arrow up again
+ * Page down through the whole file, then page up again
+ * Search highlighting

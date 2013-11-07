@@ -70,10 +70,87 @@ end
 # A string containing ANSI escape codes
 class AnsiString
   ESC = 27.chr
-  PATTERN = /#{ESC}\[([0-9;]*m)/
+  ANSICODE = /#{ESC}\[([0-9;]*m)/
+  MANPAGECODE = /[^\b][\b][^\b]([\b][^\b])?/
+
+  BOLD = "#{ESC}[1m"
+  NONBOLD = "#{ESC}[22m"
+  UNDERLINE = "#{ESC}[4m"
+  NONUNDERLINE = "#{ESC}[24m"
 
   def initialize(string)
-    @string = string
+    @string = manpage_to_ansi(string)
+  end
+
+  def manpage_to_ansi(string)
+    return_me = ''
+
+    is_bold = false
+    is_underline = false
+    while true
+      (head, match, tail) = string.partition(MANPAGECODE)
+      break if match.empty?
+
+      unless head.empty?
+        if is_underline
+          return_me += NONUNDERLINE
+          is_underline = false
+        end
+
+        if is_bold
+          return_me += NONBOLD
+          is_bold = false
+        end
+
+        return_me += head
+      end
+
+      char = match[-1]
+      want_bold = false
+      want_underline = false
+      decorations = [match[0]]
+      decorations << match[2] if match.length == 5
+      decorations.each do |decoration|
+        case decoration
+        when char
+          want_bold = true
+        when '_'
+          want_underline = true
+        else
+          # FIXME: Warn about this case
+        end
+      end
+
+      if want_bold && !is_bold
+        return_me += BOLD
+        is_bold = true
+      end
+
+      if want_underline && !is_underline
+        return_me += UNDERLINE
+        is_underline = true
+      end
+
+      if is_underline && !want_underline
+        return_me += NONUNDERLINE
+        is_underline = false
+      end
+
+      if is_bold && !want_bold
+        return_me += NONBOLD
+        is_bold = false
+      end
+
+      return_me += char
+
+      string = tail
+    end
+
+    return_me += NONUNDERLINE if is_underline
+    return_me += NONBOLD if is_bold
+    return_me += string
+
+    return return_me
   end
 
   # Input: A string
@@ -85,7 +162,7 @@ class AnsiString
     last_match = nil
     string = @string
     while true
-      (head, match, tail) = string.partition(PATTERN)
+      (head, match, tail) = string.partition(ANSICODE)
       break if match.empty?
       match = Regexp.last_match[1]
 
@@ -269,8 +346,14 @@ class Terminal
         background = -1
       when '1m'
         attron(A_BOLD)
+      when '4m'
+        attron(A_UNDERLINE)
       when '7m'
         attron(A_REVERSE)
+      when '22m'
+        attroff(A_BOLD)
+      when '24m'
+        attroff(A_UNDERLINE)
       when '27m'
         attroff(A_REVERSE)
       when '30m'
