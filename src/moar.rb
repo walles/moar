@@ -556,7 +556,7 @@ class Moar
   def handle_view_keypress(key)
     # For Ruby 1.8 compatibility
     begin
-      key = key.chr
+      key = key.chr unless key.nil?
     rescue => e
       # RangeErrors can happen for non-letter keys and are
       # intentionally ignored
