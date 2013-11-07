@@ -24,10 +24,6 @@ TODO (before trying to get others to use it)
 --------------------------------------------
 * Make sure we can search for unicode characters
 
-* Make sure we get the line length right even with unicode characters
-  present in the lines.  Verify by looking at where the truncation
-  markers end up.
-
 * Make sure searching won't match part of a multi-byte unicode
   character.
 
@@ -201,3 +197,7 @@ DONE
  * Arrow down through the whole file, then arrow up again
  * Page down through the whole file, then page up again
  * Search highlighting
+
+* Make sure we get the line length right even with unicode characters
+  present in the lines.  Verify by looking at where the truncation
+  markers end up.
