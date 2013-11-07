@@ -22,11 +22,6 @@ Doing the right thing includes:
 
 TODO (before trying to get others to use it)
 --------------------------------------------
-* Handle search hits to the right of the right screen edge. Searching
-  forwards should move first right, then to the left edge and
-  down. Searching backwards should move first left, then up and to the
-  right edge (if needed for showing search hits).
-
 * Make sure we can search for unicode characters
 
 * Make sure we get the line length right even with unicode characters
@@ -35,6 +30,11 @@ TODO (before trying to get others to use it)
 
 * Make sure searching won't match part of a multi-byte unicode
   character.
+
+* Enable displaying a man page
+ * Arrow down through the whole file, then arrow up again
+ * Page down through the whole file, then page up again
+ * Search highlighting
 
 * Enable 'h' or '?' for help
 
@@ -53,6 +53,11 @@ TODO (before trying to get others to use it)
 
 TODO (bonus)
 ------------
+* Handle search hits to the right of the right screen edge. Searching
+  forwards should move first right, then to the left edge and
+  down. Searching backwards should move first left, then up and to the
+  right edge (if needed for showing search hits).
+
 * Start at a certain line if run as "moar.rb file.txt:42"
 
 * Lazy load big / slow streams
@@ -63,11 +68,6 @@ TODO (bonus)
 
 * Try to find a newer Ruby version if needed for color support and
   exec() with that instead if available.
-
-* Enable displaying a man page
- * Arrow down through the whole file, then arrow up again
- * Page down through the whole file, then page up again
- * Search highlighting
 
 * Make sure searching for an upper case unicode character turns on
   case sensitive search.
