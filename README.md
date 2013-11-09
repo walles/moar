@@ -22,10 +22,16 @@ Doing the right thing includes:
 
 TODO (before trying to get others to use it)
 --------------------------------------------
-* Make sure we can search for unicode characters
+* Warn but don't crash if we get an invalid UTF-8 sequence from
+  getch() in wide_getch().
+
+* Warn but don't hang if we get an incomplete UTF-8 sequence from
+  getch() in wide_getch().
 
 * Make sure searching won't match part of a multi-byte unicode
   character.
+
+* Handle lines that can't be treated as UTF-8 as ISO-8859-15
 
 * Enable 'h' or '?' for help
 
@@ -44,6 +50,9 @@ TODO (before trying to get others to use it)
 
 TODO (bonus)
 ------------
+* Run rubocop as part of test.rb if installed and have the exit code
+  reflect any issues.
+
 * Handle search hits to the right of the right screen edge. Searching
   forwards should move first right, then to the left edge and
   down. Searching backwards should move first left, then up and to the
@@ -201,3 +210,10 @@ DONE
 * Make sure we get the line length right even with unicode characters
   present in the lines.  Verify by looking at where the truncation
   markers end up.
+
+* Make sure we can search for unicode characters
+ * Work around
+ [the issue with getch not returning unicode chars](https://bugs.ruby-lang.org/issues/9094)
+
+ * Work around
+ [the issue with Regexp.quote() returning non-unicode strings](https://bugs.ruby-lang.org/issues/9096)

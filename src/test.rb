@@ -1,4 +1,5 @@
 #!/usr/bin/env ruby
+# -*- coding: utf-8 -*-
 
 require 'pathname'
 require 'test/unit'
@@ -55,16 +56,31 @@ class TestLineEditor < Test::Unit::TestCase
 
   def test_regexp
     # Only lower case chars => case insensitive regexp
-    assert_equal(/apa/i, LineEditor.new('apa').regexp)
+    assert_equal(/apa/iu, LineEditor.new('apa').regexp)
 
     # Valid regexp => regexp
-    assert_equal(/[mos]/i, LineEditor.new('[mos]').regexp)
+    assert_equal(/[mos]/iu, LineEditor.new('[mos]').regexp)
 
     # Invalid regexp => string search
-    assert_equal(/\[mos/i, LineEditor.new('[mos').regexp)
+    assert_equal(Encoding::UTF_8, '[mos'.encoding)
+    regexp = LineEditor.new('[mos').regexp
+    assert_equal(/\[mos/iu, regexp)
+    assert(regexp.match('[mos'))
+    assert(regexp.match('åäö [mos'))
 
     # One upper case char => case sensitive regexp
-    assert_equal(/Apa/, LineEditor.new('Apa').regexp)
+    assert_equal(/Apa/u, LineEditor.new('Apa').regexp)
+  end
+
+  def test_encoding
+    test_me = LineEditor.new
+    assert_equal(Encoding::UTF_8, test_me.string.encoding)
+    assert_equal(Encoding::UTF_8, test_me.regexp.encoding)
+  end
+
+  def test_add_unicode
+    test_me = LineEditor.new
+    assert_add(test_me, 'ä', 'ä', 1, false)
   end
 end
 
@@ -73,6 +89,36 @@ class MockTerminal
   # We can display two lines
   def lines
     return 2
+  end
+end
+
+# Tests for terminal functionality
+class TestTerminal < Test::Unit::TestCase
+  def test_wide_getch
+    # Make sure we don't break anything
+    assert_equal(Curses::Key::RESIZE,
+                 Terminal.new(true).wide_getch(Curses::Key::RESIZE))
+    assert_equal(Curses::Key::NPAGE,
+                 Terminal.new(true).wide_getch(Curses::Key::NPAGE))
+    assert_equal(10, Terminal.new(true).wide_getch(10))
+    assert_equal(127, Terminal.new(true).wide_getch(127))
+    assert_nil(Terminal.new(true).wide_getch(nil))
+
+    # Single byte UTF-8
+    assert_equal('k', Terminal.new(true).wide_getch('k'))
+    assert_equal('k', Terminal.new(true).wide_getch(107))
+
+    # Two byte UTF-8
+    assert_equal(Encoding::UTF_8,
+                 Terminal.new(true).wide_getch(0xc3, 0xa4).encoding)
+    assert_equal('ä', Terminal.new(true).wide_getch(0xc3, 0xa4))
+
+    # Three byte UTF-8
+    assert_equal('€', Terminal.new(true).wide_getch(226, 130, 172))
+
+    # Four byte UTF-8
+    assert_equal('😉',
+                 Terminal.new(true).wide_getch(0xf0, 0x9f, 0x98, 0x89))
   end
 end
 
@@ -266,6 +312,10 @@ class TestAnsiString < Test::Unit::TestCase
     assert(!test_me.include?('m'),
            "'m' is part of the escape code and should be ignored")
     assert(!test_me.include?('mapa'))
+
+    assert(AnsiString.new('räka').include?('ä'))
+    assert(AnsiString.new('Ärta').include?(/ä/i))
+    assert(AnsiString.new('Ärta').include?(/Ä/))
   end
 
   def test_plain_substring

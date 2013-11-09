@@ -48,13 +48,16 @@ class LineEditor
   end
 
   def regexp
-    options = Regexp::IGNORECASE
-    options = nil if @string =~ UPPER
+    options = Regexp::FIXEDENCODING | Regexp::IGNORECASE
+    options = Regexp::FIXEDENCODING if @string =~ UPPER
 
     begin
       return Regexp.new(@string, options)
     rescue RegexpError
-      return Regexp.new(Regexp.quote(@string), options)
+      # The force_encoding() thing on the next line is a workaround for
+      # https://bugs.ruby-lang.org/issues/9096
+      return Regexp.new(Regexp.quote(@string).force_encoding(Encoding::UTF_8),
+                        options)
     end
   end
 
@@ -260,7 +263,9 @@ class Terminal
     return @colorized
   end
 
-  def initialize
+  def initialize(testing = false)
+    return if testing
+
     @warnings = Set.new
 
     init_screen
@@ -305,8 +310,49 @@ class Terminal
     return super - 1
   end
 
-  def getch
-    super
+  # This method is a workaround for
+  # https://bugs.ruby-lang.org/issues/9094
+  def wide_getch(*test_input)
+    testing = !test_input.empty?
+    byte = testing ? test_input.shift : getch
+
+    return nil if byte.nil?
+
+    # If it's already a character we assume it's fine
+    return byte unless byte.is_a? Fixnum
+
+    # Not within a byte = ncurses special, return unmodified
+    return byte if byte < 0
+    return byte if byte > 255
+
+    # ASCII
+    if byte <= 127
+      if byte >= 32 && byte <= 126
+        # For Ruby 1.8 compatibility
+        byte = byte.chr
+      end
+
+      return byte
+    end
+
+    # Find the number of bytes in the sequence
+    size = nil
+    if byte & 0b1110_0000 == 0b1100_0000
+      size = 2
+    elsif byte & 0b1111_0000 == 0b1110_0000
+      size = 3
+    elsif byte & 0b1111_1000 == 0b1111_0000
+      size = 4
+    else
+      fail(RangeError, "Invalid UTF-8 start byte #{byte}")
+    end
+
+    bytes = [byte]
+    (size - 1).times do
+      bytes << (testing ? test_input.shift : getch)
+    end
+
+    return bytes.pack('C*').force_encoding(Encoding::UTF_8)
   end
 
   def add_search_status(moar)
@@ -554,15 +600,6 @@ class Moar
   end
 
   def handle_view_keypress(key)
-    # For Ruby 1.8 compatibility
-    begin
-      key = key.chr unless key.nil?
-    rescue => e
-      # RangeErrors can happen for non-letter keys and are
-      # intentionally ignored
-      raise unless e.is_a? RangeError
-    end
-
     case key
     when 'q'
       @done = true
@@ -576,7 +613,7 @@ class Moar
     when Curses::Key::RESIZE
       # Do nothing; draw_screen() will be called anyway between all
       # keypresses
-    when Curses::Key::DOWN, 10  # 10=RETURN on a Powerbook
+    when Curses::Key::DOWN, 10  # 10=RETURN on a Powebook
       @first_line += 1
       @mode = :viewing
     when Curses::Key::UP
@@ -698,7 +735,7 @@ class Moar
     until @done
       @terminal.draw_screen(self)
 
-      key = @terminal.getch
+      key = @terminal.wide_getch
       case @mode
       when :viewing, :notfound
         handle_view_keypress(key)
