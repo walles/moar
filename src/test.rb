@@ -120,6 +120,32 @@ class TestTerminal < Test::Unit::TestCase
     assert_equal('😉',
                  Terminal.new(true).wide_getch(0xf0, 0x9f, 0x98, 0x89))
   end
+
+  # Test that some bogus getch input renders a certain warning
+  def assert_wide_getch_warning(expected_warning, *bytes)
+    test_me = Terminal.new(true)
+    assert_equal(bytes[0].chr, test_me.wide_getch(*bytes),
+                 'Fallback return value should be first byte.chr')
+    assert_equal(1, test_me.warnings.size)
+    warning = test_me.warnings.to_a[0]
+    assert(warning.include?(expected_warning),
+           "Should include <#{expected_warning}>: #{warning}")
+    assert(warning.start_with?('WARNING: '),
+           "Should include <WARNING:>: #{warning}")
+    assert(warning.include?('LANG='),
+           "Should include <LANG=>: #{warning}")
+  end
+
+  def test_wide_getch_invalid_input
+    assert_wide_getch_warning('start byte 255 from keyboard',
+                              255)
+    assert_wide_getch_warning('[0xc3, 0xff] from keyboard',
+                              0xc3, 255)
+    assert_wide_getch_warning('[0xe2, 0x82, 0xff] from keyboard',
+                              226, 130, 255)
+    assert_wide_getch_warning('[0xf0, 0x9f, 0x98, 0xff] from keyboard',
+                              0xf0, 0x9f, 0x98, 0xff)
+  end
 end
 
 # Tests for the pager logic

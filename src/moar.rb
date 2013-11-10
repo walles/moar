@@ -264,9 +264,9 @@ class Terminal
   end
 
   def initialize(testing = false)
-    return if testing
-
     @warnings = Set.new
+
+    return if testing
 
     init_screen
     if colorized?
@@ -344,12 +344,24 @@ class Terminal
     elsif byte & 0b1111_1000 == 0b1111_0000
       size = 4
     else
-      fail(RangeError, "Invalid UTF-8 start byte #{byte}")
+      @warnings <<
+        "WARNING: Invalid UTF-8 start byte #{byte} from keyboard, " +
+        "LANG=<#{ENV['LANG']}>"
+      return byte.chr
     end
 
     bytes = [byte]
     (size - 1).times do
       bytes << (testing ? test_input.shift : getch)
+
+      unless bytes[-1] & 0b1100_0000 == 0b1000_0000
+        @warnings <<
+          sprintf('WARNING: Invalid UTF-8 sequence [%s] from keyboard, ' +
+                  'LANG=%s',
+                  bytes.map { |b| sprintf('0x%02x', b) }.join(', '),
+                  ENV['LANG'])
+        return bytes[0].chr
+      end
     end
 
     return bytes.pack('C*').force_encoding(Encoding::UTF_8)

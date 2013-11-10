@@ -12,6 +12,7 @@ Doing the right thing includes:
 
 * Supports displaying ANSI color coded texts (like the output from
   "git diff" for example)
+* Supports UTF-8 input and output
 * Search is interactive
 * Search becomes case sensitive if you add any UPPER CASE characters
   to your search terms
@@ -22,15 +23,6 @@ Doing the right thing includes:
 
 TODO (before trying to get others to use it)
 --------------------------------------------
-* Warn but don't crash if we get an invalid UTF-8 sequence from
-  getch() in wide_getch().
-
-* Warn but don't hang if we get an incomplete UTF-8 sequence from
-  getch() in wide_getch().
-
-* Make sure searching won't match part of a multi-byte unicode
-  character.
-
 * Handle lines that can't be treated as UTF-8 as ISO-8859-15
 
 * Enable 'h' or '?' for help
@@ -40,6 +32,14 @@ TODO (before trying to get others to use it)
 * Enable --version for version information.
 
 * Make sure version information is printed if there are warnings.
+
+* Make sure the LANG environment variable is printed if there are
+warnings.
+
+* Make sure some kind of platform information is printed if there are
+warnings.
+
+* Make sure the Ruby version is printed if there are warnings.
 
 * Report command line errors, think about different command line
   requirements depending on whether we're piping input into moar.rb or
@@ -52,6 +52,11 @@ TODO (bonus)
 ------------
 * Run rubocop as part of test.rb if installed and have the exit code
   reflect any issues.
+
+* Retain the search string when pressing / to search a second time.
+
+* Make sure searching won't match part of a multi-byte unicode
+  character.
 
 * Handle search hits to the right of the right screen edge. Searching
   forwards should move first right, then to the left edge and
@@ -77,6 +82,9 @@ TODO (bonus)
 * Interactive search using ^s and ^r like in Emacs
 
 * Enable filtered input, start with zcat as a filter
+
+* Warn but don't hang if we get an incomplete UTF-8 sequence from
+  getch() in wide_getch().
 
 * Enable source code highlighting by pre-filtering using some
   highlighter.
@@ -217,3 +225,6 @@ DONE
 
  * Work around
  [the issue with Regexp.quote() returning non-unicode strings](https://bugs.ruby-lang.org/issues/9096)
+
+* Warn but don't crash if we get an invalid UTF-8 sequence from
+  getch() in wide_getch().
