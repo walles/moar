@@ -130,10 +130,6 @@ class TestTerminal < Test::Unit::TestCase
     warning = test_me.warnings.to_a[0]
     assert(warning.include?(expected_warning),
            "Should include <#{expected_warning}>: #{warning}")
-    assert(warning.start_with?('WARNING: '),
-           "Should include <WARNING:>: #{warning}")
-    assert(warning.include?('LANG='),
-           "Should include <LANG=>: #{warning}")
   end
 
   def test_wide_getch_invalid_input

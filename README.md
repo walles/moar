@@ -23,8 +23,6 @@ Doing the right thing includes:
 
 TODO (before trying to get others to use it)
 --------------------------------------------
-* Handle lines that can't be treated as UTF-8 as ISO-8859-15
-
 * Enable 'h' or '?' for help
 
 * Enable --help for help
@@ -32,14 +30,6 @@ TODO (before trying to get others to use it)
 * Enable --version for version information.
 
 * Make sure version information is printed if there are warnings.
-
-* Make sure the LANG environment variable is printed if there are
-warnings.
-
-* Make sure some kind of platform information is printed if there are
-warnings.
-
-* Make sure the Ruby version is printed if there are warnings.
 
 * Report command line errors, think about different command line
   requirements depending on whether we're piping input into moar.rb or
@@ -50,6 +40,9 @@ warnings.
 
 TODO (bonus)
 ------------
+* Handle lines that can't be treated as UTF-8 as ISO-8859-15. Make
+  sure we can search for UTF-8 in them.
+
 * Run rubocop as part of test.rb if installed and have the exit code
   reflect any issues.
 
@@ -84,7 +77,9 @@ TODO (bonus)
 * Enable filtered input, start with zcat as a filter
 
 * Warn but don't hang if we get an incomplete UTF-8 sequence from
-  getch() in wide_getch().
+  getch() in wide_getch().  Hanging won't be that much of a problem
+  assuming users will press more keys if nothing happens, thus
+  resolving the hang.
 
 * Enable source code highlighting by pre-filtering using some
   highlighter.
@@ -228,3 +223,11 @@ DONE
 
 * Warn but don't crash if we get an invalid UTF-8 sequence from
   getch() in wide_getch().
+
+* Make sure the LANG environment variable is printed if there are
+warnings.
+
+* Make sure some kind of platform information is printed if there are
+warnings.
+
+* Make sure the Ruby version is printed if there are warnings.

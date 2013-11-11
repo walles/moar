@@ -40,7 +40,7 @@ class LineEditor
         # These errors intentionally ignored; it's better to do
         # nothing than to crash if we get an unexpected / unsupported
         # keypress.
-        @warnings << "WARNING: Unhandled key while searching: #{char}"
+        @warnings << "Unhandled key while searching: #{char}"
       end
     end
     @cursor_position = [@cursor_position, 0].min
@@ -274,7 +274,7 @@ class Terminal
       use_default_colors
     else
       @warnings <<
-        'WARNING: Need a newer Ruby version for color support, ' +
+        'Need a newer Ruby version for color support, ' +
         "currently running Ruby #{RUBY_VERSION}"
     end
 
@@ -345,8 +345,7 @@ class Terminal
       size = 4
     else
       @warnings <<
-        "WARNING: Invalid UTF-8 start byte #{byte} from keyboard, " +
-        "LANG=<#{ENV['LANG']}>"
+        "Invalid UTF-8 start byte #{byte} from keyboard"
       return byte.chr
     end
 
@@ -356,7 +355,7 @@ class Terminal
 
       unless bytes[-1] & 0b1100_0000 == 0b1000_0000
         @warnings <<
-          sprintf('WARNING: Invalid UTF-8 sequence [%s] from keyboard, ' +
+          sprintf('Invalid UTF-8 sequence [%s] from keyboard, ' +
                   'LANG=%s',
                   bytes.map { |b| sprintf('0x%02x', b) }.join(', '),
                   ENV['LANG'])
@@ -431,7 +430,7 @@ class Terminal
       when '37m'
         foreground = COLOR_WHITE
       else
-        @warnings << "WARNING: Unsupported ANSI code \"#{code}\""
+        @warnings << "Unsupported ANSI code \"#{code}\""
       end
 
       if colorized?
@@ -776,7 +775,7 @@ class Moar
       warnings.merge(@search_editor.warnings)
 
       warnings.sort.each do |warning|
-        $stderr.puts warning
+        $stderr.puts "WARNING: #{warning}"
       end
 
       if crash
@@ -785,7 +784,14 @@ class Moar
         $stderr.puts('  ' + crash.backtrace.join("\n  "))
       end
 
-      if crash || !warnings.empty?
+      if true || crash || !warnings.empty?
+        $stderr.puts
+        $stderr.puts "Ruby version: #{RUBY_VERSION}"
+        $stderr.puts "Ruby platform: #{RUBY_PLATFORM}"
+        $stderr.puts "LANG=<#{ENV['LANG']}>"
+        ENV.each do |var, value|
+          $stderr.puts "#{var}=<#{value}>" if var.start_with? 'LC_'
+        end
         $stderr.puts
         $stderr.puts "Please report issues to #{BUGURL}"
       end
