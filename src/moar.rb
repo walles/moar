@@ -542,7 +542,21 @@ class Moar
   attr_reader :last_key
   attr_reader :first_column
 
+  def add_line(line)
+    begin
+      lines << AnsiString.new(line.rstrip)
+    rescue => e
+      return if @unhandled_line_warning
+
+      @unhandled_line_warning =
+        sprintf("Unhandled input string: %s:\n[\n %s\n]",
+                e.message,
+                line.unpack('C*').map{|byte| sprintf("%4d", byte)}.join(", "))
+    end
+  end
+
   def initialize(file, terminal = Terminal.new)
+    @unhandled_line_warning = nil
     @search_editor = LineEditor.new
     @terminal = terminal
     @first_line = 0
@@ -551,12 +565,12 @@ class Moar
       # We got an array, used for unit testing
       @lines = []
       file.each do |line|
-        lines << AnsiString.new(line.rstrip)
+        add_line(line)
       end
     else
       @lines = []
       file.each_line do |line|
-        lines << AnsiString.new(line.rstrip)
+        add_line(line)
       end
     end
     @last_key = 0
@@ -768,6 +782,7 @@ class Moar
 
   def warnings
     return_me = Set.new
+    return_me << @unhandled_line_warning if @unhandled_line_warning
     return_me.merge(@terminal.warnings)
     return_me.merge(@search_editor.warnings)
 
