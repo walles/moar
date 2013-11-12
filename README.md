@@ -23,6 +23,8 @@ Doing the right thing includes:
 
 TODO (before trying to get others to use it)
 --------------------------------------------
+* We must not crash on getting binary data.  Testcase: "moar.rb /bin/ls"
+
 * Enable 'h' or '?' for help
 
 * Enable --help for help
@@ -35,7 +37,17 @@ TODO (before trying to get others to use it)
   requirements depending on whether we're piping input into moar.rb or
   listing input files on the command line.
 
+  Command line formats we want to support:
+  * moar.rb file.txt
+  * moar.rb < file.txt
+
+  Command line formats we *don't* want to support:
+  * moar.rb file1.txt file2.txt
+  * moar.rb file1.txt < file2.txt
+
 * Make it possible to install system-wide using "rake install".
+
+* Test on Ubuntu
 
 
 TODO (bonus)
@@ -231,3 +243,6 @@ warnings.
 warnings.
 
 * Make sure the Ruby version is printed if there are warnings.
+
+* Startup exceptions should be caught through the same reporting
+  thingy as everything else.

@@ -564,6 +564,8 @@ class Moar
 
     # Mode can be :viewing and :searching
     @mode = :viewing
+  ensure
+    @mode == :viewing || @terminal.close
   end
 
   def first_line
@@ -742,7 +744,7 @@ class Moar
     return !search_range(first_line, last_line, @search_editor.regexp)
   end
 
-  def mainloop
+  def run
     until @done
       @terminal.draw_screen(self)
 
@@ -760,58 +762,67 @@ class Moar
     end
   end
 
-  def run
-    crash = nil
+  def close
+    @terminal.close unless @terminal.nil?
+  end
 
-    begin
-      mainloop
-    rescue => e
-      crash = e
-    ensure
-      @terminal.close
+  def warnings
+    return_me = Set.new
+    return_me.merge(@terminal.warnings)
+    return_me.merge(@search_editor.warnings)
 
-      warnings = Set.new
-      warnings.merge(@terminal.warnings)
-      warnings.merge(@search_editor.warnings)
-
-      warnings.sort.each do |warning|
-        $stderr.puts "WARNING: #{warning}"
-      end
-
-      if crash
-        $stderr.puts unless warnings.empty?
-        $stderr.puts("#{crash.class}: #{crash.message}")
-        $stderr.puts('  ' + crash.backtrace.join("\n  "))
-      end
-
-      if true || crash || !warnings.empty?
-        $stderr.puts
-        $stderr.puts "Ruby version: #{RUBY_VERSION}"
-        $stderr.puts "Ruby platform: #{RUBY_PLATFORM}"
-        $stderr.puts "LANG=<#{ENV['LANG']}>"
-        ENV.each do |var, value|
-          $stderr.puts "#{var}=<#{value}>" if var.start_with? 'LC_'
-        end
-        $stderr.puts
-        $stderr.puts "Please report issues to #{BUGURL}"
-      end
-
-      exit 1 if crash
-    end
+    return return_me
   end
 end
 
-if __FILE__ != $PROGRAM_NAME
-  # We're being required, probably due to unit testing.
-  # Do nothing.
-elsif $stdin.isatty
-  File.open(ARGV[0], 'r') do |file|
-    Moar.new(file).run
+moar = nil
+crash = nil
+begin
+  if __FILE__ != $PROGRAM_NAME
+    # We're being required, probably due to unit testing.
+    # Do nothing.
+  elsif $stdin.isatty
+    File.open(ARGV[0], 'r') do |file|
+      moar = Moar.new(file)
+      moar.run
+    end
+  else
+    # Switch around some fds to enable us to read the former stdin and
+    # curses to read the "real" stdin.
+    stream = $stdin.clone
+    $stdin.reopen(IO.new(1, 'r+'))
+    moar = Moar.new(stream)
+    moar.run
   end
-else
-  # Switch around some fds to enable us to read the former stdin and
-  # curses to read the "real" stdin.
-  stream = $stdin.clone
-  $stdin.reopen(IO.new(1, 'r+'))
-  Moar.new(stream).run
+rescue => e
+  crash = e
+ensure
+  moar.close unless moar.nil?
+
+  warnings = Set.new
+  warnings.merge(moar.warnings) if moar
+
+  warnings.sort.each do |warning|
+    $stderr.puts "WARNING: #{warning}"
+  end
+
+  if crash
+    $stderr.puts unless warnings.empty?
+    $stderr.puts("#{crash.class}: #{crash.message}")
+    $stderr.puts('  ' + crash.backtrace.join("\n  "))
+  end
+
+  if true || crash || !warnings.empty?
+    $stderr.puts
+    $stderr.puts "Ruby version: #{RUBY_VERSION}"
+    $stderr.puts "Ruby platform: #{RUBY_PLATFORM}"
+    $stderr.puts "LANG=<#{ENV['LANG']}>"
+    ENV.each do |var, value|
+      $stderr.puts "#{var}=<#{value}>" if var.start_with? 'LC_'
+    end
+    $stderr.puts
+    $stderr.puts "Please report issues to #{Moar::BUGURL}"
+  end
+
+  exit 1 if crash
 end
