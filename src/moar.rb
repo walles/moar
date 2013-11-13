@@ -2,6 +2,10 @@
 
 require 'set'
 require 'curses'
+require 'pathname'
+
+MOAR_DIR = Pathname(__FILE__).realpath.dirname
+VERSION = `cd #{MOAR_DIR} ; git describe`
 
 # Editor for a line of text that can return its contents while
 # editing. Needed for interactive search.
@@ -867,6 +871,7 @@ ensure
 
   if crash || !warnings.empty?
     $stderr.puts
+    $stderr.puts "Moar version: #{VERSION}"
     $stderr.puts "Ruby version: #{RUBY_VERSION}"
     $stderr.puts "Ruby platform: #{RUBY_PLATFORM}"
     $stderr.puts "LANG=<#{ENV['LANG']}>"

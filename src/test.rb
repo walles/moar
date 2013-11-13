@@ -4,8 +4,8 @@
 require 'pathname'
 require 'test/unit'
 
-MYDIR = Pathname(__FILE__).realpath.dirname
-require "#{MYDIR}/moar.rb"
+TEST_DIR = Pathname(__FILE__).realpath.dirname
+require "#{TEST_DIR}/moar.rb"
 
 # Tests for the line editor
 class TestLineEditor < Test::Unit::TestCase
@@ -437,4 +437,4 @@ class TestAnsiString < Test::Unit::TestCase
 end
 
 # Run Rubocop if available and fail on errors
-exit 1 if system('rubocop', :chdir => MYDIR) == false
+exit 1 if system('rubocop', :chdir => TEST_DIR) == false

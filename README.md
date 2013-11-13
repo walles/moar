@@ -29,8 +29,6 @@ TODO (before trying to get others to use it)
 
 * Enable --version for version information.
 
-* Make sure version information is printed if there are warnings.
-
 * Report command line errors, think about different command line
   requirements depending on whether we're piping input into moar.rb or
   listing input files on the command line.
@@ -43,7 +41,8 @@ TODO (before trying to get others to use it)
   * moar.rb file1.txt file2.txt
   * moar.rb file1.txt < file2.txt
 
-* Make it possible to install system-wide using "rake install".
+* Make it possible to install system-wide using "rake install". Don't
+  forget to fix the version number when doing this.
 
 * Test on Ubuntu
 
@@ -52,8 +51,11 @@ TODO (before trying to get others to use it)
 
 TODO (bonus)
 ------------
-* Handle lines that can't be treated as UTF-8 as ISO-8859-15. Make
-  sure we can search for UTF-8 in them.
+* Print something nice on file-not-found.
+
+* Exit search mode on ^C. For compatibility with less.
+
+* Exit search mode on ESC. Because that's what I feel like pressing.
 
 * Retain the search string when pressing / to search a second time.
 
@@ -250,3 +252,5 @@ warnings.
 
 * Run rubocop as part of test.rb if installed and have the exit code
   reflect any issues.
+
+* Make sure version information is printed if there are warnings.
