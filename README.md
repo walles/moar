@@ -41,9 +41,6 @@ TODO (before trying to get others to use it)
   * moar.rb file1.txt file2.txt
   * moar.rb file1.txt < file2.txt
 
-* Make it possible to install system-wide using "rake install". Don't
-  forget to fix the version number when doing this.
-
 * Test on Ubuntu
 
 * Test on Ruby 1.8.something
@@ -254,3 +251,6 @@ warnings.
   reflect any issues.
 
 * Make sure version information is printed if there are warnings.
+
+* Make it possible to install system-wide using "rake install". Don't
+  forget to fix the version number when doing this.

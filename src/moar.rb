@@ -5,7 +5,7 @@ require 'curses'
 require 'pathname'
 
 MOAR_DIR = Pathname(__FILE__).realpath.dirname
-VERSION = `cd #{MOAR_DIR} ; git describe`
+VERSION = `cd #{MOAR_DIR} ; git describe`.strip
 
 # Editor for a line of text that can return its contents while
 # editing. Needed for interactive search.
