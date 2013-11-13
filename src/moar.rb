@@ -73,6 +73,7 @@ end
 # A string containing ANSI escape codes
 class AnsiString
   ESC = 27.chr
+  CONTROLCODE = /[#{0.chr}-#{26.chr}#{28.chr}-#{31.chr}]/
   ANSICODE = /#{ESC}\[([0-9;]*m)/
   MANPAGECODE = /[^\b][\b][^\b]([\b][^\b])?/
 
@@ -82,7 +83,19 @@ class AnsiString
   NONUNDERLINE = "#{ESC}[24m"
 
   def initialize(string)
-    @string = manpage_to_ansi(string)
+    @string = scrub(to_utf8(manpage_to_ansi(string)))
+  end
+
+  # Replace control codes with "^X" where X is representative for the
+  # actual control code replaced.
+  def scrub(string)
+    return string.gsub(CONTROLCODE) do |match|
+      "^#{(match[0].ord + 64).chr}"
+    end
+  end
+
+  def to_utf8(string)
+    return string.encode(Encoding::UTF_8, :undef => :replace)
   end
 
   def manpage_to_ansi(string)
