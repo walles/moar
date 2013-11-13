@@ -23,7 +23,7 @@ Doing the right thing includes:
 
 TODO (before trying to get others to use it)
 --------------------------------------------
-* We must not crash on getting binary data.  Testcase: "moar.rb /bin/ls"
+* Validate handling of TAB characters in the input
 
 * Enable 'h' or '?' for help
 
@@ -48,6 +48,8 @@ TODO (before trying to get others to use it)
 * Make it possible to install system-wide using "rake install".
 
 * Test on Ubuntu
+
+* Test on Ruby 1.8.something
 
 
 TODO (bonus)
@@ -246,3 +248,5 @@ warnings.
 
 * Startup exceptions should be caught through the same reporting
   thingy as everything else.
+
+* We must not crash on getting binary data.  Testcase: "moar.rb /bin/ls"

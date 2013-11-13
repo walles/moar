@@ -23,6 +23,9 @@ Documentation:
 FavorUntilOverNegatedWhile:
   Enabled: true
 
+HashSyntax:
+  Enabled: false
+
 IfUnlessModifier:
   Enabled: false
 

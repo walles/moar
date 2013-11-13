@@ -397,4 +397,26 @@ class TestAnsiString < Test::Unit::TestCase
     assert_equal("a#{BOLD}#{UNDERLINE}bc#{NONUNDERLINE}#{NONBOLD}d",
                  AnsiString.new("a_#{BS}b#{BS}b_#{BS}c#{BS}cd").to_str)
   end
+
+  # Interpret an array as UTF-8, turn it into an AnsiString and tyre
+  # kick it.
+  def validate(array)
+    ansi_string =
+      AnsiString.new(array.pack('C*').force_encoding(Encoding::UTF_8))
+
+    ansi_string.highlight('å')
+  end
+
+  def test_invalid_utf8
+    validate([255])
+
+    validate([0xc3, 255])
+    validate([0xc3])
+
+    validate([226, 130, 255])
+    validate([226, 130])
+
+    validate([0xf0, 0x9f, 0x98, 0xff])
+    validate([0xf0, 0x9f, 0x98])
+  end
 end

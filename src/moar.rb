@@ -83,7 +83,7 @@ class AnsiString
   NONUNDERLINE = "#{ESC}[24m"
 
   def initialize(string)
-    @string = scrub(to_utf8(manpage_to_ansi(string)))
+    @string = scrub(manpage_to_ansi(to_utf8(string)))
   end
 
   # Replace control codes with "^X" where X is representative for the
@@ -95,6 +95,7 @@ class AnsiString
   end
 
   def to_utf8(string)
+    string.force_encoding(Encoding::ASCII_8BIT) unless string.valid_encoding?
     return string.encode(Encoding::UTF_8, :undef => :replace)
   end
 
@@ -556,16 +557,17 @@ class Moar
   attr_reader :first_column
 
   def add_line(line)
-    begin
-      lines << AnsiString.new(line.rstrip)
-    rescue => e
-      return if @unhandled_line_warning
+    lines << AnsiString.new(line.rstrip)
+  rescue => e
+    return if @unhandled_line_warning
 
-      @unhandled_line_warning =
-        sprintf("Unhandled input string: %s:\n[\n %s\n]",
-                e.message,
-                line.unpack('C*').map{|byte| sprintf("%4d", byte)}.join(", "))
-    end
+    bytes_dump =
+      line.unpack('C*').map { |byte| sprintf('%3d', byte) }.join(',')
+
+    @unhandled_line_warning =
+      sprintf("Ignoring unhandled line: %s:\n[\n %s\n]",
+              e.message,
+              bytes_dump)
   end
 
   def initialize(file, terminal = Terminal.new)
