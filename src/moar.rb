@@ -840,7 +840,7 @@ ensure
     $stderr.puts('  ' + crash.backtrace.join("\n  "))
   end
 
-  if true || crash || !warnings.empty?
+  if crash || !warnings.empty?
     $stderr.puts
     $stderr.puts "Ruby version: #{RUBY_VERSION}"
     $stderr.puts "Ruby platform: #{RUBY_PLATFORM}"
