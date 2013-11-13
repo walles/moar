@@ -23,8 +23,6 @@ Doing the right thing includes:
 
 TODO (before trying to get others to use it)
 --------------------------------------------
-* Validate handling of TAB characters in the input
-
 * Enable 'h' or '?' for help
 
 * Enable --help for help
@@ -250,3 +248,5 @@ warnings.
   thingy as everything else.
 
 * We must not crash on getting binary data.  Testcase: "moar.rb /bin/ls"
+
+* Fix handling of TAB characters in the input

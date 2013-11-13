@@ -73,7 +73,8 @@ end
 # A string containing ANSI escape codes
 class AnsiString
   ESC = 27.chr
-  CONTROLCODE = /[#{0.chr}-#{26.chr}#{28.chr}-#{31.chr}]/
+  TAB = 9.chr
+  CONTROLCODE = /[#{0.chr}-#{8.chr}#{10.chr}-#{26.chr}#{28.chr}-#{31.chr}]/
   ANSICODE = /#{ESC}\[([0-9;]*m)/
   MANPAGECODE = /[^\b][\b][^\b]([\b][^\b])?/
 
@@ -83,7 +84,29 @@ class AnsiString
   NONUNDERLINE = "#{ESC}[24m"
 
   def initialize(string)
-    @string = scrub(manpage_to_ansi(to_utf8(string)))
+    string = to_utf8(string)
+    string = manpage_to_ansi(string)
+    string = scrub(string)
+    string = resolve_tabs(string)
+    @string = string
+  end
+
+  def resolve_tabs(string)
+    return string unless string.index(TAB)
+    resolved = ''
+
+    offset = 0
+    while true
+      tabindex = string.index(TAB, offset)
+      return resolved + string[offset..-1] unless tabindex
+
+      resolved += string[offset..(tabindex - 1)] unless offset == tabindex
+      offset = tabindex + 1
+
+      n_spaces = 8 - (resolved.length % 8)
+      n_spaces = 8 if n_spaces == 0
+      resolved += ' ' * n_spaces
+    end
   end
 
   # Replace control codes with "^X" where X is representative for the

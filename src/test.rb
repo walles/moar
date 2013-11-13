@@ -204,6 +204,7 @@ end
 class TestAnsiString < Test::Unit::TestCase
   ESC = 27.chr
   BS = 8.chr  # Backspace
+  TAB = 9.chr
   R = "#{ESC}[7m"  # REVERSE
   N = "#{ESC}[27m" # NORMAL
   BOLD = "#{ESC}[1m"
@@ -418,5 +419,18 @@ class TestAnsiString < Test::Unit::TestCase
 
     validate([0xf0, 0x9f, 0x98, 0xff])
     validate([0xf0, 0x9f, 0x98])
+  end
+
+  def test_tab
+    assert_equal('        ', AnsiString.new("#{TAB}").to_str)
+    assert_equal('1       ', AnsiString.new("1#{TAB}").to_str)
+    assert_equal('12      ', AnsiString.new("12#{TAB}").to_str)
+    assert_equal('123     ', AnsiString.new("123#{TAB}").to_str)
+    assert_equal('1234    ', AnsiString.new("1234#{TAB}").to_str)
+    assert_equal('12345   ', AnsiString.new("12345#{TAB}").to_str)
+    assert_equal('123456  ', AnsiString.new("123456#{TAB}").to_str)
+    assert_equal('1234567 ', AnsiString.new("1234567#{TAB}").to_str)
+    assert_equal('12345678        ', AnsiString.new("12345678#{TAB}").to_str)
+    assert_equal('                ', AnsiString.new("#{TAB}#{TAB}").to_str)
   end
 end
