@@ -55,9 +55,6 @@ TODO (bonus)
 * Handle lines that can't be treated as UTF-8 as ISO-8859-15. Make
   sure we can search for UTF-8 in them.
 
-* Run rubocop as part of test.rb if installed and have the exit code
-  reflect any issues.
-
 * Retain the search string when pressing / to search a second time.
 
 * Make sure searching won't match part of a multi-byte unicode
@@ -250,3 +247,6 @@ warnings.
 * We must not crash on getting binary data.  Testcase: "moar.rb /bin/ls"
 
 * Fix handling of TAB characters in the input
+
+* Run rubocop as part of test.rb if installed and have the exit code
+  reflect any issues.
