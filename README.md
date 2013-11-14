@@ -23,23 +23,7 @@ Doing the right thing includes:
 
 TODO (before trying to get others to use it)
 --------------------------------------------
-* Enable 'h' or '?' for help
-
-* Enable --help for help
-
-* Enable --version for version information.
-
-* Report command line errors, think about different command line
-  requirements depending on whether we're piping input into moar.rb or
-  listing input files on the command line.
-
-  Command line formats we want to support:
-  * moar.rb file.txt
-  * moar.rb < file.txt
-
-  Command line formats we *don't* want to support:
-  * moar.rb file1.txt file2.txt
-  * moar.rb file1.txt < file2.txt
+* Enable 'h', '?' or F1 for help
 
 * Test on Ubuntu
 
@@ -254,3 +238,19 @@ warnings.
 
 * Make it possible to install system-wide using "rake install". Don't
   forget to fix the version number when doing this.
+
+* Enable --help for help
+
+* Enable --version for version information.
+
+* Report command line errors, think about different command line
+  requirements depending on whether we're piping input into moar.rb or
+  listing input files on the command line.
+
+  Command line formats we want to support:
+  * moar.rb file.txt
+  * moar.rb < file.txt
+
+  Command line formats we *don't* want to support:
+  * moar.rb file1.txt file2.txt
+  * moar.rb file1.txt < file2.txt

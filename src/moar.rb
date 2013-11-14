@@ -3,6 +3,7 @@
 require 'set'
 require 'curses'
 require 'pathname'
+require 'optparse'
 
 MOAR_DIR = Pathname(__FILE__).realpath.dirname
 VERSION = `cd #{MOAR_DIR} ; git describe`.strip
@@ -832,6 +833,62 @@ class Moar
   end
 end
 
+# Command line options parser
+class MoarOptions
+  def initialize(options = ARGV)
+    @version = false
+    @help = false
+    @error = nil
+    parser.parse!(options)
+
+    fail 'Only one file can be shown' if options.length > 1
+    @file = options[0] unless options.empty?
+  rescue => e
+    @error = e.message
+  end
+
+  def help
+    return parser.help
+  end
+
+  def parser
+    return OptionParser.new do |parser|
+      parser.banner =
+        "Usage:\n" +
+        "  moar [options] <file>\n" +
+        "  ... | moar\n" +
+        "  moar < file\n\n"
+
+      parser.on('-v', '--version', 'Show version information') do
+        @version = true
+      end
+
+      parser.on('-h', '--help', 'Show this help') do
+        @help = true
+      end
+    end
+  end
+  private :parser
+
+  def version?
+    return false if @error
+    return @version
+  end
+
+  def help?
+    return false if @error
+    return @help
+  end
+
+  def error
+    return @error
+  end
+
+  def file
+    return @file
+  end
+end
+
 moar = nil
 crash = nil
 begin
@@ -839,11 +896,42 @@ begin
     # We're being required, probably due to unit testing.
     # Do nothing.
   elsif $stdin.isatty
-    File.open(ARGV[0], 'r') do |file|
+    options = MoarOptions.new
+    if options.error
+      $stderr.puts 'ERROR: ' + options.error
+      $stderr.puts
+      $stderr.puts options.help
+      exit 1
+    end
+    if options.help?
+      puts options.help
+      exit 0
+    end
+    if options.version?
+      puts "Moar version #{VERSION}, see also https://github.com/walles/moar"
+      exit 0
+    end
+
+    unless options.file
+      $stderr.puts 'ERROR: Please add a file to view'
+      $stderr.puts
+      $stderr.puts options.help
+      exit 1
+    end
+
+    File.open(options.file, 'r') do |file|
       moar = Moar.new(file)
       moar.run
     end
   else
+    unless ARGV.empty?
+      $stderr.puts('ERROR: No options supported while reading from a pipe,' +
+                   " got #{ARGV}")
+      $stderr.puts
+      $stderr.puts MoarOptions.new([]).help
+      exit 1
+    end
+
     # Switch around some fds to enable us to read the former stdin and
     # curses to read the "real" stdin.
     stream = $stdin.clone

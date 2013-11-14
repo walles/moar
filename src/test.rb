@@ -436,5 +436,32 @@ class TestAnsiString < Test::Unit::TestCase
   end
 end
 
+# Validate command line options parsing
+class TestCommandLineParser < Test::Unit::TestCase
+  def test_help
+    assert(MoarOptions.new(['--help']).help?)
+  end
+
+  def test_version
+    assert(MoarOptions.new(['--version']).version?)
+  end
+
+  def test_unsupported
+    assert_equal('invalid option: --adgadg',
+                 MoarOptions.new(['--adgadg']).error)
+  end
+
+  def test_list_files
+    assert_equal('file.txt', MoarOptions.new(['file.txt']).file)
+    assert_equal('file.txt', MoarOptions.new(['--version', 'file.txt']).file)
+    assert_equal('file.txt', MoarOptions.new(['file.txt', '--version']).file)
+
+    many_files = MoarOptions.new(['file.txt', 'file2.txt'])
+    assert_nil(many_files.file)
+    assert_equal('Only one file can be shown',
+                 many_files.error)
+  end
+end
+
 # Run Rubocop if available and fail on errors
 exit 1 if system('rubocop', :chdir => TEST_DIR) == false
