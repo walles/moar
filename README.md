@@ -1,7 +1,17 @@
 Moar is a pager.  It's designed to be easy to use and just do the
 right thing without any configuration.
 
-Issues are tracked [here](https://github.com/walles/moar/issues).
+**Install** it (in /usr/local/bin) by doing "rake install", or run it
+directly from src/moar.rb.
+
+**Set it as your default** pager by adding "export
+PAGER=/usr/local/bin/moar" to your .bashrc.
+
+**Issues** are tracked [here](https://github.com/walles/moar/issues).
+
+**The test suite** can be run by doing ./src/test.rb. If you have
+[Rubocop](https://github.com/bbatsov/rubocop) installed it will be run
+as part of the test suite.
 
 Being easy to use includes:
 
