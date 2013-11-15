@@ -599,30 +599,21 @@ class Moar
   end
 
   def initialize(file, terminal = Terminal.new)
+    @view_stack = []
     @unhandled_line_warning = nil
     @search_editor = LineEditor.new
     @terminal = terminal
     @first_line = 0
     @first_column = 0
-    if file.respond_to? '[]'
-      # We got an array, used for unit testing
-      @lines = []
-      file.each do |line|
-        add_line(line)
-      end
-    else
-      @lines = []
-      file.each_line do |line|
-        add_line(line)
-      end
-    end
+    @lines = nil
+    push_view(file)
     @last_key = 0
     @done = false
 
     # Mode can be :viewing and :searching
     @mode = :viewing
   ensure
-    @mode == :viewing || @terminal.close
+    @mode == :viewing || @terminal.respond_to?('close') && @terminal.close
   end
 
   def first_line
@@ -669,10 +660,83 @@ class Moar
     end
   end
 
+  def push_view(text)
+    @view_stack << [@lines, first_line] unless @lines.nil?
+
+    if text.is_a? String
+      @lines = []
+      text.lines.each do |line|
+        add_line(line)
+      end
+    elsif text.is_a? Array
+      # We got an array, used for unit testing
+      @lines = []
+      text.each do |line|
+        add_line(line)
+      end
+    else
+      @lines = []
+      text.each_line do |line|
+        add_line(line)
+      end
+    end
+  end
+
+  def pop_view
+    view = @view_stack.pop
+    if view.nil?
+      @done = true
+      return
+    end
+
+    @lines, @first_line = view
+  end
+
+  def helptext
+    return <<eos
+Welcome to Moar, the nice pager!
+
+Quitting
+--------
+* Press 'q' to quit
+
+Moving around
+-------------
+* Arrow keys
+* PageUp and PageDown
+* Home and End
+* < to go to the start of the document
+* > to go to the end of the document
+* RETURN moves down one line
+* SPACE moves down a page
+
+Searching
+---------
+* Type / to start searching, then type what you want to find
+* Type RETURN to stop searching
+* Find next by typing 'n'
+* Find previous by typing SHIFT-N
+* Search is case sensitive if it contains any UPPER CASE CHARACTERS
+* Search is interpreted as a regexp if it is a valid one
+
+Reporting bugs
+--------------
+File issues at https://github.com/walles/moar/issues
+
+Installing Moar as your default pager
+-------------------------------------
+Put the following line in your .bashrc or .bash_profile:
+  export PAGER=#{Pathname(__FILE__).realpath}
+eos
+  end
+
   def handle_view_keypress(key)
     case key
     when 'q'
-      @done = true
+      pop_view
+    when 'h', '?', Curses::Key::F1
+      push_view(helptext) if @view_stack.empty?
+      @mode = :viewing
     when '/'
       @mode = :searching
       @search_editor = LineEditor.new

@@ -33,8 +33,6 @@ Doing the right thing includes:
 
 TODO (before trying to get others to use it)
 --------------------------------------------
-* Enable 'h', '?' or F1 for help
-
 * Test on Ubuntu
 
 * Test on Ruby 1.8.something
@@ -42,6 +40,14 @@ TODO (before trying to get others to use it)
 
 TODO (bonus)
 ------------
+* Always print the name of the file being shown in the status field.
+
+* Support viewing multiple files by pushing them in reverse order on
+  the view stack.
+
+* Auto generate in-program help text to correctly correspond to the
+  actual key bindings.
+
 * Print something nice on file-not-found.
 
 * Exit search mode on ^C. For compatibility with less.
@@ -264,3 +270,5 @@ warnings.
   Command line formats we *don't* want to support:
   * moar.rb file1.txt file2.txt
   * moar.rb file1.txt < file2.txt
+
+* Enable 'h', '?' or F1 for help
