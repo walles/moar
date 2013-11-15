@@ -887,6 +887,18 @@ class MoarOptions
   def file
     return @file
   end
+
+  def print_help_and_exit(problem = nil)
+    stream = (problem.nil? ? $stdout : $stderr)
+    unless problem.nil?
+      stream.puts problem
+      stream.puts
+    end
+    stream.puts help
+
+    exitcode = (problem.nil? ? 0 : 1)
+    exit exitcode
+  end
 end
 
 moar = nil
@@ -898,14 +910,10 @@ begin
   elsif $stdin.isatty
     options = MoarOptions.new
     if options.error
-      $stderr.puts 'ERROR: ' + options.error
-      $stderr.puts
-      $stderr.puts options.help
-      exit 1
+      options.print_help_and_exit('ERROR: ' + options.error)
     end
     if options.help?
-      puts options.help
-      exit 0
+      options.print_help_and_exit
     end
     if options.version?
       puts "Moar version #{VERSION}, see also https://github.com/walles/moar"
@@ -913,10 +921,7 @@ begin
     end
 
     unless options.file
-      $stderr.puts 'ERROR: Please add a file to view'
-      $stderr.puts
-      $stderr.puts options.help
-      exit 1
+      options.print_help_and_exit('ERROR: Please add a file to view')
     end
 
     File.open(options.file, 'r') do |file|
@@ -925,11 +930,8 @@ begin
     end
   else
     unless ARGV.empty?
-      $stderr.puts('ERROR: No options supported while reading from a pipe,' +
-                   " got #{ARGV}")
-      $stderr.puts
-      $stderr.puts MoarOptions.new([]).help
-      exit 1
+      MoarOptions.new([]).print_help_and_exit 'ERROR: ' +
+        "No options supported while reading from a pipe, got #{ARGV}"
     end
 
     # Switch around some fds to enable us to read the former stdin and
