@@ -452,14 +452,24 @@ class TestCommandLineParser < Test::Unit::TestCase
   end
 
   def test_list_files
-    assert_equal('file.txt', MoarOptions.new(['file.txt']).file)
-    assert_equal('file.txt', MoarOptions.new(['--version', 'file.txt']).file)
-    assert_equal('file.txt', MoarOptions.new(['file.txt', '--version']).file)
+    assert_equal(__FILE__, MoarOptions.new([__FILE__]).file)
+    assert_equal(__FILE__, MoarOptions.new(['--version', __FILE__]).file)
+    assert_equal(__FILE__, MoarOptions.new([__FILE__, '--version']).file)
 
-    many_files = MoarOptions.new(['file.txt', 'file2.txt'])
+    many_files = MoarOptions.new([__FILE__, 'file2.txt'])
     assert_nil(many_files.file)
     assert_equal('Only one file can be shown',
                  many_files.error)
+
+    missing_file = MoarOptions.new(['/adgadggad'])
+    assert_nil(missing_file.file)
+    assert_equal('File not found: /adgadggad',
+                 missing_file.error)
+
+    directory = MoarOptions.new(['/'])
+    assert_nil(directory.file)
+    assert_equal('Not a file: /',
+                 directory.error)
   end
 end
 

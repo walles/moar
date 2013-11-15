@@ -66,4 +66,4 @@ StringLiterals:
   Enabled: true
 
 WordArray:
-  Enabled: true
+  Enabled: false

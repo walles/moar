@@ -1,6 +1,8 @@
 Moar is a pager.  It's designed to be easy to use and just do the
 right thing without any configuration.
 
+And to provide interactive find-as-you-type search.
+
 **Install** it (in /usr/local/bin) by doing "rake install", or run it
 directly from src/moar.rb.
 
@@ -47,8 +49,6 @@ TODO (bonus)
 
 * Auto generate in-program help text to correctly correspond to the
   actual key bindings.
-
-* Print something nice on file-not-found.
 
 * Exit search mode on ^C. For compatibility with less.
 
@@ -272,3 +272,5 @@ warnings.
   * moar.rb file1.txt < file2.txt
 
 * Enable 'h', '?' or F1 for help
+
+* Print something nice on file-not-found.

@@ -907,7 +907,16 @@ class MoarOptions
 
     fail 'Only one file can be shown' if options.length > 1
     @file = options[0] unless options.empty?
+
+    if @file && !File.exist?(@file)
+      fail "File not found: #{@file}"
+    end
+
+    if @file && !File.file?(Pathname(@file).realpath)
+      fail "Not a file: #{@file}"
+    end
   rescue => e
+    @file = nil
     @error = e.message
   end
 
