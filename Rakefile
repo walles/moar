@@ -4,11 +4,25 @@ require 'tempfile'
 MYDIR = Pathname(__FILE__).realpath.dirname
 VERSION = `cd #{MYDIR} ; git describe`.strip
 
-task :default => [:test]
+task :default => [:help]
 
 desc 'Run the Moar tests'
 task :test do
   ruby "#{MYDIR}/src/test.rb"
+end
+
+desc 'Print a help message'
+task :help do
+  puts <<eos
+To run the unit tests:
+  rake test
+
+To install in /usr/local/bin:
+  sudo rake install
+
+To install in /usr/bin:
+  sudo rake install[/usr/bin]
+eos
 end
 
 desc 'Install Moar system wide'
