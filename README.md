@@ -35,8 +35,6 @@ Doing the right thing includes:
 
 TODO (before trying to get others to use it)
 --------------------------------------------
-* Test on Ubuntu
-
 * Test on Ruby 1.8.something
 
 
@@ -274,3 +272,5 @@ warnings.
 * Enable 'h', '?' or F1 for help
 
 * Print something nice on file-not-found.
+
+* Test on Ubuntu

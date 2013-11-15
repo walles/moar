@@ -1,4 +1,5 @@
 #!/usr/bin/env ruby
+# -*- coding: utf-8 -*-
 
 require 'set'
 require 'curses'
@@ -322,7 +323,7 @@ class Terminal
 
     noecho
     stdscr.keypad(true)
-    crmode
+    cbreak
 
     @color_pairs = {}
     @next_color_pair_number = 1
