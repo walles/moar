@@ -9,6 +9,37 @@ require 'optparse'
 MOAR_DIR = Pathname(__FILE__).realpath.dirname
 VERSION = `cd #{MOAR_DIR} ; git describe`.strip
 
+if RUBY_VERSION.to_f < 1.9
+  if RUBY_PLATFORM =~ /darwin/
+    $stderr.puts <<eos
+ERROR: Moar requires at least OS X 10.9 Mavericks.
+
+Or to be more precise, Moar requires Ruby 1.9, and OS X 10.9 Mavericks
+is the first version of OS X to ship with a new enough Ruby.
+eos
+  else
+    $stderr.puts <<eos
+ERROR: Moar requires at least Ruby 1.9 and you are on Ruby #{RUBY_VERSION}.
+eos
+  end
+  $stderr.puts <<eos
+
+Ruby 1.9 brought:
+* Support for different encodings. This is required for Moar to be
+  able to display text with international characters in it.
+
+* Support for the use_default_colors() NCurses function. This is
+  required for Moar to be able to display colored text on the default
+  terminal background.
+
+If you have questions, please file a ticket at
+https://github.com/walles/moar/issues or send a
+question to johan.walles@gmail.com.
+eos
+
+  exit 1
+end
+
 # Editor for a line of text that can return its contents while
 # editing. Needed for interactive search.
 class LineEditor

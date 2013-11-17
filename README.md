@@ -35,7 +35,10 @@ Doing the right thing includes:
 
 TODO (before trying to get others to use it)
 --------------------------------------------
-* Test on Ruby 1.8.something
+* Add licensing information (BSD)
+
+* Add info to the end of the --help output on how to set Moar to be
+your default pager.
 
 
 TODO (bonus)
@@ -274,3 +277,7 @@ warnings.
 * Print something nice on file-not-found.
 
 * Test on Ubuntu
+
+* Test on Ruby 1.8.something. We did, and due to missing UTF-8 support
+  in Ruby 1.8 we just dropped support for it. Now we print an error
+  message if Ruby < 1.9 is detected.
