@@ -26,6 +26,7 @@ eos
 end
 
 desc 'Install Moar system wide'
+task :install => [:test]
 task :install, :directory do |t, args|
   args.with_defaults(:directory => '/usr/local/bin')
   destination_file = "#{args[:directory]}/moar"
