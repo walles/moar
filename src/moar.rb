@@ -753,7 +753,8 @@ Searching
 
 Reporting bugs
 --------------
-File issues at https://github.com/walles/moar/issues
+File issues at https://github.com/walles/moar/issues, or post
+questions to johan.walles@gmail.com.
 
 Installing Moar as your default pager
 -------------------------------------
@@ -953,7 +954,29 @@ class MoarOptions
   end
 
   def help
-    return parser.help
+    message = parser.help
+    pager = ENV['PAGER']
+    if pager && !File.exist?(pager)
+      pager = nil
+    end
+    pager = Pathname(pager).realpath unless pager.nil?
+    unless pager == Pathname(__FILE__).realpath
+      message += <<eos
+
+To make Moar your default pager, put the following line in
+your .bashrc or .bash_profile and it will be default in all
+new terminal windows:
+  export PAGER=#{Pathname(__FILE__).realpath}
+eos
+    end
+
+    message += <<eos
+
+Report issues at https://github.com/walles/moar/issues, or post
+questions to johan.walles@gmail.com.
+eos
+
+    return message
   end
 
   def parser

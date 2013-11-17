@@ -37,9 +37,6 @@ TODO (before trying to get others to use it)
 --------------------------------------------
 * Add licensing information (BSD)
 
-* Add info to the end of the --help output on how to set Moar to be
-your default pager.
-
 
 TODO (bonus)
 ------------
@@ -281,3 +278,6 @@ warnings.
 * Test on Ruby 1.8.something. We did, and due to missing UTF-8 support
   in Ruby 1.8 we just dropped support for it. Now we print an error
   message if Ruby < 1.9 is detected.
+
+* Add info to the end of the --help output on how to set Moar to be
+your default pager.
