@@ -40,7 +40,7 @@ task :install, :directory do |t, args|
     tempfile.flush
 
     # Now, install the fixed-version file
-    system('install', tempfile.path, destination_file)
+    system('install', tempfile.path, destination_file) || exit(1)
   end
 
   puts "Installed into #{destination_file}"
