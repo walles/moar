@@ -1,15 +1,23 @@
 Moar is a pager.  It's designed to be easy to use and just do the
 right thing without any configuration.
 
-And to provide interactive find-as-you-type search.
+And to provide **interactive find-as-you-type search**.
 
-**Install** it (in /usr/local/bin) by doing "rake install", or run it
-directly from src/moar.rb.
+**The latest version** can be found at
+<https://github.com/walles/moar>, or downloaded by doing
+<pre>
+  git clone https://github.com/walles/moar.git
+</pre>
+
+**Install** it (in /usr/local/bin) by doing "rake install", or run
+Moar directly from src/moar.rb. Do "rake help" to learn more about how
+Rake can help you with installation.
 
 **Set it as your default** pager by adding "export
 PAGER=/usr/local/bin/moar" to your .bashrc.
 
-**Issues** are tracked [here](https://github.com/walles/moar/issues).
+**Issues** are tracked [here](https://github.com/walles/moar/issues),
+or you can send questions to <johan.walles@gmail.com>.
 
 **The test suite** can be run by doing ./src/test.rb. If you have
 [Rubocop](https://github.com/bbatsov/rubocop) installed it will be run
@@ -19,6 +27,7 @@ Being easy to use includes:
 
 * [Less](http://www.greenwoodsoftware.com/less/) compatible key
   bindings
+* Displaying help if 'h', '?' or F1 is pressed when running.
 
 Doing the right thing includes:
 
@@ -31,11 +40,6 @@ Doing the right thing includes:
 * [Regexp](http://en.wikipedia.org/wiki/Regular_expression#Basic_concepts)
   search if your search string is a valid regexp
 * The position in the file is always shown
-
-
-TODO (before trying to get others to use it)
---------------------------------------------
-* Add licensing information (BSD)
 
 
 TODO (bonus)
@@ -281,3 +285,5 @@ warnings.
 
 * Add info to the end of the --help output on how to set Moar to be
 your default pager.
+
+* Add licensing information (BSD)

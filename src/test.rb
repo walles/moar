@@ -1,6 +1,9 @@
 #!/usr/bin/env ruby
 # -*- coding: utf-8 -*-
 
+# Copyright (c) 2013, johan.walles@gmail.com
+# All rights reserved.
+
 require 'pathname'
 require 'test/unit'
 
