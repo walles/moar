@@ -454,6 +454,10 @@ class TestCommandLineParser < Test::Unit::TestCase
                  MoarOptions.new(['--adgadg']).error)
   end
 
+  def test_no_highlight
+    assert_equal(false, MoarOptions.new(['--no-highlight']).highlight?)
+  end
+
   def test_list_files
     assert_equal(__FILE__, MoarOptions.new([__FILE__]).file)
     assert_equal(__FILE__, MoarOptions.new(['--version', __FILE__]).file)

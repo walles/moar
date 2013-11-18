@@ -31,6 +31,9 @@ Being easy to use includes:
 
 Doing the right thing includes:
 
+* Syntax highlight source code by default if
+  [GNU Source-highlight](http://www.gnu.org/software/src-highlite/)
+  is installed.
 * Supports displaying ANSI color coded texts (like the output from
   "git diff" for example)
 * Supports UTF-8 input and output
@@ -42,8 +45,11 @@ Doing the right thing includes:
 * The position in the file is always shown
 
 
-TODO (bonus)
-------------
+TODO
+----
+* Remember the search string from the last session so you can start by
+  pressing 'n' or 'N'.
+
 * Always print the name of the file being shown in the status field.
 
 * Support viewing multiple files by pushing them in reverse order on
@@ -90,9 +96,6 @@ TODO (bonus)
   getch() in wide_getch().  Hanging won't be that much of a problem
   assuming users will press more keys if nothing happens, thus
   resolving the hang.
-
-* Enable source code highlighting by pre-filtering using some
-  highlighter.
 
 * Enable exiting using ^c (doesn't restore screen).
 
@@ -287,3 +290,6 @@ warnings.
 your default pager.
 
 * Add licensing information (BSD)
+
+* Enable source code highlighting by pre-filtering using GNU
+  Source-highlight.

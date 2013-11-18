@@ -5,6 +5,7 @@
 # All rights reserved.
 
 require 'set'
+require 'open3'
 require 'curses'
 require 'pathname'
 require 'optparse'
@@ -939,6 +940,7 @@ class MoarOptions
     @version = false
     @help = false
     @error = nil
+    @highlight = true
     parser.parse!(options)
 
     fail 'Only one file can be shown' if options.length > 1
@@ -973,6 +975,14 @@ new terminal windows:
 eos
     end
 
+    if `which source-highlight`.empty?
+      message += <<eos
+
+To enable syntax highlighting when viewing source code, install GNU
+Source-highlight (http://www.gnu.org/software/src-highlite).
+eos
+    end
+
     message += <<eos
 
 Report issues at https://github.com/walles/moar/issues, or post
@@ -997,6 +1007,10 @@ eos
       parser.on('-h', '--help', 'Show this help') do
         @help = true
       end
+
+      parser.on('--no-highlight', 'Don\'t highlight source code') do
+        @highlight = false
+      end
     end
   end
   private :parser
@@ -1009,6 +1023,10 @@ eos
   def help?
     return false if @error
     return @help
+  end
+
+  def highlight?
+    return @highlight
   end
 
   def error
@@ -1030,6 +1048,23 @@ eos
     exitcode = (problem.nil? ? 0 : 1)
     exit exitcode
   end
+end
+
+# Attempt to highlight the file using GNU Source-highlight
+def highlight(file)
+  lines = nil
+  exitcode = nil
+  Open3.popen3('source-highlight', '--out-format=esc',
+               '-i', file,
+               '-o', 'STDOUT') do |stdin, stdout, stderr, wait_thr|
+    lines = stdout.readlines
+    exitcode = wait_thr.value
+  end
+  return lines if exitcode.success?
+  return File.open(file, 'r')
+rescue
+  # Source-highlight not installed
+  return File.open(file, 'r')
 end
 
 moar = nil
@@ -1055,10 +1090,13 @@ begin
       options.print_help_and_exit('ERROR: Please add a file to view')
     end
 
-    File.open(options.file, 'r') do |file|
-      moar = Moar.new(file)
-      moar.run
+    moar = nil
+    if options.highlight?
+      moar = Moar.new(highlight(options.file))
+    else
+      moar = Moar.new(File.open(options.file, 'r'))
     end
+    moar.run
   else
     unless ARGV.empty?
       MoarOptions.new([]).print_help_and_exit 'ERROR: ' +
