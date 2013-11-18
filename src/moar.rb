@@ -472,43 +472,50 @@ class Terminal
     old_foreground = -1
     old_background = -1
     line.substring(moar.first_column).tokenize do |code, text|
-      case code
-      when nil
-        # This case intentionally left blank
-      when 'm'
-        attrset(A_NORMAL)
-        foreground = -1
-        background = -1
-      when '1m'
-        attron(A_BOLD)
-      when '4m'
-        attron(A_UNDERLINE)
-      when '7m'
-        attron(A_REVERSE)
-      when '22m'
-        attroff(A_BOLD)
-      when '24m'
-        attroff(A_UNDERLINE)
-      when '27m'
-        attroff(A_REVERSE)
-      when '30m'
-        foreground = COLOR_BLACK
-      when '31m'
-        foreground = COLOR_RED
-      when '32m'
-        foreground = COLOR_GREEN
-      when '33m'
-        foreground = COLOR_YELLOW
-      when '34m'
-        foreground = COLOR_BLUE
-      when '35m'
-        foreground = COLOR_MAGENTA
-      when '36m'
-        foreground = COLOR_CYAN
-      when '37m'
-        foreground = COLOR_WHITE
-      else
-        @warnings << "Unsupported ANSI code \"#{code}\""
+      unless code.nil?
+        unless code.end_with? 'm'
+          @warnings << "Unsupported ANSI code \"#{code}\""
+        end
+
+        code[0..-2].split(';').each do |csi_code|
+          csi_code = csi_code.to_i unless csi_code.empty?
+          case csi_code
+          when ''
+            attrset(A_NORMAL)
+            foreground = -1
+            background = -1
+          when 1
+            attron(A_BOLD)
+          when 4
+            attron(A_UNDERLINE)
+          when 7
+            attron(A_REVERSE)
+          when 22
+            attroff(A_BOLD)
+          when 24
+            attroff(A_UNDERLINE)
+          when 27
+            attroff(A_REVERSE)
+          when 30
+            foreground = COLOR_BLACK
+          when 31
+            foreground = COLOR_RED
+          when 32
+            foreground = COLOR_GREEN
+          when 33
+            foreground = COLOR_YELLOW
+          when 34
+            foreground = COLOR_BLUE
+          when 35
+            foreground = COLOR_MAGENTA
+          when 36
+            foreground = COLOR_CYAN
+          when 37
+            foreground = COLOR_WHITE
+          else
+            @warnings << "Unsupported ANSI CSI code \"#{csi_code}\""
+          end
+        end
       end
 
       if colorized?
