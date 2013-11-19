@@ -1,52 +1,61 @@
-Moar is a pager.  It's designed to be easy to use and just do the
-right thing without any configuration.
+Moar is a pager.  It's designed to be just do the right thing without
+any configuration.
 
-And to provide **interactive find-as-you-type search**.
+Doing the right thing includes:
 
-**The latest version** can be found at
+* **Syntax highlight** source code by default if
+  [GNU Source-highlight](http://www.gnu.org/software/src-highlite/)
+  is installed.
+* **Search is interactive** / find-as-you-type just like in
+  [Chrome](http://www.google.com/chrome) or
+  [Emacs](http://www.gnu.org/software/emacs/)
+* Search becomes case sensitive if you add any UPPER CASE characters
+  to your search terms, just like in Emacs
+* [Regexp](http://en.wikipedia.org/wiki/Regular_expression#Basic_concepts)
+  search if your search string is a valid regexp
+* Supports displaying ANSI color coded texts (like the output from
+  "git diff" for example)
+* Supports UTF-8 input and output
+* The position in the file is always shown
+
+Getting the Latest Version
+==========================
+The latest version can be found at
 <https://github.com/walles/moar>, or downloaded by doing
 <pre>
   git clone https://github.com/walles/moar.git
 </pre>
 
-**Install** it (in /usr/local/bin) by doing "rake install", or run
+Installing
+==========
+Install it (in /usr/local/bin) by doing "rake install", or run
 Moar directly from src/moar.rb. Do "rake help" to learn more about how
 Rake can help you with installation.
 
-**Set it as your default** pager by adding "export
-PAGER=/usr/local/bin/moar" to your .bashrc.
+Setting Moar as Your Default Pager
+==================================
+Set it as your default pager by adding...
 
-**Issues** are tracked [here](https://github.com/walles/moar/issues),
-or you can send questions to <johan.walles@gmail.com>.
+<pre>
+  export PAGER=/usr/local/bin/moar
+</pre>
 
-**The test suite** can be run by doing ./src/test.rb. If you have
+... to your .bashrc.
+
+Issues
+======
+Issues are tracked [here](https://github.com/walles/moar/issues), or
+you can send questions to <johan.walles@gmail.com>.
+
+Test Suite
+==========
+The test suite can be run by doing ./src/test.rb. If you have
 [Rubocop](https://github.com/bbatsov/rubocop) installed it will be run
 as part of the test suite.
 
-Being easy to use includes:
-
-* [Less](http://www.greenwoodsoftware.com/less/) compatible key
-  bindings
-* Displaying help if 'h', '?' or F1 is pressed when running.
-
-Doing the right thing includes:
-
-* Syntax highlight source code by default if
-  [GNU Source-highlight](http://www.gnu.org/software/src-highlite/)
-  is installed.
-* Supports displaying ANSI color coded texts (like the output from
-  "git diff" for example)
-* Supports UTF-8 input and output
-* Search is interactive
-* Search becomes case sensitive if you add any UPPER CASE characters
-  to your search terms
-* [Regexp](http://en.wikipedia.org/wiki/Regular_expression#Basic_concepts)
-  search if your search string is a valid regexp
-* The position in the file is always shown
-
 
 TODO
-----
+====
 * Remember the search string from the last session so you can start by
   pressing 'n' or 'N'.
 
@@ -116,7 +125,7 @@ TODO
 
 
 DONE
-----
+====
 * Enable exiting using q (restores screen)
 
 * Handle the terminal window getting resized.
