@@ -19,7 +19,7 @@ Doing the right thing includes:
 * The position in the file is always shown
 
 Getting the Latest Version
-==========================
+--------------------------
 The latest version can be found at
 <https://github.com/walles/moar>, or downloaded by doing
 <pre>
@@ -27,13 +27,13 @@ The latest version can be found at
 </pre>
 
 Installing
-==========
+----------
 Install it (in /usr/local/bin) by doing "rake install", or run
 Moar directly from src/moar.rb. Do "rake help" to learn more about how
 Rake can help you with installation.
 
 Setting Moar as Your Default Pager
-==================================
+----------------------------------
 Set it as your default pager by adding...
 
 <pre>
@@ -43,19 +43,19 @@ Set it as your default pager by adding...
 ... to your .bashrc.
 
 Issues
-======
+------
 Issues are tracked [here](https://github.com/walles/moar/issues), or
 you can send questions to <johan.walles@gmail.com>.
 
 Test Suite
-==========
+----------
 The test suite can be run by doing ./src/test.rb. If you have
 [Rubocop](https://github.com/bbatsov/rubocop) installed it will be run
 as part of the test suite.
 
 
 TODO
-====
+----
 * Remember the search string from the last session so you can start by
   pressing 'n' or 'N'.
 
@@ -125,7 +125,7 @@ TODO
 
 
 DONE
-====
+----
 * Enable exiting using q (restores screen)
 
 * Handle the terminal window getting resized.
