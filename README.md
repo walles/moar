@@ -1,6 +1,11 @@
 Moar is a pager.  It's designed to be just do the right thing without
 any configuration.
 
+The intention is that Moar should work as a drop-in replacement for
+[Less](http://www.greenwoodsoftware.com/less/). If you find that Moar
+behaves unexpectedly somehow,
+[please report that](https://github.com/walles/moar/issues)!
+
 Doing the right thing includes:
 
 * **Syntax highlight** source code by default if
