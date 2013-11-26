@@ -11,7 +11,15 @@ require 'pathname'
 require 'optparse'
 
 MOAR_DIR = Pathname(__FILE__).realpath.dirname
-VERSION = `cd #{MOAR_DIR} ; git describe`.strip
+
+def get_version
+  unless File.directory?("#{MOAR_DIR}/../.git")
+    return 'UNKNOWN'
+  end
+
+  return `cd #{MOAR_DIR} ; git describe`.strip
+end
+VERSION = get_version
 
 if RUBY_VERSION.to_f < 1.9
   if RUBY_PLATFORM =~ /darwin/
@@ -1090,6 +1098,15 @@ begin
     end
     if options.version?
       puts "Moar version #{VERSION}, see also https://github.com/walles/moar"
+
+      if VERSION =~ /UNKNOWN/
+        puts
+        $stderr.puts <<eos
+WARNING: The version number is taken from Git. To get a version number,
+get your source from 'git clone https://github.com/walles/moar' and use
+'rake' to install.
+eos
+      end
       exit 0
     end
 
@@ -1124,6 +1141,14 @@ ensure
 
   warnings = Set.new
   warnings.merge(moar.warnings) if moar
+
+  if VERSION =~ /UNKNOWN/ && !warnings.empty?
+    warnings << <<eos
+Unknown version, please run from Git and / or use 'rake'
+to install. Try "git clone https://github.com/walles/moar"
+or see http://github.com/walles/moar for more info.
+eos
+  end
 
   warnings.sort.each do |warning|
     $stderr.puts "WARNING: #{warning}"

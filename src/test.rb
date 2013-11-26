@@ -480,5 +480,20 @@ class TestCommandLineParser < Test::Unit::TestCase
   end
 end
 
+# Tests for global code
+class TestMain < Test::Unit::TestCase
+  def test_version
+    # We don't want people to install unknown versions of Moar, and
+    # failing the test suite will stop 'rake install' from installing
+    # anything.
+    #
+    # Unknown versions of Moar would be problematic when handling
+    # incoming issues.
+    assert(!(VERSION =~ /UNKNOWN/),
+           'Moar version UNKNOWN, please get your sources using ' +
+           "'git clone https://github.com/walles/moar'")
+  end
+end
+
 # Run Rubocop if available and fail on errors
 exit 1 if system('rubocop', :chdir => TEST_DIR) == false
