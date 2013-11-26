@@ -1,55 +1,74 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
-
   <head>
-    <meta charset='utf-8' />
-    <meta http-equiv="X-UA-Compatible" content="chrome=1" />
-    <meta name="description" content="Moar : Paging properly out of the box" />
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <title>Moar by walles</title>
+    <link rel="stylesheet" href="stylesheets/styles.css">
+    <link rel="stylesheet" href="stylesheets/pygment_trac.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+    <script src="javascripts/respond.js"></script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <!--[if lt IE 8]>
+    <link rel="stylesheet" href="stylesheets/ie.css">
+    <![endif]-->
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
 
-    <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
-
-    <title>Moar</title>
   </head>
-
   <body>
+      <div id="header">
+        <nav>
+          <li class="fork"><a href="https://github.com/walles/moar">View On GitHub</a></li>
+          <li class="downloads"><a href="https://github.com/walles/moar/zipball/master">ZIP</a></li>
+          <li class="downloads"><a href="https://github.com/walles/moar/tarball/master">TAR</a></li>
+          <li class="title">DOWNLOADS</li>
+        </nav>
+      </div><!-- end header -->
 
-    <!-- HEADER -->
-    <div id="header_wrap" class="outer">
-        <header class="inner">
-          <a id="forkme_banner" href="https://github.com/walles/moar">View on GitHub</a>
+    <div class="wrapper">
 
-          <h1 id="project_title">Moar</h1>
-          <h2 id="project_tagline">Paging properly out of the box</h2>
+      <section>
+        <div id="title">
+          <h1>Moar</h1>
+          <p>Paging properly out of the box</p>
+          <hr>
+          <span class="credits left">Project maintained by <a href="https://github.com/walles">walles</a></span>
+          <span class="credits right">Hosted on GitHub Pages &mdash; Theme by <a href="https://twitter.com/michigangraham">mattgraham</a></span>
+        </div>
 
-            <section id="downloads">
-              <a class="zip_download_link" href="https://github.com/walles/moar/zipball/master">Download this project as a .zip file</a>
-              <a class="tar_download_link" href="https://github.com/walles/moar/tarball/master">Download this project as a tar.gz file</a>
-            </section>
-        </header>
-    </div>
+        <h1>
+<a name="moar-is-a-pager" class="anchor" href="#moar-is-a-pager"><span class="octicon octicon-link"></span></a>Moar is a pager</h1>
 
-    <!-- MAIN CONTENT -->
-    <div id="main_content_wrap" class="outer">
-      <section id="main_content" class="inner">
-        <p>Moar is a pager.  It's designed to be just do the right thing without
-any configuration.</p>
+<p>It is designed to be just do the right thing without any configuration.</p>
+
+<p><img src="http://walles.github.io/moar/images/moar.png" alt="Screenshot of Moar displaying its own test suite"></p>
+
+<p>This is a screenshot of Moar displaying its own test suite. The screenshot shows off syntax highlighting, color support, the detailed position indication and how long lines are handled (press right-arrow to see the rest of them).</p>
+
+<h1>
+<a name="rationale" class="anchor" href="#rationale"><span class="octicon octicon-link"></span></a>Rationale</h1>
 
 <p>The intention is that Moar should work as a drop-in replacement for
 <a href="http://www.greenwoodsoftware.com/less/">Less</a>. If you find that Moar
 doesn't work that way,
 <a href="https://github.com/walles/moar/issues">please report that</a>!</p>
+
+<p>Reasons to use Moar over Less are:</p>
+
+<ul>
+<li>Moar syntax highlights source code files by default</li>
+<li>Moar does incremental find-as-you-type search</li>
+<li>Moar shows you your position in the file by default</li>
+</ul><h1>
+<a name="instructions" class="anchor" href="#instructions"><span class="octicon octicon-link"></span></a>Instructions</h1>
+
+<p>Instructions for installing, running and developing are all in the <a href="https://github.com/walles/moar">README.md</a>.</p>
       </section>
-    </div>
 
-    <!-- FOOTER  -->
-    <div id="footer_wrap" class="outer">
-      <footer class="inner">
-        <p class="copyright">Moar maintained by <a href="https://github.com/walles">walles</a></p>
-        <p>Published with <a href="http://pages.github.com">GitHub Pages</a></p>
-      </footer>
     </div>
-
+    <!--[if !IE]><script>fixScale(document);</script><![endif]-->
     
-
   </body>
 </html>
