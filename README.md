@@ -72,9 +72,11 @@ TODO
 * Auto generate in-program help text to correctly correspond to the
   actual key bindings.
 
-* Exit search mode on ^C. For compatibility with less.
+* Exit search mode on ^C. For compatibility with Less.
 
 * Exit search mode on ESC. Because that's what I feel like pressing.
+
+* Exit search mode on ^G. For compatibility with Emacs.
 
 * Retain the search string when pressing / to search a second time.
 
