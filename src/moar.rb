@@ -1106,6 +1106,7 @@ WARNING: The version number is taken from Git. To get a version number,
 get your source from 'git clone https://github.com/walles/moar' and use
 'rake' to install.
 eos
+        exit 1
       end
       exit 0
     end
