@@ -1,9 +1,11 @@
-Moar is a pager.  It's designed to be just do the right thing without
-any configuration.
+Moar is a pager.  It's designed to just do the right thing without any
+configuration:
+
+![Moar displaying its own test suite](http://walles.github.io/moar/images/moar.png)
 
 The intention is that Moar should work as a drop-in replacement for
 [Less](http://www.greenwoodsoftware.com/less/). If you find that Moar
-behaves unexpectedly somehow,
+doesn't work that way,
 [please report that](https://github.com/walles/moar/issues)!
 
 Doing the right thing includes:
