@@ -202,6 +202,23 @@ class TestMoar < Test::Unit::TestCase
     assert_equal(1, test_me.full_search('1'))
     assert_equal(1, test_me.full_search('1'))
   end
+
+  def test_handle_view_keypress_search
+    terminal = MockTerminal.new
+    test_me = Moar.new(%w(0 1), terminal)
+
+    search0 = test_me.search_editor
+    search0.enter_char(10) # 10 = RETURN, finishes search
+    assert(search0.done?)
+
+    test_me.handle_view_keypress '/'
+    search1 = test_me.search_editor
+    assert(search0.equal?(search1),
+           'Pressing "/" should retain the same search editor')
+
+    assert(!search1.done?,
+           'Search editor shouldn\'t be done while searching')
+  end
 end
 
 # Test our string-with-ANSI-control-codes class

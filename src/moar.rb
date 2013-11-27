@@ -71,6 +71,10 @@ class LineEditor
     @warnings = Set.new
   end
 
+  def resume!
+    @done = false
+  end
+
   def enter_char(char)
     case char
     when 10  # 10=RETURN on a Powerbook
@@ -792,7 +796,7 @@ eos
       @mode = :viewing
     when '/'
       @mode = :searching
-      @search_editor = LineEditor.new
+      @search_editor.resume!
     when 'n'
       find_next(:forwards)
     when 'N'

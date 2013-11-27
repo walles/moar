@@ -63,8 +63,6 @@ as part of the test suite.
 
 TODO
 ----
-* Retain the search string when pressing / to search a second time.
-
 * Exit search on pressing up / down / pageup / pagedown keys and
   scroll. I attempted to do that spontaneously, so it's probably a
   good idea.
@@ -313,3 +311,5 @@ your default pager.
 
 * Enable source code highlighting by pre-filtering using GNU
   Source-highlight.
+
+* Retain the search string when pressing / to search a second time.
