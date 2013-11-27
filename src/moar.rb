@@ -79,6 +79,9 @@ class LineEditor
     case char
     when 10  # 10=RETURN on a Powerbook
       @done = true
+    when 7, 27 # ^G and ESC should terminate search
+      @string = ''
+      @done = true
     when 127 # 127=BACKSPACE on a Powerbook
       @string = @string[0..-2]
       @cursor_position -= 1

@@ -46,6 +46,20 @@ class TestLineEditor < Test::Unit::TestCase
     assert_add(test_me, 10, 'ab', 2, true)
   end
 
+  # ESC should terminate searching
+  def test_esc
+    test_me = LineEditor.new
+    assert_add(test_me, 'a', 'a', 1, false)
+    assert_add(test_me,  27, '', 0, true)
+  end
+
+  # ^G should terminate searching (just like in Emacs)
+  def test_ctrl_g
+    test_me = LineEditor.new
+    assert_add(test_me, 'a', 'a', 1, false)
+    assert_add(test_me,  7, '', 0, true)
+  end
+
   def test_out_of_range_char
     test_me = LineEditor.new
     assert_add(test_me, 42_462_124_635, '', 0, false)

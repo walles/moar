@@ -70,6 +70,12 @@ TODO
 * Remember the search string from the last session so you can start by
   pressing 'n' or 'N'.
 
+* Enable exiting using ^c (without restoring the screen).
+
+* Start at a certain line if run as "moar.rb file.txt:42"
+
+* Enable home / end using home / end keys.
+
 * Always print the name of the file being shown in the status field.
 
 * Support viewing multiple files by pushing them in reverse order on
@@ -78,21 +84,10 @@ TODO
 * Auto generate in-program help text to correctly correspond to the
   actual key bindings.
 
-* Exit search mode on ^C. For compatibility with Less.
-
-* Exit search mode on ESC. Because that's what I feel like pressing.
-
-* Exit search mode on ^G. For compatibility with Emacs.
-
-* Make sure searching won't match part of a multi-byte unicode
-  character.
-
 * Handle search hits to the right of the right screen edge. Searching
   forwards should move first right, then to the left edge and
   down. Searching backwards should move first left, then up and to the
   right edge (if needed for showing search hits).
-
-* Start at a certain line if run as "moar.rb file.txt:42"
 
 * Lazy load big / slow streams
 
@@ -100,9 +95,6 @@ TODO
 
 * Try to find a newer Ruby version if needed for color support and
   exec() with that instead if available.
-
-* Make sure searching for an upper case unicode character turns on
-  case sensitive search.
 
 * Write "/ to search" somewhere in the status field
 
@@ -115,22 +107,11 @@ TODO
   assuming users will press more keys if nothing happens, thus
   resolving the hang.
 
-* Enable exiting using ^c (doesn't restore screen).
-
 * Just pass stuff through if stdout is not a terminal.
-
-* Enable up / down using whatever less uses.
-
-* Enable home / end using home / end keys.
 
 * Enable up / down using the mouse wheel.
 
 * Enable pass-through operation unless $stdout.isatty()
-
-* Doing moar.rb on an arbitrary binary (like /bin/ls) should put all
-  line-continuation markers at the rightmost column.  This really
-  means our truncation code must work even with things like tabs and
-  various control characters.
 
 
 DONE
@@ -313,3 +294,17 @@ your default pager.
   Source-highlight.
 
 * Retain the search string when pressing / to search a second time.
+
+* Exit search mode and cancel the search on ESC. Because that's what I
+  feel like pressing.
+
+* Exit search mode and cancel the search on ^G. For compatibility with
+  Emacs.
+
+* Make sure searching for an upper case unicode character turns on
+  case sensitive search.
+
+* Doing moar.rb on an arbitrary binary (like /bin/ls) should put all
+  line-continuation markers at the rightmost column.  This really
+  means our truncation code must work even with things like tabs and
+  various control characters.
