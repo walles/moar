@@ -53,7 +53,8 @@ eos
 end
 
 # Editor for a line of text that can return its contents while
-# editing. Needed for interactive search.
+# editing. Needed for incremental search; we can't seem to get any
+# events from Readline while typing so we have to roll our own.
 class LineEditor
   UPPER = /.*[[:upper:]].*/
 

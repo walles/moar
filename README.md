@@ -13,7 +13,7 @@ Doing the right thing includes:
 * **Syntax highlight** source code by default if
   [GNU Source-highlight](http://www.gnu.org/software/src-highlite/)
   is installed.
-* **Search is interactive** / find-as-you-type just like in
+* **Search is incremental** / find-as-you-type just like in
   [Chrome](http://www.google.com/chrome) or
   [Emacs](http://www.gnu.org/software/emacs/)
 * Search becomes case sensitive if you add any UPPER CASE characters
@@ -106,7 +106,7 @@ TODO
 
 * Write "/ to search" somewhere in the status field
 
-* Interactive search using ^s and ^r like in Emacs
+* Incremental search using ^s and ^r like in Emacs
 
 * Enable filtered input, start with zcat as a filter
 
@@ -171,7 +171,7 @@ DONE
 
 * Handle hitting BACKSPACE in the search field
 
-* Interactive search using /
+* Incremental search using /
 
 * Typing backspace in the line editor when it's empty should make the
   line editor say "done".
