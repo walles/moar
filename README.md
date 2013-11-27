@@ -63,6 +63,12 @@ as part of the test suite.
 
 TODO
 ----
+* Retain the search string when pressing / to search a second time.
+
+* Exit search on pressing up / down / pageup / pagedown keys and
+  scroll. I attempted to do that spontaneously, so it's probably a
+  good idea.
+
 * Remember the search string from the last session so you can start by
   pressing 'n' or 'N'.
 
@@ -80,8 +86,6 @@ TODO
 
 * Exit search mode on ^G. For compatibility with Emacs.
 
-* Retain the search string when pressing / to search a second time.
-
 * Make sure searching won't match part of a multi-byte unicode
   character.
 
@@ -93,8 +97,6 @@ TODO
 * Start at a certain line if run as "moar.rb file.txt:42"
 
 * Lazy load big / slow streams
-
-* Add a search history
 
 * Add search line editing
 
