@@ -6,7 +6,7 @@ configuration:
 The intention is that Moar should work as a drop-in replacement for
 [Less](http://www.greenwoodsoftware.com/less/). If you find that Moar
 doesn't work that way,
-[please report that](https://github.com/walles/moar/issues)!
+[please report it](https://github.com/walles/moar/issues)!
 
 Doing the right thing includes:
 
