@@ -400,6 +400,8 @@ class Terminal
       return
     end
 
+    # Workaround for https://bugs.ruby-lang.org/issues/9177
+    #
     # Ruby Curses installs a finalizer that clears the screen if we
     # shut down properly. Work around that by just murdering ourselves
     # on ^C so that the screen is left intact.
