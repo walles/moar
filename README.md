@@ -70,8 +70,6 @@ TODO
 * Remember the search string from the last session so you can start by
   pressing 'n' or 'N'.
 
-* Enable exiting using ^c (without restoring the screen).
-
 * Start at a certain line if run as "moar.rb file.txt:42"
 
 * Enable home / end using home / end keys.
@@ -308,3 +306,5 @@ your default pager.
   line-continuation markers at the rightmost column.  This really
   means our truncation code must work even with things like tabs and
   various control characters.
+
+* Enable exiting using ^c (without restoring the screen).

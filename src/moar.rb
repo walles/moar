@@ -66,6 +66,7 @@ class LineEditor
 
   def initialize(initial_string = '')
     @done = false
+    @dont_restore_screen = false
     @string = initial_string
     @cursor_position = 0
     @warnings = Set.new
@@ -79,7 +80,7 @@ class LineEditor
     case char
     when 10  # 10=RETURN on a Powerbook
       @done = true
-    when 7, 27 # ^G and ESC should terminate search
+    when 3, 7, 27 # ^C, ^G and ESC should terminate search
       @string = ''
       @done = true
     when 127 # 127=BACKSPACE on a Powerbook
@@ -374,7 +375,7 @@ class Terminal
 
     noecho
     stdscr.keypad(true)
-    cbreak
+    raw
 
     @color_pairs = {}
     @next_color_pair_number = 1
@@ -393,8 +394,19 @@ class Terminal
     return color_pair(pair)
   end
 
-  def close
-    close_screen
+  def close(dont_restore_screen)
+    unless dont_restore_screen
+      close_screen
+      return
+    end
+
+    # Ruby Curses installs a finalizer that clears the screen if we
+    # shut down properly. Work around that by just murdering ourselves
+    # on ^C so that the screen is left intact.
+    #
+    # If you want to have your screen restored, press 'q' to exit
+    # instead.
+    Process.kill('KILL', Process.pid)
   end
 
   # Return the number of lines of content this terminal can show.
@@ -794,6 +806,10 @@ eos
     case key
     when 'q'
       pop_view
+    when 3
+      # Exit without restoring the screen on ^c
+      @done = true
+      @dont_restore_screen = true
     when 'h', '?', Curses::Key::F1
       push_view(helptext) if @view_stack.empty?
       @mode = :viewing
@@ -944,7 +960,7 @@ eos
   end
 
   def close
-    @terminal.close unless @terminal.nil?
+    @terminal.close(@dont_restore_screen) unless @terminal.nil?
   end
 
   def warnings

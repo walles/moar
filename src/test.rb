@@ -60,6 +60,13 @@ class TestLineEditor < Test::Unit::TestCase
     assert_add(test_me,  7, '', 0, true)
   end
 
+  # ^C should terminate searching (just like in Less)
+  def test_ctrl_c
+    test_me = LineEditor.new
+    assert_add(test_me, 'a', 'a', 1, false)
+    assert_add(test_me,  3, '', 0, true)
+  end
+
   def test_out_of_range_char
     test_me = LineEditor.new
     assert_add(test_me, 42_462_124_635, '', 0, false)
