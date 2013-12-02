@@ -510,7 +510,7 @@ class Terminal
         code[0..-2].split(';').each do |csi_code|
           csi_code = csi_code.to_i unless csi_code.empty?
           case csi_code
-          when ''
+          when '', 0
             attrset(A_NORMAL)
             foreground = -1
             background = -1
