@@ -913,7 +913,7 @@ Put the following line in your .bashrc or .bash_profile:
 eos
   end
 
-  def handle_view_keypress(key)
+  def handle_view_keypress(key) # rubocop: disable Metrics/AbcSize
     if ('0'..'9').cover?(key)
       @prefix += key
       return
@@ -948,24 +948,30 @@ eos
     when Curses::Key::RESIZE
       # Do nothing; draw_screen() will be called anyway between all
       # keypresses
-    when Curses::Key::DOWN, 10  # 10=RETURN on a Powebook
+    when Curses::Key::DOWN, 'j', 'e', 10  # 10=RETURN on a Powebook
       @first_line += (prefix ? prefix : 1)
       @mode = :viewing
-    when Curses::Key::UP
+    when Curses::Key::UP, 'k', 'y'
       @first_line -= (prefix ? prefix : 1)
       @mode = :viewing
-    when Curses::Key::RIGHT
+    when Curses::Key::RIGHT, 'l'
       @first_column += (prefix ? prefix : 16)
       @mode = :viewing
-    when Curses::Key::LEFT
+    when Curses::Key::LEFT, 'h'
       @first_column -= (prefix ? prefix : 16)
       @first_column = 0 if @first_column < 0
       @mode = :viewing
-    when Curses::Key::NPAGE, ' '[0]
+    when Curses::Key::NPAGE, 'f', ' '[0]
       @first_line = (prefix ? prefix - 1 : last_line + 1)
       @mode = :viewing
-    when Curses::Key::PPAGE
+    when Curses::Key::PPAGE, 'b'
       self.last_line = first_line - 1
+      @mode = :viewing
+    when 'd'
+      @first_line = (first_line + last_line)/2
+      @mode = :viewing
+    when 'u'
+      self.last_line = (first_line + last_line)/2
       @mode = :viewing
     when '<', 'g'
       @first_line = (prefix ? prefix - 1 : 0)
