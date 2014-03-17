@@ -105,8 +105,6 @@ TODO
   assuming users will press more keys if nothing happens, thus
   resolving the hang.
 
-* Just pass stuff through if stdout is not a terminal.
-
 * Enable up / down using the mouse wheel.
 
 * Enable pass-through operation unless $stdout.isatty()
@@ -308,3 +306,5 @@ your default pager.
   various control characters.
 
 * Enable exiting using ^c (without restoring the screen).
+
+* Just pass stuff through if stdout is not a terminal.

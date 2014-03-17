@@ -1141,25 +1141,33 @@ eos
       options.print_help_and_exit('ERROR: Please add a file to view')
     end
 
-    moar = nil
-    if options.highlight?
-      moar = Moar.new(highlight(options.file))
+    if $stdout.isatty
+      moar = nil
+      if options.highlight?
+        moar = Moar.new(highlight(options.file))
+      else
+        moar = Moar.new(File.open(options.file, 'r'))
+      end
+      moar.run
     else
-      moar = Moar.new(File.open(options.file, 'r'))
+      IO.copy_stream(options.file, $stdout)
     end
-    moar.run
   else
     unless ARGV.empty?
       MoarOptions.new([]).print_help_and_exit 'ERROR: ' +
         "No options supported while reading from a pipe, got #{ARGV}"
     end
 
-    # Switch around some fds to enable us to read the former stdin and
-    # curses to read the "real" stdin.
-    stream = $stdin.clone
-    $stdin.reopen(IO.new(1, 'r+'))
-    moar = Moar.new(stream)
-    moar.run
+    if $stdout.isatty
+      # Switch around some fds to enable us to read the former stdin and
+      # curses to read the "real" stdin.
+      stream = $stdin.clone
+      $stdin.reopen(IO.new(1, 'r+'))
+      moar = Moar.new(stream)
+      moar.run
+    else
+      IO.copy_stream($stdin, $stdout)
+    end
   end
 rescue => e
   crash = e
