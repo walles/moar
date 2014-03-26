@@ -63,6 +63,9 @@ as part of the test suite.
 
 TODO
 ----
+* Searching for something above us should wrap the search. But if
+  there are no hits, we should just stop scrolling.
+
 * Exit search on pressing up / down / pageup / pagedown keys and
   scroll. I attempted to do that spontaneously, so it's probably a
   good idea.
@@ -308,3 +311,6 @@ your default pager.
 * Enable exiting using ^c (without restoring the screen).
 
 * Just pass stuff through if stdout is not a terminal.
+
+* Accept numeric prefixes just like less. Implement for 'g', 'G' and
+  SPACE to begin with.

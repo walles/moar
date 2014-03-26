@@ -580,7 +580,9 @@ class Terminal
 
   def add_view_status(moar)
     status = nil
-    if moar.lines.size > 0
+    if !moar.prefix.empty?
+      status = ':' + moar.prefix
+    elsif moar.lines.size > 0
       status = "Lines #{moar.first_line + 1}-"
 
       status += "#{moar.last_line + 1}"
@@ -656,6 +658,7 @@ class Moar
   attr_reader :mode
   attr_reader :last_key
   attr_reader :first_column
+  attr_reader :prefix
 
   def add_line(line)
     lines << AnsiString.new(line.rstrip)
@@ -682,6 +685,7 @@ class Moar
     push_view(file)
     @last_key = 0
     @done = false
+    @prefix = ''
 
     # Mode can be :viewing and :searching
     @mode = :viewing
@@ -782,6 +786,7 @@ Moving around
 * > to go to the end of the document
 * RETURN moves down one line
 * SPACE moves down a page
+* Any number followed by 'g' will move to that line
 
 Searching
 ---------
@@ -805,6 +810,17 @@ eos
   end
 
   def handle_view_keypress(key)
+    if ('0'..'9').include?(key)
+      @prefix += key
+      return
+    end
+
+    prefix = nil
+    unless @prefix.empty?
+      prefix = @prefix.to_i
+      @prefix = ''
+    end
+
     case key
     when 'q'
       pop_view
@@ -826,30 +842,42 @@ eos
       # Do nothing; draw_screen() will be called anyway between all
       # keypresses
     when Curses::Key::DOWN, 10  # 10=RETURN on a Powebook
-      @first_line += 1
+      @first_line += (prefix ? prefix : 1)
       @mode = :viewing
     when Curses::Key::UP
-      @first_line -= 1
+      @first_line -= (prefix ? prefix : 1)
       @mode = :viewing
     when Curses::Key::RIGHT
-      @first_column += 16
+      @first_column += (prefix ? prefix : 16)
       @mode = :viewing
     when Curses::Key::LEFT
-      @first_column -= 16
+      @first_column -= (prefix ? prefix : 16)
       @first_column = 0 if @first_column < 0
       @mode = :viewing
     when Curses::Key::NPAGE, ' '[0]
-      @first_line = last_line + 1
+      if prefix
+        @first_line = prefix - 1
+      else
+        @first_line = last_line + 1
+      end
       @mode = :viewing
     when Curses::Key::PPAGE
       self.last_line = first_line - 1
       @mode = :viewing
-    when '<'
-      @first_line = 0
+    when '<', 'g'
+      if prefix
+        @first_line = prefix - 1
+      else
+        @first_line = 0
+      end
       @first_column = 0
       @mode = :viewing
-    when '>'
-      @first_line = @lines.size
+    when '>', 'G'
+      if prefix
+        @first_line = prefix - 1
+      else
+        @first_line = @lines.size
+      end
       @first_column = 0
       @mode = :viewing
     end

@@ -224,6 +224,20 @@ class TestMoar < Test::Unit::TestCase
     assert_equal(1, test_me.full_search('1'))
   end
 
+  def test_handle_view_keypress_prefix
+    terminal = MockTerminal.new
+    test_me = Moar.new(%w(0 1), terminal)
+
+    assert(test_me.prefix.empty?)
+    test_me.handle_view_keypress '5'
+    assert_equal(test_me.prefix, '5')
+    test_me.handle_view_keypress '7'
+    assert_equal(test_me.prefix, '57')
+
+    test_me.handle_view_keypress 'not a number'
+    assert(test_me.prefix.empty?)
+  end
+
   def test_handle_view_keypress_search
     terminal = MockTerminal.new
     test_me = Moar.new(%w(0 1), terminal)
