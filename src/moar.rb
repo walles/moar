@@ -896,6 +896,13 @@ eos
     @search_editor.enter_char(key)
     if full_search_required?
       hit = full_search(@search_editor.regexp)
+      unless hit
+        # No hit below, try above
+        from = 0
+        to = @first_line - 1
+        to = 0 if to < 0
+        hit = search_range(from, to, @search_editor.regexp)
+      end
       show_line(hit) if hit
     end
     if @search_editor.done?

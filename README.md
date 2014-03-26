@@ -63,8 +63,8 @@ as part of the test suite.
 
 TODO
 ----
-* Searching for something above us should wrap the search. But if
-  there are no hits, we should just stop scrolling.
+* When pressing '/' to edit the search terms, find a hit and
+  re-highlight.
 
 * Remember the search string from the last session so you can start by
   pressing 'n' or 'N'.
@@ -312,3 +312,5 @@ your default pager.
 * Exit search on pressing up / down / pageup / pagedown keys and
   scroll. I attempted to do that spontaneously, so it's probably a
   good idea.
+
+* Searching for something above us should wrap the search.
