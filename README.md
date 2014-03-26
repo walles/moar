@@ -63,9 +63,6 @@ as part of the test suite.
 
 TODO
 ----
-* When pressing '/' to edit the search terms, find a hit and
-  re-highlight.
-
 * Remember the search string from the last session so you can start by
   pressing 'n' or 'N'.
 
@@ -314,3 +311,6 @@ your default pager.
   good idea.
 
 * Searching for something above us should wrap the search.
+
+* When pressing '/' to edit the search terms, find a hit and
+  re-highlight.

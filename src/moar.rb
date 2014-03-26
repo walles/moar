@@ -834,6 +834,9 @@ eos
     when '/'
       @mode = :searching
       @search_editor.resume!
+
+      # This makes the next hit visible
+      handle_search_keypress(nil)
     when 'n'
       find_next(:forwards)
     when 'N'
@@ -893,10 +896,10 @@ eos
       return
     end
 
-    @search_editor.enter_char(key)
+    @search_editor.enter_char(key) unless key.nil?
     if full_search_required?
       hit = full_search(@search_editor.regexp)
-      unless hit
+      if hit.nil?
         # No hit below, try above
         from = 0
         to = @first_line - 1
