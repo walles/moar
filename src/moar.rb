@@ -884,6 +884,15 @@ eos
   end
 
   def handle_search_keypress(key)
+    if [Curses::Key::UP,
+        Curses::Key::DOWN,
+        Curses::Key::NPAGE,
+        Curses::Key::PPAGE].include? key
+      @mode = :viewing
+      handle_view_keypress(key)
+      return
+    end
+
     @search_editor.enter_char(key)
     if full_search_required?
       hit = full_search(@search_editor.regexp)

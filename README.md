@@ -66,10 +66,6 @@ TODO
 * Searching for something above us should wrap the search. But if
   there are no hits, we should just stop scrolling.
 
-* Exit search on pressing up / down / pageup / pagedown keys and
-  scroll. I attempted to do that spontaneously, so it's probably a
-  good idea.
-
 * Remember the search string from the last session so you can start by
   pressing 'n' or 'N'.
 
@@ -109,8 +105,6 @@ TODO
   resolving the hang.
 
 * Enable up / down using the mouse wheel.
-
-* Enable pass-through operation unless $stdout.isatty()
 
 
 DONE
@@ -310,7 +304,11 @@ your default pager.
 
 * Enable exiting using ^c (without restoring the screen).
 
-* Just pass stuff through if stdout is not a terminal.
+* Enable pass-through operation unless $stdout.isatty()
 
 * Accept numeric prefixes just like less. Implement for 'g', 'G' and
   SPACE to begin with.
+
+* Exit search on pressing up / down / pageup / pagedown keys and
+  scroll. I attempted to do that spontaneously, so it's probably a
+  good idea.
