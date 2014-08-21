@@ -83,7 +83,7 @@ class LineEditor
     when 3, 7, 27 # ^C, ^G and ESC should terminate search
       @string = ''
       @done = true
-    when 127 # 127=BACKSPACE on a Powerbook
+    when 127, 263 # 127=BACKSPACE on a Powerbook, 263 is on Linux
       @string = @string[0..-2]
       @cursor_position -= 1
 
