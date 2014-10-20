@@ -243,13 +243,14 @@ class TestMoar < Test::Unit::TestCase
     test_me = Moar.new(%w(0 1), terminal)
 
     search0 = test_me.search_editor
+    search0.enter_char('g')
     search0.enter_char(10) # 10 = RETURN, finishes search
     assert(search0.done?)
 
     test_me.handle_view_keypress '/'
     search1 = test_me.search_editor
-    assert(search0.equal?(search1),
-           'Pressing "/" should retain the same search editor')
+    assert(search1.empty?,
+           'Pressing "/" should clear the search editor')
 
     assert(!search1.done?,
            'Search editor shouldn\'t be done while searching')

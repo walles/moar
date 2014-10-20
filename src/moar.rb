@@ -72,10 +72,6 @@ class LineEditor
     @warnings = Set.new
   end
 
-  def resume!
-    @done = false
-  end
-
   def enter_char(char)
     case char
     when 10  # 10=RETURN on a Powerbook
@@ -833,7 +829,7 @@ eos
       @mode = :viewing
     when '/'
       @mode = :searching
-      @search_editor.resume!
+      @search_editor = LineEditor.new
 
       # This makes the next hit visible
       handle_search_keypress(nil)
