@@ -17,7 +17,7 @@ def get_version
     return 'UNKNOWN'
   end
 
-  return `cd #{MOAR_DIR} ; git describe`.strip
+  return `cd #{MOAR_DIR} ; git describe --dirty`.strip
 end
 VERSION = get_version
 

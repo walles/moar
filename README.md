@@ -63,8 +63,13 @@ as part of the test suite.
 
 TODO
 ----
+* Redefine 'g' without any prefix to prompt for which line to go
+  to. This definition makes more sense to me than having to prefix 'g'
+  to jump.
+
 * Remember the search string from the last session so you can start by
-  pressing 'n' or 'N'.
+  pressing 'n' or 'N'. But if you start by pressing '/', we should
+  clear the memorized search string.
 
 * Start at a certain line if run as "moar.rb file.txt:42"
 
@@ -75,8 +80,8 @@ TODO
 * Support viewing multiple files by pushing them in reverse order on
   the view stack.
 
-* Auto generate in-program help text to correctly correspond to the
-  actual key bindings.
+* Auto generate the in-program help text to correctly correspond to
+  the actual key bindings.
 
 * Handle search hits to the right of the right screen edge. Searching
   forwards should move first right, then to the left edge and
@@ -94,7 +99,7 @@ TODO
 
 * Incremental search using ^s and ^r like in Emacs
 
-* Enable filtered input, start with zcat as a filter
+* Gunzip input files with .gz extension before displaying them
 
 * Warn but don't hang if we get an incomplete UTF-8 sequence from
   getch() in wide_getch().  Hanging won't be that much of a problem
