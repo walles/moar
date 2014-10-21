@@ -538,6 +538,22 @@ class Terminal
             foreground = COLOR_CYAN
           when 37
             foreground = COLOR_WHITE
+          when 40
+            background = COLOR_BLACK
+          when 41
+            background = COLOR_RED
+          when 42
+            background = COLOR_GREEN
+          when 43
+            background = COLOR_YELLOW
+          when 44
+            background = COLOR_BLUE
+          when 45
+            background = COLOR_MAGENTA
+          when 46
+            background = COLOR_CYAN
+          when 47
+            background = COLOR_WHITE
           else
             @warnings << "Unsupported ANSI CSI code \"#{csi_code}\""
           end
