@@ -482,6 +482,12 @@ class Terminal
     addstr(status)
   end
 
+  def self.split_csicode(csi)
+    return [] if csi.nil?
+    return [''] if csi.length == 1
+    return csi[0..-2].split(';')
+  end
+
   def add_line(moar, screen_line, line)
     attrset(A_NORMAL)
     setpos(screen_line, 0)
@@ -503,9 +509,7 @@ class Terminal
           @warnings << "Unsupported ANSI code \"#{code}\""
         end
 
-        codes = (code.length > 1) ? code[0..-2].split(';') : ['']
-
-        codes.each do |csi_code|
+        Terminal.split_csicode(code).each do |csi_code|
           csi_code = csi_code.to_i unless csi_code.empty?
           case csi_code
           when '', 0

@@ -167,6 +167,13 @@ class TestTerminal < Test::Unit::TestCase
     assert_wide_getch_warning('[0xf0, 0x9f, 0x98, 0xff] from keyboard',
                               0xf0, 0x9f, 0x98, 0xff)
   end
+
+  def test_split_csicode
+    assert_equal([], Terminal.split_csicode(nil))
+    assert_equal([''], Terminal.split_csicode('m'))
+    assert_equal(['27'], Terminal.split_csicode('27m'))
+    assert_equal(['22', '1'], Terminal.split_csicode('22;1m'))
+  end
 end
 
 # Tests for the pager logic
