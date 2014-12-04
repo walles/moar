@@ -63,8 +63,6 @@ as part of the test suite.
 
 TODO
 ----
-* Make sure "git grep" output gets highlighted properly.
-
 * Handle search hits to the right of the right screen edge. Searching
   forwards should move first right, then to the left edge and
   down. Searching backwards should move first left, then up and to the
@@ -321,3 +319,5 @@ your default pager.
 
 * When pressing '/' to edit the search terms, find a hit and
   re-highlight.
+
+* Make sure "git grep" output gets highlighted properly.

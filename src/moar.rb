@@ -503,7 +503,9 @@ class Terminal
           @warnings << "Unsupported ANSI code \"#{code}\""
         end
 
-        code[0..-2].split(';').each do |csi_code|
+        codes = (code.length > 1) ? code[0..-2].split(';') : ['']
+
+        codes.each do |csi_code|
           csi_code = csi_code.to_i unless csi_code.empty?
           case csi_code
           when '', 0
