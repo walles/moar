@@ -63,13 +63,20 @@ as part of the test suite.
 
 TODO
 ----
+* Make sure "git grep" output gets highlighted properly.
+
+* Handle search hits to the right of the right screen edge. Searching
+  forwards should move first right, then to the left edge and
+  down. Searching backwards should move first left, then up and to the
+  right edge (if needed for showing search hits).
+
+* Make search work cross color boundaries. Currently, if you have a
+  syntax highlighted line and search for something across a color
+  change you won't get any match.
+
 * Redefine 'g' without any prefix to prompt for which line to go
   to. This definition makes more sense to me than having to prefix 'g'
   to jump.
-
-* Remember the search string from the last session so you can start by
-  pressing 'n' or 'N'. But if you start by pressing '/', we should
-  clear the memorized search string.
 
 * Start at a certain line if run as "moar.rb file.txt:42"
 
@@ -82,11 +89,6 @@ TODO
 
 * Auto generate the in-program help text to correctly correspond to
   the actual key bindings.
-
-* Handle search hits to the right of the right screen edge. Searching
-  forwards should move first right, then to the left edge and
-  down. Searching backwards should move first left, then up and to the
-  right edge (if needed for showing search hits).
 
 * Lazy load big / slow streams
 
