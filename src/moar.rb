@@ -150,7 +150,7 @@ class AnsiString
     resolved = ''
 
     offset = 0
-    while true
+    loop do
       tabindex = string.index(TAB, offset)
       return resolved + string[offset..-1] unless tabindex
 
@@ -181,7 +181,7 @@ class AnsiString
 
     is_bold = false
     is_underline = false
-    while true
+    loop do
       (head, match, tail) = string.partition(MANPAGECODE)
       break if match.empty?
 
@@ -255,7 +255,7 @@ class AnsiString
   def tokenize(&block)
     last_match = nil
     string = @string
-    while true
+    loop do
       (head, match, tail) = string.partition(ANSICODE)
       break if match.empty?
       match = Regexp.last_match[1]
@@ -285,7 +285,7 @@ class AnsiString
       return_me += "#{ESC}[#{code}" if code
       left = text
 
-      while true
+      loop do
         (head, match, tail) = left.partition(highlight)
         break if match.empty?
 
@@ -329,7 +329,7 @@ class AnsiString
   end
 
   def include?(search_term)
-    tokenize do |code, text|
+    tokenize do |_code, text|
       return true if text.index(search_term)
     end
 
@@ -365,7 +365,7 @@ class Terminal
       use_default_colors
     else
       @warnings <<
-        'Need a newer Ruby version for color support, ' +
+        'Need a newer Ruby version for color support, ' \
         "currently running Ruby #{RUBY_VERSION}"
     end
 
@@ -459,10 +459,10 @@ class Terminal
 
       unless bytes[-1] & 0b1100_0000 == 0b1000_0000
         @warnings <<
-          sprintf('Invalid UTF-8 sequence [%s] from keyboard, ' +
-                  'LANG=%s',
-                  bytes.map { |b| sprintf('0x%02x', b) }.join(', '),
-                  ENV['LANG'])
+          format('Invalid UTF-8 sequence [%s] from keyboard, ' \
+                 'LANG=%s',
+                 bytes.map { |b| format('0x%02x', b) }.join(', '),
+                 ENV['LANG'])
         return bytes[0].chr
       end
     end
@@ -684,12 +684,12 @@ class Moar
     return if @unhandled_line_warning
 
     bytes_dump =
-      line.unpack('C*').map { |byte| sprintf('%3d', byte) }.join(',')
+      line.unpack('C*').map { |byte| format('%3d', byte) }.join(',')
 
     @unhandled_line_warning =
-      sprintf("Ignoring unhandled line: %s:\n[\n %s\n]",
-              e.message,
-              bytes_dump)
+      format("Ignoring unhandled line: %s:\n[\n %s\n]",
+             e.message,
+             bytes_dump)
   end
 
   def initialize(file, terminal = Terminal.new)
@@ -1101,9 +1101,9 @@ eos
   def parser
     return OptionParser.new do |parser|
       parser.banner =
-        "Usage:\n" +
-        "  moar [options] <file>\n" +
-        "  ... | moar\n" +
+        "Usage:\n" \
+        "  moar [options] <file>\n" \
+        "  ... | moar\n" \
         "  moar < file\n\n"
 
       parser.on('-v', '--version', 'Show version information') do
@@ -1162,7 +1162,7 @@ def highlight(file)
   exitcode = nil
   Open3.popen3('source-highlight', '--out-format=esc',
                '-i', file,
-               '-o', 'STDOUT') do |stdin, stdout, stderr, wait_thr|
+               '-o', 'STDOUT') do |_stdin, stdout, _stderr, wait_thr|
     lines = stdout.readlines
     exitcode = wait_thr.value
   end
@@ -1219,7 +1219,7 @@ eos
     end
   else
     unless ARGV.empty?
-      MoarOptions.new([]).print_help_and_exit 'ERROR: ' +
+      MoarOptions.new([]).print_help_and_exit 'ERROR: ' \
         "No options supported while reading from a pipe, got #{ARGV}"
     end
 

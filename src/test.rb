@@ -550,7 +550,7 @@ class TestMain < Test::Unit::TestCase
     # Unknown versions of Moar would be problematic when handling
     # incoming issues.
     assert(!(VERSION =~ /UNKNOWN/),
-           'Moar version UNKNOWN, please get your sources using ' +
+           'Moar version UNKNOWN, please get your sources using ' \
            "'git clone https://github.com/walles/moar'")
   end
 end
