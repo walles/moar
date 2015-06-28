@@ -20,9 +20,6 @@ DefWithParentheses:
 Documentation:
   Enabled: true
 
-FavorUntilOverNegatedWhile:
-  Enabled: true
-
 HashSyntax:
   Enabled: false
 
@@ -66,4 +63,22 @@ StringLiterals:
   Enabled: true
 
 WordArray:
+  Enabled: false
+
+# Offense count: 23
+Metrics/AbcSize:
+  Max: 65
+
+# Offense count: 7
+Metrics/PerceivedComplexity:
+  Max: 19
+
+# I'm not convinced this warns in the right places.
+# See also: https://github.com/bbatsov/rubocop/issues/1238
+Style/GuardClause:
+  Enabled: false
+
+# I'm just getting weird warnings from this.
+# See also: https://github.com/bbatsov/rubocop/issues/1238
+Style/Next:
   Enabled: false

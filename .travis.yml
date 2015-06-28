@@ -1,2 +1,6 @@
 language: ruby
+
+# This matches OS X 10.10.3
+install: gem install rubocop --version 0.29.1
+
 script: rake test
