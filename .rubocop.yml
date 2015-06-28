@@ -20,9 +20,6 @@ DefWithParentheses:
 Documentation:
   Enabled: true
 
-FavorUntilOverNegatedWhile:
-  Enabled: true
-
 HashSyntax:
   Enabled: false
 
