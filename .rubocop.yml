@@ -67,3 +67,11 @@ StringLiterals:
 
 WordArray:
   Enabled: false
+
+# Offense count: 23
+Metrics/AbcSize:
+  Max: 65
+
+# Offense count: 7
+Metrics/PerceivedComplexity:
+  Max: 19
