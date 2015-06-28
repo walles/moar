@@ -12,7 +12,7 @@ require 'optparse'
 
 MOAR_DIR = Pathname(__FILE__).realpath.dirname
 
-def get_version
+def get_version # rubocop:disable Style/AccessorMethodName
   unless File.directory?("#{MOAR_DIR}/../.git")
     return 'UNKNOWN'
   end
@@ -210,7 +210,7 @@ class AnsiString
           want_bold = true
         when '_'
           want_underline = true
-        else
+        else # rubocop:disable Style/EmptyElse
           # FIXME: Warn about this case
         end
       end
