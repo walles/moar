@@ -67,7 +67,7 @@ WordArray:
 
 # Offense count: 23
 Metrics/AbcSize:
-  Max: 65
+  Max: 49
 
 # Offense count: 7
 Metrics/PerceivedComplexity:

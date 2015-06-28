@@ -488,7 +488,7 @@ class Terminal
     return csi[0..-2].split(';')
   end
 
-  def add_line(moar, screen_line, line)
+  def add_line(moar, screen_line, line) # rubocop:disable Metrics/AbcSize
     attrset(A_NORMAL)
     setpos(screen_line, 0)
     clrtoeol
@@ -544,6 +544,8 @@ class Terminal
             foreground = COLOR_CYAN
           when 37
             foreground = COLOR_WHITE
+          when 39
+            foreground = -1
           when 40
             background = COLOR_BLACK
           when 41
@@ -560,6 +562,8 @@ class Terminal
             background = COLOR_CYAN
           when 47
             background = COLOR_WHITE
+          when 49
+            background = -1
           else
             @warnings << "Unsupported ANSI CSI code \"#{csi_code}\""
           end
