@@ -60,6 +60,16 @@ The test suite can be run by doing ./src/test.rb. If you have
 [Rubocop](https://github.com/bbatsov/rubocop) installed it will be run
 as part of the test suite.
 
+Making a new Release
+--------------------
+First, to check version number of the most recent release:
+* `git tag`
+
+Then, to release the next one:
+* `git tag --annotate <new version>`
+* `git push --tags`
+
+That's all there's to it!
 
 TODO
 ----
