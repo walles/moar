@@ -73,12 +73,10 @@ Metrics/AbcSize:
 Metrics/PerceivedComplexity:
   Max: 19
 
-# I'm not convinced this warns in the right places.
-# See also: https://github.com/bbatsov/rubocop/issues/1238
+# Johan thinks guard clauses are bad for readability
 Style/GuardClause:
   Enabled: false
 
-# I'm just getting weird warnings from this.
-# See also: https://github.com/bbatsov/rubocop/issues/1238
-Style/Next:
+# This messes with formatting, turn it on and you'll see
+Style/ExtraSpacing:
   Enabled: false

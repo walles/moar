@@ -132,10 +132,10 @@ class AnsiString
   ANSICODE = /#{ESC}\[([0-9;]*m)/
   MANPAGECODE = /[^\b][\b][^\b]([\b][^\b])?/
 
-  BOLD = "#{ESC}[1m"
-  NONBOLD = "#{ESC}[22m"
-  UNDERLINE = "#{ESC}[4m"
-  NONUNDERLINE = "#{ESC}[24m"
+  BOLD = "#{ESC}[1m".freeze
+  NONBOLD = "#{ESC}[22m".freeze
+  UNDERLINE = "#{ESC}[4m".freeze
+  NONUNDERLINE = "#{ESC}[24m".freeze
 
   def initialize(string)
     string = to_utf8(string)
@@ -252,7 +252,7 @@ class AnsiString
   # The string is divided into pairs of ansi escape codes and the text
   # following each of them.  The pairs are passed one by one into the
   # block.
-  def tokenize(&block)
+  def tokenize
     last_match = nil
     string = @string
     loop do
@@ -261,13 +261,13 @@ class AnsiString
       match = Regexp.last_match[1]
 
       if last_match || !head.empty?
-        block.call(last_match, head)
+        yield last_match, head
       end
       last_match = match
 
       string = tail
     end
-    block.call(last_match, string)
+    yield last_match, string
   end
 
   # Input:
@@ -457,14 +457,15 @@ class Terminal
     (size - 1).times do
       bytes << (testing ? test_input.shift : getch)
 
-      unless bytes[-1] & 0b1100_0000 == 0b1000_0000
-        @warnings <<
-          format('Invalid UTF-8 sequence [%s] from keyboard, ' \
-                 'LANG=%s',
-                 bytes.map { |b| format('0x%02x', b) }.join(', '),
-                 ENV['LANG'])
-        return bytes[0].chr
-      end
+      next if bytes[-1] & 0b1100_0000 == 0b1000_0000
+
+      @warnings <<
+        format('Invalid UTF-8 sequence [%s] from keyboard, ' \
+               'LANG=%s',
+               bytes.map { |b| format('0x%02x', b) }.join(', '),
+               ENV['LANG'])
+
+      return bytes[0].chr
     end
 
     return bytes.pack('C*').force_encoding(Encoding::UTF_8)
@@ -604,10 +605,10 @@ class Terminal
     status = nil
     if !moar.prefix.empty?
       status = ':' + moar.prefix
-    elsif moar.lines.size > 0
+    elsif !moar.lines.empty?
       status = "Lines #{moar.first_line + 1}-"
 
-      status += "#{moar.last_line + 1}"
+      status += (moar.last_line + 1).to_s
 
       status += "/#{moar.lines.size}"
 
@@ -673,7 +674,7 @@ end
 # The pager logic is in this class; and it's displayed by the Terminal
 # class
 class Moar
-  BUGURL = 'https://github.com/walles/moar/issues'
+  BUGURL = 'https://github.com/walles/moar/issues'.freeze
 
   attr_reader :lines
   attr_reader :search_editor
@@ -832,7 +833,7 @@ eos
   end
 
   def handle_view_keypress(key)
-    if ('0'..'9').include?(key)
+    if ('0'..'9').cover?(key)
       @prefix += key
       return
     end
@@ -880,29 +881,17 @@ eos
       @first_column = 0 if @first_column < 0
       @mode = :viewing
     when Curses::Key::NPAGE, ' '[0]
-      if prefix
-        @first_line = prefix - 1
-      else
-        @first_line = last_line + 1
-      end
+      @first_line = (prefix ? prefix - 1 : last_line + 1)
       @mode = :viewing
     when Curses::Key::PPAGE
       self.last_line = first_line - 1
       @mode = :viewing
     when '<', 'g'
-      if prefix
-        @first_line = prefix - 1
-      else
-        @first_line = 0
-      end
+      @first_line = (prefix ? prefix - 1 : 0)
       @first_column = 0
       @mode = :viewing
     when '>', 'G'
-      if prefix
-        @first_line = prefix - 1
-      else
-        @first_line = @lines.size
-      end
+      @first_line = (prefix ? prefix - 1 : @lines.size)
       @first_column = 0
       @mode = :viewing
     end
@@ -1053,15 +1042,15 @@ class MoarOptions
     @highlight = true
     parser.parse!(options)
 
-    fail 'Only one file can be shown' if options.length > 1
+    raise 'Only one file can be shown' if options.length > 1
     @file = options[0] unless options.empty?
 
     if @file && !File.exist?(@file)
-      fail "File not found: #{@file}"
+      raise "File not found: #{@file}"
     end
 
     if @file && !File.file?(Pathname(@file).realpath)
-      fail "Not a file: #{@file}"
+      raise "Not a file: #{@file}"
     end
   rescue => e
     @file = nil
@@ -1211,12 +1200,12 @@ eos
     end
 
     if $stdout.isatty
-      moar = nil
-      if options.highlight?
-        moar = Moar.new(highlight(options.file))
-      else
-        moar = Moar.new(File.open(options.file, 'r'))
-      end
+      moar = \
+        if options.highlight?
+          Moar.new(highlight(options.file))
+        else
+          Moar.new(File.open(options.file, 'r'))
+        end
       moar.run
     else
       IO.copy_stream(options.file, $stdout)

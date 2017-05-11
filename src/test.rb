@@ -269,12 +269,12 @@ class TestAnsiString < Test::Unit::TestCase
   ESC = 27.chr
   BS = 8.chr  # Backspace
   TAB = 9.chr
-  R = "#{ESC}[7m"  # REVERSE
-  N = "#{ESC}[27m" # NORMAL
-  BOLD = "#{ESC}[1m"
-  NONBOLD = "#{ESC}[22m"
-  UNDERLINE = "#{ESC}[4m"
-  NONUNDERLINE = "#{ESC}[24m"
+  R = "#{ESC}[7m".freeze  # REVERSE
+  N = "#{ESC}[27m".freeze # NORMAL
+  BOLD = "#{ESC}[1m".freeze
+  NONBOLD = "#{ESC}[22m".freeze
+  UNDERLINE = "#{ESC}[4m".freeze
+  NONUNDERLINE = "#{ESC}[24m".freeze
 
   def test_tokenize_empty
     count = 0
@@ -486,7 +486,7 @@ class TestAnsiString < Test::Unit::TestCase
   end
 
   def test_tab
-    assert_equal('        ', AnsiString.new("#{TAB}").to_str)
+    assert_equal('        ', AnsiString.new(TAB.to_s).to_str)
     assert_equal('1       ', AnsiString.new("1#{TAB}").to_str)
     assert_equal('12      ', AnsiString.new("12#{TAB}").to_str)
     assert_equal('123     ', AnsiString.new("123#{TAB}").to_str)
