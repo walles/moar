@@ -512,6 +512,24 @@ class TestAnsiString < Test::Unit::TestCase
     assert_equal(AnsiString.new("#{ansi}12345678        "), AnsiString.new("#{ansi}12345678#{TAB}"))
     assert_equal(AnsiString.new("#{ansi}                "), AnsiString.new("#{ansi}#{TAB}#{TAB}"))
   end
+
+  def test_ansi_tab_unicode
+    ansi = "#{ESC}[31m".freeze
+
+    assert_equal(AnsiString.new("#{ansi}        "), AnsiString.new("#{ansi}#{TAB}"))
+    assert_equal(AnsiString.new("#{ansi}å       "), AnsiString.new("#{ansi}å#{TAB}"))
+    assert_equal(AnsiString.new("#{ansi}åä      "), AnsiString.new("#{ansi}åä#{TAB}"))
+    assert_equal(AnsiString.new("#{ansi}åäö     "), AnsiString.new("#{ansi}åäö#{TAB}"))
+    assert_equal(AnsiString.new("#{ansi}åäöa    "), AnsiString.new("#{ansi}åäöa#{TAB}"))
+    assert_equal(AnsiString.new("#{ansi}åäöab   "), AnsiString.new("#{ansi}åäöab#{TAB}"))
+    assert_equal(AnsiString.new("#{ansi}åäöabc  "), AnsiString.new("#{ansi}åäöabc#{TAB}"))
+    assert_equal(AnsiString.new("#{ansi}åäöabcd "), AnsiString.new("#{ansi}åäöabcd#{TAB}"))
+    assert_equal(AnsiString.new("#{ansi}åäöabcde        "), AnsiString.new("#{ansi}åäöabcde#{TAB}"))
+
+    assert_equal(
+      AnsiString.new("#{ansi}å       ä#{ansi}       #{ansi}ö"),
+      AnsiString.new("#{ansi}å#{TAB}ä#{ansi}#{TAB}#{ansi}ö"))
+  end
 end
 
 # Validate command line options parsing
