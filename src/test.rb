@@ -497,6 +497,21 @@ class TestAnsiString < Test::Unit::TestCase
     assert_equal('12345678        ', AnsiString.new("12345678#{TAB}").to_str)
     assert_equal('                ', AnsiString.new("#{TAB}#{TAB}").to_str)
   end
+
+  def test_ansi_tab
+    ansi = "#{ESC}[31m".freeze
+
+    assert_equal(AnsiString.new("#{ansi}        "), AnsiString.new("#{ansi}#{TAB}"))
+    assert_equal(AnsiString.new("#{ansi}1       "), AnsiString.new("#{ansi}1#{TAB}"))
+    assert_equal(AnsiString.new("#{ansi}12      "), AnsiString.new("#{ansi}12#{TAB}"))
+    assert_equal(AnsiString.new("#{ansi}123     "), AnsiString.new("#{ansi}123#{TAB}"))
+    assert_equal(AnsiString.new("#{ansi}1234    "), AnsiString.new("#{ansi}1234#{TAB}"))
+    assert_equal(AnsiString.new("#{ansi}12345   "), AnsiString.new("#{ansi}12345#{TAB}"))
+    assert_equal(AnsiString.new("#{ansi}123456  "), AnsiString.new("#{ansi}123456#{TAB}"))
+    assert_equal(AnsiString.new("#{ansi}1234567 "), AnsiString.new("#{ansi}1234567#{TAB}"))
+    assert_equal(AnsiString.new("#{ansi}12345678        "), AnsiString.new("#{ansi}12345678#{TAB}"))
+    assert_equal(AnsiString.new("#{ansi}                "), AnsiString.new("#{ansi}#{TAB}#{TAB}"))
+  end
 end
 
 # Validate command line options parsing
