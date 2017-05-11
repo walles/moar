@@ -1,0 +1,3 @@
+This works:	bboolldd
+As does this:	_u_n_d_e_r_l_i_n_e
+This breaks:	_bb_oo_ll_dd _aa_nn_dd _uu_nn_dd_ee_rr_ll_ii_nn_ee

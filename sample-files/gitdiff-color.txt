@@ -1,0 +1,100 @@
+[33mcommit 0ccc858f87d70c302117db9034186754a4091f23[m
+Author: Johan Walles <johan.walles@gmail.com>
+Date:   Thu Oct 24 20:45:40 2013 +0200
+
+    Prioritize the TODO file
+
+[1mdiff --git a/TODO.txt b/TODO.txt[m
+[1mindex 52551e7..663ffd7 100644[m
+[1m--- a/TODO.txt[m
+[1m+++ b/TODO.txt[m
+[36m@@ -1,36 +1,48 @@[m
+ Moar is a pager.  It's designed to be easy to use and just do the[m
+ right thing without any configuration.[m
+ [m
+[31m-TODO (in some order):[m
+[32m+[m[32mTODO (before using it myself)[m
+[32m+[m[32m-----------------------------[m
+[32m+[m[32m* Scroll down one line on RETURN[m
+ [m
+[31m-* Write "/ to search" somewhere in the status field[m
+[32m+[m[32m* Enable displaying ANSI-colored input[m
+[32m+[m
+[32m+[m
+[32m+[m[32mTODO (before github)[m
+[32m+[m[32m--------------------[m
+ [m
+[32m+[m[32mTODO (before trying to get others to use it)[m
+[32m+[m[32m--------------------------------------------[m
+ * Do a regexp search if the search term is a valid regexp, otherwise[m
+   just use it as a substring.[m
+ [m
+[31m-* Make the search case sensitive only if it contains any capital[m
+[31m-  letters.  This goes for both regexps and non-regexps.[m
+[31m-[m
+ * Make sure we can search for unicode characters[m
+ [m
+[31m-* Make sure searching for an upper case unicode character turns on[m
+[31m-  case sensitive search.[m
+[31m-[m
+ * Make sure we get the line length right even with unicode characters[m
+   present in the lines.  Verify by looking at where the truncation[m
+   markers end up.[m
+ [m
+[31m-* Scroll down one line on RETURN[m
+[31m-[m
+ * Enable sideways scrolling using arrow keys.[m
+ [m
+ * Handle search hits to the right of the right screen edge[m
+ [m
+[31m-* Interactive search using ^s and ^r like in Emacs[m
+[32m+[m[32m* Enable 'h' or '?' for help[m
+ [m
+[31m-* Highlight all matches while searching[m
+[32m+[m[32m* Report command line errors, think about when to use $stdin for input[m
+[32m+[m[32m  vs what commands we accept[m
+ [m
+[31m-* Enable displaying ANSI-colored input[m
+[32m+[m
+[32m+[m[32mTODO (bonus)[m
+[32m+[m[32m------------[m
+[32m+[m[32m* Make the search case sensitive only if it contains any capital[m
+[32m+[m[32m  letters.  This goes for both regexps and non-regexps.[m
+[32m+[m
+[32m+[m[32m* Make sure searching for an upper case unicode character turns on[m
+[32m+[m[32m  case sensitive search.[m
+[32m+[m
+[32m+[m[32m* Write "/ to search" somewhere in the status field[m
+[32m+[m
+[32m+[m[32m* Interactive search using ^s and ^r like in Emacs[m
+ [m
+ * Enable filtered input, start with zcat as a filter[m
+ [m
+[36m@@ -47,11 +59,6 @@[m [mTODO (in some order):[m
+ [m
+ * Enable up / down using the mouse wheel.[m
+ [m
+[31m-* Enable 'h' or '?' for help[m
+[31m-[m
+[31m-* Report command line errors, think about when to use $stdin for input[m
+[31m-  vs what commands we accept[m
+[31m-[m
+ * Enable pass-through operation unless $stdout.isatty()[m
+ [m
+ * Doing moar.rb on an arbitrary binary (like /bin/ls) should put all[m
+[36m@@ -60,7 +67,8 @@[m [mTODO (in some order):[m
+   various control characters.[m
+ [m
+ [m
+[31m-DONE:[m
+[32m+[m[32mDONE[m
+[32m+[m[32m----[m
+ * Enable exiting using q (restores screen)[m
+ [m
+ * Handle the terminal window getting resized.[m
+[36m@@ -121,3 +129,5 @@[m [mDONE:[m
+ * Indicate when we're wrapping the search while pressing n.[m
+ [m
+ * Indicate when we're wrapping the search while pressing N.[m
+[32m+[m
+[32m+[m[32m* Highlight all matches while searching[m
