@@ -138,29 +138,51 @@ class AnsiString
   NONUNDERLINE = "#{ESC}[24m".freeze
 
   def initialize(string)
-    string = to_utf8(string)
-    string = manpage_to_ansi(string)
-    string = scrub(string)
-    string = resolve_tabs(string)
     @string = string
+    @string = to_utf8(@string)
+    @string = manpage_to_ansi(@string)
+    @string = scrub(@string)
+    @string = resolve_tabs(@string)
+  end
+
+  def ==(other)
+    other.class == self.class && other.to_s == to_s
+  end
+
+  def to_s
+    return @string
   end
 
   def resolve_tabs(string)
     return string unless string.index(TAB)
     resolved = ''
-
     offset = 0
-    loop do
-      tabindex = string.index(TAB, offset)
-      return resolved + string[offset..-1] unless tabindex
 
-      resolved += string[offset..(tabindex - 1)] unless offset == tabindex
-      offset = tabindex + 1
+    tokenize do |code, text|
+      resolved += "#{ESC}[#{code}" if code
 
-      n_spaces = 8 - (resolved.length % 8)
-      n_spaces = 8 if n_spaces == 0
-      resolved += ' ' * n_spaces
+      unless string.index(TAB)
+        # Shortcut when no tabs in this part of the string
+        resolved += text
+        offset += text.length
+        next
+      end
+
+      text.each_char do |char|
+        if char != TAB
+          resolved += char
+          offset += 1
+          next
+        end
+
+        n_spaces = 8 - (offset % 8)
+        n_spaces = 8 if n_spaces == 0
+        resolved += ' ' * n_spaces
+        offset += n_spaces
+      end
     end
+
+    return resolved
   end
 
   # Replace control codes with "^X" where X is representative for the
