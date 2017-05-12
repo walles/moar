@@ -138,10 +138,7 @@ class AnsiString
   NONUNDERLINE = "#{ESC}[24m".freeze
 
   def initialize(string)
-    string = to_utf8(string)
-    string = manpage_to_ansi(string)
-    string = scrub(string)
-    string = resolve_tabs(string)
+    @is_initialized = false
     @string = string
   end
 
@@ -150,7 +147,22 @@ class AnsiString
   end
 
   def to_s
+    return @string if @is_initialized
+
+    string = @string
+    string = to_utf8(string)
+    string = manpage_to_ansi(string)
+    string = scrub(string)
+    string = resolve_tabs(string)
+
+    @string = string
+    @is_initialized = true
+
     return @string
+  end
+
+  def to_str
+    return to_s
   end
 
   def resolve_tabs(string)
@@ -268,7 +280,7 @@ class AnsiString
   # following each of them.  The pairs are passed one by one into the
   # block.
   def tokenize(string = nil)
-    string = @string if string.nil?
+    string = to_s if string.nil?
     last_match = nil
     loop do
       (head, match, tail) = string.partition(ANSICODE)
@@ -349,10 +361,6 @@ class AnsiString
     end
 
     return false
-  end
-
-  def to_str
-    return @string
   end
 end
 
