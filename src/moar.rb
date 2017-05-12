@@ -161,13 +161,6 @@ class AnsiString
     tokenize(string) do |code, text|
       resolved += "#{ESC}[#{code}" if code
 
-      unless string.index(TAB)
-        # Shortcut when no tabs in this part of the string
-        resolved += text
-        offset += text.length
-        next
-      end
-
       text.each_char do |char|
         if char != TAB
           resolved += char
