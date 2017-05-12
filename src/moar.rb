@@ -145,22 +145,44 @@ class AnsiString
     @string = string
   end
 
+  def ==(other)
+    other.class == self.class && other.to_s == to_s
+  end
+
+  def to_s
+    return @string
+  end
+
   def resolve_tabs(string)
     return string unless string.index(TAB)
     resolved = ''
-
     offset = 0
-    loop do
-      tabindex = string.index(TAB, offset)
-      return resolved + string[offset..-1] unless tabindex
 
-      resolved += string[offset..(tabindex - 1)] unless offset == tabindex
-      offset = tabindex + 1
+    tokenize(string) do |code, text|
+      resolved += "#{ESC}[#{code}" if code
 
-      n_spaces = 8 - (resolved.length % 8)
-      n_spaces = 8 if n_spaces == 0
-      resolved += ' ' * n_spaces
+      unless string.index(TAB)
+        # Shortcut when no tabs in this part of the string
+        resolved += text
+        offset += text.length
+        next
+      end
+
+      text.each_char do |char|
+        if char != TAB
+          resolved += char
+          offset += 1
+          next
+        end
+
+        n_spaces = 8 - (offset % 8)
+        n_spaces = 8 if n_spaces == 0
+        resolved += ' ' * n_spaces
+        offset += n_spaces
+      end
     end
+
+    return resolved
   end
 
   # Replace control codes with "^X" where X is representative for the
@@ -247,14 +269,14 @@ class AnsiString
     return return_me
   end
 
-  # Input: A string
+  # Input: A string, or ourselves if no string provided
   #
   # The string is divided into pairs of ansi escape codes and the text
   # following each of them.  The pairs are passed one by one into the
   # block.
-  def tokenize
+  def tokenize(string = nil)
+    string = @string if string.nil?
     last_match = nil
-    string = @string
     loop do
       (head, match, tail) = string.partition(ANSICODE)
       break if match.empty?

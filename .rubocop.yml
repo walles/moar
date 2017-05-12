@@ -28,6 +28,7 @@ IfUnlessModifier:
 
 LineLength:
   Enabled: true
+  Max: 100
 
 LiteralInCondition:
   Enabled: false
