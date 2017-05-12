@@ -138,11 +138,11 @@ class AnsiString
   NONUNDERLINE = "#{ESC}[24m".freeze
 
   def initialize(string)
+    string = to_utf8(string)
+    string = manpage_to_ansi(string)
+    string = scrub(string)
+    string = resolve_tabs(string)
     @string = string
-    @string = to_utf8(@string)
-    @string = manpage_to_ansi(@string)
-    @string = scrub(@string)
-    @string = resolve_tabs(@string)
   end
 
   def ==(other)
@@ -158,7 +158,7 @@ class AnsiString
     resolved = ''
     offset = 0
 
-    tokenize do |code, text|
+    tokenize(string) do |code, text|
       resolved += "#{ESC}[#{code}" if code
 
       unless string.index(TAB)
@@ -269,14 +269,14 @@ class AnsiString
     return return_me
   end
 
-  # Input: A string
+  # Input: A string, or ourselves if no string provided
   #
   # The string is divided into pairs of ansi escape codes and the text
   # following each of them.  The pairs are passed one by one into the
   # block.
-  def tokenize
+  def tokenize(string = nil)
+    string = @string if string.nil?
     last_match = nil
-    string = @string
     loop do
       (head, match, tail) = string.partition(ANSICODE)
       break if match.empty?
