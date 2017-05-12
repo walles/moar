@@ -3,7 +3,7 @@ language: ruby
 # This matches OS X 10.12.4
 rvm: 2.0
 
-# This matches OS X 10.12.4
+# This matches what happens to be on Johan's computer right now
 install: gem install rubocop --version 0.39.0
 
 script: rake test
