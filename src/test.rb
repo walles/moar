@@ -176,6 +176,17 @@ class TestTerminal < Test::Unit::TestCase
   end
 end
 
+# Tests for stream loader
+class TestLinesArray < Test::Unit::TestCase
+  def test_empty?
+    empty_array = LinesArray.new([])
+    assert_true(empty_array.empty?)
+
+    nonempty_array = LinesArray.new(['gris'])
+    assert_false(nonempty_array.empty?)
+  end
+end
+
 # Tests for the pager logic
 class TestMoar < Test::Unit::TestCase
   def test_line_methods
