@@ -694,20 +694,30 @@ class Terminal
   end
 end
 
-# The pager logic is in this class; and it's displayed by the Terminal
-# class
-class Moar
-  BUGURL = 'https://github.com/walles/moar/issues'.freeze
+# Load lines, pretend to be an array
+class LinesArray
+  def initialize(input)
+    @unhandled_line_warning = nil
+    @lines = []
 
-  attr_reader :lines
-  attr_reader :search_editor
-  attr_reader :mode
-  attr_reader :last_key
-  attr_reader :first_column
-  attr_reader :prefix
+    if input.is_a? String
+      input.lines.each do |line|
+        _add_line(line)
+      end
+    elsif input.respond_to?(:each_line)
+      input.each_line do |line|
+        _add_line(line)
+      end
+    else
+      # We got an array, used for unit testing
+      input.each do |line|
+        _add_line(line)
+      end
+    end
+  end
 
-  def add_line(line)
-    lines << AnsiString.new(line.rstrip)
+  def _add_line(line)
+    @lines << AnsiString.new(line.rstrip)
   rescue => e
     return if @unhandled_line_warning
 
@@ -720,15 +730,41 @@ class Moar
              bytes_dump)
   end
 
+  def [](index)
+    return @lines[index]
+  end
+
+  def size
+    return @lines.size
+  end
+
+  def empty?
+    return @lines.empty?
+  end
+end
+
+# The pager logic is in this class; and it's displayed by the Terminal
+# class
+class Moar
+  BUGURL = 'https://github.com/walles/moar/issues'.freeze
+
+  attr_reader :lines
+  attr_reader :search_editor
+  attr_reader :mode
+  attr_reader :last_key
+  attr_reader :first_column
+  attr_reader :prefix
+
   def initialize(file, terminal = Terminal.new)
     @view_stack = []
-    @unhandled_line_warning = nil
     @search_editor = LineEditor.new
     @terminal = terminal
     @first_line = 0
     @first_column = 0
     @lines = nil
+
     push_view(file)
+
     @last_key = 0
     @done = false
     @prefix = ''
@@ -786,23 +822,7 @@ class Moar
   def push_view(text)
     @view_stack << [@lines, first_line] unless @lines.nil?
 
-    if text.is_a? String
-      @lines = []
-      text.lines.each do |line|
-        add_line(line)
-      end
-    elsif text.is_a? Array
-      # We got an array, used for unit testing
-      @lines = []
-      text.each do |line|
-        add_line(line)
-      end
-    else
-      @lines = []
-      text.each_line do |line|
-        add_line(line)
-      end
-    end
+    @lines = LinesArray.new(text)
   end
 
   def pop_view
@@ -1048,7 +1068,7 @@ eos
 
   def warnings
     return_me = Set.new
-    return_me << @unhandled_line_warning if @unhandled_line_warning
+    return_me << @lines.unhandled_line_warning if @lines && @unhandled_line_warning
     return_me.merge(@terminal.warnings)
     return_me.merge(@search_editor.warnings)
 
