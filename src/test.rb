@@ -180,10 +180,10 @@ end
 class TestLinesArray < Test::Unit::TestCase
   def test_empty?
     empty_array = LinesArray.new([])
-    assert_true(empty_array.empty?)
+    assert_equal(true, empty_array.empty?)
 
     nonempty_array = LinesArray.new(['gris'])
-    assert_false(nonempty_array.empty?)
+    assert_equal(false, nonempty_array.empty?)
   end
 end
 
