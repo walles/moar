@@ -178,7 +178,20 @@ end
 
 # Tests for stream loader
 class TestLinesArray < Test::Unit::TestCase
-  # FIXME: Add tests here
+  def test_laziness
+    test_me = LinesArray.new(File.open(TEST_DIR + '../sample-files/two-lines.txt', 'r'))
+
+    # Nothing read, size unknown
+    assert_nil(test_me.size)
+
+    # Read first line
+    assert_equal('first line', test_me[0])
+    assert_nil(test_me.size)
+
+    # Read second / last line
+    assert_equal('second line', test_me[1])
+    assert_equal(2, test_me.size)
+  end
 end
 
 # Tests for the pager logic
