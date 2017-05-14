@@ -628,7 +628,7 @@ class Terminal
     status = nil
     if !moar.prefix.empty?
       status = ':' + moar.prefix
-    elsif !moar.lines.empty?
+    elsif moar.lines.size && moar.lines.size > 0 # rubocop:disable Style/ZeroLengthPredicate
       status = "Lines #{moar.first_line + 1}-"
 
       status += (moar.last_line + 1).to_s
@@ -738,10 +738,6 @@ class LinesArray
 
   def size
     return @lines.size
-  end
-
-  def empty?
-    return @lines.empty?
   end
 end
 

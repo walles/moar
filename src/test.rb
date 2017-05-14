@@ -178,13 +178,7 @@ end
 
 # Tests for stream loader
 class TestLinesArray < Test::Unit::TestCase
-  def test_empty?
-    empty_array = LinesArray.new([])
-    assert_equal(true, empty_array.empty?)
-
-    nonempty_array = LinesArray.new(['gris'])
-    assert_equal(false, nonempty_array.empty?)
-  end
+  # FIXME: Add tests here
 end
 
 # Tests for the pager logic
