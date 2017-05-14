@@ -700,6 +700,7 @@ class LinesArray
 
   def initialize(input)
     @unhandled_line_warning = nil
+    @stream = nil
     @lines = []
 
     if input.is_a? String
@@ -707,9 +708,7 @@ class LinesArray
         _add_line(line)
       end
     elsif input.respond_to?(:each_line)
-      input.each_line do |line|
-        _add_line(line)
-      end
+      @stream = input
     else
       # We got an array, used for unit testing
       input.each do |line|
@@ -733,11 +732,37 @@ class LinesArray
   end
 
   def [](index)
+    _read_until(index)
+
     return @lines[index]
   end
 
+  def _read_until(index)
+    # Already done reading our input stream
+    return if size
+
+    # If index 0 is requested, array size must be 1 and so on...
+    while @lines.size <= index
+      # Read another line from @stream
+      line = @stream.gets
+      if line.nil?
+        # End of stream reached
+        @stream.close
+        @stream = nil
+        break
+      end
+
+      @lines << line.rstrip
+    end
+  end
+
   def size
-    return @lines.size
+    return @lines.size unless @stream     # Not reading from any stream (any more)
+    return @lines.size if @stream.closed? # Done with our stream, no more lines incoming
+    return @lines.size if @stream.eof?    # Stream ended, no more lines incoming
+
+    # Don't know how many more lines there are
+    return nil
   end
 end
 
