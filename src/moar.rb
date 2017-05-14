@@ -696,6 +696,8 @@ end
 
 # Load lines, pretend to be an array
 class LinesArray
+  attr_reader :unhandled_line_warning
+
   def initialize(input)
     @unhandled_line_warning = nil
     @lines = []
@@ -1068,7 +1070,7 @@ eos
 
   def warnings
     return_me = Set.new
-    return_me << @lines.unhandled_line_warning if @lines && @unhandled_line_warning
+    return_me << @lines.unhandled_line_warning if @lines && @lines.unhandled_line_warning
     return_me.merge(@terminal.warnings)
     return_me.merge(@search_editor.warnings)
 
