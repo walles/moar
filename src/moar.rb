@@ -752,7 +752,7 @@ class LinesArray
         break
       end
 
-      @lines << line.rstrip
+      _add_line(line.rstrip)
     end
   end
 

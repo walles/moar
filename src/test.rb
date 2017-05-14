@@ -185,11 +185,11 @@ class TestLinesArray < Test::Unit::TestCase
     assert_nil(test_me.size)
 
     # Read first line
-    assert_equal('first line', test_me[0])
+    assert_equal('first line', test_me[0].to_s)
     assert_nil(test_me.size)
 
     # Read second / last line
-    assert_equal('second line', test_me[1])
+    assert_equal('second line', test_me[1].to_s)
     assert_equal(2, test_me.size)
 
     # Outside the array we should return nil
