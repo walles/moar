@@ -73,6 +73,10 @@ That's all there's to it!
 
 TODO
 ----
+* Read `source-highlight` output as a stream for startup performance reasons.
+  This must work when `source-highlight` fails as well, and when it succeeds on
+  an empty input file.
+
 * Handle search hits to the right of the right screen edge. Searching
   forwards should move first right, then to the left edge and
   down. Searching backwards should move first left, then up and to the
