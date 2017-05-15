@@ -756,8 +756,12 @@ class LinesArray
     end
   end
 
-  def size
+  def size(force_read_all = false)
+    if force_read_all
+      _read_until @lines.size + 1234 while @stream
+    end
     return @lines.size unless @stream     # Not reading from any stream (any more)
+
     return @lines.size if @stream.closed? # Done with our stream, no more lines incoming
     return @lines.size if @stream.eof?    # Stream ended, no more lines incoming
 
@@ -963,7 +967,7 @@ eos
       @first_column = 0
       @mode = :viewing
     when '>', 'G'
-      @first_line = (prefix ? prefix - 1 : @lines.size)
+      @first_line = (prefix ? prefix - 1 : @lines.size(true))
       @first_column = 0
       @mode = :viewing
     end
