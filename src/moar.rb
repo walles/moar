@@ -639,7 +639,7 @@ class Terminal
         (100 * (moar.last_line + 1) / moar.lines.size).floor
       status += " #{percent_displayed}%"
     else
-      status = 'Lines 0-0/0'
+      status = "Lines #{moar.first_line + 1}-#{moar.last_line + 1}"
     end
 
     if moar.first_column > 0
@@ -799,9 +799,11 @@ class Moar
   end
 
   def first_line
-    # @first_line must not be closer than lines-2 from the end
-    max_first_line = @lines.size - @terminal.lines
-    @first_line = [@first_line, max_first_line].min
+    if @lines.size
+      # @first_line must not be closer than lines-2 from the end
+      max_first_line = @lines.size - @terminal.lines
+      @first_line = [@first_line, max_first_line].min
+    end
 
     # @first_line cannot be negative
     @first_line = [0, @first_line].max
@@ -813,15 +815,19 @@ class Moar
   def last_line(my_first_line = nil)
     my_first_line = first_line unless my_first_line
 
-    # my_first_line must not be closer than lines-2 from the end
-    max_first_line = @lines.size - @terminal.lines
-    my_first_line = [my_first_line, max_first_line].min
+    if @lines.size
+      # my_first_line must not be closer than lines-2 from the end
+      max_first_line = @lines.size - @terminal.lines
+      my_first_line = [my_first_line, max_first_line].min
+    end
 
     # my_first_line cannot be negative
     my_first_line = [0, my_first_line].max
 
     return_me = my_first_line + @terminal.lines - 1
-    return_me = [@lines.size - 1, return_me].min
+    if @lines.size
+      return_me = [@lines.size - 1, return_me].min
+    end
 
     return return_me
   end
