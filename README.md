@@ -82,6 +82,11 @@ TODO
   down. Searching backwards should move first left, then up and to the
   right edge (if needed for showing search hits).
 
+* When skipping to the end, either while searching or when the user presses '>',
+  try finding the end of the file for at most two seconds, then show wherever we
+  are. Pressing '>' again or searching again should make another attempt until
+  we're actually done.
+
 * Make search work cross color boundaries. Currently, if you have a
   syntax highlighted line and search for something across a color
   change you won't get any match.

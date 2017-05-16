@@ -512,6 +512,7 @@ class Terminal
     return csi[0..-2].split(';')
   end
 
+  # Draw another line of text on the screen
   def add_line(moar, screen_line, line) # rubocop:disable Metrics/AbcSize
     attrset(A_NORMAL)
     setpos(screen_line, 0)
@@ -654,6 +655,10 @@ class Terminal
 
   def draw_screen(moar)
     screen_line = 0
+
+    # Tell our lazy file reader to read all lines needed for this screen, and maybe discover where
+    # the file ends
+    moar.lines[moar.last_line]
 
     # Draw lines
     (moar.first_line..moar.last_line).each do |line_number|
