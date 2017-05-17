@@ -1031,19 +1031,35 @@ eos
   #
   # Returns the line number of the first hit, or nil if nothing was
   # found.
+  #
+  # If last is nil we'll search the whole thing to the end.
   def search_range(first, last, find_me)
-    line_numbers = first.upto(last)
-    if last < first
-      line_numbers = first.downto(last)
-    end
+    increment = 1
+    increment = -1 if last && last < first
 
-    line_numbers.each do |line_number|
-      if @lines[line_number].include?(find_me)
-        return line_number
-      end
-    end
+    line_number = first
+    loop do
+      return nil if line_number < 0
 
-    return nil
+      # Counting down until last, and line number has gone below last
+      return nil if increment == -1 && line_number < last
+
+      # Counting up until last, and line number has gone above last
+      return nil if increment == 1 && last && line_number > last
+
+      line = @lines[line_number]
+
+      # End reached while counting up, not found.
+      #
+      # We know that we're counting up, because only lines after the end of the file will be nil;
+      # and the only way to arrive after the end of the file is by counting up.
+      return nil if line.nil?
+
+      # Found it!
+      return line_number if line.include?(find_me)
+
+      line_number += increment
+    end
   end
 
   # Search the full document and return the line number of the first
@@ -1053,19 +1069,20 @@ eos
     to = nil
 
     if direction == :forwards
-      to = @lines.size - 1
       if @mode == :notfound
         from = 0
       else
         from = last_line + 1
-        if from >= @lines.size
-          from = @lines.size - 1
+        if @lines.size && from >= @lines.size
+          # Search starting where there are no more lines, nothing can be found
+          return nil
         end
       end
     else
+      # Backwards
       to = 0
       if @mode == :notfound
-        from = @lines.size - 1
+        from = @lines.size(true) - 1
       else
         from = first_line - 1
         if from < 0
