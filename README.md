@@ -73,6 +73,9 @@ That's all there's to it!
 
 TODO
 ----
+* Add making binaries to the Making a new Release section above. `rake release`
+  perhaps?
+
 * Read `source-highlight` output as a stream for startup performance reasons.
   This must work when `source-highlight` fails as well, and when it succeeds on
   an empty input file.
