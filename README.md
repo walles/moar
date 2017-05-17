@@ -107,8 +107,6 @@ TODO
 * Auto generate the in-program help text to correctly correspond to
   the actual key bindings.
 
-* Lazy load big / slow streams
-
 * Add search line editing
 
 * Try to find a newer Ruby version if needed for color support and
@@ -340,3 +338,5 @@ your default pager.
   re-highlight.
 
 * Make sure "git grep" output gets highlighted properly.
+
+* Lazy load big / slow streams
