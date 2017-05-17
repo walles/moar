@@ -1069,15 +1069,7 @@ eos
     to = nil
 
     if direction == :forwards
-      if @mode == :notfound
-        from = 0
-      else
-        from = last_line + 1
-        if @lines.size && from >= @lines.size
-          # Search starting where there are no more lines, nothing can be found
-          return nil
-        end
-      end
+      from = (@mode == :notfound) ? 0 : last_line + 1
     else
       # Backwards
       to = 0
