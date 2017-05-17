@@ -848,7 +848,7 @@ class Moar
   def find_next(direction = :forwards)
     return if @search_editor.empty?
 
-    hit = full_search(@search_editor.regexp, direction)
+    hit = remaining_search(@search_editor.regexp, direction)
     if hit
       show_line(hit)
       @mode = :viewing
@@ -989,8 +989,8 @@ eos
     end
 
     @search_editor.enter_char(key) unless key.nil?
-    if full_search_required?
-      hit = full_search(@search_editor.regexp)
+    if remaining_search_required?
+      hit = remaining_search(@search_editor.regexp)
       if hit.nil?
         # No hit below, try above
         from = 0
@@ -1062,9 +1062,9 @@ eos
     end
   end
 
-  # Search the full document and return the line number of the first
-  # hit, or nil if nothing was found
-  def full_search(find_me, direction = :forwards)
+  # Search the whatever part of the document that's after the currently visible screen, and return
+  # the line number of the first hit, or nil if nothing was found
+  def remaining_search(find_me, direction = :forwards)
     from = nil
     to = nil
 
@@ -1094,7 +1094,7 @@ eos
     return search_range(from, to, find_me)
   end
 
-  def full_search_required?
+  def remaining_search_required?
     return false if @search_editor.empty?
     return !search_range(first_line, last_line, @search_editor.regexp)
   end
