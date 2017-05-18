@@ -13,16 +13,7 @@ end
 
 desc 'Print a help message'
 task :help do
-  puts <<eos
-To run the unit tests:
-  rake test
-
-To install in /usr/local/bin:
-  sudo rake install
-
-To install in /usr/bin:
-  sudo rake install[/usr/bin]
-eos
+  puts `rake --tasks`
 end
 
 desc 'Install Moar system wide'
@@ -44,4 +35,18 @@ task :install, :directory do |_t, args|
   end
 
   puts "Installed into #{destination_file}"
+end
+
+desc 'Make a release build'
+task :release => [:test]
+task :release do
+  releasefile_name = "#{MYDIR}/moar-#{VERSION}.rb"
+  File.open(releasefile_name, 'w') do |releasefile|
+    File.open("#{MYDIR}/src/moar.rb").each_line do |line|
+      releasefile.puts(line.sub(/^VERSION *=.*/, "VERSION = '#{VERSION}'"))
+    end
+  end
+
+  puts
+  puts "Release build written to #{releasefile_name}"
 end
