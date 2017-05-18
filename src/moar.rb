@@ -512,6 +512,7 @@ class Terminal
     return csi[0..-2].split(';')
   end
 
+  # Draw another line of text on the screen
   def add_line(moar, screen_line, line) # rubocop:disable Metrics/AbcSize
     attrset(A_NORMAL)
     setpos(screen_line, 0)
@@ -628,7 +629,7 @@ class Terminal
     status = nil
     if !moar.prefix.empty?
       status = ':' + moar.prefix
-    elsif !moar.lines.empty?
+    elsif moar.lines.size && moar.lines.size > 0 # rubocop:disable Style/ZeroLengthPredicate
       status = "Lines #{moar.first_line + 1}-"
 
       status += (moar.last_line + 1).to_s
@@ -639,7 +640,7 @@ class Terminal
         (100 * (moar.last_line + 1) / moar.lines.size).floor
       status += " #{percent_displayed}%"
     else
-      status = 'Lines 0-0/0'
+      status = "Lines #{moar.first_line + 1}-#{moar.last_line + 1}"
     end
 
     if moar.first_column > 0
@@ -654,6 +655,10 @@ class Terminal
 
   def draw_screen(moar)
     screen_line = 0
+
+    # Tell our lazy file reader to read all lines needed for this screen, and maybe discover where
+    # the file ends
+    moar.lines[moar.last_line]
 
     # Draw lines
     (moar.first_line..moar.last_line).each do |line_number|
@@ -694,20 +699,31 @@ class Terminal
   end
 end
 
-# The pager logic is in this class; and it's displayed by the Terminal
-# class
-class Moar
-  BUGURL = 'https://github.com/walles/moar/issues'.freeze
+# Load lines, pretend to be an array
+class LinesArray
+  attr_reader :unhandled_line_warning
 
-  attr_reader :lines
-  attr_reader :search_editor
-  attr_reader :mode
-  attr_reader :last_key
-  attr_reader :first_column
-  attr_reader :prefix
+  def initialize(input)
+    @unhandled_line_warning = nil
+    @stream = nil
+    @lines = []
 
-  def add_line(line)
-    lines << AnsiString.new(line.rstrip)
+    if input.is_a? String
+      input.lines.each do |line|
+        _add_line(line)
+      end
+    elsif input.respond_to?(:each_line)
+      @stream = input
+    else
+      # We got an array, used for unit testing
+      input.each do |line|
+        _add_line(line)
+      end
+    end
+  end
+
+  def _add_line(line)
+    @lines << AnsiString.new(line.rstrip)
   rescue => e
     return if @unhandled_line_warning
 
@@ -720,15 +736,67 @@ class Moar
              bytes_dump)
   end
 
+  def [](index)
+    _read_until(index)
+
+    return @lines[index]
+  end
+
+  def _read_until(index)
+    # Already done reading our input stream
+    return if size
+
+    # If index 0 is requested, array size must be 1 and so on...
+    while @lines.size <= index
+      # Read another line from @stream
+      line = @stream.gets
+      if line.nil?
+        # End of stream reached
+        @stream.close
+        @stream = nil
+        break
+      end
+
+      _add_line(line.rstrip)
+    end
+  end
+
+  def size(force_read_all = false)
+    if force_read_all
+      _read_until @lines.size + 1234 while @stream
+    end
+    return @lines.size unless @stream     # Not reading from any stream (any more)
+
+    return @lines.size if @stream.closed? # Done with our stream, no more lines incoming
+    return @lines.size if @stream.eof?    # Stream ended, no more lines incoming
+
+    # Don't know how many more lines there are
+    return nil
+  end
+end
+
+# The pager logic is in this class; and it's displayed by the Terminal
+# class
+class Moar
+  BUGURL = 'https://github.com/walles/moar/issues'.freeze
+
+  attr_reader :lines
+  attr_reader :search_editor
+  attr_reader :mode
+  attr_reader :last_key
+  attr_reader :first_column
+  attr_reader :prefix
+
   def initialize(file, terminal = Terminal.new)
     @view_stack = []
-    @unhandled_line_warning = nil
     @search_editor = LineEditor.new
     @terminal = terminal
     @first_line = 0
     @first_column = 0
     @lines = nil
+
     push_view(file)
+
     @last_key = 0
     @done = false
     @prefix = ''
@@ -740,9 +808,11 @@ class Moar
   end
 
   def first_line
-    # @first_line must not be closer than lines-2 from the end
-    max_first_line = @lines.size - @terminal.lines
-    @first_line = [@first_line, max_first_line].min
+    if @lines.size
+      # @first_line must not be closer than lines-2 from the end
+      max_first_line = @lines.size - @terminal.lines
+      @first_line = [@first_line, max_first_line].min
+    end
 
     # @first_line cannot be negative
     @first_line = [0, @first_line].max
@@ -754,15 +824,19 @@ class Moar
   def last_line(my_first_line = nil)
     my_first_line = first_line unless my_first_line
 
-    # my_first_line must not be closer than lines-2 from the end
-    max_first_line = @lines.size - @terminal.lines
-    my_first_line = [my_first_line, max_first_line].min
+    if @lines.size
+      # my_first_line must not be closer than lines-2 from the end
+      max_first_line = @lines.size - @terminal.lines
+      my_first_line = [my_first_line, max_first_line].min
+    end
 
     # my_first_line cannot be negative
     my_first_line = [0, my_first_line].max
 
     return_me = my_first_line + @terminal.lines - 1
-    return_me = [@lines.size - 1, return_me].min
+    if @lines.size
+      return_me = [@lines.size - 1, return_me].min
+    end
 
     return return_me
   end
@@ -774,7 +848,7 @@ class Moar
   def find_next(direction = :forwards)
     return if @search_editor.empty?
 
-    hit = full_search(@search_editor.regexp, direction)
+    hit = remaining_search(@search_editor.regexp, direction)
     if hit
       show_line(hit)
       @mode = :viewing
@@ -786,23 +860,7 @@ class Moar
   def push_view(text)
     @view_stack << [@lines, first_line] unless @lines.nil?
 
-    if text.is_a? String
-      @lines = []
-      text.lines.each do |line|
-        add_line(line)
-      end
-    elsif text.is_a? Array
-      # We got an array, used for unit testing
-      @lines = []
-      text.each do |line|
-        add_line(line)
-      end
-    else
-      @lines = []
-      text.each_line do |line|
-        add_line(line)
-      end
-    end
+    @lines = LinesArray.new(text)
   end
 
   def pop_view
@@ -914,7 +972,7 @@ eos
       @first_column = 0
       @mode = :viewing
     when '>', 'G'
-      @first_line = (prefix ? prefix - 1 : @lines.size)
+      @first_line = (prefix ? prefix - 1 : @lines.size(true))
       @first_column = 0
       @mode = :viewing
     end
@@ -931,8 +989,8 @@ eos
     end
 
     @search_editor.enter_char(key) unless key.nil?
-    if full_search_required?
-      hit = full_search(@search_editor.regexp)
+    if remaining_search_required?
+      hit = remaining_search(@search_editor.regexp)
       if hit.nil?
         # No hit below, try above
         from = 0
@@ -973,41 +1031,50 @@ eos
   #
   # Returns the line number of the first hit, or nil if nothing was
   # found.
+  #
+  # If last is nil we'll search the whole thing to the end.
   def search_range(first, last, find_me)
-    line_numbers = first.upto(last)
-    if last < first
-      line_numbers = first.downto(last)
-    end
+    increment = 1
+    increment = -1 if last && last < first
 
-    line_numbers.each do |line_number|
-      if @lines[line_number].include?(find_me)
-        return line_number
-      end
-    end
+    line_number = first
+    loop do
+      return nil if line_number < 0
 
-    return nil
+      # Counting down until last, and line number has gone below last
+      return nil if increment == -1 && line_number < last
+
+      # Counting up until last, and line number has gone above last
+      return nil if increment == 1 && last && line_number > last
+
+      line = @lines[line_number]
+
+      # End reached while counting up, not found.
+      #
+      # We know that we're counting up, because only lines after the end of the file will be nil;
+      # and the only way to arrive after the end of the file is by counting up.
+      return nil if line.nil?
+
+      # Found it!
+      return line_number if line.include?(find_me)
+
+      line_number += increment
+    end
   end
 
-  # Search the full document and return the line number of the first
-  # hit, or nil if nothing was found
-  def full_search(find_me, direction = :forwards)
+  # Search the whatever part of the document that's after the currently visible screen, and return
+  # the line number of the first hit, or nil if nothing was found
+  def remaining_search(find_me, direction = :forwards)
     from = nil
     to = nil
 
     if direction == :forwards
-      to = @lines.size - 1
-      if @mode == :notfound
-        from = 0
-      else
-        from = last_line + 1
-        if from >= @lines.size
-          from = @lines.size - 1
-        end
-      end
+      from = (@mode == :notfound) ? 0 : last_line + 1
     else
+      # Backwards
       to = 0
       if @mode == :notfound
-        from = @lines.size - 1
+        from = @lines.size(true) - 1
       else
         from = first_line - 1
         if from < 0
@@ -1019,7 +1086,7 @@ eos
     return search_range(from, to, find_me)
   end
 
-  def full_search_required?
+  def remaining_search_required?
     return false if @search_editor.empty?
     return !search_range(first_line, last_line, @search_editor.regexp)
   end
@@ -1048,7 +1115,7 @@ eos
 
   def warnings
     return_me = Set.new
-    return_me << @unhandled_line_warning if @unhandled_line_warning
+    return_me << @lines.unhandled_line_warning if @lines && @lines.unhandled_line_warning
     return_me.merge(@terminal.warnings)
     return_me.merge(@search_editor.warnings)
 

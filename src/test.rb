@@ -176,6 +176,27 @@ class TestTerminal < Test::Unit::TestCase
   end
 end
 
+# Tests for stream loader
+class TestLinesArray < Test::Unit::TestCase
+  def test_laziness
+    test_me = LinesArray.new(File.open(TEST_DIR + '../sample-files/two-lines.txt', 'r'))
+
+    # Nothing read, size unknown
+    assert_nil(test_me.size)
+
+    # Read first line
+    assert_equal('first line', test_me[0].to_s)
+    assert_nil(test_me.size)
+
+    # Read second / last line
+    assert_equal('second line', test_me[1].to_s)
+    assert_equal(2, test_me.size)
+
+    # Outside the array we should return nil
+    assert_nil(test_me[2])
+  end
+end
+
 # Tests for the pager logic
 class TestMoar < Test::Unit::TestCase
   def test_line_methods
@@ -212,23 +233,23 @@ class TestMoar < Test::Unit::TestCase
     assert_nil(test_me.search_range(0, 0, 'mapa'))
   end
 
-  def test_full_search
+  def test_remaining_search
     # This method assumes the MockTerminal can display two lines
     terminal = MockTerminal.new
     test_me = Moar.new(%w(0 1 2 3 4), terminal)
 
-    assert_equal(2, test_me.full_search('2'))
-    assert(!test_me.full_search('1'))
-    assert_equal(2, test_me.full_search('2'))
+    assert_equal(2, test_me.remaining_search('2'))
+    assert(!test_me.remaining_search('1'))
+    assert_equal(2, test_me.remaining_search('2'))
   end
 
-  def test_full_search_at_bottom
+  def test_remaining_search_at_bottom
     # This method assumes the MockTerminal can display two lines
     terminal = MockTerminal.new
     test_me = Moar.new(%w(0 1), terminal)
 
-    assert_equal(1, test_me.full_search('1'))
-    assert_equal(1, test_me.full_search('1'))
+    assert_nil(test_me.remaining_search('1'))
+    assert_nil(test_me.remaining_search('1', :backwards))
   end
 
   def test_handle_view_keypress_prefix

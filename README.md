@@ -73,10 +73,19 @@ That's all there's to it!
 
 TODO
 ----
+* Read `source-highlight` output as a stream for startup performance reasons.
+  This must work when `source-highlight` fails as well, and when it succeeds on
+  an empty input file.
+
 * Handle search hits to the right of the right screen edge. Searching
   forwards should move first right, then to the left edge and
   down. Searching backwards should move first left, then up and to the
   right edge (if needed for showing search hits).
+
+* When skipping to the end, either while searching or when the user presses '>',
+  try finding the end of the file for at most two seconds, then show wherever we
+  are. Pressing '>' again or searching again should make another attempt until
+  we're actually done.
 
 * Make search work cross color boundaries. Currently, if you have a
   syntax highlighted line and search for something across a color
@@ -97,8 +106,6 @@ TODO
 
 * Auto generate the in-program help text to correctly correspond to
   the actual key bindings.
-
-* Lazy load big / slow streams
 
 * Add search line editing
 
@@ -331,3 +338,5 @@ your default pager.
   re-highlight.
 
 * Make sure "git grep" output gets highlighted properly.
+
+* Lazy load big / slow streams
