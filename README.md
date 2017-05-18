@@ -67,15 +67,18 @@ First, to check version number of the most recent release:
 
 Then, to release the next one:
 * `git tag --annotate <new version>`
+* `rake release`
 * `git push --tags`
+* Go to the
+  [Latest Release Page](https://github.com/walles/moar/releases/latest)
+* Click on `Edit tag`
+* Upload the release file you just built
+* Click `Publish release`
 
 That's all there's to it!
 
 TODO
 ----
-* Add making binaries to the Making a new Release section above. `rake release`
-  perhaps?
-
 * Read `source-highlight` output as a stream for startup performance reasons.
   This must work when `source-highlight` fails as well, and when it succeeds on
   an empty input file.
@@ -343,3 +346,5 @@ your default pager.
 * Make sure "git grep" output gets highlighted properly.
 
 * Lazy load big / slow streams
+
+* Add making binaries to the Making a new Release section above.
