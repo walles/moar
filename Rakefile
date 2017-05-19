@@ -69,10 +69,10 @@ task :release, :version do |_t, args|
   run("git tag --annotate -F #{ANNOTATED_MSG} #{new_version}")
 
   # Make a release build
-  releasefile_name = "#{MYDIR}/moar-#{VERSION}.rb"
+  releasefile_name = "#{MYDIR}/moar-#{new_version}.rb"
   File.open(releasefile_name, 'w') do |releasefile|
     File.open("#{MYDIR}/src/moar.rb").each_line do |line|
-      releasefile.puts(line.sub(/^VERSION *=.*/, "VERSION = '#{VERSION}'"))
+      releasefile.puts(line.sub(/^VERSION *=.*/, "VERSION = '#{new_version}'"))
     end
   end
 
