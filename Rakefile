@@ -66,7 +66,7 @@ task :release, :version do |_t, args|
   run("git log --no-decorate --first-parent #{LAST_TAG}..HEAD --oneline >> #{ANNOTATED_MSG}")
 
   # Make the annotated tag
-  run("git tag --annotate -F #{ANNOTATED_MSG}")
+  run("git tag --annotate -F #{ANNOTATED_MSG} #{new_version}")
 
   # Make a release build
   releasefile_name = "#{MYDIR}/moar-#{VERSION}.rb"
