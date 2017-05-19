@@ -29,25 +29,25 @@ Getting the Latest Version
 --------------------------
 The latest version can be found at
 <https://github.com/walles/moar>, or downloaded by doing
-<pre>
+```
   git clone https://github.com/walles/moar.git
-</pre>
+```
 
 Installing
 ----------
-Install it (in /usr/local/bin) by doing "rake install", or run
-Moar directly from src/moar.rb. Do "rake help" to learn more about how
+Install it (in `/usr/local/bin`) by doing `rake install`, or run
+Moar directly from `src/moar.rb`. Do `rake help` to learn more about how
 Rake can help you with installation.
 
 Setting Moar as Your Default Pager
 ----------------------------------
 Set it as your default pager by adding...
 
-<pre>
+```
   export PAGER=/usr/local/bin/moar
-</pre>
+```
 
-... to your .bashrc.
+... to your `.bashrc`.
 
 Issues
 ------
@@ -56,24 +56,22 @@ you can send questions to <johan.walles@gmail.com>.
 
 Test Suite
 ----------
-The test suite can be run by doing ./src/test.rb. If you have
+The test suite can be run by doing `./src/test.rb`. If you have
 [Rubocop](https://github.com/bbatsov/rubocop) installed it will be run
 as part of the test suite.
 
 Making a new Release
 --------------------
 First, to check version number of the most recent release:
-* `git tag`
+```
+git tag
+```
 
-Then, to release the next one:
-* `git tag --annotate <new version>`
-* `rake release`
-* `git push --tags`
-* Go to the
-  [Latest Release Page](https://github.com/walles/moar/releases/latest)
-* Click on `Edit tag`
-* Upload the release file you just built
-* Click `Publish release`
+Then, to release the next one, do...
+```
+rake release[1.2.3]
+```
+... and follow the instructions.
 
 That's all there's to it!
 
