@@ -25,19 +25,13 @@ Doing the right thing includes:
 * Supports UTF-8 input and output
 * The position in the file is always shown
 
-Getting the Latest Version
---------------------------
-The latest version can be found at
-<https://github.com/walles/moar>, or downloaded by doing
-```
-  git clone https://github.com/walles/moar.git
-```
-
 Installing
 ----------
-Install it (in `/usr/local/bin`) by doing `rake install`, or run
-Moar directly from `src/moar.rb`. Do `rake help` to learn more about how
-Rake can help you with installation.
+* Download `moar.rb` from <https://github.com/walles/moar/releases/latest>
+* `chmod a+x moar-*.rb`
+* `sudo cp moar-*.rb /usr/local/bin/moar`
+
+And now you can just invoke `moar` from the prompt!
 
 Setting Moar as Your Default Pager
 ----------------------------------
@@ -54,9 +48,12 @@ Issues
 Issues are tracked [here](https://github.com/walles/moar/issues), or
 you can send questions to <johan.walles@gmail.com>.
 
-Test Suite
+Developing
 ----------
-The test suite can be run by doing `./src/test.rb`. If you have
+Do `rake` for help with different Rake targets, otherwise just edit
+`src/moar.rb` and run it.
+
+The test suite can be run by doing `rake test`. If you have
 [Rubocop](https://github.com/bbatsov/rubocop) installed it will be run
 as part of the test suite.
 
