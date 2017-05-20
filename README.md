@@ -78,6 +78,10 @@ TODO
   This must work when `source-highlight` fails as well, and when it succeeds on
   an empty input file.
 
+* Make search work cross color boundaries. Currently, if you have a syntax
+  highlighted line and search for something across a color change you won't get
+  any match.
+
 * Handle search hits to the right of the right screen edge. Searching
   forwards should move first right, then to the left edge and
   down. Searching backwards should move first left, then up and to the
@@ -87,10 +91,6 @@ TODO
   try finding the end of the file for at most two seconds, then show wherever we
   are. Pressing '>' again or searching again should make another attempt until
   we're actually done.
-
-* Make search work cross color boundaries. Currently, if you have a
-  syntax highlighted line and search for something across a color
-  change you won't get any match.
 
 * Redefine 'g' without any prefix to prompt for which line to go
   to. This definition makes more sense to me than having to prefix 'g'
