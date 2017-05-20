@@ -94,7 +94,7 @@ Metrics/BlockLength:
   Max: 74
 
 # Johan would like for this check to count comments as contents, but that's not
-# supported in rubocop 0.48.1, and when writing this it's too late in the
-# evening to put a reference to a ticket about it here.
+# supported in rubocop 0.48.1:
+# https://github.com/bbatsov/rubocop/issues/3696
 Lint/EmptyWhen:
   Enabled: false
