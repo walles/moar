@@ -56,13 +56,20 @@ task :release, :version do |_t, args|
   # FIXME: Verify we're on the master branch, releases should come from master
 
   # Generate a message for the new version tag
+  LAST_TAG = run('git describe --tags --abbrev=0').strip.freeze
   ANNOTATED_MSG = '/tmp/ANNOTATED_MSG'.freeze
   File.open(ANNOTATED_MSG, 'w') do |annotated_msg|
     annotated_msg.puts("Release #{new_version}")
     annotated_msg.puts
+
+    changes_message = "Changes since #{LAST_TAG}"
+    annotated_msg.puts(changes_message)
+
+    changes_heading = changes_message.gsub(/./, '-')
+    annotated_msg.puts(changes_heading)
   end
 
-  LAST_TAG = run('git describe --tags --abbrev=0').strip.freeze
+  # Dump changes since last tag into the annotation message
   run("git log --no-decorate --first-parent #{LAST_TAG}..HEAD --oneline >> #{ANNOTATED_MSG}")
 
   # Make the annotated tag
