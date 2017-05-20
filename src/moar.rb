@@ -181,7 +181,7 @@ class AnsiString
         end
 
         n_spaces = 8 - (offset % 8)
-        n_spaces = 8 if n_spaces == 0
+        n_spaces = 8 if n_spaces.zero?
         resolved += ' ' * n_spaces
         offset += n_spaces
       end
@@ -332,7 +332,7 @@ class AnsiString
 
   # Return a substring starting at index start_index
   def substring(start_index)
-    return self if start_index == 0
+    return self if start_index.zero?
 
     string = ''
     seen = 0
@@ -446,7 +446,7 @@ class Terminal
     return nil if byte.nil?
 
     # If it's already a character we assume it's fine
-    return byte unless byte.is_a? Fixnum
+    return byte unless byte.is_a? Integer
 
     # Not within a byte = ncurses special, return unmodified
     return byte if byte < 0

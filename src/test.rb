@@ -202,7 +202,7 @@ class TestMoar < Test::Unit::TestCase
   def test_line_methods
     # This method assumes the MockTerminal can display two lines
     terminal = MockTerminal.new
-    test_me = Moar.new(%w(1 2 3 4), terminal)
+    test_me = Moar.new(%w[1 2 3 4], terminal)
 
     assert_equal(0, test_me.first_line)
     assert_equal(1, test_me.last_line)
@@ -216,7 +216,7 @@ class TestMoar < Test::Unit::TestCase
 
   def test_search_range
     terminal = MockTerminal.new
-    test_me = Moar.new(%w(0 1 2 3 4), terminal)
+    test_me = Moar.new(%w[0 1 2 3 4], terminal)
 
     assert_equal(0, test_me.search_range(0, 4, '0'))
     assert(!test_me.search_range(1, 4, '0'))
@@ -236,7 +236,7 @@ class TestMoar < Test::Unit::TestCase
   def test_remaining_search
     # This method assumes the MockTerminal can display two lines
     terminal = MockTerminal.new
-    test_me = Moar.new(%w(0 1 2 3 4), terminal)
+    test_me = Moar.new(%w[0 1 2 3 4], terminal)
 
     assert_equal(2, test_me.remaining_search('2'))
     assert(!test_me.remaining_search('1'))
@@ -246,7 +246,7 @@ class TestMoar < Test::Unit::TestCase
   def test_remaining_search_at_bottom
     # This method assumes the MockTerminal can display two lines
     terminal = MockTerminal.new
-    test_me = Moar.new(%w(0 1), terminal)
+    test_me = Moar.new(%w[0 1], terminal)
 
     assert_nil(test_me.remaining_search('1'))
     assert_nil(test_me.remaining_search('1', :backwards))
@@ -254,7 +254,7 @@ class TestMoar < Test::Unit::TestCase
 
   def test_handle_view_keypress_prefix
     terminal = MockTerminal.new
-    test_me = Moar.new(%w(0 1), terminal)
+    test_me = Moar.new(%w[0 1], terminal)
 
     assert(test_me.prefix.empty?)
     test_me.handle_view_keypress '5'
@@ -268,7 +268,7 @@ class TestMoar < Test::Unit::TestCase
 
   def test_handle_view_keypress_search
     terminal = MockTerminal.new
-    test_me = Moar.new(%w(0 1), terminal)
+    test_me = Moar.new(%w[0 1], terminal)
 
     search0 = test_me.search_editor
     search0.enter_char('g')
@@ -325,7 +325,7 @@ class TestAnsiString < Test::Unit::TestCase
       tokens << [code, text]
     end
 
-    assert_equal([%w(31m apa)], tokens)
+    assert_equal([%w[31m apa]], tokens)
   end
 
   def test_tokenize_color_middle
@@ -335,7 +335,7 @@ class TestAnsiString < Test::Unit::TestCase
     end
 
     assert_equal([[nil, 'flaska'],
-                  %w(1m apa)], tokens)
+                  %w[1m apa]], tokens)
   end
 
   def test_tokenize_color_end
@@ -354,8 +354,8 @@ class TestAnsiString < Test::Unit::TestCase
       tokens << [code, text]
     end
 
-    assert_equal([%w(1m apa),
-                  %w(2m gris),
+    assert_equal([%w[1m apa],
+                  %w[2m gris],
                   ['3m', '']], tokens)
   end
 
@@ -365,7 +365,7 @@ class TestAnsiString < Test::Unit::TestCase
       tokens << [code, text]
     end
 
-    assert_equal([[nil, 'apa'], ['1m', ''], %w(2m gris)], tokens)
+    assert_equal([[nil, 'apa'], ['1m', ''], %w[2m gris]], tokens)
   end
 
   def highlight(base, search_term)
@@ -549,7 +549,8 @@ class TestAnsiString < Test::Unit::TestCase
 
     assert_equal(
       AnsiString.new("#{ansi}å       ä#{ansi}       #{ansi}ö"),
-      AnsiString.new("#{ansi}å#{TAB}ä#{ansi}#{TAB}#{ansi}ö"))
+      AnsiString.new("#{ansi}å#{TAB}ä#{ansi}#{TAB}#{ansi}ö")
+    )
   end
 end
 
@@ -603,7 +604,7 @@ class TestMain < Test::Unit::TestCase
     #
     # Unknown versions of Moar would be problematic when handling
     # incoming issues.
-    assert(!(VERSION =~ /UNKNOWN/),
+    assert(VERSION !~ /UNKNOWN/,
            'Moar version UNKNOWN, please get your sources using ' \
            "'git clone https://github.com/walles/moar'")
   end
