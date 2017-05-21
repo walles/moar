@@ -957,7 +957,7 @@ eos
     when Curses::Key::RIGHT, 'l'
       @first_column += (prefix ? prefix : 16)
       @mode = :viewing
-    when Curses::Key::LEFT, 'h'
+    when Curses::Key::LEFT
       @first_column -= (prefix ? prefix : 16)
       @first_column = 0 if @first_column < 0
       @mode = :viewing
@@ -968,10 +968,10 @@ eos
       self.last_line = first_line - 1
       @mode = :viewing
     when 'd'
-      @first_line = (first_line + last_line)/2
+      @first_line = (first_line + last_line) / 2
       @mode = :viewing
     when 'u'
-      self.last_line = (first_line + last_line)/2
+      self.last_line = (first_line + last_line) / 2
       @mode = :viewing
     when '<', 'g'
       @first_line = (prefix ? prefix - 1 : 0)
