@@ -884,7 +884,8 @@ Quitting
 Moving around
 -------------
 * Arrow keys
-* PageUp and PageDown
+* PageUp / 'b' and PageDown / 'f'
+* Half page 'u'p / 'd'own
 * Home and End
 * < to go to the start of the document
 * > to go to the end of the document
