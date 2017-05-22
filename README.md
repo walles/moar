@@ -74,10 +74,6 @@ That's all there's to it!
 
 TODO
 ----
-* Read `source-highlight` output as a stream for startup performance reasons.
-  This must work when `source-highlight` fails as well, and when it succeeds on
-  an empty input file.
-
 * Make search work cross color boundaries. Currently, if you have a syntax
   highlighted line and search for something across a color change you won't get
   any match.
@@ -86,6 +82,17 @@ TODO
   forwards should move first right, then to the left edge and
   down. Searching backwards should move first left, then up and to the
   right edge (if needed for showing search hits).
+
+* Auto generate the in-program help text to correctly correspond to
+  the actual key bindings.
+  * If you try to bind the same key to multiple actions, that must be caught by
+    either Rubocop (preferred) or the unit tests.
+  * If you try to bind to an action that doesn't exist, that must be caught by
+    either Rubocop (preferred) or the unit tests.
+
+* Read `source-highlight` output as a stream for startup performance reasons.
+  This must work when `source-highlight` fails as well, and when it succeeds on
+  an empty input file.
 
 * When skipping to the end, either while searching or when the user presses '>',
   try finding the end of the file for at most two seconds, then show wherever we
@@ -104,9 +111,6 @@ TODO
 
 * Support viewing multiple files by pushing them in reverse order on
   the view stack.
-
-* Auto generate the in-program help text to correctly correspond to
-  the actual key bindings.
 
 * Add search line editing
 
