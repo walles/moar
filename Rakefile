@@ -90,8 +90,8 @@ task :release, :version do |_t, args|
   run('git push --tags')
 
   puts 'Now go here...'
-  puts "  https://github.com/walles/moar/releases/#{new_version}"
-  puts '... click on "Edit tag", upload...'
+  puts "  https://github.com/walles/moar/releases/new?tag=#{new_version}"
+  puts '... upload...'
   puts "  #{releasefile_name}"
   puts '... and click "Publish release"'
 end
