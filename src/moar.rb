@@ -1171,11 +1171,11 @@ new terminal windows:
 eos
     end
 
-    if `which source-highlight`.empty?
+    if `which highlight`.empty?
       message += <<eos
 
-To enable syntax highlighting when viewing source code, install GNU
-Source-highlight (http://www.gnu.org/software/src-highlite).
+To enable syntax highlighting when viewing source code, install
+Highlight (http://www.andre-simon.de/zip/download.php).
 eos
     end
 
@@ -1246,8 +1246,30 @@ eos
   end
 end
 
-# Attempt to highlight the file using GNU Source-highlight
+# Attempt to highlight the file
 def highlight(file)
+  return load_through_highlight(file) \
+    || load_through_gnu_source_highlight(file) \
+    || File.open(file, 'r')
+end
+
+# Try highlight: http://www.andre-simon.de/zip/download.php
+def load_through_highlight(file)
+  lines = nil
+  exitcode = nil
+  Open3.popen3('highlight', '--out-format=esc',
+               '-i', file) do |_stdin, stdout, _stderr, wait_thr|
+    lines = stdout.readlines
+    exitcode = wait_thr.value
+  end
+  return lines if exitcode.success?
+  return nil
+rescue
+  return nil
+end
+
+# Try GNU Source Highlight
+def load_through_gnu_source_highlight(file)
   lines = nil
   exitcode = nil
   Open3.popen3('source-highlight', '--out-format=esc',
@@ -1257,10 +1279,9 @@ def highlight(file)
     exitcode = wait_thr.value
   end
   return lines if exitcode.success?
-  return File.open(file, 'r')
+  return nil
 rescue
-  # Source-highlight not installed
-  return File.open(file, 'r')
+  return nil
 end
 
 moar = nil
