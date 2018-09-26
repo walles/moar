@@ -12,7 +12,7 @@ require 'optparse'
 
 MOAR_DIR = Pathname(__FILE__).realpath.dirname
 
-VIEW_HELP = 'Arrows: Move  q: Quit  <, >: Top / Bottom  /: Search  n: Search Next'
+VIEW_HELP = 'Arrows: Move  q: Quit  <, >: Top / Bottom  /: Search  n: Search Next'.freeze
 
 def get_version # rubocop:disable Style/AccessorMethodName
   unless File.directory?("#{MOAR_DIR}/../.git")
@@ -651,7 +651,7 @@ class Terminal
 
     attrset(A_REVERSE)
 
-    status += "  "
+    status += '  '
     space_count = [3, cols - status.length - VIEW_HELP.length - 1].max
     spaces = ' ' * space_count
     status += spaces + VIEW_HELP
