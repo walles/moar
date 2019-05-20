@@ -12,8 +12,6 @@ require "#{TEST_DIR}/moar.rb"
 
 # Tests for the line editor
 class TestLineEditor < Test::Unit::TestCase
-  include Curses
-
   def assert_add(test_me, key, string, cursor_pos, done)
     test_me.enter_char(key)
     assert_equal(string, test_me.string, 'string')

@@ -6,7 +6,6 @@
 
 require 'set'
 require 'open3'
-require 'curses'
 require 'pathname'
 require 'optparse'
 
@@ -59,8 +58,6 @@ end
 # events from Readline while typing so we have to roll our own.
 class LineEditor
   UPPER = /.*[[:upper:]].*/
-
-  include Curses
 
   attr_reader :string
   attr_reader :warnings
@@ -368,8 +365,6 @@ end
 
 # Displays the contents of a Moar instance
 class Terminal
-  include Curses
-
   attr_reader :warnings
 
   def colorized?
