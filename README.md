@@ -85,9 +85,9 @@ TODO
 * Auto generate the in-program help text to correctly correspond to
   the actual key bindings.
   * If you try to bind the same key to multiple actions, that must be caught by
-    either Rubocop (preferred) or the unit tests.
+    the unit tests.
   * If you try to bind to an action that doesn't exist, that must be caught by
-    either Rubocop (preferred) or the unit tests.
+    the unit tests.
 
 * Read `source-highlight` output as a stream for startup performance reasons.
   This must work when `source-highlight` fails as well, and when it succeeds on
