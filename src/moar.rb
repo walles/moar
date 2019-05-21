@@ -8,6 +8,8 @@ require 'set'
 require 'open3'
 require 'pathname'
 require 'optparse'
+
+require 'io/wait'
 require 'io/console'
 
 MOAR_DIR = Pathname(__FILE__).realpath.dirname
@@ -56,16 +58,17 @@ end
 
 class Curses
   class Key
-    F1 = 'F1'.freeze
+    F1 = "\x1bOP".freeze
 
-    UP = 'UP'.freeze
-    DOWN = 'DOWN'.freeze
-    LEFT = 'LEFT'.freeze
-    RIGHT = 'RIGHT'.freeze
+    UP = "\x1b[A".freeze
+    DOWN = "\x1b[B".freeze
+    LEFT = "\x1b[D".freeze
+    RIGHT = "\x1b[C".freeze
 
-    NPAGE = 'NPAGE'.freeze
-    PPAGE = 'PPAGE'.freeze
+    NPAGE = "\x1b[6".freeze
+    PPAGE = "\x1b[5".freeze
 
+    CTRL_C = "\x03".freeze
     RESIZE = 'RESIZE'.freeze
   end
 end
@@ -471,55 +474,11 @@ class Terminal
     testing = !test_input.empty?
     byte = testing ? test_input.shift : STDIN.getch
 
-    return nil if byte.nil?
+    return byte unless byte == "\e"
 
-    # If it's already a character we assume it's fine
-    return byte unless byte.is_a? Integer
+    return byte unless STDIN.ready?
 
-    # Not within a byte = ncurses special, return unmodified
-    return byte if byte < 0
-    return byte if byte > 255
-
-    # ASCII
-    if byte <= 127
-      if byte >= 32 && byte <= 126
-        # For Ruby 1.8 compatibility
-        byte = byte.chr
-      end
-
-      return byte
-    end
-
-    # Find the number of bytes in the sequence
-    size = nil
-    if byte & 0b1110_0000 == 0b1100_0000
-      size = 2
-    elsif byte & 0b1111_0000 == 0b1110_0000
-      size = 3
-    elsif byte & 0b1111_1000 == 0b1111_0000
-      size = 4
-    else
-      @warnings <<
-        "Invalid UTF-8 start byte #{byte} from keyboard"
-      return byte.chr
-    end
-
-    bytes = [byte]
-    (size - 1).times do
-      bytes << (testing ? test_input.shift : getch)
-
-      next if bytes[-1] & 0b1100_0000 == 0b1000_0000
-
-      @warnings <<
-        format('Invalid UTF-8 sequence [%s] from keyboard, ' \
-               'LANG=%s',
-               bytes.map { |b| format('0x%02x', b) }.join(', '),
-               ENV['LANG'])
-
-      return bytes[0].chr
-    end
-
-    return bytes.pack('C*').force_encoding(Encoding::UTF_8)
+    return byte + STDIN.getch + STDIN.getch
   end
 
   def add_search_status(moar)
@@ -536,7 +495,9 @@ class Terminal
 
   def self.split_csicode(csi)
     return [] if csi.nil?
+
     return [''] if csi.length == 1
+
     return csi[0..-2].split(';')
   end
 
@@ -931,7 +892,7 @@ eos
     case key
     when 'q'
       pop_view
-    when 3
+    when Curses::Key::CTRL_C
       # Exit without restoring the screen on ^c
       @done = true
       @dont_restore_screen = true
