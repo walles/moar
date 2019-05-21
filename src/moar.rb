@@ -76,15 +76,15 @@ A_REVERSE = 7
 CSI = "\x1b[".freeze
 
 def attrset(sgi)
-  print("#{CSI}#{sgi}m;")
+  print("#{CSI}#{sgi}m")
 end
 
 def setpos(row, column)
-  print("#{CSI}#{row};#{column}H;")
+  print("#{CSI}#{row};#{column}H")
 end
 
 def clrtoeol()
-  print("#{CSI}K;")
+  print("#{CSI}K")
 end
 
 # Colors are 0-7 as defined here:
@@ -94,7 +94,7 @@ end
 def set_color(foreground, background)
   foreground = 9 if foreground == -1
   background = 9 if background == -1
-  print("#{CSI}3#{foreground};4#{background}m;")
+  print("#{CSI}3#{foreground};4#{background}m")
 end
 
 # Editor for a line of text that can return its contents while
