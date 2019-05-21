@@ -53,6 +53,22 @@ eos
   exit 1
 end
 
+class Curses
+  class Key
+    F1 = 'F1'.freeze
+
+    UP = 'UP'.freeze
+    DOWN = 'DOWN'.freeze
+    LEFT = 'LEFT'.freeze
+    RIGHT = 'RIGHT'.freeze
+
+    NPAGE = 'NPAGE'.freeze
+    PPAGE = 'PPAGE'.freeze
+
+    RESIZE = 'RESIZE'.freeze
+  end
+end
+
 # Editor for a line of text that can return its contents while
 # editing. Needed for incremental search; we can't seem to get any
 # events from Readline while typing so we have to roll our own.
@@ -367,27 +383,14 @@ end
 class Terminal
   attr_reader :warnings
 
-  def colorized?
-    if @colorized.nil?
-      @colorized = Curses.respond_to?('use_default_colors')
-    end
-    return @colorized
-  end
-
   def initialize(testing = false)
     @warnings = Set.new
 
     return if testing
 
     init_screen
-    if colorized?
-      start_color
-      use_default_colors
-    else
-      @warnings <<
-        'Need a newer Ruby version for color support, ' \
-        "currently running Ruby #{RUBY_VERSION}"
-    end
+    start_color
+    use_default_colors
 
     noecho
     stdscr.keypad(true)
