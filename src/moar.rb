@@ -469,7 +469,7 @@ class Terminal
   # https://bugs.ruby-lang.org/issues/9094
   def wide_getch(*test_input)
     testing = !test_input.empty?
-    byte = testing ? test_input.shift : getch
+    byte = testing ? test_input.shift : STDIN.getch
 
     return nil if byte.nil?
 
