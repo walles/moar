@@ -8,6 +8,7 @@ require 'set'
 require 'open3'
 require 'pathname'
 require 'optparse'
+require 'io/console'
 
 MOAR_DIR = Pathname(__FILE__).realpath.dirname
 
@@ -414,16 +415,16 @@ class Terminal
   def init_screen()
     # FIXME: Clear screen
 
-    # FIXME: Disable echo (call stty?)
+    # FIXME: Disable echo (STDIN.echo = false)
 
-    # FIXME: Raw terminal mode (call stty?)
+    # FIXME: Raw terminal mode (STDIN.raw!)
 
   end
 
   def close_screen()
-    # FIXME: Enable echo (call stty?)
+    # FIXME: Enable echo (STDIN.echo = true)
 
-    # FIXME: Cooked terminal mode (call stty?)
+    # FIXME: Cooked terminal mode (STDIN.cooked!)
 
   end
 
@@ -456,12 +457,12 @@ class Terminal
   # This is generally the number of actual screen lines minus one for
   # the status line.
   def lines
-    return `stty size`.split[1].to_i - 1
+    return STDIN.winsize[0] - 1
   end
 
   # Number of screen columns
   def cols
-    return `stty size`.split[0].to_i - 1
+    return STDIN.winsize[1]
   end
 
   # This method is a workaround for
