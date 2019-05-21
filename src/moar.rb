@@ -383,18 +383,28 @@ end
 class Terminal
   attr_reader :warnings
 
+  def init_screen()
+    # FIXME: Clear screen
+
+    # FIXME: Disable echo (call stty?)
+
+    # FIXME: Raw terminal mode (call stty?)
+
+  end
+
+  def close_screen()
+    # FIXME: Enable echo (call stty?)
+
+    # FIXME: Cooked terminal mode (call stty?)
+
+  end
+
   def initialize(testing = false)
     @warnings = Set.new
 
     return if testing
 
     init_screen
-    start_color
-    use_default_colors
-
-    noecho
-    stdscr.keypad(true)
-    raw
 
     @color_pairs = {}
     @next_color_pair_number = 1
@@ -434,7 +444,7 @@ class Terminal
   # This is generally the number of actual screen lines minus one for
   # the status line.
   def lines
-    return super - 1
+    return `stty size`.split[1].to_i - 1
   end
 
   # This method is a workaround for
