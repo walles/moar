@@ -69,6 +69,34 @@ class Curses
   end
 end
 
+# From: https://en.wikipedia.org/wiki/ANSI_escape_code#SGR_parameters
+A_NORMAL = 0
+A_REVERSE = 7
+
+CSI = "\x1b[".freeze
+
+def attrset(sgi)
+  print("#{CSI}#{sgi}m;")
+end
+
+def setpos(row, column)
+  print("#{CSI}#{row};#{column}H;")
+end
+
+def clrtoeol()
+  print("#{CSI}K;")
+end
+
+# Colors are 0-7 as defined here:
+# https://en.wikipedia.org/wiki/ANSI_escape_code#3/4_bit
+#
+# Or -1 for "default"
+def set_color(foreground, background)
+  foreground = 9 if foreground == -1
+  background = 9 if background == -1
+  print("#{CSI}3#{foreground};4#{background}m;")
+end
+
 # Editor for a line of text that can return its contents while
 # editing. Needed for incremental search; we can't seem to get any
 # events from Readline while typing so we have to roll our own.
@@ -405,22 +433,6 @@ class Terminal
     return if testing
 
     init_screen
-
-    @color_pairs = {}
-    @next_color_pair_number = 1
-  end
-
-  def get_color_pair(foreground, background)
-    pair = @color_pairs[[foreground, background]]
-    unless pair
-      pair = @next_color_pair_number
-      @next_color_pair_number += 1
-
-      init_pair(pair, foreground, background)
-      @color_pairs[[foreground, background]] = pair
-    end
-
-    return color_pair(pair)
   end
 
   def close(dont_restore_screen)
@@ -445,6 +457,11 @@ class Terminal
   # the status line.
   def lines
     return `stty size`.split[1].to_i - 1
+  end
+
+  # Number of screen columns
+  def cols
+    return `stty size`.split[0].to_i - 1
   end
 
   # This method is a workaround for
@@ -507,13 +524,13 @@ class Terminal
   def add_search_status(moar)
     attrset(A_NORMAL)
     status = "/#{moar.search_editor.string}"
-    addstr(status)
+    print(status)
   end
 
   def add_notfound_status(moar)
     status = "Not found: #{moar.search_editor.string}"
     attrset(A_REVERSE)
-    addstr(status)
+    print(status)
   end
 
   def self.split_csicode(csi)
@@ -563,40 +580,12 @@ class Terminal
             attroff(A_UNDERLINE)
           when 27
             attroff(A_REVERSE)
-          when 30
-            foreground = COLOR_BLACK
-          when 31
-            foreground = COLOR_RED
-          when 32
-            foreground = COLOR_GREEN
-          when 33
-            foreground = COLOR_YELLOW
-          when 34
-            foreground = COLOR_BLUE
-          when 35
-            foreground = COLOR_MAGENTA
-          when 36
-            foreground = COLOR_CYAN
-          when 37
-            foreground = COLOR_WHITE
+          when 30..37
+            foreground = csi_code - 30
           when 39
             foreground = -1
-          when 40
-            background = COLOR_BLACK
-          when 41
-            background = COLOR_RED
-          when 42
-            background = COLOR_GREEN
-          when 43
-            background = COLOR_YELLOW
-          when 44
-            background = COLOR_BLUE
-          when 45
-            background = COLOR_MAGENTA
-          when 46
-            background = COLOR_CYAN
-          when 47
-            background = COLOR_WHITE
+          when 40..47
+            background = csi_code - 40
           when 49
             background = -1
           else
@@ -605,16 +594,14 @@ class Terminal
         end
       end
 
-      if colorized?
-        if foreground != old_foreground || background != old_background
-          attron(get_color_pair(foreground, background))
+      if foreground != old_foreground || background != old_background
+        set_color(foreground, background)
 
-          old_foreground = foreground
-          old_background = background
-        end
+        old_foreground = foreground
+        old_background = background
       end
 
-      addstr(text)
+      print(text)
 
       printed_chars += text.length
       break if printed_chars > cols
@@ -625,13 +612,13 @@ class Terminal
     if printed_chars > cols
       setpos(screen_line, cols - 1)
       attrset(A_REVERSE)
-      addstr('>')
+      print('>')
     end
 
     if moar.first_column > 0
       setpos(screen_line, 0)
       attrset(A_REVERSE)
-      addstr('<')
+      print('<')
     end
   end
 
@@ -664,7 +651,7 @@ class Terminal
     spaces = ' ' * space_count
     status += spaces + VIEW_HELP
 
-    addstr(status)
+    print(status)
   end
 
   def draw_screen(moar)
@@ -685,7 +672,7 @@ class Terminal
       setpos(screen_line, 0)
       clrtoeol
       attrset(A_REVERSE)
-      addstr('---')
+      print('---')
       screen_line += 1
     end
 
