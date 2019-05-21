@@ -696,7 +696,7 @@ class Terminal
       abort("ERROR: Unsupported mode of operation <#{@mode}>")
     end
 
-    refresh
+    $stdout.flush
   end
 end
 
