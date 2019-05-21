@@ -75,8 +75,8 @@ A_REVERSE = 7
 
 CSI = "\x1b[".freeze
 
-def attrset(sgi)
-  print("#{CSI}#{sgi}m")
+def attrset(sgi, stream = $stdout)
+  stream.print("#{CSI}#{sgi}m")
 end
 
 def setpos(row, column)
@@ -1360,6 +1360,12 @@ Unknown version, please run from Git and / or use 'rake'
 to install. Try "git clone https://github.com/walles/moar"
 or see http://github.com/walles/moar for more info.
 eos
+  end
+
+  if crash || !warnings.empty?
+    attrset(A_NORMAL, $stderr)
+    $stderr.puts
+    $stderr.puts
   end
 
   warnings.sort.each do |warning|
