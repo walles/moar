@@ -806,7 +806,7 @@ class Moar
     # Mode can be :viewing and :searching
     @mode = :viewing
   ensure
-    @mode == :viewing || @terminal.respond_to?('close') && @terminal.close
+    @mode == :viewing || @terminal.close
   end
 
   def first_line
