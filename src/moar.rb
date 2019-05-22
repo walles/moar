@@ -418,17 +418,13 @@ class Terminal
   def init_screen()
     # FIXME: Clear screen
 
-    # FIXME: Disable echo (STDIN.echo = false)
-
-    # FIXME: Raw terminal mode (STDIN.raw!)
-
+    STDIN.echo = false
+    STDIN.raw!
   end
 
   def close_screen()
-    # FIXME: Enable echo (STDIN.echo = true)
-
-    # FIXME: Cooked terminal mode (STDIN.cooked!)
-
+    STDIN.echo = true
+    STDIN.cooked!
   end
 
   def initialize(testing = false)
