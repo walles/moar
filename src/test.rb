@@ -609,6 +609,3 @@ class TestMain < Test::Unit::TestCase
            "'git clone https://github.com/walles/moar'")
   end
 end
-
-# Run Rubocop if available and fail on errors
-exit 1 if system('rubocop', :chdir => TEST_DIR) == false

@@ -14,7 +14,7 @@ MOAR_DIR = Pathname(__FILE__).realpath.dirname
 
 VIEW_HELP = 'Arrows: Move  q: Quit  <, >: Top / Bottom  /: Search  n: Search Next'.freeze
 
-def get_version # rubocop:disable Style/AccessorMethodName
+def get_version
   unless File.directory?("#{MOAR_DIR}/../.git")
     return 'UNKNOWN'
   end
@@ -239,7 +239,7 @@ class AnsiString
           want_bold = true
         when '_'
           want_underline = true
-        else # rubocop:disable Style/EmptyElse
+        else
           # FIXME: Warn about this case
         end
       end
@@ -515,7 +515,7 @@ class Terminal
   end
 
   # Draw another line of text on the screen
-  def add_line(moar, screen_line, line) # rubocop:disable Metrics/AbcSize
+  def add_line(moar, screen_line, line)
     attrset(A_NORMAL)
     setpos(screen_line, 0)
     clrtoeol
@@ -631,7 +631,7 @@ class Terminal
     status = nil
     if !moar.prefix.empty?
       status = ':' + moar.prefix
-    elsif moar.lines.size && moar.lines.size > 0 # rubocop:disable Style/ZeroLengthPredicate
+    elsif moar.lines.size && moar.lines.size > 0
       status = "Lines #{moar.first_line + 1}-"
 
       status += (moar.last_line + 1).to_s
@@ -920,7 +920,7 @@ Put the following line in your .bashrc or .bash_profile:
 eos
   end
 
-  def handle_view_keypress(key) # rubocop: disable Metrics/AbcSize
+  def handle_view_keypress(key)
     if ('0'..'9').cover?(key)
       @prefix += key
       return

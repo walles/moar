@@ -53,9 +53,7 @@ Developing
 Do `rake` for help with different Rake targets, otherwise just edit
 `src/moar.rb` and run it.
 
-The test suite can be run by doing `rake test`. If you have
-[Rubocop](https://github.com/bbatsov/rubocop) installed it will be run
-as part of the test suite.
+The test suite can be run by doing `rake test`.
 
 Making a new Release
 --------------------
