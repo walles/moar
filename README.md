@@ -27,6 +27,7 @@ Doing the right thing includes:
 
 Installing
 ----------
+* `gem install curses || sudo gem install curses`
 * Download `moar.rb` from <https://github.com/walles/moar/releases/latest>
 * `chmod a+x moar-*.rb`
 * `sudo cp moar-*.rb /usr/local/bin/moar`
