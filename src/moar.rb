@@ -468,17 +468,19 @@ class Terminal
     return STDIN.winsize[1]
   end
 
-  # This method is a workaround for
-  # https://bugs.ruby-lang.org/issues/9094
-  def wide_getch(*test_input)
-    testing = !test_input.empty?
-    byte = testing ? test_input.shift : STDIN.getch
+  # Await user kepress and return it
+  #
+  # Returns UTF-8 or escape sequences.
+  #
+  # Try the test-getch.rb script in this repo for interactive experimentation.
+  def wide_getch()
+    char = STDIN.getch
 
-    return byte unless byte == "\e"
+    return char unless char == "\e"
 
-    return byte unless STDIN.ready?
+    return char unless STDIN.ready?
 
-    return byte + STDIN.getch + STDIN.getch
+    return char + STDIN.getch + STDIN.getch
   end
 
   def add_search_status(moar)

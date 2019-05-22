@@ -117,33 +117,6 @@ end
 
 # Tests for terminal functionality
 class TestTerminal < Test::Unit::TestCase
-  def test_wide_getch
-    # Make sure we don't break anything
-    assert_equal(Curses::Key::RESIZE,
-                 Terminal.new(true).wide_getch(Curses::Key::RESIZE))
-    assert_equal(Curses::Key::NPAGE,
-                 Terminal.new(true).wide_getch(Curses::Key::NPAGE))
-    assert_equal(10, Terminal.new(true).wide_getch(10))
-    assert_equal(127, Terminal.new(true).wide_getch(127))
-    assert_nil(Terminal.new(true).wide_getch(nil))
-
-    # Single byte UTF-8
-    assert_equal('k', Terminal.new(true).wide_getch('k'))
-    assert_equal('k', Terminal.new(true).wide_getch(107))
-
-    # Two byte UTF-8
-    assert_equal(Encoding::UTF_8,
-                 Terminal.new(true).wide_getch(0xc3, 0xa4).encoding)
-    assert_equal('ä', Terminal.new(true).wide_getch(0xc3, 0xa4))
-
-    # Three byte UTF-8
-    assert_equal('€', Terminal.new(true).wide_getch(226, 130, 172))
-
-    # Four byte UTF-8
-    assert_equal('😉',
-                 Terminal.new(true).wide_getch(0xf0, 0x9f, 0x98, 0x89))
-  end
-
   # Test that some bogus getch input renders a certain warning
   def assert_wide_getch_warning(expected_warning, *bytes)
     test_me = Terminal.new(true)
@@ -153,17 +126,6 @@ class TestTerminal < Test::Unit::TestCase
     warning = test_me.warnings.to_a[0]
     assert(warning.include?(expected_warning),
            "Should include <#{expected_warning}>: #{warning}")
-  end
-
-  def test_wide_getch_invalid_input
-    assert_wide_getch_warning('start byte 255 from keyboard',
-                              255)
-    assert_wide_getch_warning('[0xc3, 0xff] from keyboard',
-                              0xc3, 255)
-    assert_wide_getch_warning('[0xe2, 0x82, 0xff] from keyboard',
-                              226, 130, 255)
-    assert_wide_getch_warning('[0xf0, 0x9f, 0x98, 0xff] from keyboard',
-                              0xf0, 0x9f, 0x98, 0xff)
   end
 
   def test_split_csicode
