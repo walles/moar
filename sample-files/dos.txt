@@ -1,0 +1,75 @@
+     1	#!/usr/bin/ruby
+     2
+     3	require "curses"
+     4
+     5	class Moar
+     6	  include Curses
+     7
+     8	  def initialize(file)
+     9	    @first_line = 0
+    10	    @file = file
+    11	    @lines = IO.readlines(file)
+    12	    @last_key = 0
+    13	  end
+    14
+    15	  def draw_screen()
+    16	    # @first_line must not be closer than lines-2 from the end
+    17	    max_first_line = @lines.size - (lines - 1)
+    18	    @first_line = [@first_line, max_first_line].min()
+    19
+    20	    # @first_line cannot be negative
+    21	    @first_line = [0, @first_line].max()
+    22
+    23	    clear()
+    24	    setpos(0, 0)
+    25
+    26	    attrset(A_NORMAL)
+    27	    last_line = @first_line + lines - 2
+    28	    for line_number in @first_line..last_line do
+    29	      if line_number < @lines.size
+    30	        addstr(@lines[line_number])
+    31	      else
+    32	        addstr("~\n")
+    33	      end
+    34	    end
+    35
+    36	    attrset(A_REVERSE)
+    37	    status = "Lines #{@first_line + 1}-"
+    38	    status += "#{[@lines.size, last_line].min()}"
+    39	    status += "/#{@lines.size}"
+    40	    addstr(status)
+    41
+    42	    refresh()
+    43	  end
+    44
+    45	  def run
+    46	    init_screen
+    47	    noecho
+    48	    stdscr.keypad(true)
+    49
+    50	    begin
+    51	      crmode
+    52	      while true
+    53	        draw_screen()
+    54
+    55	        key = getch()
+    56	        case key
+    57	        when ?q.ord
+    58	          break
+    59	        when Key::RESIZE
+    60	          draw_screen()
+    61	        when Key::DOWN
+    62	          @first_line += 1
+    63	        when Key::UP
+    64	          @first_line -= 1
+    65	        end
+    66
+    67	        @last_key = key
+    68	      end
+    69	    ensure
+    70	      close_screen
+    71	    end
+    72	  end
+    73	end
+    74
+    75	Moar.new(ARGV[0]).run()

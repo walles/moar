@@ -1,0 +1,11 @@
+Run options: 
+
+# Running tests:
+
+...................[?1049h[1;24r(B[m[4l[?7h[39;49m[?1h=.
+
+Finished tests in 0.006124s, 3265.8393 tests/s, 10940.5617 assertions/s.
+
+20 tests, 67 assertions, 0 failures, 0 errors, 0 skips
+
+ruby -v: ruby 2.0.0p247 (2013-06-27 revision 41674) [universal.x86_64-darwin13]
