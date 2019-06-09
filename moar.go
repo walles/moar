@@ -16,6 +16,11 @@ func main() {
 		os.Exit(0)
 	}
 
+	if stdinIsRedirected && !stdoutIsRedirected {
+		// FIXME: Display input pipe contents
+		os.Exit(0)
+	}
+
 	// FIXME: Support --help
 
 	// FIXME: Support --version
@@ -26,7 +31,6 @@ func main() {
 		os.Exit(1)
 	}
 
-	// FIXME: If first arg is a file name and stdout is a non-TTY, pump file onto stdout
 	if stdoutIsRedirected {
 		input, err := os.Open(os.Args[1])
 		if err != nil {
@@ -34,6 +38,10 @@ func main() {
 			os.Exit(1)
 		}
 
+		// Copy input file to redirected stdout
 		io.Copy(os.Stdout, input)
+		os.Exit(0)
 	}
+
+	// FIXME: Display the input file contents
 }
