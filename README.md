@@ -54,14 +54,11 @@ you can send questions to <johan.walles@gmail.com>.
 Developing
 ----------
 
-Build + run:
+Build + test + run:
 
 ```bash
-go build
-./moar
+./moar.sh
 ```
-
-FIXME: Go test instructions
 
 Making a new Release
 --------------------
