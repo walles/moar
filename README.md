@@ -54,10 +54,16 @@ you can send questions to <johan.walles@gmail.com>.
 Developing
 ----------
 
-Build + test + run:
+Build+ run:
 
 ```bash
 ./moar.sh
+```
+
+Run integration tests:
+
+```bash
+./test.sh
 ```
 
 Making a new Release
