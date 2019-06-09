@@ -28,7 +28,7 @@ Doing the right thing includes:
 Installing
 ----------
 
-FIXME: Go install instructions
+FIXME: End-user install instructions for the Go-built product
 
 ...
 
@@ -54,7 +54,12 @@ you can send questions to <johan.walles@gmail.com>.
 Developing
 ----------
 
-FIXME: Go build instructions
+Build + run:
+
+```bash
+go build
+./moar
+```
 
 FIXME: Go test instructions
 
@@ -65,6 +70,7 @@ FIXME: Go release instructions
 
 TODO
 ----
+
 * Make search work cross color boundaries. Currently, if you have a syntax
   highlighted line and search for something across a color change you won't get
   any match.
@@ -121,9 +127,9 @@ TODO
 
 * Enable up / down using the mouse wheel.
 
-
 DONE
 ----
+
 * Enable exiting using q (restores screen)
 
 * Handle the terminal window getting resized.
@@ -200,9 +206,9 @@ DONE
   let's see how that goes.
 
 * Enable displaying colorized output from "git diff"
- * Arrow down through the whole file, then arrow up again
- * Page down through the whole file, then page up again
- * Search highlighting
+  * Arrow down through the whole file, then arrow up again
+  * Page down through the whole file, then page up again
+  * Search highlighting
 
 * Use the same algorithm for highlighting as for determining which
   lines match.
@@ -226,20 +232,20 @@ DONE
 * Warn about any unhandled keypresses during search.
 
 * Enable displaying a man page
- * Arrow down through the whole file, then arrow up again
- * Page down through the whole file, then page up again
- * Search highlighting
+  * Arrow down through the whole file, then arrow up again
+  * Page down through the whole file, then page up again
+  * Search highlighting
 
 * Make sure we get the line length right even with unicode characters
   present in the lines.  Verify by looking at where the truncation
   markers end up.
 
 * Make sure we can search for unicode characters
- * Work around
- [the issue with getch not returning unicode chars](https://bugs.ruby-lang.org/issues/9094)
+  * Work around
+  [the issue with getch not returning unicode chars](https://bugs.ruby-lang.org/issues/9094)
 
- * Work around
- [the issue with Regexp.quote() returning non-unicode strings](https://bugs.ruby-lang.org/issues/9096)
+  * Work around
+  [the issue with Regexp.quote() returning non-unicode strings](https://bugs.ruby-lang.org/issues/9096)
 
 * Warn but don't crash if we get an invalid UTF-8 sequence from
   getch() in wide_getch().
