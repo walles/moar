@@ -14,6 +14,7 @@ func main() {
 	stdoutIsRedirected := !terminal.IsTerminal(int(os.Stdout.Fd()))
 	if stdinIsRedirected && stdoutIsRedirected {
 		io.Copy(os.Stdout, os.Stdin)
+		os.Exit(0)
 	}
 
 	if len(os.Args) != 2 {
@@ -23,5 +24,11 @@ func main() {
 	}
 
 	// FIXME: If first arg is a file name and stdout is a non-TTY, pump file onto stdout
+	if stdoutIsRedirected {
+		input, _ := os.Open(os.Args[1])
 
+		// FIXME: Handle any errors
+
+		io.Copy(os.Stdout, input)
+	}
 }

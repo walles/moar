@@ -15,3 +15,6 @@ for TEST in integration-tests/*.sh ; do
     echo "Executing: $(basename "$TEST")..."
     "$TEST"
 done
+
+echo
+echo "All tests passed!"
