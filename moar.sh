@@ -4,8 +4,8 @@ set -e -o pipefail
 
 rm -f moar
 
-go test
+go test 1>&2
 
-go build
+go build 1>&2
 
 ./moar "$@"
