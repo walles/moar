@@ -37,6 +37,7 @@ func main() {
 			fmt.Fprintf(os.Stderr, "ERROR: %s\n", err)
 			os.Exit(1)
 		}
+		defer input.Close()
 
 		// Copy input file to redirected stdout
 		io.Copy(os.Stdout, input)
