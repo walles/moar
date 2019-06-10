@@ -1,9 +1,9 @@
-package reader
+package m
 
 import (
+	"bufio"
 	"io"
 	"os"
-	"bufio"
 )
 
 // Reads a file into an array of strings.
@@ -13,12 +13,13 @@ import (
 // request.
 //
 // This package should provide query methods for the struct, no peeking!!
-
 type _Reader struct {
 	lines []string
+	name  string
 }
 
-func NewReader(r io.Reader) (*_Reader, error) {
+// NewReaderFromStream creates a new stream reader
+func NewReaderFromStream(r io.Reader) (*_Reader, error) {
 	scanner := bufio.NewScanner(os.Stdin)
 	var lines []string
 	for scanner.Scan() {
@@ -31,4 +32,14 @@ func NewReader(r io.Reader) (*_Reader, error) {
 	return &_Reader{
 		lines: lines,
 	}, nil
+}
+
+// NewReaderFromFilename creates a new file reader
+func NewReaderFromFilename(filename string) (*_Reader, error) {
+	stream, err := os.Open(filename)
+	if err != nil {
+		return nil, err
+	}
+
+	return NewReaderFromStream(stream)
 }

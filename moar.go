@@ -5,6 +5,8 @@ import (
 	"io"
 	"os"
 
+	"github.com/walles/moar/m"
+
 	"golang.org/x/crypto/ssh/terminal"
 )
 
@@ -17,7 +19,10 @@ func main() {
 	}
 
 	if stdinIsRedirected && !stdoutIsRedirected {
-		// FIXME: Display input pipe contents
+		// Display input pipe contents
+		reader, _ := m.NewReaderFromStream(os.Stdin) // FIXME: Error handling
+		m.NewPager(*reader).StartPaging()
+
 		os.Exit(0)
 	}
 
@@ -44,5 +49,7 @@ func main() {
 		os.Exit(0)
 	}
 
-	// FIXME: Display the input file contents
+	// Display the input file contents
+	reader, _ := m.NewReaderFromFilename(os.Args[1]) // FIXME: Error handling
+	m.NewPager(*reader).StartPaging()
 }
