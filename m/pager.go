@@ -11,12 +11,14 @@ import (
 type _Pager struct {
 	reader _Reader
 	screen tcell.Screen
+	quit   chan struct{}
 }
 
 // NewPager creates a new Pager
 func NewPager(r _Reader) *_Pager {
 	return &_Pager{
 		reader: r,
+		quit:   make(chan struct{}),
 	}
 }
 
@@ -37,6 +39,10 @@ func (p *_Pager) _Redraw() {
 	p.screen.Sync()
 }
 
+func (p *_Pager) _Quit() {
+	close(p.quit)
+}
+
 // StartPaging brings up the pager on screen
 func (p *_Pager) StartPaging() {
 	// This function initially inspired by
@@ -46,14 +52,12 @@ func (p *_Pager) StartPaging() {
 		fmt.Fprintf(os.Stderr, "%v\n", e)
 		os.Exit(1)
 	}
-	p.screen = s
 
 	if e = s.Init(); e != nil {
 		fmt.Fprintf(os.Stderr, "%v\n", e)
 		os.Exit(1)
 	}
-
-	quit := make(chan struct{})
+	p.screen = s
 
 	// Main loop
 	go func() {
@@ -66,8 +70,7 @@ func (p *_Pager) StartPaging() {
 			case *tcell.EventKey:
 				switch ev.Key() {
 				case tcell.KeyEscape, tcell.KeyEnter:
-					close(quit)
-					return
+					p._Quit()
 				case tcell.KeyCtrlL:
 					s.Sync()
 				}
@@ -77,7 +80,7 @@ func (p *_Pager) StartPaging() {
 		}
 	}()
 
-	<-quit
+	<-p.quit
 
 	s.Fini()
 }
