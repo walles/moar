@@ -10,6 +10,7 @@ import (
 // Pager is the main on-screen pager
 type _Pager struct {
 	reader _Reader
+	screen tcell.Screen
 }
 
 // NewPager creates a new Pager
@@ -19,21 +20,21 @@ func NewPager(r _Reader) *_Pager {
 	}
 }
 
-func _AddFooter(s tcell.Screen) {
-	_, height := s.Size()
+func (p *_Pager) _AddFooter() {
+	_, height := p.screen.Size()
 
 	for pos, char := range "Press ESC / Return to exit" {
-		s.SetContent(pos, height-1, char, nil, tcell.StyleDefault)
+		p.screen.SetContent(pos, height-1, char, nil, tcell.StyleDefault)
 	}
 }
 
-func _Redraw(s tcell.Screen) {
-	s.Clear()
+func (p *_Pager) _Redraw() {
+	p.screen.Clear()
 
 	// FIXME: Ask our reader for lines and draw them
 
-	_AddFooter(s)
-	s.Sync()
+	p._AddFooter()
+	p.screen.Sync()
 }
 
 // StartPaging brings up the pager on screen
@@ -45,6 +46,7 @@ func (p *_Pager) StartPaging() {
 		fmt.Fprintf(os.Stderr, "%v\n", e)
 		os.Exit(1)
 	}
+	p.screen = s
 
 	if e = s.Init(); e != nil {
 		fmt.Fprintf(os.Stderr, "%v\n", e)
@@ -57,7 +59,7 @@ func (p *_Pager) StartPaging() {
 	go func() {
 		s.Show()
 		for {
-			_Redraw(s)
+			p._Redraw()
 
 			ev := s.PollEvent()
 			switch ev := ev.(type) {
