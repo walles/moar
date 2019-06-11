@@ -19,6 +19,23 @@ func NewPager(r _Reader) *_Pager {
 	}
 }
 
+func _AddFooter(s tcell.Screen) {
+	_, height := s.Size()
+
+	for pos, char := range "Press ESC / Return to exit" {
+		s.SetContent(pos, height-1, char, nil, tcell.StyleDefault)
+	}
+}
+
+func _Redraw(s tcell.Screen) {
+	s.Clear()
+
+	// FIXME: Ask our reader for lines and draw them
+
+	_AddFooter(s)
+	s.Sync()
+}
+
 // StartPaging brings up the pager on screen
 func (p *_Pager) StartPaging() {
 	// This function initially inspired by
@@ -36,15 +53,12 @@ func (p *_Pager) StartPaging() {
 
 	quit := make(chan struct{})
 
-	s.Clear()
-	for pos, char := range "Press ESC / Return to exit" {
-		s.SetContent(5+pos, 5, char, nil, tcell.StyleDefault)
-	}
-	s.Show()
-
 	// Main loop
 	go func() {
+		s.Show()
 		for {
+			_Redraw(s)
+
 			ev := s.PollEvent()
 			switch ev := ev.(type) {
 			case *tcell.EventKey:
