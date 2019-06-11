@@ -43,6 +43,13 @@ func (p *_Pager) _Quit() {
 	close(p.quit)
 }
 
+func (p *_Pager) _OnKey(key tcell.Key) {
+	switch key {
+	case tcell.KeyEscape, tcell.KeyEnter:
+		p._Quit()
+	}
+}
+
 // StartPaging brings up the pager on screen
 func (p *_Pager) StartPaging() {
 	// This function initially inspired by
@@ -70,14 +77,10 @@ func (p *_Pager) StartPaging() {
 			ev := s.PollEvent()
 			switch ev := ev.(type) {
 			case *tcell.EventKey:
-				switch ev.Key() {
-				case tcell.KeyEscape, tcell.KeyEnter:
-					p._Quit()
-				case tcell.KeyCtrlL:
-					s.Sync()
-				}
+				p._OnKey(ev.Key())
+
 			case *tcell.EventResize:
-				s.Sync()
+				// We'll be implicitly redrawn just by taking another lap in the loop
 			}
 		}
 	}()
