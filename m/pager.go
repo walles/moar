@@ -57,6 +57,8 @@ func (p *_Pager) StartPaging() {
 		fmt.Fprintf(os.Stderr, "%v\n", e)
 		os.Exit(1)
 	}
+	defer s.Fini()
+
 	p.screen = s
 
 	// Main loop
@@ -81,6 +83,4 @@ func (p *_Pager) StartPaging() {
 	}()
 
 	<-p.quit
-
-	s.Fini()
 }
