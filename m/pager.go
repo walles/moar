@@ -25,7 +25,7 @@ func NewPager(r _Reader) *_Pager {
 func (p *_Pager) _AddFooter() {
 	_, height := p.screen.Size()
 
-	for pos, char := range "Press ESC / Return to exit" {
+	for pos, char := range "Press ESC / Return / q to exit" {
 		p.screen.SetContent(pos, height-1, char, nil, tcell.StyleDefault)
 	}
 }
@@ -46,6 +46,13 @@ func (p *_Pager) _Quit() {
 func (p *_Pager) _OnKey(key tcell.Key) {
 	switch key {
 	case tcell.KeyEscape, tcell.KeyEnter:
+		p._Quit()
+	}
+}
+
+func (p *_Pager) _OnRune(char rune) {
+	switch char {
+	case 'q':
 		p._Quit()
 	}
 }
@@ -77,7 +84,11 @@ func (p *_Pager) StartPaging() {
 			ev := s.PollEvent()
 			switch ev := ev.(type) {
 			case *tcell.EventKey:
-				p._OnKey(ev.Key())
+				if ev.Key() == tcell.KeyRune {
+					p._OnRune(ev.Rune())
+				} else {
+					p._OnKey(ev.Key())
+				}
 
 			case *tcell.EventResize:
 				// We'll be implicitly redrawn just by taking another lap in the loop
