@@ -13,6 +13,6 @@ func NewPager(r _Reader) *Pager {
 }
 
 // StartPaging brings up the pager on screen
-func StartPaging(p *Pager) {
+func (p *Pager) StartPaging() {
 
 }
