@@ -19,8 +19,8 @@ type _Reader struct {
 }
 
 // NewReaderFromStream creates a new stream reader
-func NewReaderFromStream(r io.Reader) (*_Reader, error) {
-	scanner := bufio.NewScanner(os.Stdin)
+func NewReaderFromStream(reader io.Reader) (*_Reader, error) {
+	scanner := bufio.NewScanner(reader)
 	var lines []string
 	for scanner.Scan() {
 		lines = append(lines, scanner.Text())
