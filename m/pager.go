@@ -1,18 +1,18 @@
 package m
 
 // Pager is the main on-screen pager
-type Pager struct {
+type _Pager struct {
 	reader _Reader
 }
 
 // NewPager creates a new Pager
-func NewPager(r _Reader) *Pager {
-	return &Pager{
+func NewPager(r _Reader) *_Pager {
+	return &_Pager{
 		reader: r,
 	}
 }
 
 // StartPaging brings up the pager on screen
-func (p *Pager) StartPaging() {
+func (p *_Pager) StartPaging() {
 
 }
