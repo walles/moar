@@ -37,6 +37,7 @@ func main() {
 	}
 
 	if stdoutIsRedirected {
+		// Pump from file by given name onto stdout which is redirected
 		input, err := os.Open(os.Args[1])
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "ERROR: %s\n", err)
