@@ -43,3 +43,9 @@ func NewReaderFromFilename(filename string) (*_Reader, error) {
 
 	return NewReaderFromStream(stream)
 }
+
+func (r *_Reader) GetLines(firstLineOneIndexed int, lineCount int) []string {
+	firstLineZeroIndexed := firstLineOneIndexed - 1
+	lastLineZeroIndexed := firstLineZeroIndexed + lineCount - 1
+	return r.lines[firstLineZeroIndexed:lastLineZeroIndexed]
+}

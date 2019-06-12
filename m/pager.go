@@ -22,18 +22,31 @@ func NewPager(r _Reader) *_Pager {
 	}
 }
 
-func (p *_Pager) _AddFooter() {
+func (p *_Pager) _AddLine(lineNumber int, line string) {
+	for pos, char := range line {
+		p.screen.SetContent(pos, lineNumber, char, nil, tcell.StyleDefault)
+	}
+}
+
+func (p *_Pager) _AddLines() {
 	_, height := p.screen.Size()
 
-	for pos, char := range "Press ESC / Return / q to exit" {
-		p.screen.SetContent(pos, height-1, char, nil, tcell.StyleDefault)
+	lines := p.reader.GetLines(1, height-1)
+
+	for lineNumber, line := range lines {
+		p._AddLine(lineNumber, line)
 	}
+}
+
+func (p *_Pager) _AddFooter() {
+	_, height := p.screen.Size()
+	p._AddLine(height-1, "Press ESC / Return / q to exit")
 }
 
 func (p *_Pager) _Redraw() {
 	p.screen.Clear()
 
-	// FIXME: Ask our reader for lines and draw them
+	p._AddLines()
 
 	p._AddFooter()
 	p.screen.Sync()
