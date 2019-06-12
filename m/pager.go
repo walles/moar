@@ -9,16 +9,18 @@ import (
 
 // Pager is the main on-screen pager
 type _Pager struct {
-	reader _Reader
-	screen tcell.Screen
-	quit   chan struct{}
+	reader            _Reader
+	screen            tcell.Screen
+	quit              chan struct{}
+	firstLineOneBased int
 }
 
 // NewPager creates a new Pager
 func NewPager(r _Reader) *_Pager {
 	return &_Pager{
-		reader: r,
-		quit:   make(chan struct{}),
+		reader:            r,
+		quit:              make(chan struct{}),
+		firstLineOneBased: 1,
 	}
 }
 
@@ -30,11 +32,18 @@ func (p *_Pager) _AddLine(lineNumber int, line string) {
 
 func (p *_Pager) _AddLines() {
 	_, height := p.screen.Size()
+	wantedLineCount := height - 1
 
-	lines := p.reader.GetLines(1, height-1)
+	lines := p.reader.GetLines(p.firstLineOneBased, wantedLineCount)
 
-	for lineNumber, line := range lines {
-		p._AddLine(lineNumber, line)
+	// If we're asking for past-the-end lines, the Reader will clip for us,
+	// and we should adapt to that. Otherwise if you scroll 100 lines past
+	// the end, you'll then have to scroll 100 lines up again before the
+	// display starts scrolling visibly.
+	p.firstLineOneBased = lines.firstLineOneBased
+
+	for screenLineNumber, line := range lines.lines {
+		p._AddLine(screenLineNumber, line)
 	}
 }
 
@@ -60,6 +69,14 @@ func (p *_Pager) _OnKey(key tcell.Key) {
 	switch key {
 	case tcell.KeyEscape, tcell.KeyEnter:
 		p._Quit()
+
+	case tcell.KeyUp:
+		// Clipping is done in _AddLines()
+		p.firstLineOneBased--
+
+	case tcell.KeyDown:
+		// Clipping is done in _AddLines()
+		p.firstLineOneBased++
 	}
 }
 
