@@ -77,6 +77,13 @@ func (p *_Pager) _OnKey(key tcell.Key) {
 	case tcell.KeyDown:
 		// Clipping is done in _AddLines()
 		p.firstLineOneBased++
+
+	case tcell.KeyHome:
+		p.firstLineOneBased = 1
+
+	case tcell.KeyEnd:
+		p.firstLineOneBased = p.reader.LineCount() + 1
+
 	}
 }
 
@@ -84,6 +91,10 @@ func (p *_Pager) _OnRune(char rune) {
 	switch char {
 	case 'q':
 		p._Quit()
+	case '<', 'g':
+		p.firstLineOneBased = 1
+	case '>', 'G':
+		p.firstLineOneBased = p.reader.LineCount() + 1
 	}
 }
 

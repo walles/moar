@@ -52,6 +52,10 @@ func NewReaderFromFilename(filename string) (*_Reader, error) {
 	return NewReaderFromStream(stream)
 }
 
+func (r *_Reader) LineCount() int {
+	return len(r.lines)
+}
+
 func (r *_Reader) GetLines(firstLineOneBased int, wantedLineCount int) *Lines {
 	if firstLineOneBased < 1 {
 		firstLineOneBased = 1
