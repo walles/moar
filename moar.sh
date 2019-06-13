@@ -4,7 +4,7 @@ set -e -o pipefail
 
 rm -f moar
 
-go test 1>&2
+go test github.com/walles/moar/m 1>&2
 
 go build 1>&2
 

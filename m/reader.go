@@ -28,6 +28,7 @@ type Lines struct {
 
 // NewReaderFromStream creates a new stream reader
 func NewReaderFromStream(reader io.Reader) (*_Reader, error) {
+	// FIXME: Close the stream when done reading it?
 	scanner := bufio.NewScanner(reader)
 	var lines []string
 	for scanner.Scan() {
@@ -49,7 +50,9 @@ func NewReaderFromFilename(filename string) (*_Reader, error) {
 		return nil, err
 	}
 
-	return NewReaderFromStream(stream)
+	reader, err := NewReaderFromStream(stream)
+	reader.name = filename
+	return reader, err
 }
 
 func (r *_Reader) LineCount() int {
@@ -59,6 +62,15 @@ func (r *_Reader) LineCount() int {
 func (r *_Reader) GetLines(firstLineOneBased int, wantedLineCount int) *Lines {
 	if firstLineOneBased < 1 {
 		firstLineOneBased = 1
+	}
+
+	if len(r.lines) == 0 {
+		return &Lines{
+			lines:             r.lines,
+
+			// FIXME: What line number should we set here?
+			firstLineOneBased: firstLineOneBased,
+		}
 	}
 
 	firstLineZeroBased := firstLineOneBased - 1

@@ -7,7 +7,7 @@ GOOS=linux GOARCH=386 go build
 GOOS=darwin GOARCH=amd64 go build
 
 # Unit tests first...
-go test
+go test github.com/walles/moar/m
 
 # ... then Verify sending the output to a file
 go build
