@@ -84,6 +84,13 @@ func (p *_Pager) _OnKey(key tcell.Key) {
 	case tcell.KeyEnd:
 		p.firstLineOneBased = p.reader.LineCount() + 1
 
+	case tcell.KeyPgDn:
+		_, height := p.screen.Size()
+		p.firstLineOneBased += (height - 1)
+
+	case tcell.KeyPgUp:
+		_, height := p.screen.Size()
+		p.firstLineOneBased -= (height - 1)
 	}
 }
 
@@ -91,10 +98,21 @@ func (p *_Pager) _OnRune(char rune) {
 	switch char {
 	case 'q':
 		p._Quit()
+
 	case '<', 'g':
 		p.firstLineOneBased = 1
+
 	case '>', 'G':
 		p.firstLineOneBased = p.reader.LineCount() + 1
+
+	case 'f':
+		_, height := p.screen.Size()
+		p.firstLineOneBased += (height - 1)
+
+	case 'b':
+		_, height := p.screen.Size()
+		p.firstLineOneBased -= (height - 1)
+
 	}
 }
 
