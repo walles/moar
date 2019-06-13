@@ -49,7 +49,7 @@ func (p *_Pager) _AddLines() {
 
 func (p *_Pager) _AddFooter() {
 	_, height := p.screen.Size()
-	p._AddLine(height-1, "Press ESC / Return / q to exit")
+	p._AddLine(height-1, "Press ESC / q to exit")
 }
 
 func (p *_Pager) _Redraw() {
@@ -67,14 +67,14 @@ func (p *_Pager) _Quit() {
 
 func (p *_Pager) _OnKey(key tcell.Key) {
 	switch key {
-	case tcell.KeyEscape, tcell.KeyEnter:
+	case tcell.KeyEscape:
 		p._Quit()
 
 	case tcell.KeyUp:
 		// Clipping is done in _AddLines()
 		p.firstLineOneBased--
 
-	case tcell.KeyDown:
+	case tcell.KeyDown, tcell.KeyEnter:
 		// Clipping is done in _AddLines()
 		p.firstLineOneBased++
 
@@ -99,13 +99,21 @@ func (p *_Pager) _OnRune(char rune) {
 	case 'q':
 		p._Quit()
 
+	case 'k', 'y':
+		// Clipping is done in _AddLines()
+		p.firstLineOneBased--
+
+	case 'j', 'e':
+		// Clipping is done in _AddLines()
+		p.firstLineOneBased++
+
 	case '<', 'g':
 		p.firstLineOneBased = 1
 
 	case '>', 'G':
 		p.firstLineOneBased = p.reader.LineCount() + 1
 
-	case 'f':
+	case 'f', ' ':
 		_, height := p.screen.Size()
 		p.firstLineOneBased += (height - 1)
 
