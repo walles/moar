@@ -31,6 +31,28 @@ func _TestGetLines(t *testing.T, reader *_Reader) {
 		t.Errorf("Expected first line to be %d, was %d", lineCount - 9, lines.firstLineOneBased)
 		return
 	}
+
+	startOfLastSection := lines.firstLineOneBased
+	lines = reader.GetLines(startOfLastSection, 10)
+	if lines.firstLineOneBased != startOfLastSection {
+		t.Errorf("Expected start line %d when asking for the last 10 lines, got %d",
+			startOfLastSection, lines.firstLineOneBased)
+		return
+	}
+
+	lines = reader.GetLines(startOfLastSection + 1, 10)
+	if lines.firstLineOneBased != startOfLastSection {
+		t.Errorf("Expected start line %d when asking for the last+1 10 lines, got %d",
+			startOfLastSection, lines.firstLineOneBased)
+		return
+	}
+
+	lines = reader.GetLines(startOfLastSection - 1, 10)
+	if lines.firstLineOneBased != startOfLastSection - 1 {
+		t.Errorf("Expected start line %d when asking for the last-1 10 lines, got %d",
+			startOfLastSection, lines.firstLineOneBased)
+		return
+	}
 }
 
 func _GetTestFiles() []string {

@@ -76,7 +76,7 @@ func (r *_Reader) GetLines(firstLineOneBased int, wantedLineCount int) *Lines {
 	firstLineZeroBased := firstLineOneBased - 1
 	lastLineZeroBased := firstLineZeroBased + wantedLineCount - 1
 
-	if lastLineZeroBased > len(r.lines) {
+	if lastLineZeroBased >= len(r.lines) {
 		lastLineZeroBased = len(r.lines) - 1
 	}
 
