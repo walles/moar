@@ -48,8 +48,18 @@ func (p *_Pager) _AddLines() {
 }
 
 func (p *_Pager) _AddFooter() {
-	_, height := p.screen.Size()
-	p._AddLine(height-1, "Press ESC / q to exit")
+	width, height := p.screen.Size()
+
+	footerText := "Press ESC / q to exit"
+
+	reverse := tcell.Style.Reverse(tcell.StyleDefault, true)
+	for pos, char := range footerText {
+		p.screen.SetContent(pos, height - 1, char, nil, reverse)
+	}
+
+	for pos := len(footerText); pos < width; pos++ {
+		p.screen.SetContent(pos, height - 1, ' ', nil, reverse)
+	}
 }
 
 func (p *_Pager) _Redraw() {
