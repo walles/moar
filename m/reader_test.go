@@ -1,6 +1,11 @@
 package m
 
-import "testing"
+import (
+	"testing"
+	"path"
+	"runtime"
+	"io/ioutil"
+)
 
 func _TestGetLines(t *testing.T, reader *_Reader) {
 	t.Logf("Testing file: %s...", reader.name)
@@ -19,19 +24,39 @@ func _TestGetLines(t *testing.T, reader *_Reader) {
 	lineCount := reader.LineCount()
 	lines = reader.GetLines(lineCount, 10)
 	if len(lines.lines) != 10 {
-		t.Errorf("Asked for 10 lines, got too few: %d", len(lines.lines))
+		t.Errorf("Asked for 10 lines but got %d", len(lines.lines))
 		return
 	}
 	if lines.firstLineOneBased != lineCount - 9 {
-		t.Errorf("Expected last line to be %d, was %d", lineCount - 9, lines.firstLineOneBased)
+		t.Errorf("Expected first line to be %d, was %d", lineCount - 9, lines.firstLineOneBased)
 		return
 	}
 }
 
+func _GetTestFiles() []string {
+	// From: https://coderwall.com/p/_fmbug/go-get-path-to-current-file
+	_, filename, _, ok := runtime.Caller(0)
+	if !ok {
+		panic("Getting current filename failed")
+	}
+
+	samplesDir := path.Join(path.Dir(filename), "../sample-files")
+
+	files, err := ioutil.ReadDir(samplesDir)
+    if err != nil {
+		panic(err)
+    }
+
+	var filenames []string
+    for _, file := range files {
+		filenames = append(filenames, "../sample-files/" + file.Name())
+	}
+
+	return filenames
+}
+
 func TestGetLines(t *testing.T) {
-	// FIXME: List all files in ../sample-files
-	files := []string {"../sample-files/empty.txt"}
-	for _, file := range files {
+	for _, file := range _GetTestFiles() {
 		reader, e := NewReaderFromFilename(file)
 		if e != nil {
 			t.Errorf("Error opening file <%s>: %s", file, e.Error())
