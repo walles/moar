@@ -25,8 +25,10 @@ func NewPager(r _Reader) *_Pager {
 }
 
 func (p *_Pager) _AddLine(lineNumber int, line string) {
-	for pos, char := range line {
+	pos := 0
+	for _, char := range line {
 		p.screen.SetContent(pos, lineNumber, char, nil, tcell.StyleDefault)
+		pos++
 	}
 }
 
@@ -54,11 +56,11 @@ func (p *_Pager) _AddFooter() {
 
 	reverse := tcell.Style.Reverse(tcell.StyleDefault, true)
 	for pos, char := range footerText {
-		p.screen.SetContent(pos, height - 1, char, nil, reverse)
+		p.screen.SetContent(pos, height-1, char, nil, reverse)
 	}
 
 	for pos := len(footerText); pos < width; pos++ {
-		p.screen.SetContent(pos, height - 1, ' ', nil, reverse)
+		p.screen.SetContent(pos, height-1, ' ', nil, reverse)
 	}
 }
 
@@ -71,14 +73,14 @@ func (p *_Pager) _Redraw() {
 	p.screen.Sync()
 }
 
-func (p *_Pager) _Quit() {
+func (p *_Pager) Quit() {
 	close(p.quit)
 }
 
 func (p *_Pager) _OnKey(key tcell.Key) {
 	switch key {
 	case tcell.KeyEscape:
-		p._Quit()
+		p.Quit()
 
 	case tcell.KeyUp:
 		// Clipping is done in _AddLines()
@@ -107,7 +109,7 @@ func (p *_Pager) _OnKey(key tcell.Key) {
 func (p *_Pager) _OnRune(char rune) {
 	switch char {
 	case 'q':
-		p._Quit()
+		p.Quit()
 
 	case 'k', 'y':
 		// Clipping is done in _AddLines()
@@ -135,30 +137,22 @@ func (p *_Pager) _OnRune(char rune) {
 }
 
 // StartPaging brings up the pager on screen
-func (p *_Pager) StartPaging() {
+func (p *_Pager) StartPaging(screen tcell.Screen) {
 	// This function initially inspired by
 	// https://github.com/gdamore/tcell/blob/master/_demos/unicode.go
-	s, e := tcell.NewScreen()
-	if e != nil {
+	if e := screen.Init(); e != nil {
 		fmt.Fprintf(os.Stderr, "%v\n", e)
 		os.Exit(1)
 	}
 
-	if e = s.Init(); e != nil {
-		fmt.Fprintf(os.Stderr, "%v\n", e)
-		os.Exit(1)
-	}
-	defer s.Fini()
-
-	p.screen = s
+	p.screen = screen
+	screen.Show()
+	p._Redraw()
 
 	// Main loop
 	go func() {
-		s.Show()
 		for {
-			p._Redraw()
-
-			ev := s.PollEvent()
+			ev := screen.PollEvent()
 			switch ev := ev.(type) {
 			case *tcell.EventKey:
 				if ev.Key() == tcell.KeyRune {
@@ -170,6 +164,8 @@ func (p *_Pager) StartPaging() {
 			case *tcell.EventResize:
 				// We'll be implicitly redrawn just by taking another lap in the loop
 			}
+
+			p._Redraw()
 		}
 	}()
 

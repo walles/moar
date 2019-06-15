@@ -5,6 +5,7 @@ import (
 	"io"
 	"os"
 
+	"github.com/gdamore/tcell"
 	"github.com/walles/moar/m"
 
 	"golang.org/x/crypto/ssh/terminal"
@@ -21,9 +22,16 @@ func main() {
 	if stdinIsRedirected && !stdoutIsRedirected {
 		// Display input pipe contents
 		reader, _ := m.NewReaderFromStream(os.Stdin) // FIXME: Error handling
-		m.NewPager(*reader).StartPaging()
 
-		os.Exit(0)
+		screen, e := tcell.NewScreen()
+		if e != nil {
+			fmt.Fprintf(os.Stderr, "%v\n", e)
+			os.Exit(1)
+		}
+		defer screen.Fini()
+
+		m.NewPager(*reader).StartPaging(screen)
+		return
 	}
 
 	// FIXME: Support --help
@@ -52,5 +60,13 @@ func main() {
 
 	// Display the input file contents
 	reader, _ := m.NewReaderFromFilename(os.Args[1]) // FIXME: Error handling
-	m.NewPager(*reader).StartPaging()
+
+	screen, e := tcell.NewScreen()
+	if e != nil {
+		fmt.Fprintf(os.Stderr, "%v\n", e)
+		os.Exit(1)
+	}
+	defer screen.Fini()
+
+	m.NewPager(*reader).StartPaging(screen)
 }
