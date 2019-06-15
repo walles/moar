@@ -1,0 +1,12 @@
+# This file inspired by:
+# https://gist.github.com/y0ssar1an/df2dab474520c4086926f672c52db139
+
+dist: xenial
+
+language: go
+
+go:
+  - 1.12.x
+
+script:
+  - ./test.sh
