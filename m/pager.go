@@ -11,7 +11,7 @@ import (
 type _Pager struct {
 	reader            _Reader
 	screen            tcell.Screen
-	quit              chan struct{}
+	quit              bool
 	firstLineOneBased int
 }
 
@@ -19,7 +19,7 @@ type _Pager struct {
 func NewPager(r _Reader) *_Pager {
 	return &_Pager{
 		reader:            r,
-		quit:              make(chan struct{}),
+		quit:              false,
 		firstLineOneBased: 1,
 	}
 }
@@ -74,7 +74,7 @@ func (p *_Pager) _Redraw() {
 }
 
 func (p *_Pager) Quit() {
-	close(p.quit)
+	p.quit = true
 }
 
 func (p *_Pager) _OnKey(key tcell.Key) {
@@ -150,24 +150,20 @@ func (p *_Pager) StartPaging(screen tcell.Screen) {
 	p._Redraw()
 
 	// Main loop
-	go func() {
-		for {
-			ev := screen.PollEvent()
-			switch ev := ev.(type) {
-			case *tcell.EventKey:
-				if ev.Key() == tcell.KeyRune {
-					p._OnRune(ev.Rune())
-				} else {
-					p._OnKey(ev.Key())
-				}
-
-			case *tcell.EventResize:
-				// We'll be implicitly redrawn just by taking another lap in the loop
+	for !p.quit {
+		ev := screen.PollEvent()
+		switch ev := ev.(type) {
+		case *tcell.EventKey:
+			if ev.Key() == tcell.KeyRune {
+				p._OnRune(ev.Rune())
+			} else {
+				p._OnKey(ev.Key())
 			}
 
-			p._Redraw()
+		case *tcell.EventResize:
+			// We'll be implicitly redrawn just by taking another lap in the loop
 		}
-	}()
 
-	<-p.quit
+		p._Redraw()
+	}
 }
