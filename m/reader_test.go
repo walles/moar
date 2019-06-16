@@ -1,10 +1,10 @@
 package m
 
 import (
-	"testing"
+	"io/ioutil"
 	"path"
 	"runtime"
-	"io/ioutil"
+	"testing"
 )
 
 func _TestGetLines(t *testing.T, reader *_Reader) {
@@ -27,8 +27,8 @@ func _TestGetLines(t *testing.T, reader *_Reader) {
 		t.Errorf("Asked for 10 lines but got %d", len(lines.lines))
 		return
 	}
-	if lines.firstLineOneBased != lineCount - 9 {
-		t.Errorf("Expected first line to be %d, was %d", lineCount - 9, lines.firstLineOneBased)
+	if lines.firstLineOneBased != lineCount-9 {
+		t.Errorf("Expected first line to be %d, was %d", lineCount-9, lines.firstLineOneBased)
 		return
 	}
 
@@ -40,15 +40,15 @@ func _TestGetLines(t *testing.T, reader *_Reader) {
 		return
 	}
 
-	lines = reader.GetLines(startOfLastSection + 1, 10)
+	lines = reader.GetLines(startOfLastSection+1, 10)
 	if lines.firstLineOneBased != startOfLastSection {
 		t.Errorf("Expected start line %d when asking for the last+1 10 lines, got %d",
 			startOfLastSection, lines.firstLineOneBased)
 		return
 	}
 
-	lines = reader.GetLines(startOfLastSection - 1, 10)
-	if lines.firstLineOneBased != startOfLastSection - 1 {
+	lines = reader.GetLines(startOfLastSection-1, 10)
+	if lines.firstLineOneBased != startOfLastSection-1 {
 		t.Errorf("Expected start line %d when asking for the last-1 10 lines, got %d",
 			startOfLastSection, lines.firstLineOneBased)
 		return
@@ -65,13 +65,13 @@ func _GetTestFiles() []string {
 	samplesDir := path.Join(path.Dir(filename), "../sample-files")
 
 	files, err := ioutil.ReadDir(samplesDir)
-    if err != nil {
+	if err != nil {
 		panic(err)
-    }
+	}
 
 	var filenames []string
-    for _, file := range files {
-		filenames = append(filenames, "../sample-files/" + file.Name())
+	for _, file := range files {
+		filenames = append(filenames, "../sample-files/"+file.Name())
 	}
 
 	return filenames
@@ -88,3 +88,5 @@ func TestGetLines(t *testing.T) {
 		_TestGetLines(t, reader)
 	}
 }
+
+// FIXME: Add test for reading broken UTF-8
