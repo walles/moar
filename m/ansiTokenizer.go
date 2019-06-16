@@ -89,17 +89,17 @@ func _UpdateStyle(logger *log.Logger, style tcell.Style, escapeSequence string) 
 		case "30":
 			style = style.Foreground(tcell.ColorBlack)
 		case "31":
-			style = style.Foreground(tcell.ColorRed)
+			style = style.Foreground(tcell.ColorLightCoral)
 		case "32":
-			style = style.Foreground(tcell.ColorGreen)
+			style = style.Foreground(tcell.ColorLightGreen)
 		case "33":
-			style = style.Foreground(tcell.ColorYellow)
+			style = style.Foreground(tcell.ColorLightYellow)
 		case "34":
-			style = style.Foreground(tcell.ColorBlue)
+			style = style.Foreground(tcell.ColorLightBlue)
 		case "35":
-			style = style.Foreground(tcell.ColorPurple)
+			style = style.Foreground(tcell.ColorPink) // Think "light purple"
 		case "36":
-			style = style.Foreground(tcell.ColorTeal)
+			style = style.Foreground(tcell.ColorLightCyan)
 		case "37":
 			style = style.Foreground(tcell.ColorWhite)
 
