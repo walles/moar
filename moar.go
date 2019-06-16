@@ -3,7 +3,9 @@ package main
 import (
 	"fmt"
 	"io"
+	"log"
 	"os"
+	"strings"
 
 	"github.com/gdamore/tcell"
 	"github.com/walles/moar/m"
@@ -21,16 +23,12 @@ func main() {
 
 	if stdinIsRedirected && !stdoutIsRedirected {
 		// Display input pipe contents
-		reader, _ := m.NewReaderFromStream(os.Stdin) // FIXME: Error handling
-
-		screen, e := tcell.NewScreen()
-		if e != nil {
-			fmt.Fprintf(os.Stderr, "%v\n", e)
+		reader, err := m.NewReaderFromStream(os.Stdin) // FIXME: Error handling
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "%v\n", err)
 			os.Exit(1)
 		}
-		defer screen.Fini()
-
-		m.NewPager(*reader).StartPaging(screen)
+		_StartPaging(reader)
 		return
 	}
 
@@ -59,14 +57,28 @@ func main() {
 	}
 
 	// Display the input file contents
-	reader, _ := m.NewReaderFromFilename(os.Args[1]) // FIXME: Error handling
+	reader, err := m.NewReaderFromFilename(os.Args[1])
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "%v\n", err)
+		os.Exit(1)
+	}
+	_StartPaging(reader)
+}
 
+func _StartPaging(reader *m.Reader) {
 	screen, e := tcell.NewScreen()
 	if e != nil {
 		fmt.Fprintf(os.Stderr, "%v\n", e)
 		os.Exit(1)
 	}
-	defer screen.Fini()
 
-	m.NewPager(*reader).StartPaging(screen)
+	var loglines strings.Builder
+	logger := log.New(&loglines, "", 0)
+	m.NewPager(*reader).StartPaging(logger, screen)
+	screen.Fini()
+
+	if len(loglines.String()) > 0 {
+		fmt.Fprintf(os.Stderr, "%s", loglines.String())
+		os.Exit(1)
+	}
 }

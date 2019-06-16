@@ -7,7 +7,7 @@ import (
 	"testing"
 )
 
-func _TestGetLines(t *testing.T, reader *_Reader) {
+func _TestGetLines(t *testing.T, reader *Reader) {
 	t.Logf("Testing file: %s...", reader.name)
 
 	lines := reader.GetLines(1, 10)

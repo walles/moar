@@ -13,7 +13,7 @@ import (
 // request.
 //
 // This package should provide query methods for the struct, no peeking!!
-type _Reader struct {
+type Reader struct {
 	lines []string
 	name  string
 }
@@ -27,7 +27,7 @@ type Lines struct {
 }
 
 // NewReaderFromStream creates a new stream reader
-func NewReaderFromStream(reader io.Reader) (*_Reader, error) {
+func NewReaderFromStream(reader io.Reader) (*Reader, error) {
 	// FIXME: Close the stream when done reading it?
 	scanner := bufio.NewScanner(reader)
 	var lines []string
@@ -38,13 +38,13 @@ func NewReaderFromStream(reader io.Reader) (*_Reader, error) {
 		return nil, err
 	}
 
-	return &_Reader{
+	return &Reader{
 		lines: lines,
 	}, nil
 }
 
 // NewReaderFromFilename creates a new file reader
-func NewReaderFromFilename(filename string) (*_Reader, error) {
+func NewReaderFromFilename(filename string) (*Reader, error) {
 	stream, err := os.Open(filename)
 	if err != nil {
 		return nil, err
@@ -55,18 +55,18 @@ func NewReaderFromFilename(filename string) (*_Reader, error) {
 	return reader, err
 }
 
-func (r *_Reader) LineCount() int {
+func (r *Reader) LineCount() int {
 	return len(r.lines)
 }
 
-func (r *_Reader) GetLines(firstLineOneBased int, wantedLineCount int) *Lines {
+func (r *Reader) GetLines(firstLineOneBased int, wantedLineCount int) *Lines {
 	if firstLineOneBased < 1 {
 		firstLineOneBased = 1
 	}
 
 	if len(r.lines) == 0 {
 		return &Lines{
-			lines:             r.lines,
+			lines: r.lines,
 
 			// FIXME: What line number should we set here?
 			firstLineOneBased: firstLineOneBased,

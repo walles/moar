@@ -2,6 +2,7 @@ package m
 
 import (
 	"fmt"
+	"log"
 	"os"
 
 	"github.com/gdamore/tcell"
@@ -9,14 +10,14 @@ import (
 
 // Pager is the main on-screen pager
 type _Pager struct {
-	reader            _Reader
+	reader            Reader
 	screen            tcell.Screen
 	quit              bool
 	firstLineOneBased int
 }
 
 // NewPager creates a new Pager
-func NewPager(r _Reader) *_Pager {
+func NewPager(r Reader) *_Pager {
 	return &_Pager{
 		reader:            r,
 		quit:              false,
@@ -75,7 +76,7 @@ func (p *_Pager) Quit() {
 	p.quit = true
 }
 
-func (p *_Pager) _OnKey(key tcell.Key) {
+func (p *_Pager) _OnKey(logger *log.Logger, key tcell.Key) {
 	switch key {
 	case tcell.KeyEscape:
 		p.Quit()
@@ -101,10 +102,13 @@ func (p *_Pager) _OnKey(key tcell.Key) {
 	case tcell.KeyPgUp:
 		_, height := p.screen.Size()
 		p.firstLineOneBased -= (height - 1)
+
+	default:
+		logger.Printf("Unhandled rune key event %v", key)
 	}
 }
 
-func (p *_Pager) _OnRune(char rune) {
+func (p *_Pager) _OnRune(logger *log.Logger, char rune) {
 	switch char {
 	case 'q':
 		p.Quit()
@@ -131,11 +135,13 @@ func (p *_Pager) _OnRune(char rune) {
 		_, height := p.screen.Size()
 		p.firstLineOneBased -= (height - 1)
 
+	default:
+		logger.Printf("Unhandled rune keyress '%s'", string(char))
 	}
 }
 
 // StartPaging brings up the pager on screen
-func (p *_Pager) StartPaging(screen tcell.Screen) {
+func (p *_Pager) StartPaging(logger *log.Logger, screen tcell.Screen) {
 	// This function initially inspired by
 	// https://github.com/gdamore/tcell/blob/master/_demos/unicode.go
 	if e := screen.Init(); e != nil {
@@ -153,13 +159,16 @@ func (p *_Pager) StartPaging(screen tcell.Screen) {
 		switch ev := ev.(type) {
 		case *tcell.EventKey:
 			if ev.Key() == tcell.KeyRune {
-				p._OnRune(ev.Rune())
+				p._OnRune(logger, ev.Rune())
 			} else {
-				p._OnKey(ev.Key())
+				p._OnKey(logger, ev.Key())
 			}
 
 		case *tcell.EventResize:
 			// We'll be implicitly redrawn just by taking another lap in the loop
+
+		default:
+			logger.Printf("Unhandled event type: %v", ev)
 		}
 
 		p._Redraw()

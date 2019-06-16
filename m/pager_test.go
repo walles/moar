@@ -1,6 +1,7 @@
 package m
 
 import (
+	"log"
 	"strings"
 	"testing"
 
@@ -13,18 +14,13 @@ func TestUnicodeRendering(t *testing.T) {
 		panic(err)
 	}
 
-	screen := tcell.NewSimulationScreen("UTF-8")
-	pager := NewPager(*reader)
-	pager.Quit()
-	pager.StartPaging(screen)
-
 	var answers = []_ExpectedCell{
 		_CreateExpectedCell('å', tcell.StyleDefault),
 		_CreateExpectedCell('ä', tcell.StyleDefault),
 		_CreateExpectedCell('ö', tcell.StyleDefault),
 	}
 
-	contents, _, _ := screen.GetContents()
+	contents := _StartPaging(t, reader)
 	for pos, expected := range answers {
 		expected.LogDifference(t, contents[pos])
 	}
@@ -59,11 +55,6 @@ func TestFgColorRendering(t *testing.T) {
 		panic(err)
 	}
 
-	screen := tcell.NewSimulationScreen("UTF-8")
-	pager := NewPager(*reader)
-	pager.Quit()
-	pager.StartPaging(screen)
-
 	var answers = []_ExpectedCell{
 		_CreateExpectedCell('a', tcell.StyleDefault.Foreground(tcell.ColorBlack)),
 		_CreateExpectedCell('b', tcell.StyleDefault.Foreground(tcell.ColorRed)),
@@ -76,10 +67,27 @@ func TestFgColorRendering(t *testing.T) {
 		_CreateExpectedCell('i', tcell.StyleDefault),
 	}
 
-	contents, _, _ := screen.GetContents()
+	contents := _StartPaging(t, reader)
 	for pos, expected := range answers {
 		expected.LogDifference(t, contents[pos])
 	}
+}
+
+func _StartPaging(t *testing.T, reader *Reader) []tcell.SimCell {
+	screen := tcell.NewSimulationScreen("UTF-8")
+	pager := NewPager(*reader)
+	pager.Quit()
+
+	var loglines strings.Builder
+	logger := log.New(&loglines, "", 0)
+	pager.StartPaging(logger, screen)
+	contents, _, _ := screen.GetContents()
+
+	if len(loglines.String()) > 0 {
+		t.Logf("%s", loglines.String())
+	}
+
+	return contents
 }
 
 // FIXME: Add background color tests
