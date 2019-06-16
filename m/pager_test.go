@@ -81,3 +81,11 @@ func TestFgColorRendering(t *testing.T) {
 		expected.LogDifference(t, contents[pos])
 	}
 }
+
+// FIXME: Add background color tests
+
+// FIXME: Add tests for various forms of highlighting
+
+// FIXME: Add man page formatting tests
+
+// FIXME: Add TAB handling tests

@@ -25,10 +25,8 @@ func NewPager(r _Reader) *_Pager {
 }
 
 func (p *_Pager) _AddLine(lineNumber int, line string) {
-	pos := 0
-	for _, char := range line {
-		p.screen.SetContent(pos, lineNumber, char, nil, tcell.StyleDefault)
-		pos++
+	for pos, token := range TokensFromString(line) {
+		p.screen.SetContent(pos, lineNumber, token.Rune, nil, token.Style)
 	}
 }
 
