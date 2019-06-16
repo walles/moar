@@ -85,6 +85,12 @@ func _UpdateStyle(logger *log.Logger, style tcell.Style, escapeSequence string) 
 		case "1":
 			style = style.Bold(true)
 
+		case "7":
+			style = style.Reverse(true)
+
+		case "27":
+			style = style.Reverse(false)
+
 		// Foreground colors
 		case "30":
 			style = style.Foreground(0)
