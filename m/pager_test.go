@@ -90,10 +90,6 @@ func _StartPaging(t *testing.T, reader *Reader) []tcell.SimCell {
 	return contents
 }
 
-// FIXME: Add background color tests
-
-// FIXME: Add tests for various forms of highlighting
-
 // FIXME: Add man page formatting tests
 
 // FIXME: Add TAB handling tests

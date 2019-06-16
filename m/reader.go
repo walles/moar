@@ -6,7 +6,7 @@ import (
 	"os"
 )
 
-// Reads a file into an array of strings.
+// Reader reads a file into an array of strings.
 //
 // When this thing grows up it's going to do the reading in the
 // background, and it will return parts of the read data upon
@@ -55,10 +55,7 @@ func NewReaderFromFilename(filename string) (*Reader, error) {
 	return reader, err
 }
 
-func (r *Reader) LineCount() int {
-	return len(r.lines)
-}
-
+// GetLines gets the indicated lines from the input
 func (r *Reader) GetLines(firstLineOneBased int, wantedLineCount int) *Lines {
 	if firstLineOneBased < 1 {
 		firstLineOneBased = 1

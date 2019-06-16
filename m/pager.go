@@ -3,6 +3,7 @@ package m
 import (
 	"fmt"
 	"log"
+	"math"
 	"os"
 
 	"github.com/gdamore/tcell"
@@ -51,6 +52,8 @@ func (p *_Pager) _AddLines(logger *log.Logger) {
 func (p *_Pager) _AddFooter() {
 	width, height := p.screen.Size()
 
+	// FIXME: Add input file name (if applicable) to footer text
+	// FIXME: Add line number / count info to footer text
 	footerText := "Press ESC / q to exit"
 
 	reverse := tcell.Style.Reverse(tcell.StyleDefault, true)
@@ -93,7 +96,7 @@ func (p *_Pager) _OnKey(logger *log.Logger, key tcell.Key) {
 		p.firstLineOneBased = 1
 
 	case tcell.KeyEnd:
-		p.firstLineOneBased = p.reader.LineCount() + 1
+		p.firstLineOneBased = math.MaxInt32
 
 	case tcell.KeyPgDn:
 		_, height := p.screen.Size()
@@ -125,7 +128,7 @@ func (p *_Pager) _OnRune(logger *log.Logger, char rune) {
 		p.firstLineOneBased = 1
 
 	case '>', 'G':
-		p.firstLineOneBased = p.reader.LineCount() + 1
+		p.firstLineOneBased = math.MaxInt32
 
 	case 'f', ' ':
 		_, height := p.screen.Size()

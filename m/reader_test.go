@@ -2,6 +2,7 @@ package m
 
 import (
 	"io/ioutil"
+	"math"
 	"path"
 	"runtime"
 	"testing"
@@ -21,14 +22,9 @@ func _TestGetLines(t *testing.T, reader *Reader) {
 	}
 
 	// Test clipping at the end
-	lineCount := reader.LineCount()
-	lines = reader.GetLines(lineCount, 10)
+	lines = reader.GetLines(math.MaxInt32, 10)
 	if len(lines.lines) != 10 {
 		t.Errorf("Asked for 10 lines but got %d", len(lines.lines))
-		return
-	}
-	if lines.firstLineOneBased != lineCount-9 {
-		t.Errorf("Expected first line to be %d, was %d", lineCount-9, lines.firstLineOneBased)
 		return
 	}
 
@@ -39,6 +35,11 @@ func _TestGetLines(t *testing.T, reader *Reader) {
 			startOfLastSection, lines.firstLineOneBased)
 		return
 	}
+	if len(lines.lines) != 10 {
+		t.Errorf("Expected 10 lines when asking for the last 10 lines, got %d",
+			len(lines.lines))
+		return
+	}
 
 	lines = reader.GetLines(startOfLastSection+1, 10)
 	if lines.firstLineOneBased != startOfLastSection {
@@ -46,11 +47,21 @@ func _TestGetLines(t *testing.T, reader *Reader) {
 			startOfLastSection, lines.firstLineOneBased)
 		return
 	}
+	if len(lines.lines) != 10 {
+		t.Errorf("Expected 10 lines when asking for the last+1 10 lines, got %d",
+			len(lines.lines))
+		return
+	}
 
 	lines = reader.GetLines(startOfLastSection-1, 10)
 	if lines.firstLineOneBased != startOfLastSection-1 {
 		t.Errorf("Expected start line %d when asking for the last-1 10 lines, got %d",
 			startOfLastSection, lines.firstLineOneBased)
+		return
+	}
+	if len(lines.lines) != 10 {
+		t.Errorf("Expected 10 lines when asking for the last-1 10 lines, got %d",
+			len(lines.lines))
 		return
 	}
 }
