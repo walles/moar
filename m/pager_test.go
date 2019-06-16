@@ -56,14 +56,14 @@ func TestFgColorRendering(t *testing.T) {
 	}
 
 	var answers = []_ExpectedCell{
-		_CreateExpectedCell('a', tcell.StyleDefault.Foreground(tcell.ColorBlack)),
-		_CreateExpectedCell('b', tcell.StyleDefault.Foreground(tcell.ColorLightCoral)),
-		_CreateExpectedCell('c', tcell.StyleDefault.Foreground(tcell.ColorLightGreen)),
-		_CreateExpectedCell('d', tcell.StyleDefault.Foreground(tcell.ColorLightYellow)),
-		_CreateExpectedCell('e', tcell.StyleDefault.Foreground(tcell.ColorLightBlue)),
-		_CreateExpectedCell('f', tcell.StyleDefault.Foreground(tcell.ColorPink)),
-		_CreateExpectedCell('g', tcell.StyleDefault.Foreground(tcell.ColorLightCyan)),
-		_CreateExpectedCell('h', tcell.StyleDefault.Foreground(tcell.ColorWhite)),
+		_CreateExpectedCell('a', tcell.StyleDefault.Foreground(0)),
+		_CreateExpectedCell('b', tcell.StyleDefault.Foreground(1)),
+		_CreateExpectedCell('c', tcell.StyleDefault.Foreground(2)),
+		_CreateExpectedCell('d', tcell.StyleDefault.Foreground(3)),
+		_CreateExpectedCell('e', tcell.StyleDefault.Foreground(4)),
+		_CreateExpectedCell('f', tcell.StyleDefault.Foreground(5)),
+		_CreateExpectedCell('g', tcell.StyleDefault.Foreground(6)),
+		_CreateExpectedCell('h', tcell.StyleDefault.Foreground(7)),
 		_CreateExpectedCell('i', tcell.StyleDefault),
 	}
 

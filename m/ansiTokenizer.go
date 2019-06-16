@@ -87,39 +87,39 @@ func _UpdateStyle(logger *log.Logger, style tcell.Style, escapeSequence string) 
 
 		// Foreground colors
 		case "30":
-			style = style.Foreground(tcell.ColorBlack)
+			style = style.Foreground(0)
 		case "31":
-			style = style.Foreground(tcell.ColorLightCoral)
+			style = style.Foreground(1)
 		case "32":
-			style = style.Foreground(tcell.ColorLightGreen)
+			style = style.Foreground(2)
 		case "33":
-			style = style.Foreground(tcell.ColorLightYellow)
+			style = style.Foreground(3)
 		case "34":
-			style = style.Foreground(tcell.ColorLightBlue)
+			style = style.Foreground(4)
 		case "35":
-			style = style.Foreground(tcell.ColorPink) // Think "light purple"
+			style = style.Foreground(5)
 		case "36":
-			style = style.Foreground(tcell.ColorLightCyan)
+			style = style.Foreground(6)
 		case "37":
-			style = style.Foreground(tcell.ColorWhite)
+			style = style.Foreground(7)
 
 		// Background colors
 		case "40":
-			style = style.Background(tcell.ColorBlack)
+			style = style.Background(0)
 		case "41":
-			style = style.Background(tcell.ColorRed)
+			style = style.Background(1)
 		case "42":
-			style = style.Background(tcell.ColorGreen)
+			style = style.Background(2)
 		case "43":
-			style = style.Background(tcell.ColorYellow)
+			style = style.Background(3)
 		case "44":
-			style = style.Background(tcell.ColorBlue)
+			style = style.Background(4)
 		case "45":
-			style = style.Background(tcell.ColorPurple)
+			style = style.Background(5)
 		case "46":
-			style = style.Background(tcell.ColorTeal)
+			style = style.Background(6)
 		case "47":
-			style = style.Background(tcell.ColorWhite)
+			style = style.Background(7)
 
 		default:
 			logger.Printf("Unrecognized ANSI SGI code <%s>", number)

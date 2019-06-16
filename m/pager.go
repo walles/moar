@@ -142,8 +142,9 @@ func (p *_Pager) _OnRune(logger *log.Logger, char rune) {
 
 // StartPaging brings up the pager on screen
 func (p *_Pager) StartPaging(logger *log.Logger, screen tcell.Screen) {
-	// This function initially inspired by
-	// https://github.com/gdamore/tcell/blob/master/_demos/unicode.go
+	// We want to match the terminal theme, see screen.Init() source code
+	os.Setenv("TCELL_TRUECOLOR", "disable")
+
 	if e := screen.Init(); e != nil {
 		fmt.Fprintf(os.Stderr, "%v\n", e)
 		os.Exit(1)
