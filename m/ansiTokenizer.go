@@ -49,7 +49,7 @@ func _StyledStringsFromString(s string) []_StyledString {
 	for _, match := range matches {
 		end = match[0]
 
-		if end > beg+1 {
+		if end > beg {
 			// Otherwise the string is empty, no point for us in that
 			styledStrings = append(styledStrings, _StyledString{
 				String: s[beg:end],
