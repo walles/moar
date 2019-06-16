@@ -25,13 +25,13 @@ func NewPager(r Reader) *_Pager {
 	}
 }
 
-func (p *_Pager) _AddLine(lineNumber int, line string) {
-	for pos, token := range TokensFromString(line) {
+func (p *_Pager) _AddLine(logger *log.Logger, lineNumber int, line string) {
+	for pos, token := range TokensFromString(logger, line) {
 		p.screen.SetContent(pos, lineNumber, token.Rune, nil, token.Style)
 	}
 }
 
-func (p *_Pager) _AddLines() {
+func (p *_Pager) _AddLines(logger *log.Logger) {
 	_, height := p.screen.Size()
 	wantedLineCount := height - 1
 
@@ -44,7 +44,7 @@ func (p *_Pager) _AddLines() {
 	p.firstLineOneBased = lines.firstLineOneBased
 
 	for screenLineNumber, line := range lines.lines {
-		p._AddLine(screenLineNumber, line)
+		p._AddLine(logger, screenLineNumber, line)
 	}
 }
 
@@ -63,10 +63,10 @@ func (p *_Pager) _AddFooter() {
 	}
 }
 
-func (p *_Pager) _Redraw() {
+func (p *_Pager) _Redraw(logger *log.Logger) {
 	p.screen.Clear()
 
-	p._AddLines()
+	p._AddLines(logger)
 
 	p._AddFooter()
 	p.screen.Show()
@@ -151,7 +151,7 @@ func (p *_Pager) StartPaging(logger *log.Logger, screen tcell.Screen) {
 
 	p.screen = screen
 	screen.Show()
-	p._Redraw()
+	p._Redraw(logger)
 
 	// Main loop
 	for !p.quit {
@@ -171,6 +171,6 @@ func (p *_Pager) StartPaging(logger *log.Logger, screen tcell.Screen) {
 			logger.Printf("Unhandled event type: %v", ev)
 		}
 
-		p._Redraw()
+		p._Redraw(logger)
 	}
 }
