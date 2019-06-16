@@ -69,7 +69,7 @@ func (p *_Pager) _Redraw() {
 	p._AddLines()
 
 	p._AddFooter()
-	p.screen.Sync()
+	p.screen.Show()
 }
 
 func (p *_Pager) Quit() {
