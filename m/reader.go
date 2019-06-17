@@ -13,6 +13,8 @@ import (
 // request.
 //
 // This package should provide query methods for the struct, no peeking!!
+//
+// FIXME: Make the reader read in the background, independently of what the pager is showing
 type Reader struct {
 	lines []string
 	name  string

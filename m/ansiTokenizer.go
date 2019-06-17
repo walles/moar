@@ -8,6 +8,8 @@ import (
 	"github.com/gdamore/tcell"
 )
 
+const _TabSize = 4
+
 // Token is a rune with a style to be written to a cell on screen
 type Token struct {
 	Rune  rune
@@ -20,10 +22,25 @@ func TokensFromString(logger *log.Logger, s string) []Token {
 
 	for _, styledString := range _StyledStringsFromString(logger, s) {
 		for _, char := range styledString.String {
-			tokens = append(tokens, Token{
-				Rune:  char,
-				Style: styledString.Style,
-			})
+			if char == '\x09' {
+				// We got a TAB character
+				for {
+					tokens = append(tokens, Token{
+						Rune:  ' ',
+						Style: styledString.Style,
+					})
+
+					if (len(tokens))%_TabSize == 0 {
+						// We arrived at the next tab stop
+						break
+					}
+				}
+			} else {
+				tokens = append(tokens, Token{
+					Rune:  char,
+					Style: styledString.Style,
+				})
+			}
 		}
 	}
 

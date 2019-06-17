@@ -90,6 +90,49 @@ func _StartPaging(t *testing.T, reader *Reader) []tcell.SimCell {
 	return contents
 }
 
-// FIXME: Add man page formatting tests
+// _AssertIndexOfFirstX verifies the (zero-based) index of the first 'x'
+func _AssertIndexOfFirstX(t *testing.T, s string, expectedIndex int) {
+	reader, err := NewReaderFromStream(strings.NewReader(s))
+	if err != nil {
+		panic(err)
+	}
 
-// FIXME: Add TAB handling tests
+	contents := _StartPaging(t, reader)
+	for pos, cell := range contents {
+		if cell.Runes[0] != 'x' {
+			continue
+		}
+
+		if pos == expectedIndex {
+			// Success!
+			return
+		}
+
+		t.Errorf("Expected first 'x' to be at (zero-based) index %d, but was at %d: \"%s\"",
+			expectedIndex, pos, strings.ReplaceAll(s, "\x09", "<TAB>"))
+		return
+	}
+
+	panic("No 'x' found")
+}
+
+func TestTabHandling(t *testing.T) {
+	_AssertIndexOfFirstX(t, "x", 0)
+
+	_AssertIndexOfFirstX(t, "\x09x", 4)
+	_AssertIndexOfFirstX(t, "\x09\x09x", 8)
+
+	_AssertIndexOfFirstX(t, "J\x09x", 4)
+	_AssertIndexOfFirstX(t, "Jo\x09x", 4)
+	_AssertIndexOfFirstX(t, "Joh\x09x", 4)
+	_AssertIndexOfFirstX(t, "Joha\x09x", 8)
+	_AssertIndexOfFirstX(t, "Johan\x09x", 8)
+
+	_AssertIndexOfFirstX(t, "\x09J\x09x", 8)
+	_AssertIndexOfFirstX(t, "\x09Jo\x09x", 8)
+	_AssertIndexOfFirstX(t, "\x09Joh\x09x", 8)
+	_AssertIndexOfFirstX(t, "\x09Joha\x09x", 12)
+	_AssertIndexOfFirstX(t, "\x09Johan\x09x", 12)
+}
+
+// FIXME: Add man page formatting tests

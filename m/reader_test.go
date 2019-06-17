@@ -101,3 +101,5 @@ func TestGetLines(t *testing.T) {
 }
 
 // FIXME: Add test for reading broken UTF-8
+
+// FIXME: Add test for code highlighting using http://www.andre-simon.de/zip/download.php
