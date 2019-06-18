@@ -106,7 +106,7 @@ func _StyledStringsFromString(logger *log.Logger, s string) []_StyledString {
 func _UpdateStyle(logger *log.Logger, style tcell.Style, escapeSequence string) tcell.Style {
 	for _, number := range strings.Split(escapeSequence[2:len(escapeSequence)-1], ";") {
 		switch number {
-		case "", "0":
+		case "", "0", "00":
 			style = tcell.StyleDefault
 
 		case "1":

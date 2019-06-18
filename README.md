@@ -11,7 +11,7 @@ doesn't work that way,
 Doing the right thing includes:
 
 * **Syntax highlight** source code by default if
-  [GNU Source-highlight](http://www.gnu.org/software/src-highlite/)
+  [Highlight](http://www.andre-simon.de/doku/highlight/en/highlight.php)
   is installed.
 * **Search is incremental** / find-as-you-type just like in
   [Chrome](http://www.google.com/chrome) or
