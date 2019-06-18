@@ -99,5 +99,3 @@ func TestGetLines(t *testing.T) {
 		_TestGetLines(t, reader)
 	}
 }
-
-// FIXME: Add test for code highlighting using http://www.andre-simon.de/zip/download.php
