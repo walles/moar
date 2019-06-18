@@ -73,6 +73,30 @@ func TestFgColorRendering(t *testing.T) {
 	}
 }
 
+func TestBrokenUtf8(t *testing.T) {
+	// The broken UTF8 character in the middle is based on "©" = 0xc2a9
+	reader, err := NewReaderFromStream(strings.NewReader(
+		"abc\xc2def"))
+	if err != nil {
+		panic(err)
+	}
+
+	var answers = []_ExpectedCell{
+		_CreateExpectedCell('a', tcell.StyleDefault),
+		_CreateExpectedCell('b', tcell.StyleDefault),
+		_CreateExpectedCell('c', tcell.StyleDefault),
+		_CreateExpectedCell('?', tcell.StyleDefault.Foreground(1).Background(7)),
+		_CreateExpectedCell('d', tcell.StyleDefault),
+		_CreateExpectedCell('e', tcell.StyleDefault),
+		_CreateExpectedCell('f', tcell.StyleDefault),
+	}
+
+	contents := _StartPaging(t, reader)
+	for pos, expected := range answers {
+		expected.LogDifference(t, contents[pos])
+	}
+}
+
 func _StartPaging(t *testing.T, reader *Reader) []tcell.SimCell {
 	screen := tcell.NewSimulationScreen("UTF-8")
 	pager := NewPager(*reader)

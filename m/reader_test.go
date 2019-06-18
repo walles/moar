@@ -100,8 +100,4 @@ func TestGetLines(t *testing.T) {
 	}
 }
 
-// FIXME: Add test for reading broken UTF-8
-// NOTE: Wait for Go 1.13 (https://github.com/golang/go/milestone/83,
-// August 01 2019), then use strings.ToValidUTF8() for this.
-
 // FIXME: Add test for code highlighting using http://www.andre-simon.de/zip/download.php

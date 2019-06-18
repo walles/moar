@@ -20,10 +20,13 @@ type Token struct {
 func TokensFromString(logger *log.Logger, s string) []Token {
 	var tokens []Token
 
+	styleBrokenUtf8 := tcell.StyleDefault.Background(7).Foreground(1)
+
 	for _, styledString := range _StyledStringsFromString(logger, s) {
 		for _, char := range styledString.String {
-			if char == '\x09' {
-				// We got a TAB character
+			switch char {
+
+			case '\x09': // TAB
 				for {
 					tokens = append(tokens, Token{
 						Rune:  ' ',
@@ -35,7 +38,14 @@ func TokensFromString(logger *log.Logger, s string) []Token {
 						break
 					}
 				}
-			} else {
+
+			case '�': // Go's broken-UTF8 marker
+				tokens = append(tokens, Token{
+					Rune:  '?',
+					Style: styleBrokenUtf8,
+				})
+
+			default:
 				tokens = append(tokens, Token{
 					Rune:  char,
 					Style: styledString.Style,
