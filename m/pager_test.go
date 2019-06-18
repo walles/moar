@@ -2,6 +2,7 @@ package m
 
 import (
 	"log"
+	"runtime"
 	"strings"
 	"testing"
 
@@ -157,6 +158,38 @@ func TestTabHandling(t *testing.T) {
 	_AssertIndexOfFirstX(t, "\x09Joh\x09x", 8)
 	_AssertIndexOfFirstX(t, "\x09Joha\x09x", 12)
 	_AssertIndexOfFirstX(t, "\x09Johan\x09x", 12)
+}
+
+// This test assumes highlight is installed:
+// http://www.andre-simon.de/zip/download.php
+func TestCodeHighlighting(t *testing.T) {
+	// From: https://coderwall.com/p/_fmbug/go-get-path-to-current-file
+	_, filename, _, ok := runtime.Caller(0)
+	if !ok {
+		panic("Getting current filename failed")
+	}
+
+	reader, err := NewReaderFromFilename(filename)
+	if err != nil {
+		panic(err)
+	}
+
+	var answers = []_ExpectedCell{
+		_CreateExpectedCell('p', tcell.StyleDefault.Foreground(3)),
+		_CreateExpectedCell('a', tcell.StyleDefault.Foreground(3)),
+		_CreateExpectedCell('c', tcell.StyleDefault.Foreground(3)),
+		_CreateExpectedCell('k', tcell.StyleDefault.Foreground(3)),
+		_CreateExpectedCell('a', tcell.StyleDefault.Foreground(3)),
+		_CreateExpectedCell('g', tcell.StyleDefault.Foreground(3)),
+		_CreateExpectedCell('e', tcell.StyleDefault.Foreground(3)),
+		_CreateExpectedCell(' ', tcell.StyleDefault),
+		_CreateExpectedCell('m', tcell.StyleDefault),
+	}
+
+	contents := _StartPaging(t, reader)
+	for pos, expected := range answers {
+		expected.LogDifference(t, contents[pos])
+	}
 }
 
 // FIXME: Add man page formatting tests
