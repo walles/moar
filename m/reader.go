@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"io"
 	"os"
+	"os/exec"
 )
 
 // Reader reads a file into an array of strings.
@@ -45,14 +46,40 @@ func NewReaderFromStream(reader io.Reader) (*Reader, error) {
 	}, nil
 }
 
-// NewReaderFromFilename creates a new file reader
-func NewReaderFromFilename(filename string) (*Reader, error) {
-	stream, err := os.Open(filename)
+// Highlight input file using highlight:
+// http://www.andre-simon.de/doku/highlight/en/highlight.php
+func _Highlight(filename string) (io.Reader, error) {
+	highlight := exec.Command("highlight", "--out-format=esc", "-i", filename)
+
+	highlightOut, err := highlight.StdoutPipe()
 	if err != nil {
 		return nil, err
 	}
 
+	err = highlight.Start()
+	if err != nil {
+		return nil, err
+	}
+
+	return highlightOut, nil
+}
+
+// NewReaderFromFilename creates a new file reader
+func NewReaderFromFilename(filename string) (*Reader, error) {
+	stream, err := _Highlight("apa")
+	if err != nil {
+		// Can't highlight, try without
+		stream, err = os.Open(filename)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	reader, err := NewReaderFromStream(stream)
+	if err != nil {
+		return nil, err
+	}
+
 	reader.name = filename
 	return reader, err
 }
