@@ -66,7 +66,7 @@ func _Highlight(filename string) (io.Reader, error) {
 
 // NewReaderFromFilename creates a new file reader
 func NewReaderFromFilename(filename string) (*Reader, error) {
-	stream, err := _Highlight("apa")
+	stream, err := _Highlight(filename)
 	if err != nil {
 		// Can't highlight, try without
 		stream, err = os.Open(filename)
