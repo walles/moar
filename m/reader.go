@@ -53,6 +53,7 @@ func _Highlight(filename string) (io.Reader, error) {
 
 	highlightOut, err := highlight.StdoutPipe()
 	if err != nil {
+		// FIXME: Print user warning when done if highlight isn't installed
 		return nil, err
 	}
 
