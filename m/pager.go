@@ -33,7 +33,7 @@ func (p *_Pager) _AddLine(logger *log.Logger, lineNumber int, line string) {
 }
 
 func (p *_Pager) _AddLines(logger *log.Logger) {
-	_, height := p.screen.Size()
+	width, height := p.screen.Size()
 	wantedLineCount := height - 1
 
 	lines := p.reader.GetLines(p.firstLineOneBased, wantedLineCount)
@@ -47,22 +47,16 @@ func (p *_Pager) _AddLines(logger *log.Logger) {
 	for screenLineNumber, line := range lines.lines {
 		p._AddLine(logger, screenLineNumber, line)
 	}
-}
 
-func (p *_Pager) _AddFooter() {
-	width, height := p.screen.Size()
-
-	// FIXME: Add input file name (if applicable) to footer text
-	// FIXME: Add line number / count info to footer text
-	footerText := "Press ESC / q to exit"
-
-	reverse := tcell.Style.Reverse(tcell.StyleDefault, true)
-	for pos, char := range footerText {
-		p.screen.SetContent(pos, height-1, char, nil, reverse)
+	pos := 0
+	footerStyle := tcell.StyleDefault.Reverse(true)
+	for _, token := range "Press ESC / q to exit" {
+		p.screen.SetContent(pos, height-1, token, nil, footerStyle)
+		pos++
 	}
 
-	for pos := len(footerText); pos < width; pos++ {
-		p.screen.SetContent(pos, height-1, ' ', nil, reverse)
+	for ; pos < width; pos++ {
+		p.screen.SetContent(pos, height-1, ' ', nil, footerStyle)
 	}
 }
 
@@ -71,7 +65,6 @@ func (p *_Pager) _Redraw(logger *log.Logger) {
 
 	p._AddLines(logger)
 
-	p._AddFooter()
 	p.screen.Show()
 }
 

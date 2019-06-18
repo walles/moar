@@ -49,6 +49,9 @@ func NewReaderFromStream(reader io.Reader) (*Reader, error) {
 // Highlight input file using highlight:
 // http://www.andre-simon.de/doku/highlight/en/highlight.php
 func _Highlight(filename string) (io.Reader, error) {
+	// FIXME: Check file extension vs "highlight --list-scripts=langs" before
+	// calling highlight, otherwise binary files like /bin/ls get messed up.
+
 	highlight := exec.Command("highlight", "--out-format=esc", "-i", filename)
 
 	highlightOut, err := highlight.StdoutPipe()
