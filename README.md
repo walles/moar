@@ -54,16 +54,25 @@ you can send questions to <johan.walles@gmail.com>.
 Developing
 ----------
 
-Build+ run:
+First, install [Highlight](http://www.andre-simon.de/zip/download.php),
+otherwise the test suite won't pass:
 
-```bash
-./moar.sh
-```
+* On macOS: [`brew install highlight`](https://brew.sh/)
+* On Ubuntu: [`sudo apt-get install highlight`](https://packages.ubuntu.com/search?suite=all&searchon=names&keywords=highlight)
+* Elsewhere, follow [instructions](http://www.andre-simon.de/zip/download.php)
 
-Run integration tests:
+Also, you need the [go tools](https://golang.org/doc/install).
+
+Run tests:
 
 ```bash
 ./test.sh
+```
+
+Build + run:
+
+```bash
+./moar.sh ...
 ```
 
 Making a new Release
