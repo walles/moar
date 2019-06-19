@@ -8,5 +8,9 @@ language: go
 go:
   - 1.12.x
 
+before_install:
+  # Needed for test suite to pass
+  - sudo apt-get install -y highlight
+
 script:
   - ./test.sh
