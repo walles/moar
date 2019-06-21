@@ -2,9 +2,12 @@ package m
 
 import (
 	"bufio"
+	"fmt"
 	"io"
+	"math"
 	"os"
 	"os/exec"
+	"path"
 )
 
 // Reader reads a file into an array of strings.
@@ -18,20 +21,24 @@ import (
 // FIXME: Make the reader read in the background, independently of what the pager is showing
 type Reader struct {
 	lines []string
-	name  string
+	name  *string
 }
 
 // Lines contains a number of lines from the reader, plus metadata
 type Lines struct {
 	lines []string
 
-	// One-based number of the first of the lines
+	// One-based line number of the first line returned
 	firstLineOneBased int
+
+	// "monkey.txt: 1-23/45 51%"
+	statusText string
 }
 
 // NewReaderFromStream creates a new stream reader
 func NewReaderFromStream(reader io.Reader) (*Reader, error) {
 	// FIXME: Close the stream when done reading it?
+	// FIXME: If we have a filter process, wait for that after done reading the stream
 	scanner := bufio.NewScanner(reader)
 	var lines []string
 	for scanner.Scan() {
@@ -84,8 +91,28 @@ func NewReaderFromFilename(filename string) (*Reader, error) {
 		return nil, err
 	}
 
-	reader.name = filename
+	reader.name = &filename
 	return reader, err
+}
+
+func (r *Reader) _CreateStatus(firstLineOneBased int, lastLineOneBased int) string {
+	prefix := ""
+	if r.name != nil {
+		prefix = path.Base(*r.name) + ": "
+	}
+
+	if len(r.lines) == 0 {
+		return prefix + "<empty>"
+	}
+
+	percent := int(math.Floor(100.0 * float64(lastLineOneBased) / float64(len(r.lines))))
+
+	return fmt.Sprintf("%s%d-%d/%d %d%%",
+		prefix,
+		firstLineOneBased,
+		lastLineOneBased,
+		len(r.lines),
+		percent)
 }
 
 // GetLines gets the indicated lines from the input
@@ -100,6 +127,8 @@ func (r *Reader) GetLines(firstLineOneBased int, wantedLineCount int) *Lines {
 
 			// FIXME: What line number should we set here?
 			firstLineOneBased: firstLineOneBased,
+
+			statusText: r._CreateStatus(0, 0),
 		}
 	}
 
@@ -125,5 +154,6 @@ func (r *Reader) GetLines(firstLineOneBased int, wantedLineCount int) *Lines {
 	return &Lines{
 		lines:             r.lines[firstLineZeroBased : lastLineZeroBased+1],
 		firstLineOneBased: firstLineOneBased,
+		statusText:        r._CreateStatus(firstLineOneBased, lastLineZeroBased+1),
 	}
 }

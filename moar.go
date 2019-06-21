@@ -36,6 +36,8 @@ func main() {
 
 	// FIXME: Support --version
 
+	// FIXME: Support --no-highlight
+
 	if len(os.Args) != 2 {
 		// FIXME: Improve this message
 		fmt.Fprintf(os.Stderr, "ERROR: Expected exactly one parameter, got: %v\n", os.Args[1:])

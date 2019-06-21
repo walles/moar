@@ -50,7 +50,7 @@ func (p *_Pager) _AddLines(logger *log.Logger) {
 
 	pos := 0
 	footerStyle := tcell.StyleDefault.Reverse(true)
-	for _, token := range "Press ESC / q to exit" {
+	for _, token := range lines.statusText + "  Press ESC / q to exit" {
 		p.screen.SetContent(pos, height-1, token, nil, footerStyle)
 		pos++
 	}
@@ -167,6 +167,9 @@ func (p *_Pager) StartPaging(logger *log.Logger, screen tcell.Screen) {
 		default:
 			logger.Printf("Unhandled event type: %v", ev)
 		}
+
+		// FIXME: If more events are ready, skip this redraw, that
+		// should speed up mouse wheel scrolling
 
 		p._Redraw(logger)
 	}

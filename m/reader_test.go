@@ -5,11 +5,14 @@ import (
 	"math"
 	"path"
 	"runtime"
+	"strings"
 	"testing"
+
+	"gotest.tools/assert"
 )
 
 func _TestGetLines(t *testing.T, reader *Reader) {
-	t.Logf("Testing file: %s...", reader.name)
+	t.Logf("Testing file: %s...", *reader.name)
 
 	lines := reader.GetLines(1, 10)
 	if len(lines.lines) > 10 {
@@ -99,3 +102,39 @@ func TestGetLines(t *testing.T) {
 		_TestGetLines(t, reader)
 	}
 }
+
+func _GetReaderWithLineCount(totalLines int) *Reader {
+	reader, err := NewReaderFromStream(strings.NewReader(strings.Repeat("x\n", totalLines)))
+	if err != nil {
+		panic(err)
+	}
+	return reader
+}
+
+func _TestStatusText(t *testing.T, fromLine int, toLine int, totalLines int, expected string) {
+	testMe := _GetReaderWithLineCount(totalLines)
+	linesRequested := toLine - fromLine + 1
+	statusText := testMe.GetLines(fromLine, linesRequested).statusText
+	assert.Equal(t, statusText, expected)
+}
+
+func TestStatusText(t *testing.T) {
+	_TestStatusText(t, 1, 10, 20, "1-10/20 50%")
+	_TestStatusText(t, 1, 5, 5, "1-5/5 100%")
+	_TestStatusText(t, 998, 999, 1000, "998-999/1000 99%")
+
+	_TestStatusText(t, 0, 0, 0, "<empty>")
+	_TestStatusText(t, 1, 1, 1, "1-1/1 100%")
+
+	// Test with filename
+	testMe, err := NewReaderFromFilename("/dev/null")
+	if err != nil {
+		panic(err)
+	}
+	statusText := testMe.GetLines(0, 0).statusText
+	assert.Equal(t, statusText, "null: <empty>")
+}
+
+// FIXME: Add test for opening .gz files
+// FIXME: Add test for opening .xz files
+// FIXME: Add test for opening .bz2 files
