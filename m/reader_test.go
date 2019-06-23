@@ -69,16 +69,18 @@ func _TestGetLines(t *testing.T, reader *Reader) {
 	}
 }
 
-func _GetTestFiles() []string {
+func _GetSamplesDir() string {
 	// From: https://coderwall.com/p/_fmbug/go-get-path-to-current-file
 	_, filename, _, ok := runtime.Caller(0)
 	if !ok {
 		panic("Getting current filename failed")
 	}
 
-	samplesDir := path.Join(path.Dir(filename), "../sample-files")
+	return path.Join(path.Dir(filename), "../sample-files")
+}
 
-	files, err := ioutil.ReadDir(samplesDir)
+func _GetTestFiles() []string {
+	files, err := ioutil.ReadDir(_GetSamplesDir())
 	if err != nil {
 		panic(err)
 	}
@@ -135,6 +137,18 @@ func TestStatusText(t *testing.T) {
 	assert.Equal(t, statusText, "null: <empty>")
 }
 
-// FIXME: Add test for opening .gz files
-// FIXME: Add test for opening .xz files
-// FIXME: Add test for opening .bz2 files
+func _TestCompressedFile(t *testing.T, filename string) {
+	reader, e := NewReaderFromFilename(_GetSamplesDir() + "/" + filename)
+	if e != nil {
+		t.Errorf("Error opening file <%s>: %s", filename, e.Error())
+		panic(e)
+	}
+
+	assert.Equal(t, reader.GetLines(1, 5).lines, [...]string{"This is a compressed file"})
+}
+
+func TestCompressedFiles(t *testing.T) {
+	_TestCompressedFile(t, "compressed.gz")
+	_TestCompressedFile(t, "compressed.bz2")
+	_TestCompressedFile(t, "compressed.xz")
+}

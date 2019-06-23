@@ -73,6 +73,8 @@ func (p *_Pager) Quit() {
 }
 
 func (p *_Pager) _OnKey(logger *log.Logger, key tcell.Key) {
+	// FIXME: Add support for pressing 'h' to get a list of keybindings
+	// FIXME: Add support for pressing '/' to search
 	switch key {
 	case tcell.KeyEscape:
 		p.Quit()
