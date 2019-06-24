@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/exec"
 	"path"
+	"strings"
 )
 
 // Reader reads a file into an array of strings.
@@ -53,37 +54,63 @@ func NewReaderFromStream(reader io.Reader) (*Reader, error) {
 	}, nil
 }
 
-// Highlight input file using highlight:
-// http://www.andre-simon.de/doku/highlight/en/highlight.php
-func _Highlight(filename string) (io.Reader, error) {
-	// FIXME: Check file extension vs "highlight --list-scripts=langs" before
-	// calling highlight, otherwise binary files like /bin/ls get messed up.
+// NewReaderFromCommand creates a new reader by running a file through a filter
+func NewReaderFromCommand(filename string, filterCommand ...string) (*Reader, error) {
+	filterWithFilename := append(filterCommand, filename)
+	filter := exec.Command(filterWithFilename[0], filterWithFilename[1:]...)
 
-	highlight := exec.Command("highlight", "--out-format=esc", "-i", filename)
-
-	highlightOut, err := highlight.StdoutPipe()
-	if err != nil {
-		// FIXME: Print user warning when done if highlight isn't installed
-		return nil, err
-	}
-
-	err = highlight.Start()
+	filterOut, err := filter.StdoutPipe()
 	if err != nil {
 		return nil, err
 	}
 
-	return highlightOut, nil
+	err = filter.Start()
+	if err != nil {
+		return nil, err
+	}
+	defer filter.Wait()
+
+	reader, err := NewReaderFromStream(filterOut)
+	if err != nil {
+		return nil, err
+	}
+
+	err = filter.Wait()
+	if err != nil {
+		return nil, err
+	}
+
+	reader.name = &filename
+	return reader, err
 }
 
 // NewReaderFromFilename creates a new file reader
 func NewReaderFromFilename(filename string) (*Reader, error) {
-	stream, err := _Highlight(filename)
+	if strings.HasSuffix(filename, ".gz") {
+		return NewReaderFromCommand(filename, "gzip", "-d", "-c")
+	}
+	if strings.HasSuffix(filename, ".bz2") {
+		return NewReaderFromCommand(filename, "bzip2", "-d", "-c")
+	}
+	if strings.HasSuffix(filename, ".xz") {
+		return NewReaderFromCommand(filename, "xz", "-d", "-c")
+	}
+
+	// Highlight input file using highlight:
+	// http://www.andre-simon.de/doku/highlight/en/highlight.php
+	//
+	// FIXME: Check file extension vs "highlight --list-scripts=langs" before
+	// calling highlight, otherwise binary files like /bin/ls get messed up.
+	highlighted, err := NewReaderFromCommand(filename, "highlight", "--out-format=esc", "-i")
+	if err == nil {
+		return highlighted, err
+	}
+
+	// FIXME: Warn user if highlight is not installed?
+
+	stream, err := os.Open(filename)
 	if err != nil {
-		// Can't highlight, try without
-		stream, err = os.Open(filename)
-		if err != nil {
-			return nil, err
-		}
+		return nil, err
 	}
 
 	reader, err := NewReaderFromStream(stream)

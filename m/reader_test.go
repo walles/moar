@@ -138,17 +138,20 @@ func TestStatusText(t *testing.T) {
 }
 
 func _TestCompressedFile(t *testing.T, filename string) {
-	reader, e := NewReaderFromFilename(_GetSamplesDir() + "/" + filename)
+	filenameWithPath := _GetSamplesDir() + "/" + filename
+	reader, e := NewReaderFromFilename(filenameWithPath)
 	if e != nil {
-		t.Errorf("Error opening file <%s>: %s", filename, e.Error())
+		t.Errorf("Error opening file <%s>: %s", filenameWithPath, e.Error())
 		panic(e)
 	}
 
-	assert.Equal(t, reader.GetLines(1, 5).lines, [...]string{"This is a compressed file"})
+	assert.Equal(t, reader.GetLines(1, 5).lines[0], "This is a compressed file", "%s", filename)
 }
 
 func TestCompressedFiles(t *testing.T) {
-	_TestCompressedFile(t, "compressed.gz")
-	_TestCompressedFile(t, "compressed.bz2")
-	_TestCompressedFile(t, "compressed.xz")
+	_TestCompressedFile(t, "compressed.txt.gz")
+	_TestCompressedFile(t, "compressed.txt.bz2")
+	_TestCompressedFile(t, "compressed.txt.xz")
 }
+
+// FIXME: Add tests for NewReaderFromCommand with non-existing and failing commands
