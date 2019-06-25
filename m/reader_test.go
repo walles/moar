@@ -69,16 +69,18 @@ func _TestGetLines(t *testing.T, reader *Reader) {
 	}
 }
 
-func _GetTestFiles() []string {
+func _GetSamplesDir() string {
 	// From: https://coderwall.com/p/_fmbug/go-get-path-to-current-file
 	_, filename, _, ok := runtime.Caller(0)
 	if !ok {
 		panic("Getting current filename failed")
 	}
 
-	samplesDir := path.Join(path.Dir(filename), "../sample-files")
+	return path.Join(path.Dir(filename), "../sample-files")
+}
 
-	files, err := ioutil.ReadDir(samplesDir)
+func _GetTestFiles() []string {
+	files, err := ioutil.ReadDir(_GetSamplesDir())
 	if err != nil {
 		panic(err)
 	}
@@ -135,6 +137,39 @@ func TestStatusText(t *testing.T) {
 	assert.Equal(t, statusText, "null: <empty>")
 }
 
-// FIXME: Add test for opening .gz files
-// FIXME: Add test for opening .xz files
-// FIXME: Add test for opening .bz2 files
+func _TestCompressedFile(t *testing.T, filename string) {
+	filenameWithPath := _GetSamplesDir() + "/" + filename
+	reader, e := NewReaderFromFilename(filenameWithPath)
+	if e != nil {
+		t.Errorf("Error opening file <%s>: %s", filenameWithPath, e.Error())
+		panic(e)
+	}
+
+	assert.Equal(t, reader.GetLines(1, 5).lines[0], "This is a compressed file", "%s", filename)
+}
+
+func TestCompressedFiles(t *testing.T) {
+	_TestCompressedFile(t, "compressed.txt.gz")
+	_TestCompressedFile(t, "compressed.txt.bz2")
+	_TestCompressedFile(t, "compressed.txt.xz")
+}
+
+func TestFilterNotInstalled(t *testing.T) {
+	// FIXME: Test what happens if we try to use a filter that is not installed
+}
+
+func TestFilterFailure(t *testing.T) {
+	// FIXME: Test what happens if the filter command fails because of bad command line options
+}
+
+func TestFilterPermissionDenied(t *testing.T) {
+	// FIXME: Test what happens if the filter command fails because it can't access the requested file
+}
+
+func TestFilterFileNotFound(t *testing.T) {
+	// FIXME: Test what happens if the filter command fails because it can't find the requested file
+}
+
+func TestFilterNotAFile(t *testing.T) {
+	// FIXME: Test what happens if the filter command fails because the target is not a file
+}
