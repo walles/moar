@@ -154,4 +154,22 @@ func TestCompressedFiles(t *testing.T) {
 	_TestCompressedFile(t, "compressed.txt.xz")
 }
 
-// FIXME: Add tests for NewReaderFromCommand with non-existing and failing commands
+func TestFilterNotInstalled(t *testing.T) {
+	// FIXME: Test what happens if we try to use a filter that is not installed
+}
+
+func TestFilterFailure(t *testing.T) {
+	// FIXME: Test what happens if the filter command fails because of bad command line options
+}
+
+func TestFilterPermissionDenied(t *testing.T) {
+	// FIXME: Test what happens if the filter command fails because it can't access the requested file
+}
+
+func TestFilterFileNotFound(t *testing.T) {
+	// FIXME: Test what happens if the filter command fails because it can't find the requested file
+}
+
+func TestFilterNotAFile(t *testing.T) {
+	// FIXME: Test what happens if the filter command fails because the target is not a file
+}
