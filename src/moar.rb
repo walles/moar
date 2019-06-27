@@ -90,7 +90,7 @@ class LineEditor
       end
     else
       begin
-        @string << char.chr
+        @string += char.chr
         @cursor_position += 1
       rescue RangeError
         # These errors intentionally ignored; it's better to do
