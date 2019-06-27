@@ -23,8 +23,8 @@ func TokensFromString(logger *log.Logger, s string) []Token {
 	styleBrokenUtf8 := tcell.StyleDefault.Background(7).Foreground(1)
 
 	for _, styledString := range _StyledStringsFromString(logger, s) {
-		for _, char := range styledString.String {
-			switch char {
+		for _, token := range _TokensFromStyledString(styledString) {
+			switch token.Rune {
 
 			case '\x09': // TAB
 				for {
@@ -45,13 +45,63 @@ func TokensFromString(logger *log.Logger, s string) []Token {
 					Style: styleBrokenUtf8,
 				})
 
-			default:
+			case '\x08': // Backspace
 				tokens = append(tokens, Token{
-					Rune:  char,
-					Style: styledString.Style,
+					Rune:  '<',
+					Style: styleBrokenUtf8,
 				})
+
+			default:
+				tokens = append(tokens, token)
 			}
 		}
+	}
+
+	return tokens
+}
+
+func _TokensFromStyledString(styledString _StyledString) []Token {
+	tokens := make([]Token, 0, len(styledString.String)+1)
+	oneBack := '\x00'
+	twoBack := '\x00'
+	for _, char := range []rune(styledString.String) {
+		if oneBack == '\x08' && twoBack != '\x00' {
+			// Something-Backspace-Something
+
+			replacement := (*Token)(nil)
+
+			if char == twoBack {
+				replacement = &Token{
+					Rune:  twoBack,
+					Style: styledString.Style.Bold(true),
+				}
+			}
+
+			if twoBack == '_' {
+				replacement = &Token{
+					Rune:  char,
+					Style: styledString.Style.Underline(true),
+				}
+			}
+
+			if replacement != nil {
+				tokens = append(tokens[0:len(tokens)-2], *replacement)
+
+				twoBack = oneBack
+				oneBack = char
+				continue
+			}
+
+			// No match, just keep going
+		}
+
+		tokens = append(tokens, Token{
+			Rune:  char,
+			Style: styledString.Style,
+		})
+
+		twoBack = oneBack
+		oneBack = char
 	}
 
 	return tokens
@@ -79,7 +129,7 @@ func _StyledStringsFromString(logger *log.Logger, s string) []_StyledString {
 		end = match[0]
 
 		if end > beg {
-			// Otherwise the string is empty, no point for us in that
+			// Found non-zero length string
 			styledStrings = append(styledStrings, _StyledString{
 				String: s[beg:end],
 				Style:  style,

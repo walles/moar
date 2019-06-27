@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/gdamore/tcell"
+	"gotest.tools/assert"
 )
 
 func TestUnicodeRendering(t *testing.T) {
@@ -192,4 +193,25 @@ func TestCodeHighlighting(t *testing.T) {
 	}
 }
 
-// FIXME: Add man page formatting tests
+func _TestManPageFormatting(t *testing.T, input string, expected _ExpectedCell) {
+	reader, err := NewReaderFromStream(strings.NewReader(input))
+	if err != nil {
+		panic(err)
+	}
+
+	contents := _StartPaging(t, reader)
+	expected.LogDifference(t, contents[0])
+	assert.Equal(t, contents[1].Runes[0], ' ')
+}
+
+func TestManPageFormatting(t *testing.T) {
+	_TestManPageFormatting(t, "N\x08N", _CreateExpectedCell('N', tcell.StyleDefault.Bold(true)))
+	_TestManPageFormatting(t, "_\x08x", _CreateExpectedCell('x', tcell.StyleDefault.Underline(true)))
+
+	// Corner cases
+	_TestManPageFormatting(t, "\x08", _CreateExpectedCell('<', tcell.StyleDefault.Foreground(1).Background(7)))
+
+	// FIXME: Test two consecutive backspaces
+
+	// FIXME: Test backspace between two uncombinable characters
+}
