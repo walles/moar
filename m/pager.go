@@ -15,6 +15,9 @@ type _Pager struct {
 	screen            tcell.Screen
 	quit              bool
 	firstLineOneBased int
+
+	isSearching  bool
+	searchString string
 }
 
 // NewPager creates a new Pager
@@ -29,6 +32,16 @@ func NewPager(r Reader) *_Pager {
 func (p *_Pager) _AddLine(logger *log.Logger, lineNumber int, line string) {
 	for pos, token := range TokensFromString(logger, line) {
 		p.screen.SetContent(pos, lineNumber, token.Rune, nil, token.Style)
+	}
+}
+
+func (p *_Pager) _AddSearchFooter() {
+	_, height := p.screen.Size()
+
+	pos := 0
+	for _, token := range "FIXME: Search footer here" {
+		p.screen.SetContent(pos, height-1, token, nil, tcell.StyleDefault)
+		pos++
 	}
 }
 
@@ -48,9 +61,14 @@ func (p *_Pager) _AddLines(logger *log.Logger) {
 		p._AddLine(logger, screenLineNumber, line)
 	}
 
+	if p.isSearching {
+		p._AddSearchFooter()
+		return
+	}
+
 	pos := 0
 	footerStyle := tcell.StyleDefault.Reverse(true)
-	for _, token := range lines.statusText + "  Press ESC / q to exit" {
+	for _, token := range lines.statusText + "  Press ESC / q to exit, '/' to search" {
 		p.screen.SetContent(pos, height-1, token, nil, footerStyle)
 		pos++
 	}
@@ -72,9 +90,23 @@ func (p *_Pager) Quit() {
 	p.quit = true
 }
 
+func (p *_Pager) _OnSearchKey(logger *log.Logger, key tcell.Key) {
+	switch key {
+	case tcell.KeyEscape, tcell.KeyEnter:
+		p.isSearching = false
+
+	default:
+		logger.Printf("Unhandled key event %v", key)
+	}
+}
+
 func (p *_Pager) _OnKey(logger *log.Logger, key tcell.Key) {
+	if p.isSearching {
+		p._OnSearchKey(logger, key)
+		return
+	}
+
 	// FIXME: Add support for pressing 'h' to get a list of keybindings
-	// FIXME: Add support for pressing '/' to search
 	switch key {
 	case tcell.KeyEscape:
 		p.Quit()
@@ -102,11 +134,20 @@ func (p *_Pager) _OnKey(logger *log.Logger, key tcell.Key) {
 		p.firstLineOneBased -= (height - 1)
 
 	default:
-		logger.Printf("Unhandled rune key event %v", key)
+		logger.Printf("Unhandled key event %v", key)
 	}
 }
 
+func (p *_Pager) _OnSearchRune(char rune) {
+	// FIXME: Accept keys here
+}
+
 func (p *_Pager) _OnRune(logger *log.Logger, char rune) {
+	if p.isSearching {
+		p._OnSearchRune(char)
+		return
+	}
+
 	switch char {
 	case 'q':
 		p.Quit()
@@ -132,6 +173,9 @@ func (p *_Pager) _OnRune(logger *log.Logger, char rune) {
 	case 'b':
 		_, height := p.screen.Size()
 		p.firstLineOneBased -= (height - 1)
+
+	case '/':
+		p.isSearching = true
 
 	default:
 		logger.Printf("Unhandled rune keyress '%s'", string(char))
