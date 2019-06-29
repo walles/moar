@@ -39,12 +39,13 @@ func (p *_Pager) _AddSearchFooter() {
 	_, height := p.screen.Size()
 
 	pos := 0
-	for _, token := range "Search: " + p.searchString + "<CURSOR>" {
+	for _, token := range "Search: " + p.searchString {
 		p.screen.SetContent(pos, height-1, token, nil, tcell.StyleDefault)
 		pos++
 	}
 
-	// FIXME: Add a cursor
+	// Add a cursor
+	p.screen.SetContent(pos, height-1, ' ', nil, tcell.StyleDefault.Reverse(true))
 }
 
 func (p *_Pager) _AddLines(logger *log.Logger) {
