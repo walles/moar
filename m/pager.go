@@ -39,10 +39,12 @@ func (p *_Pager) _AddSearchFooter() {
 	_, height := p.screen.Size()
 
 	pos := 0
-	for _, token := range "FIXME: Search footer here" {
+	for _, token := range "Search: " + p.searchString + "<CURSOR>" {
 		p.screen.SetContent(pos, height-1, token, nil, tcell.StyleDefault)
 		pos++
 	}
+
+	// FIXME: Add a cursor
 }
 
 func (p *_Pager) _AddLines(logger *log.Logger) {
@@ -95,8 +97,15 @@ func (p *_Pager) _OnSearchKey(logger *log.Logger, key tcell.Key) {
 	case tcell.KeyEscape, tcell.KeyEnter:
 		p.isSearching = false
 
+	case tcell.KeyBackspace, tcell.KeyDEL:
+		if len(p.searchString) == 0 {
+			return
+		}
+
+		p.searchString = p.searchString[:len(p.searchString)-1]
+
 	default:
-		logger.Printf("Unhandled key event %v", key)
+		logger.Printf("Unhandled search key event %v", key)
 	}
 }
 
@@ -138,13 +147,13 @@ func (p *_Pager) _OnKey(logger *log.Logger, key tcell.Key) {
 	}
 }
 
-func (p *_Pager) _OnSearchRune(char rune) {
-	// FIXME: Accept keys here
+func (p *_Pager) _OnSearchRune(logger *log.Logger, char rune) {
+	p.searchString = p.searchString + string(char)
 }
 
 func (p *_Pager) _OnRune(logger *log.Logger, char rune) {
 	if p.isSearching {
-		p._OnSearchRune(char)
+		p._OnSearchRune(logger, char)
 		return
 	}
 

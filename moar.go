@@ -14,6 +14,8 @@ import (
 )
 
 func main() {
+	// FIXME: On any panic or warnings, also print system info and how to report bugs
+
 	stdinIsRedirected := !terminal.IsTerminal(int(os.Stdin.Fd()))
 	stdoutIsRedirected := !terminal.IsTerminal(int(os.Stdout.Fd()))
 	if stdinIsRedirected && stdoutIsRedirected {
@@ -68,6 +70,8 @@ func main() {
 }
 
 func _StartPaging(reader *m.Reader) {
+	// FIXME: If we panic anywhere in here, restore the screen before printing the panic message
+
 	screen, e := tcell.NewScreen()
 	if e != nil {
 		fmt.Fprintf(os.Stderr, "%v\n", e)
