@@ -5,6 +5,7 @@ import (
 	"log"
 	"math"
 	"os"
+	"regexp"
 
 	"github.com/gdamore/tcell"
 )
@@ -16,8 +17,9 @@ type _Pager struct {
 	quit              bool
 	firstLineOneBased int
 
-	isSearching  bool
-	searchString string
+	isSearching   bool
+	searchString  string
+	searchPattern *regexp.Regexp
 }
 
 // NewPager creates a new Pager
@@ -30,8 +32,22 @@ func NewPager(r Reader) *_Pager {
 }
 
 func (p *_Pager) _AddLine(logger *log.Logger, lineNumber int, line string) {
-	for pos, token := range TokensFromString(logger, line) {
-		p.screen.SetContent(pos, lineNumber, token.Rune, nil, token.Style)
+	tokens := TokensFromString(logger, line)
+
+	plainString := ""
+	for _, token := range tokens {
+		plainString += string(token.Rune)
+	}
+	matchRanges := GetMatchRanges(plainString, p.searchPattern)
+
+	for pos, token := range tokens {
+		style := token.Style
+		if matchRanges.InRange(pos) {
+			// FIXME: This doesn't work if the style is already reversed
+			style = style.Reverse(true)
+		}
+
+		p.screen.SetContent(pos, lineNumber, token.Rune, nil, style)
 	}
 }
 
@@ -93,6 +109,30 @@ func (p *_Pager) Quit() {
 	p.quit = true
 }
 
+func (p *_Pager) UpdateSearchPattern() {
+	if len(p.searchString) == 0 {
+		p.searchPattern = nil
+		return
+	}
+
+	pattern, err := regexp.Compile(p.searchString)
+	if err == nil {
+		// Search string is a regexp
+		p.searchPattern = pattern
+		return
+	}
+
+	pattern, err = regexp.Compile(regexp.QuoteMeta(p.searchString))
+	if err == nil {
+		// Pattern matching the string exactly
+		p.searchPattern = pattern
+		return
+	}
+
+	// Unable to create a match-string-verbatim pattern
+	panic(err)
+}
+
 func (p *_Pager) _OnSearchKey(logger *log.Logger, key tcell.Key) {
 	switch key {
 	case tcell.KeyEscape, tcell.KeyEnter:
@@ -104,6 +144,7 @@ func (p *_Pager) _OnSearchKey(logger *log.Logger, key tcell.Key) {
 		}
 
 		p.searchString = p.searchString[:len(p.searchString)-1]
+		p.UpdateSearchPattern()
 
 	default:
 		logger.Printf("Unhandled search key event %v", key)
@@ -150,6 +191,7 @@ func (p *_Pager) _OnKey(logger *log.Logger, key tcell.Key) {
 
 func (p *_Pager) _OnSearchRune(logger *log.Logger, char rune) {
 	p.searchString = p.searchString + string(char)
+	p.UpdateSearchPattern()
 }
 
 func (p *_Pager) _OnRune(logger *log.Logger, char rune) {
