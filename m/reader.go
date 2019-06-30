@@ -152,7 +152,7 @@ func (r *Reader) GetLines(firstLineOneBased int, wantedLineCount int) *Lines {
 		return &Lines{
 			lines: r.lines,
 
-			// FIXME: What line number should we set here?
+			// The line number set here won't matter, we'll clip it anyway when we get it back
 			firstLineOneBased: firstLineOneBased,
 
 			statusText: r._CreateStatus(0, 0),

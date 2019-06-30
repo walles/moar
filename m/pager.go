@@ -5,6 +5,7 @@ import (
 	"log"
 	"math"
 	"os"
+	"regexp"
 
 	"github.com/gdamore/tcell"
 )
@@ -15,6 +16,10 @@ type _Pager struct {
 	screen            tcell.Screen
 	quit              bool
 	firstLineOneBased int
+
+	isSearching   bool
+	searchString  string
+	searchPattern *regexp.Regexp
 }
 
 // NewPager creates a new Pager
@@ -27,9 +32,36 @@ func NewPager(r Reader) *_Pager {
 }
 
 func (p *_Pager) _AddLine(logger *log.Logger, lineNumber int, line string) {
-	for pos, token := range TokensFromString(logger, line) {
-		p.screen.SetContent(pos, lineNumber, token.Rune, nil, token.Style)
+	tokens := TokensFromString(logger, line)
+
+	plainString := ""
+	for _, token := range tokens {
+		plainString += string(token.Rune)
 	}
+	matchRanges := GetMatchRanges(plainString, p.searchPattern)
+
+	for pos, token := range tokens {
+		style := token.Style
+		if matchRanges.InRange(pos) {
+			// FIXME: This doesn't work if the style is already reversed
+			style = style.Reverse(true)
+		}
+
+		p.screen.SetContent(pos, lineNumber, token.Rune, nil, style)
+	}
+}
+
+func (p *_Pager) _AddSearchFooter() {
+	_, height := p.screen.Size()
+
+	pos := 0
+	for _, token := range "Search: " + p.searchString {
+		p.screen.SetContent(pos, height-1, token, nil, tcell.StyleDefault)
+		pos++
+	}
+
+	// Add a cursor
+	p.screen.SetContent(pos, height-1, ' ', nil, tcell.StyleDefault.Reverse(true))
 }
 
 func (p *_Pager) _AddLines(logger *log.Logger) {
@@ -48,9 +80,14 @@ func (p *_Pager) _AddLines(logger *log.Logger) {
 		p._AddLine(logger, screenLineNumber, line)
 	}
 
+	if p.isSearching {
+		p._AddSearchFooter()
+		return
+	}
+
 	pos := 0
 	footerStyle := tcell.StyleDefault.Reverse(true)
-	for _, token := range lines.statusText + "  Press ESC / q to exit" {
+	for _, token := range lines.statusText + "  Press ESC / q to exit, '/' to search" {
 		p.screen.SetContent(pos, height-1, token, nil, footerStyle)
 		pos++
 	}
@@ -72,9 +109,57 @@ func (p *_Pager) Quit() {
 	p.quit = true
 }
 
+func (p *_Pager) UpdateSearchPattern() {
+	if len(p.searchString) == 0 {
+		p.searchPattern = nil
+		return
+	}
+
+	pattern, err := regexp.Compile(p.searchString)
+	if err == nil {
+		// Search string is a regexp
+		// FIXME: Make this case insensitive if input is all-lowercase
+		p.searchPattern = pattern
+		return
+	}
+
+	pattern, err = regexp.Compile(regexp.QuoteMeta(p.searchString))
+	if err == nil {
+		// Pattern matching the string exactly
+		// FIXME: Make this case insensitive if input is all-lowercase
+		p.searchPattern = pattern
+		return
+	}
+
+	// Unable to create a match-string-verbatim pattern
+	panic(err)
+}
+
+func (p *_Pager) _OnSearchKey(logger *log.Logger, key tcell.Key) {
+	switch key {
+	case tcell.KeyEscape, tcell.KeyEnter:
+		p.isSearching = false
+
+	case tcell.KeyBackspace, tcell.KeyDEL:
+		if len(p.searchString) == 0 {
+			return
+		}
+
+		p.searchString = p.searchString[:len(p.searchString)-1]
+		p.UpdateSearchPattern()
+
+	default:
+		logger.Printf("Unhandled search key event %v", key)
+	}
+}
+
 func (p *_Pager) _OnKey(logger *log.Logger, key tcell.Key) {
+	if p.isSearching {
+		p._OnSearchKey(logger, key)
+		return
+	}
+
 	// FIXME: Add support for pressing 'h' to get a list of keybindings
-	// FIXME: Add support for pressing '/' to search
 	switch key {
 	case tcell.KeyEscape:
 		p.Quit()
@@ -102,11 +187,21 @@ func (p *_Pager) _OnKey(logger *log.Logger, key tcell.Key) {
 		p.firstLineOneBased -= (height - 1)
 
 	default:
-		logger.Printf("Unhandled rune key event %v", key)
+		logger.Printf("Unhandled key event %v", key)
 	}
 }
 
+func (p *_Pager) _OnSearchRune(logger *log.Logger, char rune) {
+	p.searchString = p.searchString + string(char)
+	p.UpdateSearchPattern()
+}
+
 func (p *_Pager) _OnRune(logger *log.Logger, char rune) {
+	if p.isSearching {
+		p._OnSearchRune(logger, char)
+		return
+	}
+
 	switch char {
 	case 'q':
 		p.Quit()
@@ -132,6 +227,9 @@ func (p *_Pager) _OnRune(logger *log.Logger, char rune) {
 	case 'b':
 		_, height := p.screen.Size()
 		p.firstLineOneBased -= (height - 1)
+
+	case '/':
+		p.isSearching = true
 
 	default:
 		logger.Printf("Unhandled rune keyress '%s'", string(char))
