@@ -32,12 +32,7 @@ func NewPager(r Reader) *_Pager {
 }
 
 func (p *_Pager) _AddLine(logger *log.Logger, lineNumber int, line string) {
-	tokens := TokensFromString(logger, line)
-
-	plainString := ""
-	for _, token := range tokens {
-		plainString += string(token.Rune)
-	}
+	tokens, plainString := TokensFromString(logger, line)
 	matchRanges := GetMatchRanges(plainString, p.searchPattern)
 
 	for pos, token := range tokens {
@@ -109,11 +104,22 @@ func (p *_Pager) Quit() {
 	p.quit = true
 }
 
-func (p *_Pager) UpdateSearchPattern() {
+func (p *_Pager) _ScrollToSearchHits() {
+	// FIXME: If there are hits on the current page, do nothing
+
+	// FIXME: Scan from here to the last line and scroll to the first hit found
+
+	// FIXME: On no hits, somehow inform the user
+
+}
+
+func (p *_Pager) _UpdateSearchPattern() {
 	if len(p.searchString) == 0 {
 		p.searchPattern = nil
 		return
 	}
+
+	defer p._ScrollToSearchHits()
 
 	pattern, err := regexp.Compile(p.searchString)
 	if err == nil {
@@ -146,7 +152,7 @@ func (p *_Pager) _OnSearchKey(logger *log.Logger, key tcell.Key) {
 		}
 
 		p.searchString = p.searchString[:len(p.searchString)-1]
-		p.UpdateSearchPattern()
+		p._UpdateSearchPattern()
 
 	default:
 		logger.Printf("Unhandled search key event %v", key)
@@ -193,7 +199,7 @@ func (p *_Pager) _OnKey(logger *log.Logger, key tcell.Key) {
 
 func (p *_Pager) _OnSearchRune(logger *log.Logger, char rune) {
 	p.searchString = p.searchString + string(char)
-	p.UpdateSearchPattern()
+	p._UpdateSearchPattern()
 }
 
 func (p *_Pager) _OnRune(logger *log.Logger, char rune) {

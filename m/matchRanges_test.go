@@ -7,9 +7,11 @@ import (
 	"gotest.tools/assert"
 )
 
+// This is really a constant, don't change it!
+var _TestString = "mamma"
+
 func TestGetMatchRanges(t *testing.T) {
-	// Should match the one in TestInRange()
-	matchRanges := GetMatchRanges("mamma", regexp.MustCompile("m+"))
+	matchRanges := GetMatchRanges(&_TestString, regexp.MustCompile("m+"))
 	assert.Equal(t, len(matchRanges.Matches), 2) // Two matches
 
 	assert.DeepEqual(t, matchRanges.Matches[0][0], 0) // First match starts at 0
@@ -20,14 +22,14 @@ func TestGetMatchRanges(t *testing.T) {
 }
 
 func TestGetMatchRangesNilPattern(t *testing.T) {
-	matchRanges := GetMatchRanges("mamma", nil)
+	matchRanges := GetMatchRanges(&_TestString, nil)
 	assert.Assert(t, matchRanges == nil)
 	assert.Assert(t, !matchRanges.InRange(0))
 }
 
 func TestInRange(t *testing.T) {
 	// Should match the one in TestGetMatchRanges()
-	matchRanges := GetMatchRanges("mamma", regexp.MustCompile("m+"))
+	matchRanges := GetMatchRanges(&_TestString, regexp.MustCompile("m+"))
 
 	assert.Assert(t, !matchRanges.InRange(-1)) // Before start
 	assert.Assert(t, matchRanges.InRange(0))   // m
