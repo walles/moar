@@ -9,6 +9,10 @@ type MatchRanges struct {
 
 // GetMatchRanges locates a regexp in a string
 func GetMatchRanges(String string, Pattern *regexp.Regexp) *MatchRanges {
+	if Pattern == nil {
+		return nil
+	}
+
 	return &MatchRanges{
 		Matches: Pattern.FindAllStringIndex(String, -1),
 	}

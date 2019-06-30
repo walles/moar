@@ -19,6 +19,12 @@ func TestGetMatchRanges(t *testing.T) {
 	assert.DeepEqual(t, matchRanges.Matches[1][1], 4) // And ends on 4 exclusive
 }
 
+func TestGetMatchRangesNilPattern(t *testing.T) {
+	matchRanges := GetMatchRanges("mamma", nil)
+	assert.Assert(t, matchRanges == nil)
+	assert.Assert(t, !matchRanges.InRange(0))
+}
+
 func TestInRange(t *testing.T) {
 	// Should match the one in TestGetMatchRanges()
 	matchRanges := GetMatchRanges("mamma", regexp.MustCompile("m+"))

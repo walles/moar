@@ -118,6 +118,7 @@ func (p *_Pager) UpdateSearchPattern() {
 	pattern, err := regexp.Compile(p.searchString)
 	if err == nil {
 		// Search string is a regexp
+		// FIXME: Make this case insensitive if input is all-lowercase
 		p.searchPattern = pattern
 		return
 	}
@@ -125,6 +126,7 @@ func (p *_Pager) UpdateSearchPattern() {
 	pattern, err = regexp.Compile(regexp.QuoteMeta(p.searchString))
 	if err == nil {
 		// Pattern matching the string exactly
+		// FIXME: Make this case insensitive if input is all-lowercase
 		p.searchPattern = pattern
 		return
 	}
