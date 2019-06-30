@@ -120,6 +120,7 @@ func (p *_Pager) _UpdateSearchPattern() {
 	}
 
 	defer p._ScrollToSearchHits()
+	// FIXME: Indicate to user if we didn't find anything
 
 	pattern, err := regexp.Compile(p.searchString)
 	if err == nil {
@@ -236,6 +237,8 @@ func (p *_Pager) _OnRune(logger *log.Logger, char rune) {
 
 	case '/':
 		p.isSearching = true
+		p.searchString = ""
+		p.searchPattern = nil
 
 	default:
 		logger.Printf("Unhandled rune keyress '%s'", string(char))
