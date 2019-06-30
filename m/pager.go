@@ -105,12 +105,40 @@ func (p *_Pager) Quit() {
 }
 
 func (p *_Pager) _ScrollToSearchHits() {
-	// FIXME: If there are hits on the current page, do nothing
+	if p.searchPattern == nil {
+		// This is not a search
+		return
+	}
 
-	// FIXME: Scan from here to the last line and scroll to the first hit found
+	firstVisibleLineOneBased := p.firstLineOneBased
+	_, windowHeight := p.screen.Size()
 
-	// FIXME: On no hits, somehow inform the user
+	// If first line is 1 and window is 2 high, and one line is the status
+	// line, the last line will be 1 + 2 - 2 = 1
+	lastVisibleLineOneBased := firstVisibleLineOneBased + windowHeight - 2
 
+	lineNumber := firstVisibleLineOneBased
+	for {
+		line := p.reader.GetLine(lineNumber)
+		if line == nil {
+			// No match, give up
+			return
+		}
+
+		if p.searchPattern.MatchString(*line) {
+			// Match!
+			if lineNumber <= lastVisibleLineOneBased {
+				// Already on-screen, never mind
+				return
+			}
+
+			// Scroll!
+			p.firstLineOneBased = lineNumber
+			return
+		}
+
+		lineNumber++
+	}
 }
 
 func (p *_Pager) _UpdateSearchPattern() {
