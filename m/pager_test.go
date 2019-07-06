@@ -218,4 +218,20 @@ func TestManPageFormatting(t *testing.T) {
 
 func TestToPattern(t *testing.T) {
 	assert.Assert(t, ToPattern("") == nil)
+
+	// Test regexp matching
+	assert.Assert(t, ToPattern("G.*S").MatchString("GRIIIS"))
+	assert.Assert(t, !ToPattern("G.*S").MatchString("gRIIIS"))
+
+	// Test case insensitive regexp matching
+	assert.Assert(t, ToPattern("g.*s").MatchString("GRIIIS"))
+	assert.Assert(t, ToPattern("g.*s").MatchString("gRIIIS"))
+
+	// Test non-regexp matching
+	assert.Assert(t, ToPattern(")G").MatchString(")G"))
+	assert.Assert(t, !ToPattern(")G").MatchString(")g"))
+
+	// Test case insensitive non-regexp matching
+	assert.Assert(t, ToPattern(")g").MatchString(")G"))
+	assert.Assert(t, ToPattern(")g").MatchString(")g"))
 }

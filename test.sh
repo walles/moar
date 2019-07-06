@@ -2,14 +2,10 @@
 
 set -e -o pipefail
 
-# Ensure we can cross compile
-GOOS=linux GOARCH=386 go build
-GOOS=darwin GOARCH=amd64 go build
-
-# Unit tests first...
+# Unit tests first
 go test github.com/walles/moar/m
 
-# ... then Verify sending the output to a file
+# Verify sending the output to a file
 go build
 
 RESULT="$(mktemp)"
@@ -33,6 +29,10 @@ if ./moar does-not-exist >& /dev/null ; then
     echo ERROR: Should have failed on non-existing input file name
     exit 1
 fi
+
+# Ensure we can cross compile
+GOOS=linux GOARCH=386 go build
+GOOS=darwin GOARCH=amd64 go build
 
 echo
 echo "All tests passed!"

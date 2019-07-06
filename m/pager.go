@@ -6,6 +6,7 @@ import (
 	"math"
 	"os"
 	"regexp"
+	"unicode"
 
 	"github.com/gdamore/tcell"
 )
@@ -279,17 +280,29 @@ func ToPattern(compileMe string) *regexp.Regexp {
 		return nil
 	}
 
-	pattern, err := regexp.Compile(compileMe)
+	hasUppercase := false
+	for _, char := range compileMe {
+		if unicode.IsUpper(char) {
+			hasUppercase = true
+		}
+	}
+
+	// Smart case; be case insensitive unless there are upper case chars
+	// in the search string
+	prefix := "(?i)"
+	if hasUppercase {
+		prefix = ""
+	}
+
+	pattern, err := regexp.Compile(prefix + compileMe)
 	if err == nil {
 		// Search string is a regexp
-		// FIXME: Make this case insensitive if input is all-lowercase
 		return pattern
 	}
 
-	pattern, err = regexp.Compile(regexp.QuoteMeta(compileMe))
+	pattern, err = regexp.Compile(prefix + regexp.QuoteMeta(compileMe))
 	if err == nil {
 		// Pattern matching the string exactly
-		// FIXME: Make this case insensitive if input is all-lowercase
 		return pattern
 	}
 
