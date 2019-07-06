@@ -10,6 +10,14 @@ import (
 	"github.com/gdamore/tcell"
 )
 
+type _PagerMode int
+
+const (
+	_Viewing   _PagerMode = 0
+	_Searching _PagerMode = 1
+	_NotFound  _PagerMode = 2
+)
+
 // Pager is the main on-screen pager
 type _Pager struct {
 	reader            Reader
@@ -17,7 +25,7 @@ type _Pager struct {
 	quit              bool
 	firstLineOneBased int
 
-	isSearching   bool
+	mode          _PagerMode
 	searchString  string
 	searchPattern *regexp.Regexp
 }
@@ -60,7 +68,7 @@ func (p *_Pager) _AddSearchFooter() {
 }
 
 func (p *_Pager) _AddLines(logger *log.Logger) {
-	width, height := p.screen.Size()
+	_, height := p.screen.Size()
 	wantedLineCount := height - 1
 
 	lines := p.reader.GetLines(p.firstLineOneBased, wantedLineCount)
@@ -75,14 +83,27 @@ func (p *_Pager) _AddLines(logger *log.Logger) {
 		p._AddLine(logger, screenLineNumber, line)
 	}
 
-	if p.isSearching {
+	switch p.mode {
+	case _Searching:
 		p._AddSearchFooter()
-		return
+
+	case _NotFound:
+		p._SetFooter("Not found: " + p.searchString)
+
+	case _Viewing:
+		p._SetFooter(lines.statusText + "  Press ESC / q to exit, '/' to search")
+
+	default:
+		panic(fmt.Sprintf("Unsupported pager mode %v", p.mode))
 	}
+}
+
+func (p *_Pager) _SetFooter(footer string) {
+	width, height := p.screen.Size()
 
 	pos := 0
 	footerStyle := tcell.StyleDefault.Reverse(true)
-	for _, token := range lines.statusText + "  Press ESC / q to exit, '/' to search" {
+	for _, token := range footer {
 		p.screen.SetContent(pos, height-1, token, nil, footerStyle)
 		pos++
 	}
@@ -110,35 +131,74 @@ func (p *_Pager) _ScrollToSearchHits() {
 		return
 	}
 
+	firstHitLine := p._FindFirstHitLineOneBased(p.firstLineOneBased)
+	if firstHitLine == nil {
+		// No match, give up
+		return
+	}
+
+	if *firstHitLine <= p._GetLastVisibleLineOneBased() {
+		// Already on-screen, never mind
+		return
+	}
+
+	p.firstLineOneBased = *firstHitLine
+}
+
+func (p *_Pager) _GetLastVisibleLineOneBased() int {
 	firstVisibleLineOneBased := p.firstLineOneBased
 	_, windowHeight := p.screen.Size()
 
 	// If first line is 1 and window is 2 high, and one line is the status
 	// line, the last line will be 1 + 2 - 2 = 1
-	lastVisibleLineOneBased := firstVisibleLineOneBased + windowHeight - 2
+	return firstVisibleLineOneBased + windowHeight - 2
+}
 
-	lineNumber := firstVisibleLineOneBased
+func (p *_Pager) _FindFirstHitLineOneBased(firstLineOneBased int) *int {
+	lineNumber := firstLineOneBased
 	for {
 		line := p.reader.GetLine(lineNumber)
 		if line == nil {
 			// No match, give up
-			return
+			return nil
 		}
 
 		if p.searchPattern.MatchString(*line) {
-			// Match!
-			if lineNumber <= lastVisibleLineOneBased {
-				// Already on-screen, never mind
-				return
-			}
-
-			// Scroll!
-			p.firstLineOneBased = lineNumber
-			return
+			return &lineNumber
 		}
 
 		lineNumber++
 	}
+}
+
+func (p *_Pager) _ScrollToNextSearchHit() {
+	if p.searchPattern == nil {
+		// Nothing to search for, never mind
+		return
+	}
+
+	var firstSearchLineOneBased int
+
+	switch p.mode {
+	case _Viewing:
+		// Start searching on the first line below the bottom of the screen
+		firstSearchLineOneBased = p._GetLastVisibleLineOneBased() + 1
+
+	case _NotFound:
+		// Restart searching from the top
+		p.mode = _Viewing
+		firstSearchLineOneBased = 1
+
+	default:
+		panic(fmt.Sprintf("Unknown search mode when finding next: %v", p.mode))
+	}
+
+	firstHitLine := p._FindFirstHitLineOneBased(firstSearchLineOneBased)
+	if firstHitLine == nil {
+		p.mode = _NotFound
+		return
+	}
+	p.firstLineOneBased = *firstHitLine
 }
 
 func (p *_Pager) _UpdateSearchPattern() {
@@ -173,7 +233,7 @@ func (p *_Pager) _UpdateSearchPattern() {
 func (p *_Pager) _OnSearchKey(logger *log.Logger, key tcell.Key) {
 	switch key {
 	case tcell.KeyEscape, tcell.KeyEnter:
-		p.isSearching = false
+		p.mode = _Viewing
 
 	case tcell.KeyBackspace, tcell.KeyDEL:
 		if len(p.searchString) == 0 {
@@ -189,10 +249,14 @@ func (p *_Pager) _OnSearchKey(logger *log.Logger, key tcell.Key) {
 }
 
 func (p *_Pager) _OnKey(logger *log.Logger, key tcell.Key) {
-	if p.isSearching {
+	if p.mode == _Searching {
 		p._OnSearchKey(logger, key)
 		return
 	}
+	// FIXME: Else verify that mode is either Viewing on NotFound, otherwise panic
+
+	// Reset the not-found marker on non-search keypresses
+	p.mode = _Viewing
 
 	// FIXME: Add support for pressing 'h' to get a list of keybindings
 	switch key {
@@ -206,6 +270,8 @@ func (p *_Pager) _OnKey(logger *log.Logger, key tcell.Key) {
 	case tcell.KeyDown, tcell.KeyEnter:
 		// Clipping is done in _AddLines()
 		p.firstLineOneBased++
+
+	// FIXME: KeyRight and KeyLeft should scroll right and left
 
 	case tcell.KeyHome:
 		p.firstLineOneBased = 1
@@ -232,10 +298,11 @@ func (p *_Pager) _OnSearchRune(logger *log.Logger, char rune) {
 }
 
 func (p *_Pager) _OnRune(logger *log.Logger, char rune) {
-	if p.isSearching {
+	if p.mode == _Searching {
 		p._OnSearchRune(logger, char)
 		return
 	}
+	// FIXME: Else verify that mode is either Viewing on NotFound, otherwise panic
 
 	switch char {
 	case 'q':
@@ -264,9 +331,14 @@ func (p *_Pager) _OnRune(logger *log.Logger, char rune) {
 		p.firstLineOneBased -= (height - 1)
 
 	case '/':
-		p.isSearching = true
+		p.mode = _Searching
 		p.searchString = ""
 		p.searchPattern = nil
+
+	case 'n':
+		p._ScrollToNextSearchHit()
+
+	// FIXME: Go to previous hit wit 'p'
 
 	default:
 		logger.Printf("Unhandled rune keyress '%s'", string(char))
