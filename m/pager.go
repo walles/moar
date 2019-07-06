@@ -94,7 +94,7 @@ func (p *_Pager) _AddLines(logger *log.Logger) {
 		p._SetFooter(lines.statusText + "  Press ESC / q to exit, '/' to search")
 
 	default:
-		panic(fmt.Sprintf("Unsupported pager mode %v", p.mode))
+		panic(fmt.Sprint("Unsupported pager mode: ", p.mode))
 	}
 }
 
@@ -190,7 +190,7 @@ func (p *_Pager) _ScrollToNextSearchHit() {
 		firstSearchLineOneBased = 1
 
 	default:
-		panic(fmt.Sprintf("Unknown search mode when finding next: %v", p.mode))
+		panic(fmt.Sprint("Unknown search mode when finding next: ", p.mode))
 	}
 
 	firstHitLine := p._FindFirstHitLineOneBased(firstSearchLineOneBased)
@@ -253,7 +253,9 @@ func (p *_Pager) _OnKey(logger *log.Logger, key tcell.Key) {
 		p._OnSearchKey(logger, key)
 		return
 	}
-	// FIXME: Else verify that mode is either Viewing on NotFound, otherwise panic
+	if p.mode != _Viewing && p.mode != _NotFound {
+		panic(fmt.Sprint("Unhandled mode: ", p.mode))
+	}
 
 	// Reset the not-found marker on non-search keypresses
 	p.mode = _Viewing
@@ -302,7 +304,9 @@ func (p *_Pager) _OnRune(logger *log.Logger, char rune) {
 		p._OnSearchRune(logger, char)
 		return
 	}
-	// FIXME: Else verify that mode is either Viewing on NotFound, otherwise panic
+	if p.mode != _Viewing && p.mode != _NotFound {
+		panic(fmt.Sprint("Unhandled mode: ", p.mode))
+	}
 
 	switch char {
 	case 'q':
