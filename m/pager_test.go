@@ -215,3 +215,7 @@ func TestManPageFormatting(t *testing.T) {
 
 	// FIXME: Test backspace between two uncombinable characters
 }
+
+func TestToPattern(t *testing.T) {
+	assert.Assert(t, ToPattern("") == nil)
+}

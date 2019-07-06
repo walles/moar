@@ -260,28 +260,37 @@ func (p *_Pager) _ScrollToPreviousSearchHit() {
 }
 
 func (p *_Pager) _UpdateSearchPattern() {
-	if len(p.searchString) == 0 {
-		p.searchPattern = nil
-		return
+	p.searchPattern = ToPattern(p.searchString)
+
+	p._ScrollToSearchHits()
+
+	// FIXME: If the user is typing, indicate to user if we didn't find anything
+}
+
+// ToPattern compiles a search string into a pattern.
+//
+// If the string contains only lower-case letter the pattern will be case insensitive.
+//
+// If the string is empty the pattern will be nil.
+//
+// If the string does not compile into a regexp the pattern will match the string verbatim
+func ToPattern(compileMe string) *regexp.Regexp {
+	if len(compileMe) == 0 {
+		return nil
 	}
 
-	defer p._ScrollToSearchHits()
-	// FIXME: Indicate to user if we didn't find anything
-
-	pattern, err := regexp.Compile(p.searchString)
+	pattern, err := regexp.Compile(compileMe)
 	if err == nil {
 		// Search string is a regexp
 		// FIXME: Make this case insensitive if input is all-lowercase
-		p.searchPattern = pattern
-		return
+		return pattern
 	}
 
-	pattern, err = regexp.Compile(regexp.QuoteMeta(p.searchString))
+	pattern, err = regexp.Compile(regexp.QuoteMeta(compileMe))
 	if err == nil {
 		// Pattern matching the string exactly
 		// FIXME: Make this case insensitive if input is all-lowercase
-		p.searchPattern = pattern
-		return
+		return pattern
 	}
 
 	// Unable to create a match-string-verbatim pattern
