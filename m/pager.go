@@ -20,10 +20,11 @@ const (
 
 // Pager is the main on-screen pager
 type _Pager struct {
-	reader            Reader
-	screen            tcell.Screen
-	quit              bool
-	firstLineOneBased int
+	reader              Reader
+	screen              tcell.Screen
+	quit                bool
+	firstLineOneBased   int
+	leftColumnZeroBased int
 
 	mode          _PagerMode
 	searchString  string
@@ -40,10 +41,21 @@ func NewPager(r Reader) *_Pager {
 }
 
 func (p *_Pager) _AddLine(logger *log.Logger, lineNumber int, line string) {
-	tokens, plainString := TokensFromString(logger, line)
-	matchRanges := GetMatchRanges(plainString, p.searchPattern)
+	pos := 0
+	if p.leftColumnZeroBased > 0 {
+		// Indicate that it's possible to scroll left
+		p.screen.SetContent(pos, lineNumber, '<', nil, tcell.StyleDefault.Reverse(true))
+		pos++
+	}
 
-	for pos, token := range tokens {
+	tokens, plainString := TokensFromString(logger, line)
+	if p.leftColumnZeroBased >= len(tokens) {
+		// Nothing to display, never mind
+		return
+	}
+
+	matchRanges := GetMatchRanges(plainString, p.searchPattern)
+	for _, token := range tokens[p.leftColumnZeroBased:] {
 		style := token.Style
 		if matchRanges.InRange(pos) {
 			// FIXME: This doesn't work if the style is already reversed
@@ -51,6 +63,8 @@ func (p *_Pager) _AddLine(logger *log.Logger, lineNumber int, line string) {
 		}
 
 		p.screen.SetContent(pos, lineNumber, token.Rune, nil, style)
+
+		pos++
 	}
 }
 
@@ -317,7 +331,14 @@ func (p *_Pager) _OnKey(logger *log.Logger, key tcell.Key) {
 		// Clipping is done in _AddLines()
 		p.firstLineOneBased++
 
-	// FIXME: KeyRight and KeyLeft should scroll right and left
+	case tcell.KeyRight:
+		p.leftColumnZeroBased += 16
+
+	case tcell.KeyLeft:
+		p.leftColumnZeroBased -= 16
+		if p.leftColumnZeroBased < 0 {
+			p.leftColumnZeroBased = 0
+		}
 
 	case tcell.KeyHome:
 		p.firstLineOneBased = 1
