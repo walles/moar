@@ -142,6 +142,11 @@ func (r *Reader) _CreateStatus(firstLineOneBased int, lastLineOneBased int) stri
 		percent)
 }
 
+// GetLineCount returns the number of lines available for viewing
+func (r *Reader) GetLineCount() int {
+	return len(r.lines)
+}
+
 // GetLine gets a line. If the requested line number is out of bounds, nil is returned.
 func (r *Reader) GetLine(lineNumberOneBased int) *string {
 	if lineNumberOneBased < 1 {

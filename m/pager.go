@@ -131,7 +131,7 @@ func (p *_Pager) _ScrollToSearchHits() {
 		return
 	}
 
-	firstHitLine := p._FindFirstHitLineOneBased(p.firstLineOneBased)
+	firstHitLine := p._FindFirstHitLineOneBased(p.firstLineOneBased, false)
 	if firstHitLine == nil {
 		// No match, give up
 		return
@@ -154,7 +154,7 @@ func (p *_Pager) _GetLastVisibleLineOneBased() int {
 	return firstVisibleLineOneBased + windowHeight - 2
 }
 
-func (p *_Pager) _FindFirstHitLineOneBased(firstLineOneBased int) *int {
+func (p *_Pager) _FindFirstHitLineOneBased(firstLineOneBased int, backwards bool) *int {
 	lineNumber := firstLineOneBased
 	for {
 		line := p.reader.GetLine(lineNumber)
@@ -167,13 +167,22 @@ func (p *_Pager) _FindFirstHitLineOneBased(firstLineOneBased int) *int {
 			return &lineNumber
 		}
 
-		lineNumber++
+		if backwards {
+			lineNumber--
+		} else {
+			lineNumber++
+		}
 	}
 }
 
 func (p *_Pager) _ScrollToNextSearchHit() {
 	if p.searchPattern == nil {
 		// Nothing to search for, never mind
+		return
+	}
+
+	if p.reader.GetLineCount() == 0 {
+		// Nothing to search in, never mind
 		return
 	}
 
@@ -193,7 +202,42 @@ func (p *_Pager) _ScrollToNextSearchHit() {
 		panic(fmt.Sprint("Unknown search mode when finding next: ", p.mode))
 	}
 
-	firstHitLine := p._FindFirstHitLineOneBased(firstSearchLineOneBased)
+	firstHitLine := p._FindFirstHitLineOneBased(firstSearchLineOneBased, false)
+	if firstHitLine == nil {
+		p.mode = _NotFound
+		return
+	}
+	p.firstLineOneBased = *firstHitLine
+}
+
+func (p *_Pager) _ScrollToPreviousSearchHit() {
+	if p.searchPattern == nil {
+		// Nothing to search for, never mind
+		return
+	}
+
+	if p.reader.GetLineCount() == 0 {
+		// Nothing to search in, never mind
+		return
+	}
+
+	var firstSearchLineOneBased int
+
+	switch p.mode {
+	case _Viewing:
+		// Start searching on the first line above the top of the screen
+		firstSearchLineOneBased = p.firstLineOneBased - 1
+
+	case _NotFound:
+		// Restart searching from the bottom
+		p.mode = _Viewing
+		firstSearchLineOneBased = p.reader.GetLineCount()
+
+	default:
+		panic(fmt.Sprint("Unknown search mode when finding previous: ", p.mode))
+	}
+
+	firstHitLine := p._FindFirstHitLineOneBased(firstSearchLineOneBased, true)
 	if firstHitLine == nil {
 		p.mode = _NotFound
 		return
@@ -342,7 +386,8 @@ func (p *_Pager) _OnRune(logger *log.Logger, char rune) {
 	case 'n':
 		p._ScrollToNextSearchHit()
 
-	// FIXME: Go to previous hit wit 'p'
+	case 'p', 'N':
+		p._ScrollToPreviousSearchHit()
 
 	default:
 		logger.Printf("Unhandled rune keyress '%s'", string(char))
