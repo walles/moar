@@ -71,6 +71,12 @@ func main() {
 
 func _StartPaging(reader *m.Reader) {
 	screen, e := tcell.NewScreen()
+	if e != nil {
+		fmt.Fprintf(os.Stderr, "%v\n", e)
+		os.Exit(1)
+	}
+
+	var loglines strings.Builder
 	defer func() {
 		// Restore screen...
 		screen.Fini()
@@ -80,19 +86,13 @@ func _StartPaging(reader *m.Reader) {
 		if err := recover(); err != nil {
 			panic(err)
 		}
+
+		if len(loglines.String()) > 0 {
+			fmt.Fprintf(os.Stderr, "%s", loglines.String())
+			os.Exit(1)
+		}
 	}()
 
-	if e != nil {
-		fmt.Fprintf(os.Stderr, "%v\n", e)
-		os.Exit(1)
-	}
-
-	var loglines strings.Builder
 	logger := log.New(&loglines, "", 0)
 	m.NewPager(*reader).StartPaging(logger, screen)
-
-	if len(loglines.String()) > 0 {
-		fmt.Fprintf(os.Stderr, "%s", loglines.String())
-		os.Exit(1)
-	}
 }

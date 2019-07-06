@@ -16,8 +16,9 @@ type Token struct {
 	Style tcell.Style
 }
 
-// TokensFromString turns a string into a series of tokens
-func TokensFromString(logger *log.Logger, s string) []Token {
+// TokensFromString turns a (formatted) string into a series of tokens,
+// and an unformatted string
+func TokensFromString(logger *log.Logger, s string) ([]Token, *string) {
 	var tokens []Token
 
 	styleBrokenUtf8 := tcell.StyleDefault.Background(7).Foreground(1)
@@ -57,7 +58,11 @@ func TokensFromString(logger *log.Logger, s string) []Token {
 		}
 	}
 
-	return tokens
+	plainString := ""
+	for _, token := range tokens {
+		plainString += string(token.Rune)
+	}
+	return tokens, &plainString
 }
 
 func _TokensFromStyledString(styledString _StyledString) []Token {
