@@ -75,6 +75,12 @@ Build + run:
 ./moar.sh ...
 ```
 
+Install (into `/usr/local/bin`) from source:
+
+```bash
+./install.sh
+```
+
 Making a new Release
 --------------------
 
