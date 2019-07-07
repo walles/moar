@@ -14,18 +14,20 @@ import (
 	"golang.org/x/crypto/ssh/terminal"
 )
 
+var versionString = "Should be set when building, please use build.sh to build"
+
 func main() {
 	// FIXME: On any panic or warnings, also print system info and how to report bugs
 
-	version := flag.Bool("version", false, "Prints the moar version number")
+	printVersion := flag.Bool("version", false, "Prints the moar version number")
 
 	// FIXME: Support --help
 
 	// FIXME: Support --no-highlight
 
 	flag.Parse()
-	if *version {
-		fmt.Println("FIXME: Imagine a version string here")
+	if *printVersion {
+		fmt.Println(versionString)
 		os.Exit(0)
 	}
 
