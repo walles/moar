@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"io"
 	"log"
@@ -13,8 +14,22 @@ import (
 	"golang.org/x/crypto/ssh/terminal"
 )
 
+var versionString = "Should be set when building, please use build.sh to build"
+
 func main() {
 	// FIXME: On any panic or warnings, also print system info and how to report bugs
+
+	printVersion := flag.Bool("version", false, "Prints the moar version number")
+
+	// FIXME: Support --help
+
+	// FIXME: Support --no-highlight
+
+	flag.Parse()
+	if *printVersion {
+		fmt.Println(versionString)
+		os.Exit(0)
+	}
 
 	stdinIsRedirected := !terminal.IsTerminal(int(os.Stdin.Fd()))
 	stdoutIsRedirected := !terminal.IsTerminal(int(os.Stdout.Fd()))
@@ -34,21 +49,18 @@ func main() {
 		return
 	}
 
-	// FIXME: Support --help
-
-	// FIXME: Support --version
-
-	// FIXME: Support --no-highlight
-
-	if len(os.Args) != 2 {
+	if len(flag.Args()) != 1 {
 		// FIXME: Improve this message
-		fmt.Fprintf(os.Stderr, "ERROR: Expected exactly one parameter, got: %v\n", os.Args[1:])
+		fmt.Fprintln(os.Stderr, "ERROR: Expected exactly one filename, got: ", flag.Args())
+
+		// FIXME: Print full usage here
+
 		os.Exit(1)
 	}
 
 	if stdoutIsRedirected {
 		// Pump from file by given name onto stdout which is redirected
-		input, err := os.Open(os.Args[1])
+		input, err := os.Open(flag.Arg(0))
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "ERROR: %s\n", err)
 			os.Exit(1)
@@ -61,7 +73,7 @@ func main() {
 	}
 
 	// Display the input file contents
-	reader, err := m.NewReaderFromFilename(os.Args[1])
+	reader, err := m.NewReaderFromFilename(flag.Arg(0))
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "%v\n", err)
 		os.Exit(1)

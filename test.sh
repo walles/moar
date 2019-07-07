@@ -5,9 +5,14 @@ set -e -o pipefail
 # Unit tests first
 go test github.com/walles/moar/m
 
-# Verify sending the output to a file
-go build
+# Ensure we can cross compile
+GOOS=linux GOARCH=386 ./build.sh
+GOOS=darwin GOARCH=amd64 ./build.sh
 
+# Make sure we have a runnable binary for the current platform when done
+./build.sh
+
+# Verify sending the output to a file
 RESULT="$(mktemp)"
 function cleanup {
   rm -rf "$RESULT"
@@ -30,9 +35,9 @@ if ./moar does-not-exist >& /dev/null ; then
     exit 1
 fi
 
-# Ensure we can cross compile
-GOOS=linux GOARCH=386 go build
-GOOS=darwin GOARCH=amd64 go build
+echo Test --version...
+./moar --version > /dev/null  # Should exit with code 0
+diff -u <(./moar --version) <(git describe --tags --dirty)
 
 echo
 echo "All tests passed!"
