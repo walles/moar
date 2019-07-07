@@ -30,6 +30,10 @@ if ./moar does-not-exist >& /dev/null ; then
     exit 1
 fi
 
+echo Test --version...
+./moar --version > /dev/null  # Should exit with code 0
+diff -u <(./moar --version) <(git describe --tags --dirty)
+
 # Ensure we can cross compile
 GOOS=linux GOARCH=386 go build
 GOOS=darwin GOARCH=amd64 go build
