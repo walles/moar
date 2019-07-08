@@ -89,6 +89,18 @@ func _TokensFromStyledString(styledString _StyledString) []Token {
 				}
 			}
 
+			// FIXME: Man page formatting fails, if I do (in bash)...
+			//   "man printf|hexdump -C|grep -10 leading| grep --color 08"
+			// ... I get...
+			//   "000003e0  20 20 20 20 20 20 20 20  2b 08 2b 08 6f 08 6f 20  |        +.+.o.o |"
+			// ... wich "less" renders as a bold "o". We should as well.
+			//
+			// I don't get the logic though, the sequence is:
+			//   plus-backspace-plus-backspace-o-backspace-o
+			//
+			// Maybe the interpretation should be:
+			//   "Make a bold +, then erase that and replace it with a bold o"?
+
 			if replacement != nil {
 				tokens = append(tokens[0:len(tokens)-2], *replacement)
 

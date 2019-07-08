@@ -6,5 +6,8 @@ set -e -o pipefail
 
 echo
 
-set -x
+echo 'Installing into /usr/local/bin...'
 cp moar /usr/local/bin/moar
+
+echo
+echo 'Installed, try "moar moar.go" to see moar in action!'
