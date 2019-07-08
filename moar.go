@@ -6,6 +6,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"runtime"
 	"strings"
 
 	"github.com/gdamore/tcell"
@@ -17,7 +18,29 @@ import (
 var versionString = "Should be set when building, please use build.sh to build"
 
 func main() {
-	// FIXME: On any panic or warnings, also print system info and how to report bugs
+	defer func() {
+		err := recover()
+		if err == nil {
+			return
+		}
+
+		// On any panic or warnings, also print system info and how to report bugs
+		fmt.Fprintln(os.Stderr, "Please post the following crash report at <https://github.com/walles/moar/issues>,")
+		fmt.Fprintln(os.Stderr, "or e-mail it to johan.walles@gmail.com.")
+		fmt.Fprintln(os.Stderr)
+		fmt.Fprintln(os.Stderr, "Version:", versionString)
+		fmt.Fprintln(os.Stderr, "LANG   :", os.Getenv("LANG"))
+		fmt.Fprintln(os.Stderr, "TERM   :", os.Getenv("TERM"))
+		fmt.Fprintln(os.Stderr)
+		fmt.Fprintln(os.Stderr, "GOOS    :", runtime.GOOS)
+		fmt.Fprintln(os.Stderr, "GOARCH  :", runtime.GOARCH)
+		fmt.Fprintln(os.Stderr, "Compiler:", runtime.Compiler)
+		fmt.Fprintln(os.Stderr, "NumCPU  :", runtime.NumCPU())
+
+		fmt.Fprintln(os.Stderr)
+
+		panic(err)
+	}()
 
 	printVersion := flag.Bool("version", false, "Prints the moar version number")
 
@@ -84,8 +107,7 @@ func main() {
 func _StartPaging(reader *m.Reader) {
 	screen, e := tcell.NewScreen()
 	if e != nil {
-		fmt.Fprintf(os.Stderr, "%v\n", e)
-		os.Exit(1)
+		panic(e)
 	}
 
 	var loglines strings.Builder
@@ -100,6 +122,8 @@ func _StartPaging(reader *m.Reader) {
 		}
 
 		if len(loglines.String()) > 0 {
+			// FIXME: Don't print duplicate log messages more than once,
+			// maybe invent our own logger for this?
 			fmt.Fprintf(os.Stderr, "%s", loglines.String())
 			os.Exit(1)
 		}
