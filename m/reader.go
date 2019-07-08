@@ -9,6 +9,7 @@ import (
 	"os/exec"
 	"path"
 	"strings"
+	"sync"
 )
 
 // Reader reads a file into an array of strings.
@@ -18,11 +19,11 @@ import (
 // request.
 //
 // This package should provide query methods for the struct, no peeking!!
-//
-// FIXME: Make the reader read in the background, independently of what the pager is showing
 type Reader struct {
 	lines []string
 	name  *string
+	lock  *sync.Mutex
+	err   error
 }
 
 // Lines contains a number of lines from the reader, plus metadata
@@ -37,21 +38,49 @@ type Lines struct {
 }
 
 // NewReaderFromStream creates a new stream reader
-func NewReaderFromStream(reader io.Reader) (*Reader, error) {
+//
+// If fromFilter is not nil this method will wait() for it,
+// and effectively takes over ownership for it.
+func NewReaderFromStream(reader io.Reader, fromFilter *exec.Cmd) *Reader {
 	// FIXME: Close the stream when done reading it?
-	// FIXME: If we have a filter process, wait for that after done reading the stream
 	scanner := bufio.NewScanner(reader)
 	var lines []string
-	for scanner.Scan() {
-		lines = append(lines, scanner.Text())
-	}
-	if err := scanner.Err(); err != nil {
-		return nil, err
+	var lock = &sync.Mutex{}
+
+	returnMe := Reader{
+		lines: lines,
+		lock:  lock,
 	}
 
-	return &Reader{
-		lines: lines,
-	}, nil
+	go func() {
+		defer func() {
+			if fromFilter == nil {
+				return
+			}
+
+			err := fromFilter.Wait()
+			lock.Lock()
+			defer lock.Unlock()
+			if returnMe.err == nil {
+				returnMe.err = err
+			}
+		}()
+
+		for scanner.Scan() {
+			lock.Lock()
+			returnMe.lines = append(returnMe.lines, scanner.Text())
+			lock.Unlock()
+		}
+
+		if err := scanner.Err(); err != nil {
+			lock.Lock()
+			returnMe.err = err
+			lock.Unlock()
+			return
+		}
+	}()
+
+	return &returnMe
 }
 
 // NewReaderFromCommand creates a new reader by running a file through a filter
@@ -68,20 +97,12 @@ func NewReaderFromCommand(filename string, filterCommand ...string) (*Reader, er
 	if err != nil {
 		return nil, err
 	}
-	defer filter.Wait()
 
-	reader, err := NewReaderFromStream(filterOut)
-	if err != nil {
-		return nil, err
-	}
-
-	err = filter.Wait()
-	if err != nil {
-		return nil, err
-	}
-
+	reader := NewReaderFromStream(filterOut, filter)
+	reader.lock.Lock()
 	reader.name = &filename
-	return reader, err
+	reader.lock.Unlock()
+	return reader, nil
 }
 
 // NewReaderFromFilename creates a new file reader
@@ -113,15 +134,14 @@ func NewReaderFromFilename(filename string) (*Reader, error) {
 		return nil, err
 	}
 
-	reader, err := NewReaderFromStream(stream)
-	if err != nil {
-		return nil, err
-	}
-
+	reader := NewReaderFromStream(stream, nil)
+	reader.lock.Lock()
 	reader.name = &filename
-	return reader, err
+	reader.lock.Unlock()
+	return reader, nil
 }
 
+// _CreateStatus() assumes that its caller is holding the lock
 func (r *Reader) _CreateStatus(firstLineOneBased int, lastLineOneBased int) string {
 	prefix := ""
 	if r.name != nil {
@@ -144,11 +164,17 @@ func (r *Reader) _CreateStatus(firstLineOneBased int, lastLineOneBased int) stri
 
 // GetLineCount returns the number of lines available for viewing
 func (r *Reader) GetLineCount() int {
+	r.lock.Lock()
+	defer r.lock.Unlock()
+
 	return len(r.lines)
 }
 
 // GetLine gets a line. If the requested line number is out of bounds, nil is returned.
 func (r *Reader) GetLine(lineNumberOneBased int) *string {
+	r.lock.Lock()
+	defer r.lock.Unlock()
+
 	if lineNumberOneBased < 1 {
 		return nil
 	}
@@ -160,16 +186,22 @@ func (r *Reader) GetLine(lineNumberOneBased int) *string {
 
 // GetLines gets the indicated lines from the input
 func (r *Reader) GetLines(firstLineOneBased int, wantedLineCount int) *Lines {
+	r.lock.Lock()
+	defer r.lock.Unlock()
+	return r._GetLinesUnlocked(firstLineOneBased, wantedLineCount)
+}
+
+func (r *Reader) _GetLinesUnlocked(firstLineOneBased int, wantedLineCount int) *Lines {
 	if firstLineOneBased < 1 {
 		firstLineOneBased = 1
 	}
 
 	if len(r.lines) == 0 {
 		return &Lines{
-			lines: r.lines,
+			lines: nil,
 
 			// The line number set here won't matter, we'll clip it anyway when we get it back
-			firstLineOneBased: firstLineOneBased,
+			firstLineOneBased: 0,
 
 			statusText: r._CreateStatus(0, 0),
 		}
@@ -191,7 +223,7 @@ func (r *Reader) GetLines(firstLineOneBased int, wantedLineCount int) *Lines {
 			firstLineOneBased = 1
 		}
 
-		return r.GetLines(firstLineOneBased, wantedLineCount)
+		return r._GetLinesUnlocked(firstLineOneBased, wantedLineCount)
 	}
 
 	return &Lines{

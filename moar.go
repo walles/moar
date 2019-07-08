@@ -63,11 +63,7 @@ func main() {
 
 	if stdinIsRedirected && !stdoutIsRedirected {
 		// Display input pipe contents
-		reader, err := m.NewReaderFromStream(os.Stdin)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "%v\n", err)
-			os.Exit(1)
-		}
+		reader := m.NewReaderFromStream(os.Stdin, nil)
 		_StartPaging(reader)
 		return
 	}
