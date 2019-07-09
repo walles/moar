@@ -11,11 +11,7 @@ import (
 )
 
 func TestUnicodeRendering(t *testing.T) {
-	reader, err := NewReaderFromStream(strings.NewReader("åäö"))
-	if err != nil {
-		panic(err)
-	}
-
+	reader := NewReaderFromStream(strings.NewReader("åäö"), nil)
 	var answers = []_ExpectedCell{
 		_CreateExpectedCell('å', tcell.StyleDefault),
 		_CreateExpectedCell('ä', tcell.StyleDefault),
@@ -51,11 +47,8 @@ func _CreateExpectedCell(Rune rune, Style tcell.Style) _ExpectedCell {
 }
 
 func TestFgColorRendering(t *testing.T) {
-	reader, err := NewReaderFromStream(strings.NewReader(
-		"\x1b[30ma\x1b[31mb\x1b[32mc\x1b[33md\x1b[34me\x1b[35mf\x1b[36mg\x1b[37mh\x1b[0mi"))
-	if err != nil {
-		panic(err)
-	}
+	reader := NewReaderFromStream(strings.NewReader(
+		"\x1b[30ma\x1b[31mb\x1b[32mc\x1b[33md\x1b[34me\x1b[35mf\x1b[36mg\x1b[37mh\x1b[0mi"), nil)
 
 	var answers = []_ExpectedCell{
 		_CreateExpectedCell('a', tcell.StyleDefault.Foreground(0)),
@@ -77,11 +70,8 @@ func TestFgColorRendering(t *testing.T) {
 
 func TestBrokenUtf8(t *testing.T) {
 	// The broken UTF8 character in the middle is based on "©" = 0xc2a9
-	reader, err := NewReaderFromStream(strings.NewReader(
-		"abc\xc2def"))
-	if err != nil {
-		panic(err)
-	}
+	reader := NewReaderFromStream(strings.NewReader(
+		"abc\xc2def"), nil)
 
 	var answers = []_ExpectedCell{
 		_CreateExpectedCell('a', tcell.StyleDefault),
@@ -101,7 +91,7 @@ func TestBrokenUtf8(t *testing.T) {
 
 func _StartPaging(t *testing.T, reader *Reader) []tcell.SimCell {
 	screen := tcell.NewSimulationScreen("UTF-8")
-	pager := NewPager(*reader)
+	pager := NewPager(reader)
 	pager.Quit()
 
 	var loglines strings.Builder
@@ -118,10 +108,7 @@ func _StartPaging(t *testing.T, reader *Reader) []tcell.SimCell {
 
 // _AssertIndexOfFirstX verifies the (zero-based) index of the first 'x'
 func _AssertIndexOfFirstX(t *testing.T, s string, expectedIndex int) {
-	reader, err := NewReaderFromStream(strings.NewReader(s))
-	if err != nil {
-		panic(err)
-	}
+	reader := NewReaderFromStream(strings.NewReader(s), nil)
 
 	contents := _StartPaging(t, reader)
 	for pos, cell := range contents {
@@ -194,10 +181,7 @@ func TestCodeHighlighting(t *testing.T) {
 }
 
 func _TestManPageFormatting(t *testing.T, input string, expected _ExpectedCell) {
-	reader, err := NewReaderFromStream(strings.NewReader(input))
-	if err != nil {
-		panic(err)
-	}
+	reader := NewReaderFromStream(strings.NewReader(input), nil)
 
 	contents := _StartPaging(t, reader)
 	expected.LogDifference(t, contents[0])

@@ -106,11 +106,7 @@ func TestGetLines(t *testing.T) {
 }
 
 func _GetReaderWithLineCount(totalLines int) *Reader {
-	reader, err := NewReaderFromStream(strings.NewReader(strings.Repeat("x\n", totalLines)))
-	if err != nil {
-		panic(err)
-	}
-	return reader
+	return NewReaderFromStream(strings.NewReader(strings.Repeat("x\n", totalLines)), nil)
 }
 
 func _TestStatusText(t *testing.T, fromLine int, toLine int, totalLines int, expected string) {
