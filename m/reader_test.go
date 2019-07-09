@@ -95,9 +95,13 @@ func _GetTestFiles() []string {
 
 func TestGetLines(t *testing.T) {
 	for _, file := range _GetTestFiles() {
-		reader, e := NewReaderFromFilename(file)
-		if e != nil {
-			t.Errorf("Error opening file <%s>: %s", file, e.Error())
+		reader, err := NewReaderFromFilename(file)
+		if err != nil {
+			t.Errorf("Error opening file <%s>: %s", file, err.Error())
+			continue
+		}
+		if err := reader._Wait(); err != nil {
+			t.Errorf("Error reading file <%s>: %s", file, err.Error())
 			continue
 		}
 
@@ -106,7 +110,12 @@ func TestGetLines(t *testing.T) {
 }
 
 func _GetReaderWithLineCount(totalLines int) *Reader {
-	return NewReaderFromStream(strings.NewReader(strings.Repeat("x\n", totalLines)), nil)
+	reader := NewReaderFromStream(strings.NewReader(strings.Repeat("x\n", totalLines)), nil)
+	if err := reader._Wait(); err != nil {
+		panic(err)
+	}
+
+	return reader
 }
 
 func _TestStatusText(t *testing.T, fromLine int, toLine int, totalLines int, expected string) {
@@ -129,6 +138,10 @@ func TestStatusText(t *testing.T) {
 	if err != nil {
 		panic(err)
 	}
+	if err := testMe._Wait(); err != nil {
+		panic(err)
+	}
+
 	statusText := testMe.GetLines(0, 0).statusText
 	assert.Equal(t, statusText, "null: <empty>")
 }
@@ -139,6 +152,9 @@ func _TestCompressedFile(t *testing.T, filename string) {
 	if e != nil {
 		t.Errorf("Error opening file <%s>: %s", filenameWithPath, e.Error())
 		panic(e)
+	}
+	if err := reader._Wait(); err != nil {
+		panic(err)
 	}
 
 	assert.Equal(t, reader.GetLines(1, 5).lines[0], "This is a compressed file", "%s", filename)

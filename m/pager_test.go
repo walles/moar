@@ -12,6 +12,10 @@ import (
 
 func TestUnicodeRendering(t *testing.T) {
 	reader := NewReaderFromStream(strings.NewReader("åäö"), nil)
+	if err := reader._Wait(); err != nil {
+		panic(err)
+	}
+
 	var answers = []_ExpectedCell{
 		_CreateExpectedCell('å', tcell.StyleDefault),
 		_CreateExpectedCell('ä', tcell.StyleDefault),
@@ -49,6 +53,9 @@ func _CreateExpectedCell(Rune rune, Style tcell.Style) _ExpectedCell {
 func TestFgColorRendering(t *testing.T) {
 	reader := NewReaderFromStream(strings.NewReader(
 		"\x1b[30ma\x1b[31mb\x1b[32mc\x1b[33md\x1b[34me\x1b[35mf\x1b[36mg\x1b[37mh\x1b[0mi"), nil)
+	if err := reader._Wait(); err != nil {
+		panic(err)
+	}
 
 	var answers = []_ExpectedCell{
 		_CreateExpectedCell('a', tcell.StyleDefault.Foreground(0)),
@@ -72,6 +79,9 @@ func TestBrokenUtf8(t *testing.T) {
 	// The broken UTF8 character in the middle is based on "©" = 0xc2a9
 	reader := NewReaderFromStream(strings.NewReader(
 		"abc\xc2def"), nil)
+	if err := reader._Wait(); err != nil {
+		panic(err)
+	}
 
 	var answers = []_ExpectedCell{
 		_CreateExpectedCell('a', tcell.StyleDefault),
@@ -109,6 +119,9 @@ func _StartPaging(t *testing.T, reader *Reader) []tcell.SimCell {
 // _AssertIndexOfFirstX verifies the (zero-based) index of the first 'x'
 func _AssertIndexOfFirstX(t *testing.T, s string, expectedIndex int) {
 	reader := NewReaderFromStream(strings.NewReader(s), nil)
+	if err := reader._Wait(); err != nil {
+		panic(err)
+	}
 
 	contents := _StartPaging(t, reader)
 	for pos, cell := range contents {
@@ -161,6 +174,9 @@ func TestCodeHighlighting(t *testing.T) {
 	if err != nil {
 		panic(err)
 	}
+	if err := reader._Wait(); err != nil {
+		panic(err)
+	}
 
 	var answers = []_ExpectedCell{
 		_CreateExpectedCell('p', tcell.StyleDefault.Foreground(3)),
@@ -182,6 +198,9 @@ func TestCodeHighlighting(t *testing.T) {
 
 func _TestManPageFormatting(t *testing.T, input string, expected _ExpectedCell) {
 	reader := NewReaderFromStream(strings.NewReader(input), nil)
+	if err := reader._Wait(); err != nil {
+		panic(err)
+	}
 
 	contents := _StartPaging(t, reader)
 	expected.LogDifference(t, contents[0])

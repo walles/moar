@@ -24,6 +24,7 @@ type Reader struct {
 	name  *string
 	lock  *sync.Mutex
 	err   error
+	done  chan bool
 }
 
 // Lines contains a number of lines from the reader, plus metadata
@@ -45,10 +46,12 @@ func NewReaderFromStream(reader io.Reader, fromFilter *exec.Cmd) *Reader {
 	// FIXME: Close the stream when done reading it?
 	var lines []string
 	var lock = &sync.Mutex{}
+	done := make(chan bool)
 
 	returnMe := Reader{
 		lines: lines,
 		lock:  lock,
+		done:  done,
 	}
 
 	go func() {
@@ -57,6 +60,7 @@ func NewReaderFromStream(reader io.Reader, fromFilter *exec.Cmd) *Reader {
 			defer returnMe.lock.Unlock()
 
 			if fromFilter == nil {
+				returnMe.done <- true
 				return
 			}
 
@@ -64,6 +68,7 @@ func NewReaderFromStream(reader io.Reader, fromFilter *exec.Cmd) *Reader {
 			if returnMe.err == nil {
 				returnMe.err = err
 			}
+			returnMe.done <- true
 		}()
 
 		scanner := bufio.NewScanner(reader)
@@ -83,6 +88,16 @@ func NewReaderFromStream(reader io.Reader, fromFilter *exec.Cmd) *Reader {
 	}()
 
 	return &returnMe
+}
+
+// Wait for reader to finish reading. Used by tests.
+func (r *Reader) _Wait() error {
+	// Wait for our goroutine to finish
+	<-r.done
+
+	r.lock.Lock()
+	defer r.lock.Unlock()
+	return r.err
 }
 
 // NewReaderFromCommand creates a new reader by running a file through a filter
