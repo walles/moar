@@ -43,7 +43,6 @@ type Lines struct {
 // and effectively takes over ownership for it.
 func NewReaderFromStream(reader io.Reader, fromFilter *exec.Cmd) *Reader {
 	// FIXME: Close the stream when done reading it?
-	scanner := bufio.NewScanner(reader)
 	var lines []string
 	var lock = &sync.Mutex{}
 
@@ -54,21 +53,24 @@ func NewReaderFromStream(reader io.Reader, fromFilter *exec.Cmd) *Reader {
 
 	go func() {
 		defer func() {
+			lock.Lock()
+			defer lock.Unlock()
+
 			if fromFilter == nil {
 				return
 			}
 
 			err := fromFilter.Wait()
-			lock.Lock()
-			defer lock.Unlock()
 			if returnMe.err == nil {
 				returnMe.err = err
 			}
 		}()
 
+		scanner := bufio.NewScanner(reader)
 		for scanner.Scan() {
+			text := scanner.Text()
 			lock.Lock()
-			returnMe.lines = append(returnMe.lines, scanner.Text())
+			returnMe.lines = append(returnMe.lines, text)
 			lock.Unlock()
 		}
 
