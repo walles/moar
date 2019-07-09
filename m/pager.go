@@ -21,7 +21,7 @@ const (
 
 // Pager is the main on-screen pager
 type _Pager struct {
-	reader              Reader
+	reader              *Reader
 	screen              tcell.Screen
 	quit                bool
 	firstLineOneBased   int
@@ -33,7 +33,7 @@ type _Pager struct {
 }
 
 // NewPager creates a new Pager
-func NewPager(r Reader) *_Pager {
+func NewPager(r *Reader) *_Pager {
 	return &_Pager{
 		reader:            r,
 		quit:              false,

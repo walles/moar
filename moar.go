@@ -126,5 +126,5 @@ func _StartPaging(reader *m.Reader) {
 	}()
 
 	logger := log.New(&loglines, "", 0)
-	m.NewPager(*reader).StartPaging(logger, screen)
+	m.NewPager(reader).StartPaging(logger, screen)
 }

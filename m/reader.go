@@ -53,8 +53,8 @@ func NewReaderFromStream(reader io.Reader, fromFilter *exec.Cmd) *Reader {
 
 	go func() {
 		defer func() {
-			lock.Lock()
-			defer lock.Unlock()
+			returnMe.lock.Lock()
+			defer returnMe.lock.Unlock()
 
 			if fromFilter == nil {
 				return
@@ -69,15 +69,15 @@ func NewReaderFromStream(reader io.Reader, fromFilter *exec.Cmd) *Reader {
 		scanner := bufio.NewScanner(reader)
 		for scanner.Scan() {
 			text := scanner.Text()
-			lock.Lock()
+			returnMe.lock.Lock()
 			returnMe.lines = append(returnMe.lines, text)
-			lock.Unlock()
+			returnMe.lock.Unlock()
 		}
 
 		if err := scanner.Err(); err != nil {
-			lock.Lock()
+			returnMe.lock.Lock()
 			returnMe.err = err
-			lock.Unlock()
+			returnMe.lock.Unlock()
 			return
 		}
 	}()
