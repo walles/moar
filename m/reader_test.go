@@ -3,13 +3,38 @@ package m
 import (
 	"io/ioutil"
 	"math"
+	"os/exec"
 	"path"
 	"runtime"
+	"strconv"
 	"strings"
 	"testing"
 
 	"gotest.tools/assert"
 )
+
+func _TestGetLineCount(t *testing.T, reader *Reader) {
+	if strings.Contains(*reader.name, "compressed") {
+		// We are no good at counting lines of compressed files, never mind
+		return
+	}
+
+	cmd := exec.Command("wc", "-l", *reader.name)
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		t.Error("Error calling wc -l to count lines of", *reader.name, err)
+	}
+
+	wcNumberString := strings.Split(strings.TrimSpace(string(output)), " ")[0]
+	fileLineCount, err := strconv.Atoi(wcNumberString)
+	if err != nil {
+		t.Error("Error counting lines of", *reader.name, err)
+	}
+	if reader.GetLineCount() != fileLineCount {
+		t.Errorf("Got %d lines but expected %d: <%s>",
+			reader.GetLineCount(), fileLineCount, *reader.name)
+	}
+}
 
 func _TestGetLines(t *testing.T, reader *Reader) {
 	t.Logf("Testing file: %s...", *reader.name)
@@ -20,7 +45,8 @@ func _TestGetLines(t *testing.T, reader *Reader) {
 	}
 
 	if len(lines.lines) < 10 {
-		// No good plan for how to test short files more
+		// No good plan for how to test short files, more than just
+		// querying them, which we just did
 		return
 	}
 
@@ -106,6 +132,7 @@ func TestGetLines(t *testing.T) {
 		}
 
 		_TestGetLines(t, reader)
+		_TestGetLineCount(t, reader)
 	}
 }
 

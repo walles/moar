@@ -76,6 +76,7 @@ func NewReaderFromStream(reader io.Reader, fromFilter *exec.Cmd) *Reader {
 			text := scanner.Text()
 			returnMe.lock.Lock()
 			returnMe.lines = append(returnMe.lines, text)
+			// FIXME: Notify the pager that we have added a line
 			returnMe.lock.Unlock()
 		}
 
