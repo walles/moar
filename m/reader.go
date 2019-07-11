@@ -24,7 +24,9 @@ type Reader struct {
 	name  *string
 	lock  *sync.Mutex
 	err   error
-	done  chan bool
+
+	done           chan bool
+	moreLinesAdded chan bool
 }
 
 // Lines contains a number of lines from the reader, plus metadata
@@ -47,14 +49,19 @@ func NewReaderFromStream(reader io.Reader, fromFilter *exec.Cmd) *Reader {
 	var lines []string
 	var lock = &sync.Mutex{}
 	done := make(chan bool)
+	moreLinesAdded := make(chan bool)
 
 	returnMe := Reader{
-		lines: lines,
-		lock:  lock,
-		done:  done,
+		lines:          lines,
+		lock:           lock,
+		done:           done,
+		moreLinesAdded: moreLinesAdded,
 	}
 
 	go func() {
+		// FIXME: Make sure that if we panic somewhere inside of this goroutine,
+		// the main program terminates and prints our panic stack trace.
+
 		defer func() {
 			returnMe.lock.Lock()
 			defer returnMe.lock.Unlock()
@@ -76,11 +83,15 @@ func NewReaderFromStream(reader io.Reader, fromFilter *exec.Cmd) *Reader {
 			text := scanner.Text()
 
 			returnMe.lock.Lock()
-
 			returnMe.lines = append(returnMe.lines, text)
-			// FIXME: Notify the pager that we have added a line
-
 			returnMe.lock.Unlock()
+
+			// This is how to do a non-blocking write to a channel:
+			// https://gobyexample.com/non-blocking-channel-operations
+			select {
+			case returnMe.moreLinesAdded <- true:
+				// There was room in the queue
+			}
 		}
 
 		if err := scanner.Err(); err != nil {
