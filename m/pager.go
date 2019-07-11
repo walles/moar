@@ -453,6 +453,21 @@ func (p *_Pager) StartPaging(logger *log.Logger, screen tcell.Screen) {
 	screen.Show()
 	p._Redraw(logger)
 
+	go func() {
+		for {
+			// Wait for new lines to appear
+			<-p.reader.moreLinesAdded
+
+			// Request refresh
+			//
+			// FIXME: What we want to do here really is request a refresh in
+			// 0.2s. If a refresh is already pending, do nothing. This way
+			// we'll be able to respond to more lines read, while not having
+			// to refresh the screen too many times for long files.
+			screen.PostEvent(tcell.NewEventInterrupt(nil))
+		}
+	}()
+
 	// Main loop
 	for !p.quit {
 		ev := screen.PollEvent()

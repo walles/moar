@@ -18,6 +18,8 @@ import (
 var versionString = "Should be set when building, please use build.sh to build"
 
 func main() {
+	// FIXME: If we get a CTRL-C, get terminal back into a useful state before terminating
+
 	defer func() {
 		err := recover()
 		if err == nil {
