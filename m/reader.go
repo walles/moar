@@ -40,12 +40,53 @@ type Lines struct {
 	statusText string
 }
 
+func _ReadStream(stream io.Reader, reader *Reader, fromFilter *exec.Cmd) {
+	// FIXME: Close the stream when done reading it?
+	defer func() {
+		reader.lock.Lock()
+		defer reader.lock.Unlock()
+
+		if fromFilter == nil {
+			reader.done <- true
+			return
+		}
+
+		err := fromFilter.Wait()
+		if reader.err == nil {
+			reader.err = err
+		}
+		reader.done <- true
+	}()
+
+	scanner := bufio.NewScanner(stream)
+	for scanner.Scan() {
+		text := scanner.Text()
+
+		reader.lock.Lock()
+		reader.lines = append(reader.lines, text)
+		reader.lock.Unlock()
+
+		// This is how to do a non-blocking write to a channel:
+		// https://gobyexample.com/non-blocking-channel-operations
+		select {
+		case reader.moreLinesAdded <- true:
+			// There was room in the queue
+		}
+	}
+
+	if err := scanner.Err(); err != nil {
+		reader.lock.Lock()
+		reader.err = err
+		reader.lock.Unlock()
+		return
+	}
+}
+
 // NewReaderFromStream creates a new stream reader
 //
 // If fromFilter is not nil this method will wait() for it,
 // and effectively takes over ownership for it.
 func NewReaderFromStream(reader io.Reader, fromFilter *exec.Cmd) *Reader {
-	// FIXME: Close the stream when done reading it?
 	var lines []string
 	var lock = &sync.Mutex{}
 	done := make(chan bool)
@@ -58,49 +99,9 @@ func NewReaderFromStream(reader io.Reader, fromFilter *exec.Cmd) *Reader {
 		moreLinesAdded: moreLinesAdded,
 	}
 
-	go func() {
-		// FIXME: Make sure that if we panic somewhere inside of this goroutine,
-		// the main program terminates and prints our panic stack trace.
-
-		defer func() {
-			returnMe.lock.Lock()
-			defer returnMe.lock.Unlock()
-
-			if fromFilter == nil {
-				returnMe.done <- true
-				return
-			}
-
-			err := fromFilter.Wait()
-			if returnMe.err == nil {
-				returnMe.err = err
-			}
-			returnMe.done <- true
-		}()
-
-		scanner := bufio.NewScanner(reader)
-		for scanner.Scan() {
-			text := scanner.Text()
-
-			returnMe.lock.Lock()
-			returnMe.lines = append(returnMe.lines, text)
-			returnMe.lock.Unlock()
-
-			// This is how to do a non-blocking write to a channel:
-			// https://gobyexample.com/non-blocking-channel-operations
-			select {
-			case returnMe.moreLinesAdded <- true:
-				// There was room in the queue
-			}
-		}
-
-		if err := scanner.Err(); err != nil {
-			returnMe.lock.Lock()
-			returnMe.err = err
-			returnMe.lock.Unlock()
-			return
-		}
-	}()
+	// FIXME: Make sure that if we panic somewhere inside of this goroutine,
+	// the main program terminates and prints our panic stack trace.
+	go _ReadStream(reader, &returnMe, fromFilter)
 
 	return &returnMe
 }
