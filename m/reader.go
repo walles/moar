@@ -42,6 +42,7 @@ type Lines struct {
 
 func _ReadStream(stream io.Reader, reader *Reader, fromFilter *exec.Cmd) {
 	// FIXME: Close the stream when done reading it?
+
 	defer func() {
 		reader.lock.Lock()
 		defer reader.lock.Unlock()
@@ -51,6 +52,7 @@ func _ReadStream(stream io.Reader, reader *Reader, fromFilter *exec.Cmd) {
 			return
 		}
 
+		// FIXME: Can Wait()ing here stall? Should we release the lock while Wait()ing?
 		err := fromFilter.Wait()
 		if reader.err == nil {
 			reader.err = err
@@ -174,8 +176,8 @@ func NewReaderFromFilename(filename string) (*Reader, error) {
 	return reader, nil
 }
 
-// _CreateStatus() assumes that its caller is holding the lock
-func (r *Reader) _CreateStatus(firstLineOneBased int, lastLineOneBased int) string {
+// _CreateStatusUnlocked() assumes that its caller is holding the lock
+func (r *Reader) _CreateStatusUnlocked(firstLineOneBased int, lastLineOneBased int) string {
 	prefix := ""
 	if r.name != nil {
 		prefix = path.Base(*r.name) + ": "
@@ -236,7 +238,7 @@ func (r *Reader) _GetLinesUnlocked(firstLineOneBased int, wantedLineCount int) *
 			// The line number set here won't matter, we'll clip it anyway when we get it back
 			firstLineOneBased: 0,
 
-			statusText: r._CreateStatus(0, 0),
+			statusText: r._CreateStatusUnlocked(0, 0),
 		}
 	}
 
@@ -262,6 +264,6 @@ func (r *Reader) _GetLinesUnlocked(firstLineOneBased int, wantedLineCount int) *
 	return &Lines{
 		lines:             r.lines[firstLineZeroBased : lastLineZeroBased+1],
 		firstLineOneBased: firstLineOneBased,
-		statusText:        r._CreateStatus(firstLineOneBased, lastLineZeroBased+1),
+		statusText:        r._CreateStatusUnlocked(firstLineOneBased, lastLineZeroBased+1),
 	}
 }
