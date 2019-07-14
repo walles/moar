@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"log"
 	"math"
-	"time"
 	"os"
 	"regexp"
+	"time"
 	"unicode"
 
 	"github.com/gdamore/tcell"
@@ -479,6 +479,11 @@ func (p *_Pager) StartPaging(logger *log.Logger, screen tcell.Screen) {
 
 		case *tcell.EventResize:
 			// We'll be implicitly redrawn just by taking another lap in the loop
+
+		case *tcell.EventInterrupt:
+			// This means we got more lines, look for NewEventInterrupt higher up
+			// in this file. Doing nothing here is fine, the refresh happens after
+			// this switch statement.
 
 		default:
 			logger.Printf("Unhandled event type: %v", ev)
