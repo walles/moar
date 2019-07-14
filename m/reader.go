@@ -57,7 +57,16 @@ func _ReadStream(stream io.Reader, reader *Reader, fromFilter *exec.Cmd) {
 		if reader.err == nil {
 			reader.err = err
 		}
-		reader.done <- true
+
+		// Must send non-blocking since the channel has no buffer and sometimes no reader
+		select {
+		case reader.done <- true:
+		default:
+			// Empty default statement required for the write to be non-blocking,
+			// without this the write blocks and just hangs. Then we never get to
+			// the deferred reader.lock.Unlock() (see above), and the pager hangs
+			// when trying to take the lock for getting more lines.
+		}
 	}()
 
 	scanner := bufio.NewScanner(stream)
@@ -72,7 +81,8 @@ func _ReadStream(stream io.Reader, reader *Reader, fromFilter *exec.Cmd) {
 		// https://gobyexample.com/non-blocking-channel-operations
 		select {
 		case reader.moreLinesAdded <- true:
-			// There was room in the queue
+		default:
+			// Default case required for the write to be non-blocking
 		}
 	}
 
