@@ -101,8 +101,12 @@ func _ReadStream(stream io.Reader, reader *Reader, fromFilter *exec.Cmd) {
 func NewReaderFromStream(reader io.Reader, fromFilter *exec.Cmd) *Reader {
 	var lines []string
 	var lock = &sync.Mutex{}
-	done := make(chan bool)
-	moreLinesAdded := make(chan bool)
+	done := make(chan bool, 1)
+
+	// This needs to be size 1. If it would be 0, and we add more lines while the
+	// pager is processing, the pager would miss the lines added while it was
+	// processing.
+	moreLinesAdded := make(chan bool, 1)
 
 	returnMe := Reader{
 		lines:          lines,

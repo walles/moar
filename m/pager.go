@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"math"
+	"time"
 	"os"
 	"regexp"
 	"unicode"
@@ -458,12 +459,9 @@ func (p *_Pager) StartPaging(logger *log.Logger, screen tcell.Screen) {
 			// Wait for new lines to appear
 			<-p.reader.moreLinesAdded
 
-			// Request refresh
-			//
-			// FIXME: What we want to do here really is request a refresh in
-			// 0.2s. If a refresh is already pending, do nothing. This way
-			// we'll be able to respond to more lines read, while not having
-			// to refresh the screen too many times for long files.
+			// Delay updates a bit so that we don't waste time refreshing
+			// the screen too often.
+			time.Sleep(200 * time.Millisecond)
 			screen.PostEvent(tcell.NewEventInterrupt(nil))
 		}
 	}()
