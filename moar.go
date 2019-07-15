@@ -41,7 +41,11 @@ func _PrintUsage(output io.Writer) {
 
 	moarPath, err := filepath.Abs(os.Args[0])
 	if err == nil {
-		if os.Getenv("PAGER") != moarPath {
+		pagerValue, err := filepath.Abs(os.Getenv("PAGER"))
+		if err != nil {
+			pagerValue = ""
+		}
+		if pagerValue != moarPath {
 			// We're not the default pager
 			fmt.Fprintln(output)
 			fmt.Fprintln(output, "To make Moar your default pager, put the following line in")
