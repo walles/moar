@@ -127,10 +127,8 @@ func TestGetLines(t *testing.T) {
 			continue
 		}
 		if err := reader._Wait(); err != nil {
-			/* FIXME: Re-enable this and fix the error that it uncovers
 			t.Errorf("Error reading file <%s>: %s", file, err.Error())
 			continue
-			*/
 		}
 
 		_TestGetLines(t, reader)
@@ -168,9 +166,7 @@ func TestStatusText(t *testing.T) {
 		panic(err)
 	}
 	if err := testMe._Wait(); err != nil {
-		/* FIXME: Re-enable this and fix the problem it uncovers:
 		panic(err)
-		*/
 	}
 
 	statusText := testMe.GetLines(0, 0).statusText

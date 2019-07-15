@@ -9,6 +9,7 @@ import (
 	"os/exec"
 	"path"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"sync"
 )
@@ -157,15 +158,44 @@ func NewReaderFromCommand(filename string, filterCommand ...string) (*Reader, er
 }
 
 func _CanHighlight(filename string) bool {
-	ext := filepath.Ext(filename)
-	if len(ext) == 0 {
+	extension := filepath.Ext(filename)
+	if len(extension) <= 1 {
+		// No extension or a single "."
 		return false
 	}
 
-	// FIXME: Check file extension vs "highlight --list-scripts=langs" before
-	// calling highlight, otherwise files with unsupported extensions (like
-	// .log) get messed upp.
-	return true
+	// Remove leading dot from the extension
+	extension = extension[1:]
+
+	// Check file extension vs "highlight --list-scripts=langs" before calling
+	// highlight, otherwise files with unsupported extensions (like .log) get
+	// messed upp.
+	highlight := exec.Command("highlight", "--list-scripts=langs")
+	outBytes, err := highlight.CombinedOutput()
+	if err != nil {
+		return false
+	}
+
+	extensionMatcher := regexp.MustCompile("[^() ]+")
+
+	outString := string(outBytes)
+	outLines := strings.Split(outString, "\n")
+	for _, line := range outLines {
+		parts := strings.Split(line, ": ")
+		if len(parts) < 2 {
+			continue
+		}
+
+		// Pick out all extensions from this line
+		for _, supportedExtension := range extensionMatcher.FindAllString(parts[1], -1) {
+			if extension == supportedExtension {
+				return true
+			}
+		}
+	}
+
+	// No match
+	return false
 }
 
 // NewReaderFromFilename creates a new file reader

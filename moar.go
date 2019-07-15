@@ -47,6 +47,8 @@ func main() {
 	printVersion := flag.Bool("version", false, "Prints the moar version number")
 
 	// FIXME: Support --help
+	// FIXME: Have --help warn / explain if highlight is not installed
+	// FIXME: Have --help explain how to make moar your default pager
 
 	// FIXME: Support --no-highlight
 
