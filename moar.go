@@ -18,6 +18,8 @@ import (
 var versionString = "Should be set when building, please use build.sh to build"
 
 func main() {
+	// FIXME: If we get a CTRL-C, get terminal back into a useful state before terminating
+
 	defer func() {
 		err := recover()
 		if err == nil {
@@ -63,11 +65,7 @@ func main() {
 
 	if stdinIsRedirected && !stdoutIsRedirected {
 		// Display input pipe contents
-		reader, err := m.NewReaderFromStream(os.Stdin)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "%v\n", err)
-			os.Exit(1)
-		}
+		reader := m.NewReaderFromStream(os.Stdin, nil)
 		_StartPaging(reader)
 		return
 	}
@@ -130,5 +128,5 @@ func _StartPaging(reader *m.Reader) {
 	}()
 
 	logger := log.New(&loglines, "", 0)
-	m.NewPager(*reader).StartPaging(logger, screen)
+	m.NewPager(reader).StartPaging(logger, screen)
 }

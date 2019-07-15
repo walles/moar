@@ -9,6 +9,7 @@ import (
 	"os/exec"
 	"path"
 	"strings"
+	"sync"
 )
 
 // Reader reads a file into an array of strings.
@@ -18,11 +19,14 @@ import (
 // request.
 //
 // This package should provide query methods for the struct, no peeking!!
-//
-// FIXME: Make the reader read in the background, independently of what the pager is showing
 type Reader struct {
 	lines []string
 	name  *string
+	lock  *sync.Mutex
+	err   error
+
+	done           chan bool
+	moreLinesAdded chan bool
 }
 
 // Lines contains a number of lines from the reader, plus metadata
@@ -36,22 +40,96 @@ type Lines struct {
 	statusText string
 }
 
-// NewReaderFromStream creates a new stream reader
-func NewReaderFromStream(reader io.Reader) (*Reader, error) {
+func _ReadStream(stream io.Reader, reader *Reader, fromFilter *exec.Cmd) {
 	// FIXME: Close the stream when done reading it?
-	// FIXME: If we have a filter process, wait for that after done reading the stream
-	scanner := bufio.NewScanner(reader)
-	var lines []string
+
+	defer func() {
+		reader.lock.Lock()
+		defer reader.lock.Unlock()
+
+		if fromFilter == nil {
+			reader.done <- true
+			return
+		}
+
+		// FIXME: Can Wait()ing here stall? Should we release the lock while Wait()ing?
+		err := fromFilter.Wait()
+		if reader.err == nil {
+			reader.err = err
+		}
+
+		// Must send non-blocking since the channel has no buffer and sometimes no reader
+		select {
+		case reader.done <- true:
+		default:
+			// Empty default statement required for the write to be non-blocking,
+			// without this the write blocks and just hangs. Then we never get to
+			// the deferred reader.lock.Unlock() (see above), and the pager hangs
+			// when trying to take the lock for getting more lines.
+		}
+	}()
+
+	scanner := bufio.NewScanner(stream)
 	for scanner.Scan() {
-		lines = append(lines, scanner.Text())
-	}
-	if err := scanner.Err(); err != nil {
-		return nil, err
+		text := scanner.Text()
+
+		reader.lock.Lock()
+		reader.lines = append(reader.lines, text)
+		reader.lock.Unlock()
+
+		// This is how to do a non-blocking write to a channel:
+		// https://gobyexample.com/non-blocking-channel-operations
+		select {
+		case reader.moreLinesAdded <- true:
+		default:
+			// Default case required for the write to be non-blocking
+		}
 	}
 
-	return &Reader{
-		lines: lines,
-	}, nil
+	if err := scanner.Err(); err != nil {
+		reader.lock.Lock()
+		reader.err = err
+		reader.lock.Unlock()
+		return
+	}
+}
+
+// NewReaderFromStream creates a new stream reader
+//
+// If fromFilter is not nil this method will wait() for it,
+// and effectively takes over ownership for it.
+func NewReaderFromStream(reader io.Reader, fromFilter *exec.Cmd) *Reader {
+	var lines []string
+	var lock = &sync.Mutex{}
+	done := make(chan bool, 1)
+
+	// This needs to be size 1. If it would be 0, and we add more lines while the
+	// pager is processing, the pager would miss the lines added while it was
+	// processing.
+	moreLinesAdded := make(chan bool, 1)
+
+	returnMe := Reader{
+		lines:          lines,
+		lock:           lock,
+		done:           done,
+		moreLinesAdded: moreLinesAdded,
+	}
+
+	// FIXME: Make sure that if we panic somewhere inside of this goroutine,
+	// the main program terminates and prints our panic stack trace.
+	go _ReadStream(reader, &returnMe, fromFilter)
+
+	return &returnMe
+}
+
+// Wait for reader to finish reading. Used by tests.
+func (r *Reader) _Wait() error {
+	// Wait for our goroutine to finish
+	<-r.done
+
+	r.lock.Lock()
+	defer r.lock.Unlock()
+	return r.err
 }
 
 // NewReaderFromCommand creates a new reader by running a file through a filter
@@ -68,20 +146,12 @@ func NewReaderFromCommand(filename string, filterCommand ...string) (*Reader, er
 	if err != nil {
 		return nil, err
 	}
-	defer filter.Wait()
 
-	reader, err := NewReaderFromStream(filterOut)
-	if err != nil {
-		return nil, err
-	}
-
-	err = filter.Wait()
-	if err != nil {
-		return nil, err
-	}
-
+	reader := NewReaderFromStream(filterOut, filter)
+	reader.lock.Lock()
 	reader.name = &filename
-	return reader, err
+	reader.lock.Unlock()
+	return reader, nil
 }
 
 // NewReaderFromFilename creates a new file reader
@@ -113,16 +183,15 @@ func NewReaderFromFilename(filename string) (*Reader, error) {
 		return nil, err
 	}
 
-	reader, err := NewReaderFromStream(stream)
-	if err != nil {
-		return nil, err
-	}
-
+	reader := NewReaderFromStream(stream, nil)
+	reader.lock.Lock()
 	reader.name = &filename
-	return reader, err
+	reader.lock.Unlock()
+	return reader, nil
 }
 
-func (r *Reader) _CreateStatus(firstLineOneBased int, lastLineOneBased int) string {
+// _CreateStatusUnlocked() assumes that its caller is holding the lock
+func (r *Reader) _CreateStatusUnlocked(firstLineOneBased int, lastLineOneBased int) string {
 	prefix := ""
 	if r.name != nil {
 		prefix = path.Base(*r.name) + ": "
@@ -144,11 +213,17 @@ func (r *Reader) _CreateStatus(firstLineOneBased int, lastLineOneBased int) stri
 
 // GetLineCount returns the number of lines available for viewing
 func (r *Reader) GetLineCount() int {
+	r.lock.Lock()
+	defer r.lock.Unlock()
+
 	return len(r.lines)
 }
 
 // GetLine gets a line. If the requested line number is out of bounds, nil is returned.
 func (r *Reader) GetLine(lineNumberOneBased int) *string {
+	r.lock.Lock()
+	defer r.lock.Unlock()
+
 	if lineNumberOneBased < 1 {
 		return nil
 	}
@@ -160,18 +235,24 @@ func (r *Reader) GetLine(lineNumberOneBased int) *string {
 
 // GetLines gets the indicated lines from the input
 func (r *Reader) GetLines(firstLineOneBased int, wantedLineCount int) *Lines {
+	r.lock.Lock()
+	defer r.lock.Unlock()
+	return r._GetLinesUnlocked(firstLineOneBased, wantedLineCount)
+}
+
+func (r *Reader) _GetLinesUnlocked(firstLineOneBased int, wantedLineCount int) *Lines {
 	if firstLineOneBased < 1 {
 		firstLineOneBased = 1
 	}
 
 	if len(r.lines) == 0 {
 		return &Lines{
-			lines: r.lines,
+			lines: nil,
 
 			// The line number set here won't matter, we'll clip it anyway when we get it back
-			firstLineOneBased: firstLineOneBased,
+			firstLineOneBased: 0,
 
-			statusText: r._CreateStatus(0, 0),
+			statusText: r._CreateStatusUnlocked(0, 0),
 		}
 	}
 
@@ -191,12 +272,12 @@ func (r *Reader) GetLines(firstLineOneBased int, wantedLineCount int) *Lines {
 			firstLineOneBased = 1
 		}
 
-		return r.GetLines(firstLineOneBased, wantedLineCount)
+		return r._GetLinesUnlocked(firstLineOneBased, wantedLineCount)
 	}
 
 	return &Lines{
 		lines:             r.lines[firstLineZeroBased : lastLineZeroBased+1],
 		firstLineOneBased: firstLineOneBased,
-		statusText:        r._CreateStatus(firstLineOneBased, lastLineZeroBased+1),
+		statusText:        r._CreateStatusUnlocked(firstLineOneBased, lastLineZeroBased+1),
 	}
 }

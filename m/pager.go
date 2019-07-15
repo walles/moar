@@ -6,10 +6,13 @@ import (
 	"math"
 	"os"
 	"regexp"
+	"time"
 	"unicode"
 
 	"github.com/gdamore/tcell"
 )
+
+// FIXME: Profile the pager while searching through a large file
 
 type _PagerMode int
 
@@ -21,7 +24,7 @@ const (
 
 // Pager is the main on-screen pager
 type _Pager struct {
-	reader              Reader
+	reader              *Reader
 	screen              tcell.Screen
 	quit                bool
 	firstLineOneBased   int
@@ -33,7 +36,7 @@ type _Pager struct {
 }
 
 // NewPager creates a new Pager
-func NewPager(r Reader) *_Pager {
+func NewPager(r *Reader) *_Pager {
 	return &_Pager{
 		reader:            r,
 		quit:              false,
@@ -451,6 +454,22 @@ func (p *_Pager) StartPaging(logger *log.Logger, screen tcell.Screen) {
 	screen.Show()
 	p._Redraw(logger)
 
+	go func() {
+		for {
+			// Wait for new lines to appear
+			<-p.reader.moreLinesAdded
+			screen.PostEvent(tcell.NewEventInterrupt(nil))
+
+			// Delay updates a bit so that we don't waste time refreshing
+			// the screen too often.
+			//
+			// Note that the delay is *after* reacting, this way single-line
+			// updates are reacted to immediately, and the first output line
+			// read will appear on screen without delay.
+			time.Sleep(200 * time.Millisecond)
+		}
+	}()
+
 	// Main loop
 	for !p.quit {
 		ev := screen.PollEvent()
@@ -465,6 +484,11 @@ func (p *_Pager) StartPaging(logger *log.Logger, screen tcell.Screen) {
 		case *tcell.EventResize:
 			// We'll be implicitly redrawn just by taking another lap in the loop
 
+		case *tcell.EventInterrupt:
+			// This means we got more lines, look for NewEventInterrupt higher up
+			// in this file. Doing nothing here is fine, the refresh happens after
+			// this switch statement.
+
 		default:
 			logger.Printf("Unhandled event type: %v", ev)
 		}
@@ -474,4 +498,6 @@ func (p *_Pager) StartPaging(logger *log.Logger, screen tcell.Screen) {
 
 		p._Redraw(logger)
 	}
+
+	// FIXME: Log p.reader.err if it's non-nil
 }
