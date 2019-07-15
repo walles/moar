@@ -219,8 +219,6 @@ func NewReaderFromFilename(filename string) (*Reader, error) {
 		}
 	}
 
-	// FIXME: Warn user if highlight is not installed?
-
 	stream, err := os.Open(filename)
 	if err != nil {
 		return nil, err

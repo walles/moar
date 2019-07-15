@@ -17,6 +17,23 @@ import (
 
 var versionString = "Should be set when building, please use build.sh to build"
 
+func _PrintUsage(output io.Writer) {
+	// This controls where PrintDefaults() prints, see below
+	flag.CommandLine.SetOutput(output)
+
+	fmt.Fprintln(output, "Usage:")
+	fmt.Fprintln(output, "  moar [options] <file>")
+	fmt.Fprintln(output, "  ... | moar")
+	fmt.Fprintln(output, "  moar < file")
+	fmt.Fprintln(output)
+
+	flag.PrintDefaults()
+
+	// FIXME: Warn / explain if highlight is not installed
+
+	// FIXME: Explain how to make moar your default pager
+}
+
 func main() {
 	// FIXME: If we get a CTRL-C, get terminal back into a useful state before terminating
 
@@ -44,11 +61,10 @@ func main() {
 		panic(err)
 	}()
 
+	flag.Usage = func() {
+		_PrintUsage(os.Stdout)
+	}
 	printVersion := flag.Bool("version", false, "Prints the moar version number")
-
-	// FIXME: Support --help
-	// FIXME: Have --help warn / explain if highlight is not installed
-	// FIXME: Have --help explain how to make moar your default pager
 
 	// FIXME: Support --no-highlight
 
@@ -73,10 +89,9 @@ func main() {
 	}
 
 	if len(flag.Args()) != 1 {
-		// FIXME: Improve this message
 		fmt.Fprintln(os.Stderr, "ERROR: Expected exactly one filename, got: ", flag.Args())
-
-		// FIXME: Print full usage here
+		fmt.Fprintln(os.Stderr)
+		_PrintUsage(os.Stderr)
 
 		os.Exit(1)
 	}
