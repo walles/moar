@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/exec"
 	"path"
+	"path/filepath"
 	"strings"
 	"sync"
 )
@@ -55,6 +56,7 @@ func _ReadStream(stream io.Reader, reader *Reader, fromFilter *exec.Cmd) {
 		// FIXME: Can Wait()ing here stall? Should we release the lock while Wait()ing?
 		err := fromFilter.Wait()
 		if reader.err == nil {
+			// FIXME: Add filter stderr contents to the error reported here
 			reader.err = err
 		}
 
@@ -154,6 +156,18 @@ func NewReaderFromCommand(filename string, filterCommand ...string) (*Reader, er
 	return reader, nil
 }
 
+func _CanHighlight(filename string) bool {
+	ext := filepath.Ext(filename)
+	if len(ext) == 0 {
+		return false
+	}
+
+	// FIXME: Check file extension vs "highlight --list-scripts=langs" before
+	// calling highlight, otherwise files with unsupported extensions (like
+	// .log) get messed upp.
+	return true
+}
+
 // NewReaderFromFilename creates a new file reader
 func NewReaderFromFilename(filename string) (*Reader, error) {
 	if strings.HasSuffix(filename, ".gz") {
@@ -168,12 +182,11 @@ func NewReaderFromFilename(filename string) (*Reader, error) {
 
 	// Highlight input file using highlight:
 	// http://www.andre-simon.de/doku/highlight/en/highlight.php
-	//
-	// FIXME: Check file extension vs "highlight --list-scripts=langs" before
-	// calling highlight, otherwise binary files like /bin/ls get messed up.
-	highlighted, err := NewReaderFromCommand(filename, "highlight", "--out-format=esc", "-i")
-	if err == nil {
-		return highlighted, err
+	if _CanHighlight(filename) {
+		highlighted, err := NewReaderFromCommand(filename, "highlight", "--out-format=esc", "-i")
+		if err == nil {
+			return highlighted, err
+		}
 	}
 
 	// FIXME: Warn user if highlight is not installed?
