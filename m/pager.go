@@ -458,11 +458,15 @@ func (p *_Pager) StartPaging(logger *log.Logger, screen tcell.Screen) {
 		for {
 			// Wait for new lines to appear
 			<-p.reader.moreLinesAdded
+			screen.PostEvent(tcell.NewEventInterrupt(nil))
 
 			// Delay updates a bit so that we don't waste time refreshing
 			// the screen too often.
+			//
+			// Note that the delay is *after* reacting, this way single-line
+			// updates are reacted to immediately, and the first output line
+			// read will appear on screen without delay.
 			time.Sleep(200 * time.Millisecond)
-			screen.PostEvent(tcell.NewEventInterrupt(nil))
 		}
 	}()
 
