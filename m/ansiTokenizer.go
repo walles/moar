@@ -202,6 +202,8 @@ func _UpdateStyle(logger *log.Logger, style tcell.Style, escapeSequence string) 
 			style = style.Foreground(6)
 		case "37":
 			style = style.Foreground(7)
+		case "39":
+			style = style.Foreground(tcell.ColorDefault)
 
 		// Background colors
 		case "40":
@@ -220,6 +222,8 @@ func _UpdateStyle(logger *log.Logger, style tcell.Style, escapeSequence string) 
 			style = style.Background(6)
 		case "47":
 			style = style.Background(7)
+		case "49":
+			style = style.Background(tcell.ColorDefault)
 
 		default:
 			logger.Printf("Unrecognized ANSI SGI code <%s>", number)
