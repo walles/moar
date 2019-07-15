@@ -30,7 +30,10 @@ func _PrintUsage(output io.Writer) {
 
 	flag.PrintDefaults()
 
-	// FIXME: Warn / explain if highlight is not installed
+	// FIXME: Don't print this if highlight is already installed
+	fmt.Fprintln(output)
+	fmt.Fprintln(output, "To enable syntax highlighting when viewing source code, install")
+	fmt.Fprintln(output, "Highlight (http://www.andre-simon.de/zip/download.php).")
 
 	moarPath, err := filepath.Abs(os.Args[0])
 	if err == nil {
@@ -39,7 +42,7 @@ func _PrintUsage(output io.Writer) {
 		fmt.Fprintln(output, "To make Moar your default pager, put the following line in")
 		fmt.Fprintln(output, "your .bashrc or .bash_profile and it will be default in all")
 		fmt.Fprintln(output, "new terminal windows:")
-		fmt.Fprintf(output, "   export PAGER=%s", moarPath)
+		fmt.Fprintf(output, "   export PAGER=%s\n", moarPath)
 	} else {
 		// FIXME: Report this error?
 	}
