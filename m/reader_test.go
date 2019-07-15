@@ -3,8 +3,10 @@ package m
 import (
 	"io/ioutil"
 	"math"
+	"os/exec"
 	"path"
 	"runtime"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -12,7 +14,6 @@ import (
 )
 
 func _TestGetLineCount(t *testing.T, reader *Reader) {
-	/* FIXME: Re-enable this test and fix the problems found, this test finds problems
 	if strings.Contains(*reader.name, "compressed") {
 		// We are no good at counting lines of compressed files, never mind
 		return
@@ -33,7 +34,6 @@ func _TestGetLineCount(t *testing.T, reader *Reader) {
 		t.Errorf("Got %d lines but expected %d: <%s>",
 			reader.GetLineCount(), fileLineCount, *reader.name)
 	}
-	*/
 }
 
 func _TestGetLines(t *testing.T, reader *Reader) {
