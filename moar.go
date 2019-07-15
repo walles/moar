@@ -41,12 +41,14 @@ func _PrintUsage(output io.Writer) {
 
 	moarPath, err := filepath.Abs(os.Args[0])
 	if err == nil {
-		// FIXME: Don't print this if PAGER already point to ourselves
-		fmt.Fprintln(output)
-		fmt.Fprintln(output, "To make Moar your default pager, put the following line in")
-		fmt.Fprintln(output, "your .bashrc or .bash_profile and it will be default in all")
-		fmt.Fprintln(output, "new terminal windows:")
-		fmt.Fprintf(output, "   export PAGER=%s\n", moarPath)
+		if os.Getenv("PAGER") != moarPath {
+			// We're not the default pager
+			fmt.Fprintln(output)
+			fmt.Fprintln(output, "To make Moar your default pager, put the following line in")
+			fmt.Fprintln(output, "your .bashrc or .bash_profile and it will be default in all")
+			fmt.Fprintln(output, "new terminal windows:")
+			fmt.Fprintf(output, "   export PAGER=%s\n", moarPath)
+		}
 	} else {
 		// FIXME: Report this error?
 	}

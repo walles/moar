@@ -61,6 +61,8 @@ func _ReadStream(stream io.Reader, reader *Reader, fromFilter *exec.Cmd) {
 			reader.err = err
 		}
 
+		// FIXME: Report any filter printouts to stderr to the user
+
 		// Must send non-blocking since the channel has no buffer and sometimes no reader
 		select {
 		case reader.done <- true:
