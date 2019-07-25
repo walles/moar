@@ -200,8 +200,33 @@ func _CanHighlight(filename string) bool {
 	return false
 }
 
+func _TryOpen(filename string) error {
+	// Try opening the file
+	tryMe, err := os.Open(filename)
+	if err != nil {
+		return err
+	}
+	defer tryMe.Close()
+
+	// Try reading a byte
+	buffer := make([]byte, 1)
+	_, err = tryMe.Read(buffer)
+
+	if err != nil && err.Error() == "EOF" {
+		// Empty file, this is fine
+		return nil
+	}
+
+	return err
+}
+
 // NewReaderFromFilename creates a new file reader
 func NewReaderFromFilename(filename string) (*Reader, error) {
+	fileError := _TryOpen(filename)
+	if fileError != nil {
+		return nil, fileError
+	}
+
 	if strings.HasSuffix(filename, ".gz") {
 		return NewReaderFromCommand(filename, "gzip", "-d", "-c")
 	}

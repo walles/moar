@@ -206,7 +206,11 @@ func TestFilterPermissionDenied(t *testing.T) {
 }
 
 func TestFilterFileNotFound(t *testing.T) {
-	// FIXME: Test what happens if the filter command fails because it can't find the requested file
+	// The example file name needs to be one supported by one of our filters.
+	// ".md" is good, it is supported by highlight.
+	_, err := NewReaderFromFilename("/doesntexist.md")
+	assert.Check(t, err != nil, "Opening non-existing file should have been an error")
+	assert.Check(t, strings.HasPrefix(err.Error(), "open /doesntexist.md: "), err.Error())
 }
 
 func TestFilterNotAFile(t *testing.T) {
