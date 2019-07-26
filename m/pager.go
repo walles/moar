@@ -44,11 +44,46 @@ type _PreHelpState struct {
 	leftColumnZeroBased int
 }
 
-// FIXME: Better text here
 var _HelpReader = NewReaderFromText("Help", `
-Imagine a list of keybindings here
+Welcome to Moar, the nice pager!
 
-Keybindings
+Quitting
+--------
+* Press 'q' or ESC to quit
+
+Moving around
+-------------
+* Arrow keys
+* PageUp / 'b' and PageDown / 'f'
+* Half page 'u'p / 'd'own
+* Home and End for start / end of the document
+* < to go to the start of the document
+* > to go to the end of the document
+* RETURN moves down one line
+* SPACE moves down a page
+
+Searching
+---------
+* Type / to start searching, then type what you want to find
+* Type RETURN to stop searching
+* Find next by typing 'n' (for "next")
+* Find previous by typing SHIFT-N or 'p' (for "previous")
+* Search is case sensitive if it contains any UPPER CASE CHARACTERS
+* Search is interpreted as a regexp if it is a valid one
+
+Reporting bugs
+--------------
+File issues at https://github.com/walles/moar/issues, or post
+questions to johan.walles@gmail.com.
+
+Installing Moar as your default pager
+-------------------------------------
+Put the following line in your .bashrc or .bash_profile:
+  export PAGER=/usr/local/bin/moar.rb
+
+Source Code
+-----------
+Available at https://github.com/walles/moar/.
 `)
 
 // NewPager creates a new Pager
@@ -465,6 +500,14 @@ func (p *_Pager) _OnRune(logger *log.Logger, char rune) {
 	case 'b':
 		_, height := p.screen.Size()
 		p.firstLineOneBased -= (height - 1)
+
+	case 'u':
+		_, height := p.screen.Size()
+		p.firstLineOneBased -= (height / 2)
+
+	case 'd':
+		_, height := p.screen.Size()
+		p.firstLineOneBased += (height / 2)
 
 	case '/':
 		p.mode = _Searching
