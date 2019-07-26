@@ -33,7 +33,23 @@ type _Pager struct {
 	mode          _PagerMode
 	searchString  string
 	searchPattern *regexp.Regexp
+
+	isShowingHelp bool
+	preHelpState  *_PreHelpState
 }
+
+type _PreHelpState struct {
+	reader              *Reader
+	firstLineOneBased   int
+	leftColumnZeroBased int
+}
+
+// FIXME: Better text here
+var _HelpReader = NewReaderFromText(`
+Imagine a list of keybindings here
+
+Keybindings
+`)
 
 // NewPager creates a new Pager
 func NewPager(r *Reader) *_Pager {
@@ -109,7 +125,11 @@ func (p *_Pager) _AddLines(logger *log.Logger) {
 		p._SetFooter("Not found: " + p.searchString)
 
 	case _Viewing:
-		p._SetFooter(lines.statusText + "  Press ESC / q to exit, '/' to search")
+		helpText := "Press ESC / q to exit, '/' to search, 'h' for help"
+		if p.isShowingHelp {
+			helpText = "Press ESC / q to exit help, '/' to search"
+		}
+		p._SetFooter(lines.statusText + "  " + helpText)
 
 	default:
 		panic(fmt.Sprint("Unsupported pager mode: ", p.mode))
@@ -140,7 +160,17 @@ func (p *_Pager) _Redraw(logger *log.Logger) {
 }
 
 func (p *_Pager) Quit() {
-	p.quit = true
+	if !p.isShowingHelp {
+		p.quit = true
+		return
+	}
+
+	// Reset help
+	p.isShowingHelp = false
+	p.reader = p.preHelpState.reader
+	p.firstLineOneBased = p.preHelpState.firstLineOneBased
+	p.leftColumnZeroBased = p.preHelpState.leftColumnZeroBased
+	p.preHelpState = nil
 }
 
 func (p *_Pager) _ScrollToSearchHits() {
@@ -343,7 +373,6 @@ func (p *_Pager) _OnKey(logger *log.Logger, key tcell.Key) {
 	// Reset the not-found marker on non-search keypresses
 	p.mode = _Viewing
 
-	// FIXME: Add support for pressing 'h' to get a list of keybindings
 	switch key {
 	case tcell.KeyEscape:
 		p.Quit()
@@ -401,6 +430,19 @@ func (p *_Pager) _OnRune(logger *log.Logger, char rune) {
 	switch char {
 	case 'q':
 		p.Quit()
+
+	case 'h':
+		if !p.isShowingHelp {
+			p.preHelpState = &_PreHelpState{
+				reader:              p.reader,
+				firstLineOneBased:   p.firstLineOneBased,
+				leftColumnZeroBased: p.leftColumnZeroBased,
+			}
+			p.reader = _HelpReader
+			p.firstLineOneBased = 1
+			p.leftColumnZeroBased = 0
+			p.isShowingHelp = true
+		}
 
 	case 'k', 'y':
 		// Clipping is done in _AddLines()
