@@ -33,7 +33,58 @@ type _Pager struct {
 	mode          _PagerMode
 	searchString  string
 	searchPattern *regexp.Regexp
+
+	isShowingHelp bool
+	preHelpState  *_PreHelpState
 }
+
+type _PreHelpState struct {
+	reader              *Reader
+	firstLineOneBased   int
+	leftColumnZeroBased int
+}
+
+var _HelpReader = NewReaderFromText("Help", `
+Welcome to Moar, the nice pager!
+
+Quitting
+--------
+* Press 'q' or ESC to quit
+
+Moving around
+-------------
+* Arrow keys
+* PageUp / 'b' and PageDown / 'f'
+* Half page 'u'p / 'd'own
+* Home and End for start / end of the document
+* < to go to the start of the document
+* > to go to the end of the document
+* RETURN moves down one line
+* SPACE moves down a page
+
+Searching
+---------
+* Type / to start searching, then type what you want to find
+* Type RETURN to stop searching
+* Find next by typing 'n' (for "next")
+* Find previous by typing SHIFT-N or 'p' (for "previous")
+* Search is case sensitive if it contains any UPPER CASE CHARACTERS
+* Search is interpreted as a regexp if it is a valid one
+
+Reporting bugs
+--------------
+File issues at https://github.com/walles/moar/issues, or post
+questions to johan.walles@gmail.com.
+
+Installing Moar as your default pager
+-------------------------------------
+Put the following line in your .bashrc or .bash_profile:
+  export PAGER=/usr/local/bin/moar.rb
+
+Source Code
+-----------
+Available at https://github.com/walles/moar/.
+`)
 
 // NewPager creates a new Pager
 func NewPager(r *Reader) *_Pager {
@@ -109,7 +160,11 @@ func (p *_Pager) _AddLines(logger *log.Logger) {
 		p._SetFooter("Not found: " + p.searchString)
 
 	case _Viewing:
-		p._SetFooter(lines.statusText + "  Press ESC / q to exit, '/' to search")
+		helpText := "Press ESC / q to exit, '/' to search, 'h' for help"
+		if p.isShowingHelp {
+			helpText = "Press ESC / q to exit help, '/' to search"
+		}
+		p._SetFooter(lines.statusText + "  " + helpText)
 
 	default:
 		panic(fmt.Sprint("Unsupported pager mode: ", p.mode))
@@ -140,7 +195,17 @@ func (p *_Pager) _Redraw(logger *log.Logger) {
 }
 
 func (p *_Pager) Quit() {
-	p.quit = true
+	if !p.isShowingHelp {
+		p.quit = true
+		return
+	}
+
+	// Reset help
+	p.isShowingHelp = false
+	p.reader = p.preHelpState.reader
+	p.firstLineOneBased = p.preHelpState.firstLineOneBased
+	p.leftColumnZeroBased = p.preHelpState.leftColumnZeroBased
+	p.preHelpState = nil
 }
 
 func (p *_Pager) _ScrollToSearchHits() {
@@ -343,7 +408,6 @@ func (p *_Pager) _OnKey(logger *log.Logger, key tcell.Key) {
 	// Reset the not-found marker on non-search keypresses
 	p.mode = _Viewing
 
-	// FIXME: Add support for pressing 'h' to get a list of keybindings
 	switch key {
 	case tcell.KeyEscape:
 		p.Quit()
@@ -402,6 +466,19 @@ func (p *_Pager) _OnRune(logger *log.Logger, char rune) {
 	case 'q':
 		p.Quit()
 
+	case 'h':
+		if !p.isShowingHelp {
+			p.preHelpState = &_PreHelpState{
+				reader:              p.reader,
+				firstLineOneBased:   p.firstLineOneBased,
+				leftColumnZeroBased: p.leftColumnZeroBased,
+			}
+			p.reader = _HelpReader
+			p.firstLineOneBased = 1
+			p.leftColumnZeroBased = 0
+			p.isShowingHelp = true
+		}
+
 	case 'k', 'y':
 		// Clipping is done in _AddLines()
 		p.firstLineOneBased--
@@ -423,6 +500,14 @@ func (p *_Pager) _OnRune(logger *log.Logger, char rune) {
 	case 'b':
 		_, height := p.screen.Size()
 		p.firstLineOneBased -= (height - 1)
+
+	case 'u':
+		_, height := p.screen.Size()
+		p.firstLineOneBased -= (height / 2)
+
+	case 'd':
+		_, height := p.screen.Size()
+		p.firstLineOneBased += (height / 2)
 
 	case '/':
 		p.mode = _Searching
