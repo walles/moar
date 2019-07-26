@@ -521,7 +521,7 @@ func (p *_Pager) _OnRune(logger *log.Logger, char rune) {
 		p._ScrollToPreviousSearchHit()
 
 	default:
-		logger.Printf("Unhandled rune keyress '%s'", string(char))
+		logger.Printf("Unhandled rune keypress '%s'", string(char))
 	}
 }
 
