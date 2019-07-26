@@ -45,7 +45,7 @@ type _PreHelpState struct {
 }
 
 // FIXME: Better text here
-var _HelpReader = NewReaderFromText(`
+var _HelpReader = NewReaderFromText("Help", `
 Imagine a list of keybindings here
 
 Keybindings

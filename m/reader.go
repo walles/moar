@@ -127,6 +127,16 @@ func NewReaderFromStream(reader io.Reader, fromFilter *exec.Cmd) *Reader {
 	return &returnMe
 }
 
+// NewReaderFromText creates a Reader from a block of text
+func NewReaderFromText(name string, text string) *Reader {
+	noExternalNewlines := strings.Trim(text, "\n")
+	return &Reader{
+		name:  &name,
+		lines: strings.Split(noExternalNewlines, "\n"),
+		lock:  &sync.Mutex{},
+	}
+}
+
 // Wait for reader to finish reading. Used by tests.
 func (r *Reader) _Wait() error {
 	// Wait for our goroutine to finish
