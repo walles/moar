@@ -97,10 +97,17 @@ func NewPager(r *Reader) *_Pager {
 
 func (p *_Pager) _AddLine(logger *log.Logger, lineNumber int, line string) {
 	pos := 0
+	stringIndexAtColumnZero := p.leftColumnZeroBased
 	if p.leftColumnZeroBased > 0 {
 		// Indicate that it's possible to scroll left
 		p.screen.SetContent(pos, lineNumber, '<', nil, tcell.StyleDefault.Reverse(true))
 		pos++
+
+		// This code can be verified by searching for "monkeys" in
+		// sample-files/long-and-wide.txt and scrolling right. If the
+		// "monkeys" highlight is in the right place both before and
+		// after scrolling right then this code is good.
+		stringIndexAtColumnZero--
 	}
 
 	tokens, plainString := TokensFromString(logger, line)
@@ -119,8 +126,8 @@ func (p *_Pager) _AddLine(logger *log.Logger, lineNumber int, line string) {
 		}
 
 		style := token.Style
-		if matchRanges.InRange(pos) {
-			// FIXME: This doesn't work if the style is already reversed
+		if matchRanges.InRange(pos + stringIndexAtColumnZero) {
+			// Search hits in reverse video
 			style = style.Reverse(true)
 		}
 

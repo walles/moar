@@ -89,9 +89,6 @@ FIXME: Go release instructions
 TODO
 ----
 
-* Make sure search hits are highlighted even when we have to scroll right
-  to see them
-
 * Change out-of-file visualization to writing --- after the end of the
   file and leaving the rest of the screen blank.
 
@@ -141,3 +138,6 @@ Done
   line-continuation markers at the rightmost column.  This really
   means our truncation code must work even with things like tabs and
   various control characters.
+
+* Make sure search hits are highlighted even when we have to scroll right
+  to see them
