@@ -111,6 +111,13 @@ func (p *_Pager) _AddLine(logger *log.Logger, lineNumber int, line string) {
 
 	matchRanges := GetMatchRanges(plainString, p.searchPattern)
 	for _, token := range tokens[p.leftColumnZeroBased:] {
+		width, _ := p.screen.Size()
+		if pos >= width {
+			// Indicate that this line continues to the right
+			p.screen.SetContent(pos-1, lineNumber, '>', nil, tcell.StyleDefault.Reverse(true))
+			break
+		}
+
 		style := token.Style
 		if matchRanges.InRange(pos) {
 			// FIXME: This doesn't work if the style is already reversed

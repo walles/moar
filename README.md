@@ -89,13 +89,6 @@ FIXME: Go release instructions
 TODO
 ----
 
-* Add '>' markers at the end of lines being cut because they are too long
-
-* Doing moar on an arbitrary binary (like /bin/ls) should put all
-  line-continuation markers at the rightmost column.  This really
-  means our truncation code must work even with things like tabs and
-  various control characters.
-
 * Make sure search hits are highlighted even when we have to scroll right
   to see them
 
@@ -138,3 +131,13 @@ TODO
 * Retain the search string when pressing / to search a second time.
 
 * Make sure "git grep" output gets highlighted properly.
+
+Done
+----
+
+* Add '>' markers at the end of lines being cut because they are too long
+
+* Doing moar on an arbitrary binary (like /bin/ls) should put all
+  line-continuation markers at the rightmost column.  This really
+  means our truncation code must work even with things like tabs and
+  various control characters.
