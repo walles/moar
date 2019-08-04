@@ -26,7 +26,7 @@ read -r VERSION
 # changes since last release as inspiration
 
 # Make an annotated tag for this release
-git tag --annotated "$VERSION"
+git tag --annotate "$VERSION"
 
 # NOTE: To get the version number right, these builds must
 # be done after the above tagging.
