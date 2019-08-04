@@ -28,11 +28,16 @@ Doing the right thing includes:
 Installing
 ----------
 
-FIXME: End-user install instructions for the Go-built product
-
-...
+1. Download `moar` for your platform from
+   <https://github.com/walles/moar/releases/latest>
+1. `chmod a+x moar-*-*-*`
+1. `sudo mv moar-*-*-* /usr/local/bin`
 
 And now you can just invoke `moar` from the prompt!
+
+If a binary for your platform is not available, please
+[file a ticket](https://github.com/walles/moar/releases) or contact
+<johan.walles@gmail.com>.
 
 Setting Moar as Your Default Pager
 ----------------------------------
@@ -89,8 +94,6 @@ Execute `release.sh` and follow instructions.
 TODO
 ----
 
-* Remedy all FIXMEs in this README file
-
 * Release the `go` version as the new `moar`, replacing the previous Ruby
   implementation
 
@@ -143,3 +146,5 @@ Done
 * Exit search on pressing up / down / pageup / pagedown keys and
   scroll. I attempted to do that spontaneously, so it's probably a
   good idea.
+
+* Remedy all FIXMEs in this README file
