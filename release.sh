@@ -4,7 +4,14 @@ set -e -o pipefail
 
 ./test.sh
 
-# FIXME: Bail if we're on a dirty version
+# Bail if we're on a dirty version
+if [ -n "$(git diff --stat)" ]; then
+  echo "ERROR: Please commit all changes before doing a release"
+  echo
+  git status
+
+  exit 1
+fi
 
 # List existing version numbers...
 echo
