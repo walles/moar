@@ -411,6 +411,26 @@ func (p *_Pager) _OnSearchKey(logger *log.Logger, key tcell.Key) {
 		p.searchString = p.searchString[:len(p.searchString)-1]
 		p._UpdateSearchPattern()
 
+	case tcell.KeyUp:
+		// Clipping is done in _AddLines()
+		p.firstLineOneBased--
+		p.mode = _Viewing
+
+	case tcell.KeyDown:
+		// Clipping is done in _AddLines()
+		p.firstLineOneBased++
+		p.mode = _Viewing
+
+	case tcell.KeyPgUp:
+		_, height := p.screen.Size()
+		p.firstLineOneBased -= (height - 1)
+		p.mode = _Viewing
+
+	case tcell.KeyPgDn:
+		_, height := p.screen.Size()
+		p.firstLineOneBased += (height - 1)
+		p.mode = _Viewing
+
 	default:
 		logger.Printf("Unhandled search key event %v", key)
 	}

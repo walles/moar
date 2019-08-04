@@ -1,6 +1,7 @@
 Moar is a pager.  It's designed to just do the right thing without any
 configuration:
 
+FIXME: Update this to the Go version
 ![Moar displaying its own test suite](http://walles.github.io/moar/images/moar.png)
 
 The intention is that Moar should work as a drop-in replacement for
@@ -89,9 +90,7 @@ FIXME: Go release instructions
 TODO
 ----
 
-* Exit search on pressing up / down / pageup / pagedown keys and
-  scroll. I attempted to do that spontaneously, so it's probably a
-  good idea.
+* Remedy all FIXMEs in this README file
 
 * Release the `go` version as the new `moar`, replacing the previous Ruby
   implementation
@@ -141,3 +140,7 @@ Done
 
 * Change out-of-file visualization to writing --- after the end of the
   file and leaving the rest of the screen blank.
+
+* Exit search on pressing up / down / pageup / pagedown keys and
+  scroll. I attempted to do that spontaneously, so it's probably a
+  good idea.
