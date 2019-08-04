@@ -84,7 +84,7 @@ Install (into `/usr/local/bin`) from source:
 Making a new Release
 --------------------
 
-FIXME: Go release instructions
+Execute `release.sh` and follow instructions.
 
 TODO
 ----

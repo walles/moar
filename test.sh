@@ -6,6 +6,7 @@ set -e -o pipefail
 go test github.com/walles/moar/m
 
 # Ensure we can cross compile
+# NOTE: Make sure this list matches the one in release.sh
 GOOS=linux GOARCH=386 ./build.sh
 GOOS=darwin GOARCH=amd64 ./build.sh
 
