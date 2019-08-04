@@ -38,10 +38,8 @@ GOOS=darwin GOARCH=amd64 ./build.sh
 # Push the newly built release tag
 git push --tags
 
-# FIXME: Put the actual URL here, don't just refer to Github
-#
 # FIXME: Instead of asking the user to upload the binaries,
 # upload them for the user.
 echo
-echo "Please upload the following binaries to the new release page on Github:"
+echo "Please upload the following binaries to <https://github.com/walles/moar/releases/tag/$VERSION>:"
 find . -maxdepth 1 -name 'moar-*-*-*' -print0 | xargs -0 -n1 basename
