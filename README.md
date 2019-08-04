@@ -1,8 +1,7 @@
 Moar is a pager.  It's designed to just do the right thing without any
 configuration:
 
-FIXME: Update this to the Go version
-![Moar displaying its own test suite](http://walles.github.io/moar/images/moar.png)
+![Moar displaying its own source code](screenshot.png)
 
 The intention is that Moar should work as a drop-in replacement for
 [Less](http://www.greenwoodsoftware.com/less/). If you find that Moar
