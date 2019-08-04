@@ -44,6 +44,8 @@ type _PreHelpState struct {
 	leftColumnZeroBased int
 }
 
+const _EofMarker = "\x1b[7m---" // Reverse video "---""
+
 var _HelpReader = NewReaderFromText("Help", `
 Welcome to Moar, the nice pager!
 
@@ -162,9 +164,13 @@ func (p *_Pager) _AddLines(logger *log.Logger) {
 	// display starts scrolling visibly.
 	p.firstLineOneBased = lines.firstLineOneBased
 
-	for screenLineNumber, line := range lines.lines {
+	screenLineNumber := 0
+	for _, line := range lines.lines {
 		p._AddLine(logger, screenLineNumber, line)
+		screenLineNumber++
 	}
+
+	p._AddLine(logger, screenLineNumber, _EofMarker)
 
 	switch p.mode {
 	case _Searching:

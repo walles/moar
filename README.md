@@ -89,9 +89,6 @@ FIXME: Go release instructions
 TODO
 ----
 
-* Change out-of-file visualization to writing --- after the end of the
-  file and leaving the rest of the screen blank.
-
 * Exit search on pressing up / down / pageup / pagedown keys and
   scroll. I attempted to do that spontaneously, so it's probably a
   good idea.
@@ -141,3 +138,6 @@ Done
 
 * Make sure search hits are highlighted even when we have to scroll right
   to see them
+
+* Change out-of-file visualization to writing --- after the end of the
+  file and leaving the rest of the screen blank.
