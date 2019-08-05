@@ -2,6 +2,7 @@
 
 set -e -o pipefail
 
+echo "Running tests before making the release..."
 ./test.sh
 
 # Bail if we're on a dirty version
@@ -15,6 +16,7 @@ fi
 
 # List existing version numbers...
 echo
+echo "Previous version numbers:"
 git tag | cat
 
 # ... and ask for a new version number.
@@ -42,4 +44,4 @@ git push --tags
 # upload them for the user.
 echo
 echo "Please upload the following binaries to <https://github.com/walles/moar/releases/tag/$VERSION>:"
-find . -maxdepth 1 -name 'moar-*-*-*' -print0 | xargs -0 -n1 basename
+file moar-"$VERSION"-*-*
