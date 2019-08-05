@@ -1,6 +1,6 @@
 #!/bin/bash
 
-VERSION="$(git describe --tags --dirty)"
+VERSION="$(git describe --dirty)"
 
 BINARY="moar"
 if [ -n "$GOOS$GOARCH" ] ; then
