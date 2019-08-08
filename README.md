@@ -94,8 +94,9 @@ Execute `release.sh` and follow instructions.
 TODO
 ----
 
-* Release the `go` version as the new `moar`, replacing the previous Ruby
-  implementation
+* Make `tail -f /dev/null` exit properly, maybe explicitly close
+  the input pipe when exiting? Would fix
+  <https://github.com/walles/moar/issues/7>.
 
 * Searching for something above us should wrap the search.
 
@@ -148,3 +149,6 @@ Done
   good idea.
 
 * Remedy all FIXMEs in this README file
+
+* Release the `go` version as the new `moar`, replacing the previous Ruby
+  implementation

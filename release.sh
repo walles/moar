@@ -24,8 +24,13 @@ echo
 echo "Please provide a version number for the new release:"
 read -r VERSION
 
-# FIXME: When asking for a release description, list
-# changes since last release as inspiration
+# List changes since last release as inspiration...
+LAST_VERSION="$(git describe --abbrev=0)"
+echo
+
+# FIXME: Make this part of the editable tagging message
+echo "Changes since last release:"
+git log --pretty="format:* %s" "$LAST_VERSION"..HEAD
 
 # Make an annotated tag for this release
 git tag --annotate "$VERSION"
