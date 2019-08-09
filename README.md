@@ -100,15 +100,9 @@ TODO
 
 * Searching for something above us should wrap the search.
 
-* Handle all kinds of line endings.
-
 * Enable exiting using ^c (without restoring the screen).
 
 * Start at a certain line if run as "moar.rb file.txt:42"
-
-* Add licensing information (BSD)
-
-* Make sure version information is printed if there are warnings.
 
 * Redefine 'g' without any prefix to prompt for which line to go
   to. This definition makes more sense to me than having to prefix 'g'
@@ -125,8 +119,6 @@ TODO
 * Incremental search using ^s and ^r like in Emacs
 
 * Retain the search string when pressing / to search a second time.
-
-* Make sure "git grep" output gets highlighted properly.
 
 Done
 ----
@@ -152,3 +144,11 @@ Done
 
 * Release the `go` version as the new `moar`, replacing the previous Ruby
   implementation
+
+* Add licensing information (same as for the Ruby branch)
+
+* Make sure "git grep" output gets highlighted properly.
+
+* Handle all kinds of line endings.
+
+* Make sure version information is printed if there are warnings.
