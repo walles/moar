@@ -179,6 +179,9 @@ func _UpdateStyle(logger *log.Logger, style tcell.Style, escapeSequence string) 
 		case "1":
 			style = style.Bold(true)
 
+		case "4":
+			style = style.Underline(true)
+
 		case "7":
 			style = style.Reverse(true)
 
@@ -226,7 +229,7 @@ func _UpdateStyle(logger *log.Logger, style tcell.Style, escapeSequence string) 
 			style = style.Background(tcell.ColorDefault)
 
 		default:
-			logger.Printf("Unrecognized ANSI SGI code <%s>", number)
+			logger.Printf("Unrecognized ANSI SGR code <%s>", number)
 		}
 	}
 
