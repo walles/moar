@@ -44,8 +44,7 @@ type _PreHelpState struct {
 	leftColumnZeroBased int
 }
 
-// FIXME: Animate this while file is still loading
-const _EofMarker = "\x1b[7m---" // Reverse video "---""
+const _EofMarkerFormat = "\x1b[7m" // Reverse video
 
 var _HelpReader = NewReaderFromText("Help", `
 Welcome to Moar, the nice pager!
@@ -171,7 +170,12 @@ func (p *_Pager) _AddLines(logger *log.Logger, spinner string) {
 		screenLineNumber++
 	}
 
-	p._AddLine(logger, screenLineNumber, _EofMarker)
+	eofSpinner := spinner
+	if eofSpinner == "" {
+		// This happens when we're done
+		eofSpinner = "---"
+	}
+	p._AddLine(logger, screenLineNumber, _EofMarkerFormat+eofSpinner)
 
 	switch p.mode {
 	case _Searching:
