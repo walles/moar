@@ -152,3 +152,5 @@ Done
 * Handle all kinds of line endings.
 
 * Make sure version information is printed if there are warnings.
+
+* Add spinners while file is still loading
