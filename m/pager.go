@@ -44,6 +44,7 @@ type _PreHelpState struct {
 	leftColumnZeroBased int
 }
 
+// FIXME: Animate this while file is still loading
 const _EofMarker = "\x1b[7m---" // Reverse video "---""
 
 var _HelpReader = NewReaderFromText("Help", `
@@ -152,7 +153,7 @@ func (p *_Pager) _AddSearchFooter() {
 	p.screen.SetContent(pos, height-1, ' ', nil, tcell.StyleDefault.Reverse(true))
 }
 
-func (p *_Pager) _AddLines(logger *log.Logger) {
+func (p *_Pager) _AddLines(logger *log.Logger, spinner string) {
 	_, height := p.screen.Size()
 	wantedLineCount := height - 1
 
@@ -184,7 +185,7 @@ func (p *_Pager) _AddLines(logger *log.Logger) {
 		if p.isShowingHelp {
 			helpText = "Press ESC / q to exit help, '/' to search"
 		}
-		p._SetFooter(lines.statusText + "  " + helpText)
+		p._SetFooter(lines.statusText + spinner + "  " + helpText)
 
 	default:
 		panic(fmt.Sprint("Unsupported pager mode: ", p.mode))
@@ -206,10 +207,10 @@ func (p *_Pager) _SetFooter(footer string) {
 	}
 }
 
-func (p *_Pager) _Redraw(logger *log.Logger) {
+func (p *_Pager) _Redraw(logger *log.Logger, spinner string) {
 	p.screen.Clear()
 
-	p._AddLines(logger)
+	p._AddLines(logger, spinner)
 
 	p.screen.Show()
 }
@@ -577,7 +578,7 @@ func (p *_Pager) StartPaging(logger *log.Logger, screen tcell.Screen) {
 
 	p.screen = screen
 	screen.Show()
-	p._Redraw(logger)
+	p._Redraw(logger, "")
 
 	go func() {
 		for {
@@ -595,7 +596,38 @@ func (p *_Pager) StartPaging(logger *log.Logger, screen tcell.Screen) {
 		}
 	}()
 
+	go func() {
+		done := false
+		spinnerFrames := [...]string{"...", " ..", ". .", ".. ", "..."}
+		spinnerIndex := 0
+		for {
+			// Break this loop on the reader.done signal...
+			select {
+			case <-p.reader.done:
+				done = true
+			default:
+				// This default case makes this an async read
+			}
+
+			if done {
+				break
+			}
+
+			screen.PostEvent(tcell.NewEventInterrupt(spinnerFrames[spinnerIndex]))
+			spinnerIndex++
+			if spinnerIndex >= len(spinnerFrames) {
+				spinnerIndex = 0
+			}
+
+			time.Sleep(200 * time.Millisecond)
+		}
+
+		// Empty our spinner, loading done!
+		screen.PostEvent(tcell.NewEventInterrupt(""))
+	}()
+
 	// Main loop
+	spinner := ""
 	for !p.quit {
 		ev := screen.PollEvent()
 		switch ev := ev.(type) {
@@ -613,6 +645,11 @@ func (p *_Pager) StartPaging(logger *log.Logger, screen tcell.Screen) {
 			// This means we got more lines, look for NewEventInterrupt higher up
 			// in this file. Doing nothing here is fine, the refresh happens after
 			// this switch statement.
+			data := ev.Data()
+			if data != nil {
+				// From: https://yourbasic.org/golang/interface-to-string/
+				spinner = fmt.Sprintf("%v", data)
+			}
 
 		default:
 			logger.Printf("Unhandled event type: %v", ev)
@@ -621,7 +658,7 @@ func (p *_Pager) StartPaging(logger *log.Logger, screen tcell.Screen) {
 		// FIXME: If more events are ready, skip this redraw, that
 		// should speed up mouse wheel scrolling
 
-		p._Redraw(logger)
+		p._Redraw(logger, spinner)
 	}
 
 	// FIXME: Log p.reader.err if it's non-nil

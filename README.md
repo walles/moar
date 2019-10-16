@@ -94,6 +94,10 @@ Execute `release.sh` and follow instructions.
 TODO
 ----
 
+* While reading from an active command, indicate that using:
+  * No `---` EOF marker
+  * Suffixing file location with `...`
+
 * Make `tail -f /dev/null` exit properly, maybe explicitly close
   the input pipe when exiting? Would fix
   <https://github.com/walles/moar/issues/7>.
