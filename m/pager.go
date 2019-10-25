@@ -23,7 +23,7 @@ const (
 )
 
 // Pager is the main on-screen pager
-type _Pager struct {
+type Pager struct {
 	reader              *Reader
 	screen              tcell.Screen
 	quit                bool
@@ -89,15 +89,15 @@ Available at https://github.com/walles/moar/.
 `)
 
 // NewPager creates a new Pager
-func NewPager(r *Reader) *_Pager {
-	return &_Pager{
+func NewPager(r *Reader) *Pager {
+	return &Pager{
 		reader:            r,
 		quit:              false,
 		firstLineOneBased: 1,
 	}
 }
 
-func (p *_Pager) _AddLine(logger *log.Logger, lineNumber int, line string) {
+func (p *Pager) _AddLine(logger *log.Logger, lineNumber int, line string) {
 	pos := 0
 	stringIndexAtColumnZero := p.leftColumnZeroBased
 	if p.leftColumnZeroBased > 0 {
@@ -139,7 +139,7 @@ func (p *_Pager) _AddLine(logger *log.Logger, lineNumber int, line string) {
 	}
 }
 
-func (p *_Pager) _AddSearchFooter() {
+func (p *Pager) _AddSearchFooter() {
 	_, height := p.screen.Size()
 
 	pos := 0
@@ -152,7 +152,7 @@ func (p *_Pager) _AddSearchFooter() {
 	p.screen.SetContent(pos, height-1, ' ', nil, tcell.StyleDefault.Reverse(true))
 }
 
-func (p *_Pager) _AddLines(logger *log.Logger, spinner string) {
+func (p *Pager) _AddLines(logger *log.Logger, spinner string) {
 	_, height := p.screen.Size()
 	wantedLineCount := height - 1
 
@@ -196,7 +196,7 @@ func (p *_Pager) _AddLines(logger *log.Logger, spinner string) {
 	}
 }
 
-func (p *_Pager) _SetFooter(footer string) {
+func (p *Pager) _SetFooter(footer string) {
 	width, height := p.screen.Size()
 
 	pos := 0
@@ -211,7 +211,7 @@ func (p *_Pager) _SetFooter(footer string) {
 	}
 }
 
-func (p *_Pager) _Redraw(logger *log.Logger, spinner string) {
+func (p *Pager) _Redraw(logger *log.Logger, spinner string) {
 	p.screen.Clear()
 
 	p._AddLines(logger, spinner)
@@ -219,7 +219,8 @@ func (p *_Pager) _Redraw(logger *log.Logger, spinner string) {
 	p.screen.Show()
 }
 
-func (p *_Pager) Quit() {
+// Quit leaves the help screen or quits the pager
+func (p *Pager) Quit() {
 	if !p.isShowingHelp {
 		p.quit = true
 		return
@@ -233,7 +234,7 @@ func (p *_Pager) Quit() {
 	p.preHelpState = nil
 }
 
-func (p *_Pager) _ScrollToSearchHits() {
+func (p *Pager) _ScrollToSearchHits() {
 	if p.searchPattern == nil {
 		// This is not a search
 		return
@@ -253,7 +254,7 @@ func (p *_Pager) _ScrollToSearchHits() {
 	p.firstLineOneBased = *firstHitLine
 }
 
-func (p *_Pager) _GetLastVisibleLineOneBased() int {
+func (p *Pager) _GetLastVisibleLineOneBased() int {
 	firstVisibleLineOneBased := p.firstLineOneBased
 	_, windowHeight := p.screen.Size()
 
@@ -262,7 +263,7 @@ func (p *_Pager) _GetLastVisibleLineOneBased() int {
 	return firstVisibleLineOneBased + windowHeight - 2
 }
 
-func (p *_Pager) _FindFirstHitLineOneBased(firstLineOneBased int, backwards bool) *int {
+func (p *Pager) _FindFirstHitLineOneBased(firstLineOneBased int, backwards bool) *int {
 	lineNumber := firstLineOneBased
 	for {
 		line := p.reader.GetLine(lineNumber)
@@ -283,7 +284,7 @@ func (p *_Pager) _FindFirstHitLineOneBased(firstLineOneBased int, backwards bool
 	}
 }
 
-func (p *_Pager) _ScrollToNextSearchHit() {
+func (p *Pager) _ScrollToNextSearchHit() {
 	if p.searchPattern == nil {
 		// Nothing to search for, never mind
 		return
@@ -318,7 +319,7 @@ func (p *_Pager) _ScrollToNextSearchHit() {
 	p.firstLineOneBased = *firstHitLine
 }
 
-func (p *_Pager) _ScrollToPreviousSearchHit() {
+func (p *Pager) _ScrollToPreviousSearchHit() {
 	if p.searchPattern == nil {
 		// Nothing to search for, never mind
 		return
@@ -353,7 +354,7 @@ func (p *_Pager) _ScrollToPreviousSearchHit() {
 	p.firstLineOneBased = *firstHitLine
 }
 
-func (p *_Pager) _UpdateSearchPattern() {
+func (p *Pager) _UpdateSearchPattern() {
 	p.searchPattern = ToPattern(p.searchString)
 
 	p._ScrollToSearchHits()
@@ -403,7 +404,7 @@ func ToPattern(compileMe string) *regexp.Regexp {
 	panic(err)
 }
 
-func (p *_Pager) _OnSearchKey(logger *log.Logger, key tcell.Key) {
+func (p *Pager) _OnSearchKey(logger *log.Logger, key tcell.Key) {
 	switch key {
 	case tcell.KeyEscape, tcell.KeyEnter:
 		p.mode = _Viewing
@@ -441,7 +442,7 @@ func (p *_Pager) _OnSearchKey(logger *log.Logger, key tcell.Key) {
 	}
 }
 
-func (p *_Pager) _OnKey(logger *log.Logger, key tcell.Key) {
+func (p *Pager) _OnKey(logger *log.Logger, key tcell.Key) {
 	if p.mode == _Searching {
 		p._OnSearchKey(logger, key)
 		return
@@ -493,12 +494,12 @@ func (p *_Pager) _OnKey(logger *log.Logger, key tcell.Key) {
 	}
 }
 
-func (p *_Pager) _OnSearchRune(logger *log.Logger, char rune) {
+func (p *Pager) _OnSearchRune(logger *log.Logger, char rune) {
 	p.searchString = p.searchString + string(char)
 	p._UpdateSearchPattern()
 }
 
-func (p *_Pager) _OnRune(logger *log.Logger, char rune) {
+func (p *Pager) _OnRune(logger *log.Logger, char rune) {
 	if p.mode == _Searching {
 		p._OnSearchRune(logger, char)
 		return
@@ -571,7 +572,7 @@ func (p *_Pager) _OnRune(logger *log.Logger, char rune) {
 }
 
 // StartPaging brings up the pager on screen
-func (p *_Pager) StartPaging(logger *log.Logger, screen tcell.Screen) {
+func (p *Pager) StartPaging(logger *log.Logger, screen tcell.Screen) {
 	// We want to match the terminal theme, see screen.Init() source code
 	os.Setenv("TCELL_TRUECOLOR", "disable")
 
