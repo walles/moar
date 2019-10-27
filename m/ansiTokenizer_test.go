@@ -64,13 +64,26 @@ func TestConsumeCompositeColorHappy(t *testing.T) {
 	assert.Equal(t, color, tcell.NewRGBColor(10, 20, 30))
 }
 
-// FIXME: Test consuming part of sequence
+func TestConsumeCompositeColorHappyMidSequence(t *testing.T) {
+	// 8 bit color
+	// Example from: https://github.com/walles/moar/issues/14
+	newIndex, color, err := consumeCompositeColor([]string{"whatever", "38", "5", "74"}, 1, tcell.StyleDefault)
+	assert.NilError(t, err)
+	assert.Equal(t, newIndex, 4)
+	assert.Equal(t, color, tcell.Color74)
+
+	// 24 bit color
+	newIndex, color, err = consumeCompositeColor([]string{"whatever", "38", "2", "10", "20", "30"}, 1, tcell.StyleDefault)
+	assert.NilError(t, err)
+	assert.Equal(t, newIndex, 4)
+	assert.Equal(t, color, tcell.NewRGBColor(10, 20, 30))
+}
 
 func TestConsumeCompositeColorBadPrefix(t *testing.T) {
 	// 8 bit color
 	// Example from: https://github.com/walles/moar/issues/14
 	_, color, err := consumeCompositeColor([]string{"29"}, 0, tcell.StyleDefault)
-	assert.Equal(t, err.Error, "Unknown start of color sequence <29>, expected 38 (foregroung) or 48 (background): <CSI 29m>")
+	assert.Equal(t, err.Error, "Unknown start of color sequence <29>, expected 38 (foreground) or 48 (background): <CSI 29m>")
 	assert.Equal(t, color, nil)
 
 	// FIXME: Same test but mid-sequence, with initial index > 0
