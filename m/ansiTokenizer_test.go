@@ -86,7 +86,10 @@ func TestConsumeCompositeColorBadPrefix(t *testing.T) {
 	assert.Equal(t, err.Error, "Unknown start of color sequence <29>, expected 38 (foreground) or 48 (background): <CSI 29m>")
 	assert.Equal(t, color, nil)
 
-	// FIXME: Same test but mid-sequence, with initial index > 0
+	// Same test but mid-sequence, with initial index > 0
+	_, color, err = consumeCompositeColor([]string{"whatever", "29"}, 1, tcell.StyleDefault)
+	assert.Equal(t, err.Error, "Unknown start of color sequence <29>, expected 38 (foreground) or 48 (background): <CSI 29m>")
+	assert.Equal(t, color, nil)
 }
 
 func TestConsumeCompositeColorBadType(t *testing.T) {
@@ -95,7 +98,10 @@ func TestConsumeCompositeColorBadType(t *testing.T) {
 	assert.Equal(t, err.Error, "Unknown color type <4>, expected 5 (8 bit color) or 2 (24 bit color): <CSI 38;4m>")
 	assert.Equal(t, color, nil)
 
-	// FIXME: Same test but mid-sequence, with initial index > 0
+	// Same test but mid-sequence, with initial index > 0
+	_, color, err = consumeCompositeColor([]string{"whatever", "38", "4"}, 1, tcell.StyleDefault)
+	assert.Equal(t, err.Error, "Unknown color type <4>, expected 5 (8 bit color) or 2 (24 bit color): <CSI 38;4m>")
+	assert.Equal(t, color, nil)
 }
 
 // FIXME: Test incomplete 8 bit color sequence
