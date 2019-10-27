@@ -7,6 +7,10 @@ import (
 	"strings"
 	"testing"
 	"unicode/utf8"
+
+	"gotest.tools/assert"
+
+	"github.com/gdamore/tcell"
 )
 
 // Verify that we can tokenize all lines in ../sample-files/*
@@ -44,3 +48,42 @@ func TestTokenize(t *testing.T) {
 		}
 	}
 }
+
+func TestConsumeCompositeColorHappy(t *testing.T) {
+	// 8 bit color
+	// Example from: https://github.com/walles/moar/issues/14
+	newIndex, color, err := consumeCompositeColor([]string{"38", "5", "74"}, 0, tcell.StyleDefault)
+	assert.NilError(t, err)
+	assert.Equal(t, newIndex, 3)
+	assert.Equal(t, color, tcell.Color74)
+
+	// 24 bit color
+	newIndex, color, err = consumeCompositeColor([]string{"38", "2", "10", "20", "30"}, 0, tcell.StyleDefault)
+	assert.NilError(t, err)
+	assert.Equal(t, newIndex, 3)
+	assert.Equal(t, color, tcell.NewRGBColor(10, 20, 30))
+}
+
+// FIXME: Test consuming part of sequence
+
+func TestConsumeCompositeColorBadPrefix(t *testing.T) {
+	// 8 bit color
+	// Example from: https://github.com/walles/moar/issues/14
+	_, color, err := consumeCompositeColor([]string{"29"}, 0, tcell.StyleDefault)
+	assert.Equal(t, err.Error, "Unknown start of color sequence <29>, expected 38 (foregroung) or 48 (background): <CSI 29m>")
+	assert.Equal(t, color, nil)
+
+	// FIXME: Same test but mid-sequence, with initial index > 0
+}
+
+func TestConsumeCompositeColorBadType(t *testing.T) {
+	_, color, err := consumeCompositeColor([]string{"38", "4"}, 0, tcell.StyleDefault)
+	// https://en.wikipedia.org/wiki/ANSI_escape_code#Colors
+	assert.Equal(t, err.Error, "Unknown color type <4>, expected 5 (8 bit color) or 2 (24 bit color): <CSI 38;4m>")
+	assert.Equal(t, color, nil)
+
+	// FIXME: Same test but mid-sequence, with initial index > 0
+}
+
+// FIXME: Test incomplete 8 bit color sequence
+// FIXME: Test incomplete 24 bit color sequence
