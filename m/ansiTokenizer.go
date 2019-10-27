@@ -2,6 +2,7 @@ package m
 
 import (
 	"errors"
+	"fmt"
 	"log"
 	"regexp"
 	"strings"
@@ -213,7 +214,7 @@ func _UpdateStyle(logger *log.Logger, style tcell.Style, escapeSequence string) 
 		case "38":
 			var err error = nil
 			var color *tcell.Color
-			index, color, err = consumeCompositeColor(numbers, index-1, style)
+			index, color, err = consumeCompositeColor(numbers, index-1)
 			if err != nil {
 				logger.Printf("Foreground: %s", err.Error())
 				return style
@@ -242,7 +243,7 @@ func _UpdateStyle(logger *log.Logger, style tcell.Style, escapeSequence string) 
 		case "48":
 			var err error = nil
 			var color *tcell.Color
-			index, color, err = consumeCompositeColor(numbers, index-1, style)
+			index, color, err = consumeCompositeColor(numbers, index-1)
 			if err != nil {
 				logger.Printf("Background: %s", err.Error())
 				return style
@@ -259,13 +260,20 @@ func _UpdateStyle(logger *log.Logger, style tcell.Style, escapeSequence string) 
 	return style
 }
 
-// numbers is from a ANSI SGR string
+// numbers is a list of numbers from a ANSI SGR string
 // index points to either 38 or 48 in that string
-// style is the base style that this function will modify
 //
 // This method will return:
 // * The first index in the string that this function did not consume
 // * A color value that can be applied to a style
-func consumeCompositeColor(numbers []string, index int, style tcell.Style) (int, *tcell.Color, error) {
+func consumeCompositeColor(numbers []string, index int) (int, *tcell.Color, error) {
+	if numbers[index] != "38" && numbers[index] != "48" {
+		err := fmt.Errorf(
+			"Unknown start of color sequence <%s>, expected 38 (foreground) or 48 (background): <CSI %sm>",
+			numbers[index],
+			strings.Join(numbers[index:], ";"))
+		return -1, nil, err
+	}
+
 	return -1, nil, errors.New("Unimplemented")
 }
