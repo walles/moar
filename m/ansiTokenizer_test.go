@@ -115,4 +115,13 @@ func TestConsumeCompositeColorIncomplete8Bit(t *testing.T) {
 	assert.Equal(t, color, nil)
 }
 
-// FIXME: Test incomplete 24 bit color sequence
+func TestConsumeCompositeColorIncomplete24Bit(t *testing.T) {
+	_, color, err := consumeCompositeColor([]string{"38", "2", "10", "20"}, 0, tcell.StyleDefault)
+	assert.Equal(t, err.Error, "Incomplete 24 bit color sequence, expected N8;2;R;G;Bm: <CSI 38;2;10;20m>")
+	assert.Equal(t, color, nil)
+
+	// Same test, mid-sequence
+	_, color, err = consumeCompositeColor([]string{"whatever", "38", "2", "10", "20"}, 1, tcell.StyleDefault)
+	assert.Equal(t, err.Error, "Incomplete 24 bit color sequence, expected N8;2;R;G;Bm: <CSI 38;2;10;20m>")
+	assert.Equal(t, color, nil)
+}
