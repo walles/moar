@@ -104,6 +104,17 @@ func TestConsumeCompositeColorBadType(t *testing.T) {
 	assert.Assert(t, color == nil)
 }
 
+func TestConsumeCompositeColorIncomplete(t *testing.T) {
+	_, color, err := consumeCompositeColor([]string{"38"}, 0)
+	assert.Equal(t, err.Error(), "Incomplete color sequence: <CSI 38m>")
+	assert.Assert(t, color == nil)
+
+	// Same test, mid-sequence
+	_, color, err = consumeCompositeColor([]string{"whatever", "38"}, 1)
+	assert.Equal(t, err.Error(), "Incomplete color sequence: <CSI 38m>")
+	assert.Assert(t, color == nil)
+}
+
 func TestConsumeCompositeColorIncomplete8Bit(t *testing.T) {
 	_, color, err := consumeCompositeColor([]string{"38", "5"}, 0)
 	assert.Equal(t, err.Error(), "Incomplete 8 bit color sequence: <CSI 38;5m>")
