@@ -55,13 +55,13 @@ func TestConsumeCompositeColorHappy(t *testing.T) {
 	newIndex, color, err := consumeCompositeColor([]string{"38", "5", "74"}, 0)
 	assert.NilError(t, err)
 	assert.Equal(t, newIndex, 3)
-	assert.Equal(t, color, tcell.Color74)
+	assert.Equal(t, *color, tcell.Color74)
 
 	// 24 bit color
 	newIndex, color, err = consumeCompositeColor([]string{"38", "2", "10", "20", "30"}, 0)
 	assert.NilError(t, err)
-	assert.Equal(t, newIndex, 3)
-	assert.Equal(t, color, tcell.NewRGBColor(10, 20, 30))
+	assert.Equal(t, newIndex, 5)
+	assert.Equal(t, *color, tcell.NewRGBColor(10, 20, 30))
 }
 
 func TestConsumeCompositeColorHappyMidSequence(t *testing.T) {
@@ -70,13 +70,13 @@ func TestConsumeCompositeColorHappyMidSequence(t *testing.T) {
 	newIndex, color, err := consumeCompositeColor([]string{"whatever", "38", "5", "74"}, 1)
 	assert.NilError(t, err)
 	assert.Equal(t, newIndex, 4)
-	assert.Equal(t, color, tcell.Color74)
+	assert.Equal(t, *color, tcell.Color74)
 
 	// 24 bit color
 	newIndex, color, err = consumeCompositeColor([]string{"whatever", "38", "2", "10", "20", "30"}, 1)
 	assert.NilError(t, err)
-	assert.Equal(t, newIndex, 4)
-	assert.Equal(t, color, tcell.NewRGBColor(10, 20, 30))
+	assert.Equal(t, newIndex, 6)
+	assert.Equal(t, *color, tcell.NewRGBColor(10, 20, 30))
 }
 
 func TestConsumeCompositeColorBadPrefix(t *testing.T) {
