@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"regexp"
+	"strconv"
 	"strings"
 
 	"github.com/gdamore/tcell"
@@ -277,12 +278,29 @@ func consumeCompositeColor(numbers []string, index int) (int, *tcell.Color, erro
 	}
 
 	index++
-
 	if index >= len(numbers) {
 		err := fmt.Errorf(
 			"Incomplete color sequence: <CSI %sm>",
 			strings.Join(numbers[baseIndex:], ";"))
 		return -1, nil, err
+	}
+
+	if numbers[index] == "5" {
+		index++
+		if index >= len(numbers) {
+			err := fmt.Errorf(
+				"Incomplete 8 bit color sequence: <CSI %sm>",
+				strings.Join(numbers[baseIndex:], ";"))
+			return -1, nil, err
+		}
+
+		colorNumber, err := strconv.Atoi(numbers[index])
+		if err != nil {
+			return -1, nil, err
+		}
+
+		colorValue := tcell.Color(colorNumber)
+		return index + 1, &colorValue, nil
 	}
 
 	return -1, nil, errors.New("Unimplemented")
