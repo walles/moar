@@ -178,8 +178,8 @@ func _UpdateStyle(logger *log.Logger, style tcell.Style, escapeSequence string) 
 	for index < len(numbers) {
 		number := numbers[index]
 		index++
-		switch number {
-		case "", "0", "00":
+		switch strings.TrimLeft(number, "0") {
+		case "":
 			style = tcell.StyleDefault
 
 		case "1":
