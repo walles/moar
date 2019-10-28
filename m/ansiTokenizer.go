@@ -1,7 +1,6 @@
 package m
 
 import (
-	"errors"
 	"fmt"
 	"log"
 	"regexp"
@@ -303,5 +302,13 @@ func consumeCompositeColor(numbers []string, index int) (int, *tcell.Color, erro
 		return index + 1, &colorValue, nil
 	}
 
-	return -1, nil, errors.New("Unimplemented")
+	if numbers[index] == "2" {
+		// FIXME: Handle 24 bit color
+	}
+
+	err := fmt.Errorf(
+		"Unknown color type <%s>, expected 5 (8 bit color) or 2 (24 bit color): <CSI %sm>",
+		numbers[index],
+		strings.Join(numbers[baseIndex:], ";"))
+	return -1, nil, err
 }
