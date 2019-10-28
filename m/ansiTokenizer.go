@@ -285,6 +285,7 @@ func consumeCompositeColor(numbers []string, index int) (int, *tcell.Color, erro
 	}
 
 	if numbers[index] == "5" {
+		// Handle 8 bit color
 		index++
 		if index >= len(numbers) {
 			err := fmt.Errorf(
@@ -303,7 +304,37 @@ func consumeCompositeColor(numbers []string, index int) (int, *tcell.Color, erro
 	}
 
 	if numbers[index] == "2" {
-		// FIXME: Handle 24 bit color
+		// Handle 24 bit color
+		rIndex := index + 1
+		gIndex := index + 2
+		bIndex := index + 3
+		if bIndex >= len(numbers) {
+			err := fmt.Errorf(
+				"Incomplete 24 bit color sequence, expected N8;2;R;G;Bm: <CSI %sm>",
+				strings.Join(numbers[baseIndex:], ";"))
+			return -1, nil, err
+		}
+
+		rValueX, err := strconv.ParseInt(numbers[rIndex], 10, 32)
+		if err != nil {
+			return -1, nil, err
+		}
+		rValue := int32(rValueX)
+
+		gValueX, err := strconv.Atoi(numbers[gIndex])
+		if err != nil {
+			return -1, nil, err
+		}
+		gValue := int32(gValueX)
+
+		bValueX, err := strconv.Atoi(numbers[bIndex])
+		if err != nil {
+			return -1, nil, err
+		}
+		bValue := int32(bValueX)
+
+		colorValue := tcell.NewRGBColor(rValue, gValue, bValue)
+		return bIndex + 1, &colorValue, nil
 	}
 
 	err := fmt.Errorf(
