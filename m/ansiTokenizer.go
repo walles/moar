@@ -267,11 +267,21 @@ func _UpdateStyle(logger *log.Logger, style tcell.Style, escapeSequence string) 
 // * The first index in the string that this function did not consume
 // * A color value that can be applied to a style
 func consumeCompositeColor(numbers []string, index int) (int, *tcell.Color, error) {
+	baseIndex := index
 	if numbers[index] != "38" && numbers[index] != "48" {
 		err := fmt.Errorf(
 			"Unknown start of color sequence <%s>, expected 38 (foreground) or 48 (background): <CSI %sm>",
 			numbers[index],
-			strings.Join(numbers[index:], ";"))
+			strings.Join(numbers[baseIndex:], ";"))
+		return -1, nil, err
+	}
+
+	index++
+
+	if index >= len(numbers) {
+		err := fmt.Errorf(
+			"Incomplete color sequence: <CSI %sm>",
+			strings.Join(numbers[baseIndex:], ";"))
 		return -1, nil, err
 	}
 
