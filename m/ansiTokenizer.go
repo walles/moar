@@ -1,8 +1,10 @@
 package m
 
 import (
+	"fmt"
 	"log"
 	"regexp"
+	"strconv"
 	"strings"
 
 	"github.com/gdamore/tcell"
@@ -171,9 +173,13 @@ func _StyledStringsFromString(logger *log.Logger, s string) []_StyledString {
 
 // _UpdateStyle parses a string of the form "ESC[33m" into changes to style
 func _UpdateStyle(logger *log.Logger, style tcell.Style, escapeSequence string) tcell.Style {
-	for _, number := range strings.Split(escapeSequence[2:len(escapeSequence)-1], ";") {
-		switch number {
-		case "", "0", "00":
+	numbers := strings.Split(escapeSequence[2:len(escapeSequence)-1], ";")
+	index := 0
+	for index < len(numbers) {
+		number := numbers[index]
+		index++
+		switch strings.TrimLeft(number, "0") {
+		case "":
 			style = tcell.StyleDefault
 
 		case "1":
@@ -205,6 +211,15 @@ func _UpdateStyle(logger *log.Logger, style tcell.Style, escapeSequence string) 
 			style = style.Foreground(6)
 		case "37":
 			style = style.Foreground(7)
+		case "38":
+			var err error = nil
+			var color *tcell.Color
+			index, color, err = consumeCompositeColor(numbers, index-1)
+			if err != nil {
+				logger.Printf("Foreground: %s", err.Error())
+				return style
+			}
+			style = style.Foreground(*color)
 		case "39":
 			style = style.Foreground(tcell.ColorDefault)
 
@@ -225,6 +240,15 @@ func _UpdateStyle(logger *log.Logger, style tcell.Style, escapeSequence string) 
 			style = style.Background(6)
 		case "47":
 			style = style.Background(7)
+		case "48":
+			var err error = nil
+			var color *tcell.Color
+			index, color, err = consumeCompositeColor(numbers, index-1)
+			if err != nil {
+				logger.Printf("Background: %s", err.Error())
+				return style
+			}
+			style = style.Background(*color)
 		case "49":
 			style = style.Background(tcell.ColorDefault)
 
@@ -234,4 +258,88 @@ func _UpdateStyle(logger *log.Logger, style tcell.Style, escapeSequence string) 
 	}
 
 	return style
+}
+
+// numbers is a list of numbers from a ANSI SGR string
+// index points to either 38 or 48 in that string
+//
+// This method will return:
+// * The first index in the string that this function did not consume
+// * A color value that can be applied to a style
+func consumeCompositeColor(numbers []string, index int) (int, *tcell.Color, error) {
+	baseIndex := index
+	if numbers[index] != "38" && numbers[index] != "48" {
+		err := fmt.Errorf(
+			"Unknown start of color sequence <%s>, expected 38 (foreground) or 48 (background): <CSI %sm>",
+			numbers[index],
+			strings.Join(numbers[baseIndex:], ";"))
+		return -1, nil, err
+	}
+
+	index++
+	if index >= len(numbers) {
+		err := fmt.Errorf(
+			"Incomplete color sequence: <CSI %sm>",
+			strings.Join(numbers[baseIndex:], ";"))
+		return -1, nil, err
+	}
+
+	if numbers[index] == "5" {
+		// Handle 8 bit color
+		index++
+		if index >= len(numbers) {
+			err := fmt.Errorf(
+				"Incomplete 8 bit color sequence: <CSI %sm>",
+				strings.Join(numbers[baseIndex:], ";"))
+			return -1, nil, err
+		}
+
+		colorNumber, err := strconv.Atoi(numbers[index])
+		if err != nil {
+			return -1, nil, err
+		}
+
+		colorValue := tcell.Color(colorNumber)
+		return index + 1, &colorValue, nil
+	}
+
+	if numbers[index] == "2" {
+		// Handle 24 bit color
+		rIndex := index + 1
+		gIndex := index + 2
+		bIndex := index + 3
+		if bIndex >= len(numbers) {
+			err := fmt.Errorf(
+				"Incomplete 24 bit color sequence, expected N8;2;R;G;Bm: <CSI %sm>",
+				strings.Join(numbers[baseIndex:], ";"))
+			return -1, nil, err
+		}
+
+		rValueX, err := strconv.ParseInt(numbers[rIndex], 10, 32)
+		if err != nil {
+			return -1, nil, err
+		}
+		rValue := int32(rValueX)
+
+		gValueX, err := strconv.Atoi(numbers[gIndex])
+		if err != nil {
+			return -1, nil, err
+		}
+		gValue := int32(gValueX)
+
+		bValueX, err := strconv.Atoi(numbers[bIndex])
+		if err != nil {
+			return -1, nil, err
+		}
+		bValue := int32(bValueX)
+
+		colorValue := tcell.NewRGBColor(rValue, gValue, bValue)
+		return bIndex + 1, &colorValue, nil
+	}
+
+	err := fmt.Errorf(
+		"Unknown color type <%s>, expected 5 (8 bit color) or 2 (24 bit color): <CSI %sm>",
+		numbers[index],
+		strings.Join(numbers[baseIndex:], ";"))
+	return -1, nil, err
 }
