@@ -603,7 +603,7 @@ func (p *Pager) StartPaging(logger *log.Logger, screen tcell.Screen) {
 
 	go func() {
 		done := false
-		spinnerFrames := [...]string{"...", " ..", ". .", ".. ", "..."}
+		spinnerFrames := [...]string{"/.\\", "-o-", "\\O/", "| |"}
 		spinnerIndex := 0
 		for {
 			// Break this loop on the reader.done signal...

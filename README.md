@@ -94,10 +94,6 @@ Execute `release.sh` and follow instructions.
 TODO
 ----
 
-* Make `tail -f /dev/null` exit properly, maybe explicitly close
-  the input pipe when exiting? Would fix
-  <https://github.com/walles/moar/issues/7>.
-
 * Searching for something above us should wrap the search.
 
 * Enable exiting using ^c (without restoring the screen).
@@ -154,3 +150,6 @@ Done
 * Make sure version information is printed if there are warnings.
 
 * Add spinners while file is still loading
+
+* Make `tail -f /dev/null` exit properly, fix
+  <https://github.com/walles/moar/issues/7>.
