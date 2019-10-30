@@ -21,9 +21,17 @@ Doing the right thing includes:
 * [Regexp](http://en.wikipedia.org/wiki/Regular_expression#Basic_concepts)
   search if your search string is a valid regexp
 * Supports displaying ANSI color coded texts (like the output from
-  "git diff" for example)
+  `git diff` for example)
 * Supports UTF-8 input and output
 * The position in the file is always shown
+
+For compatibility reasons, `moar` uses the formats declared in these
+environment variables when viewing man pages:
+
+* `LESS_TERMCAP_md`: Bold
+* `LESS_TERMCAP_us`: Underline
+
+See [here](https://github.com/walles/moar/issues/14) for usage examples.
 
 Installing
 ----------
