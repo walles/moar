@@ -49,6 +49,24 @@ func TestTokenize(t *testing.T) {
 	}
 }
 
+func testManPages(t *testing.T) {
+	// Bold
+	tokens, _ := TokensFromString(nil, "ab\bbc")
+	assert.Equal(t, []Token{
+		Token{Rune: 'a', Style: tcell.StyleDefault},
+		Token{Rune: 'b', Style: tcell.StyleDefault.Bold(true)},
+		Token{Rune: 'c', Style: tcell.StyleDefault},
+	}, tokens)
+
+	// Underline
+	tokens, _ = TokensFromString(nil, "ab\b_c")
+	assert.Equal(t, []Token{
+		Token{Rune: 'a', Style: tcell.StyleDefault},
+		Token{Rune: 'b', Style: tcell.StyleDefault.Underline(true)},
+		Token{Rune: 'c', Style: tcell.StyleDefault},
+	}, tokens)
+}
+
 func TestConsumeCompositeColorHappy(t *testing.T) {
 	// 8 bit color
 	// Example from: https://github.com/walles/moar/issues/14
