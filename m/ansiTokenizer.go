@@ -3,6 +3,7 @@ package m
 import (
 	"fmt"
 	"log"
+	"os"
 	"regexp"
 	"strconv"
 	"strings"
@@ -19,6 +20,28 @@ var manPageUnderline = tcell.StyleDefault.Underline(true)
 type Token struct {
 	Rune  rune
 	Style tcell.Style
+}
+
+// SetManPageFormatFromEnv parses LESS_TERMCAP_xx environment variables and
+// adapts the moar output accordingly.
+func SetManPageFormatFromEnv(logger *log.Logger) {
+	// Requested here: https://github.com/walles/moar/issues/14
+
+	lessTermcapMd := os.Getenv("LESS_TERMCAP_md")
+	if lessTermcapMd != "" {
+		manPageBold = _TermcapToStyle(logger, lessTermcapMd)
+	}
+
+	lessTermcapUs := os.Getenv("LESS_TERMCAP_us")
+	if lessTermcapUs != "" {
+		manPageUnderline = _TermcapToStyle(logger, lessTermcapUs)
+	}
+}
+
+func _TermcapToStyle(logger *log.Logger, termcap string) tcell.Style {
+	// Add a character to be sure we have one to take the format from
+	tokens, _ := TokensFromString(logger, termcap+"x")
+	return tokens[len(tokens)-1].Style
 }
 
 // TokensFromString turns a (formatted) string into a series of tokens,
