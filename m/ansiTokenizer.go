@@ -12,6 +12,9 @@ import (
 
 const _TabSize = 4
 
+var manPageBold = tcell.StyleDefault.Bold(true)
+var manPageUnderline = tcell.StyleDefault.Underline(true)
+
 // Token is a rune with a style to be written to a cell on screen
 type Token struct {
 	Rune  rune
@@ -80,14 +83,14 @@ func _TokensFromStyledString(styledString _StyledString) []Token {
 			if char == twoBack {
 				replacement = &Token{
 					Rune:  twoBack,
-					Style: styledString.Style.Bold(true),
+					Style: manPageBold,
 				}
 			}
 
 			if twoBack == '_' {
 				replacement = &Token{
 					Rune:  char,
-					Style: styledString.Style.Underline(true),
+					Style: manPageUnderline,
 				}
 			}
 
@@ -102,6 +105,9 @@ func _TokensFromStyledString(styledString _StyledString) []Token {
 			//
 			// Maybe the interpretation should be:
 			//   "Make a bold +, then erase that and replace it with a bold o"?
+			//
+			// Used for bullet points, maybe we should just replace the whole thing with
+			// a unicode bullet point in bold?
 
 			if replacement != nil {
 				tokens = append(tokens[0:len(tokens)-2], *replacement)
