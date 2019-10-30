@@ -3,6 +3,7 @@ package m
 import (
 	"fmt"
 	"log"
+	"os"
 	"regexp"
 	"strconv"
 	"strings"
@@ -12,10 +13,35 @@ import (
 
 const _TabSize = 4
 
+var manPageBold = tcell.StyleDefault.Bold(true)
+var manPageUnderline = tcell.StyleDefault.Underline(true)
+
 // Token is a rune with a style to be written to a cell on screen
 type Token struct {
 	Rune  rune
 	Style tcell.Style
+}
+
+// SetManPageFormatFromEnv parses LESS_TERMCAP_xx environment variables and
+// adapts the moar output accordingly.
+func SetManPageFormatFromEnv(logger *log.Logger) {
+	// Requested here: https://github.com/walles/moar/issues/14
+
+	lessTermcapMd := os.Getenv("LESS_TERMCAP_md")
+	if lessTermcapMd != "" {
+		manPageBold = _TermcapToStyle(logger, lessTermcapMd)
+	}
+
+	lessTermcapUs := os.Getenv("LESS_TERMCAP_us")
+	if lessTermcapUs != "" {
+		manPageUnderline = _TermcapToStyle(logger, lessTermcapUs)
+	}
+}
+
+func _TermcapToStyle(logger *log.Logger, termcap string) tcell.Style {
+	// Add a character to be sure we have one to take the format from
+	tokens, _ := TokensFromString(logger, termcap+"x")
+	return tokens[len(tokens)-1].Style
 }
 
 // TokensFromString turns a (formatted) string into a series of tokens,
@@ -80,14 +106,14 @@ func _TokensFromStyledString(styledString _StyledString) []Token {
 			if char == twoBack {
 				replacement = &Token{
 					Rune:  twoBack,
-					Style: styledString.Style.Bold(true),
+					Style: manPageBold,
 				}
 			}
 
 			if twoBack == '_' {
 				replacement = &Token{
 					Rune:  char,
-					Style: styledString.Style.Underline(true),
+					Style: manPageUnderline,
 				}
 			}
 
@@ -102,6 +128,9 @@ func _TokensFromStyledString(styledString _StyledString) []Token {
 			//
 			// Maybe the interpretation should be:
 			//   "Make a bold +, then erase that and replace it with a bold o"?
+			//
+			// Used for bullet points, maybe we should just replace the whole thing with
+			// a unicode bullet point in bold?
 
 			if replacement != nil {
 				tokens = append(tokens[0:len(tokens)-2], *replacement)

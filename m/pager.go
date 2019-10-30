@@ -576,6 +576,8 @@ func (p *Pager) StartPaging(logger *log.Logger, screen tcell.Screen) {
 	// We want to match the terminal theme, see screen.Init() source code
 	os.Setenv("TCELL_TRUECOLOR", "disable")
 
+	SetManPageFormatFromEnv(logger)
+
 	if e := screen.Init(); e != nil {
 		fmt.Fprintf(os.Stderr, "%v\n", e)
 		os.Exit(1)
