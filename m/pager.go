@@ -8,6 +8,7 @@ import (
 	"regexp"
 	"time"
 	"unicode"
+	"unicode/utf8"
 
 	"github.com/gdamore/tcell"
 )
@@ -404,6 +405,15 @@ func ToPattern(compileMe string) *regexp.Regexp {
 	panic(err)
 }
 
+// From: https://stackoverflow.com/a/57005674/473672
+func removeLastChar(s string) string {
+	r, size := utf8.DecodeLastRuneInString(s)
+	if r == utf8.RuneError && (size == 0 || size == 1) {
+		size = 0
+	}
+	return s[:len(s)-size]
+}
+
 func (p *Pager) _OnSearchKey(logger *log.Logger, key tcell.Key) {
 	switch key {
 	case tcell.KeyEscape, tcell.KeyEnter:
@@ -414,7 +424,7 @@ func (p *Pager) _OnSearchKey(logger *log.Logger, key tcell.Key) {
 			return
 		}
 
-		p.searchString = p.searchString[:len(p.searchString)-1]
+		p.searchString = removeLastChar(p.searchString)
 		p._UpdateSearchPattern()
 
 	case tcell.KeyUp:

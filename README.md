@@ -102,6 +102,8 @@ Execute `release.sh` and follow instructions.
 TODO
 ----
 
+* Showing unicode search hits should highlight the correct chars
+
 * Searching for something above us should wrap the search.
 
 * Enable exiting using ^c (without restoring the screen).
