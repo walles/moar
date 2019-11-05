@@ -3,6 +3,7 @@ package m
 import (
 	"log"
 	"os"
+	"regexp"
 	"runtime"
 	"strings"
 	"testing"
@@ -289,5 +290,44 @@ func TestCreateScreenLineUnderflowLeft(t *testing.T) {
 }
 
 func TestCreateScreenLineSearchHit(t *testing.T) {
-	assert.Assert(t, len("Unimplemented") == 0)
+	pattern, err := regexp.Compile("b")
+	if err != nil {
+		panic(err)
+	}
+
+	line := _CreateScreenLine(nil, 0, 0, 3, "abc", pattern)
+	assertTokenRangesEqual(t, line, []Token{
+		_CreateExpectedCell('a', tcell.StyleDefault),
+		_CreateExpectedCell('b', tcell.StyleDefault.Reverse(true)),
+		_CreateExpectedCell('c', tcell.StyleDefault),
+	})
+}
+
+func TestCreateScreenLineUtf8SearchHit(t *testing.T) {
+	pattern, err := regexp.Compile("ä")
+	if err != nil {
+		panic(err)
+	}
+
+	line := _CreateScreenLine(nil, 0, 0, 3, "åäö", pattern)
+	assertTokenRangesEqual(t, line, []Token{
+		_CreateExpectedCell('å', tcell.StyleDefault),
+		_CreateExpectedCell('ä', tcell.StyleDefault.Reverse(true)),
+		_CreateExpectedCell('ö', tcell.StyleDefault),
+	})
+}
+
+func TestCreateScreenLineScrolledUtf8SearchHit(t *testing.T) {
+	pattern, err := regexp.Compile("ä")
+	if err != nil {
+		panic(err)
+	}
+
+	line := _CreateScreenLine(nil, 0, 1, 4, "ååäö", pattern)
+	assertTokenRangesEqual(t, line, []Token{
+		_CreateExpectedCell('<', tcell.StyleDefault.Reverse(true)),
+		_CreateExpectedCell('å', tcell.StyleDefault),
+		_CreateExpectedCell('ä', tcell.StyleDefault.Reverse(true)),
+		_CreateExpectedCell('ö', tcell.StyleDefault),
+	})
 }
