@@ -2,6 +2,7 @@ package m
 
 import (
 	"log"
+	"os"
 	"runtime"
 	"strings"
 	"testing"
@@ -201,6 +202,12 @@ func _TestManPageFormatting(t *testing.T, input string, expected _ExpectedCell) 
 	if err := reader._Wait(); err != nil {
 		panic(err)
 	}
+
+	// Without these three lines the man page tests will fail if either of these
+	// environment variables are set when the tests are run.
+	os.Setenv("LESS_TERMCAP_md", "")
+	os.Setenv("LESS_TERMCAP_us", "")
+	_ResetManPageFormatForTesting()
 
 	contents := _StartPaging(t, reader)
 	expected.LogDifference(t, contents[0])

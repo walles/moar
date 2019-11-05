@@ -38,6 +38,12 @@ func SetManPageFormatFromEnv(logger *log.Logger) {
 	}
 }
 
+// Used from tests
+func _ResetManPageFormatForTesting() {
+	manPageBold = tcell.StyleDefault.Bold(true)
+	manPageUnderline = tcell.StyleDefault.Underline(true)
+}
+
 func _TermcapToStyle(logger *log.Logger, termcap string) tcell.Style {
 	// Add a character to be sure we have one to take the format from
 	tokens, _ := TokensFromString(logger, termcap+"x")
