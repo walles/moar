@@ -318,12 +318,10 @@ func TestCreateScreenLineUtf8SearchHit(t *testing.T) {
 }
 
 func TestCreateScreenLineScrolledUtf8SearchHit(t *testing.T) {
-	pattern, err := regexp.Compile("ä")
-	if err != nil {
-		panic(err)
-	}
+	pattern := regexp.MustCompile("ä")
 
 	line := _CreateScreenLine(nil, 0, 1, 4, "ååäö", pattern)
+
 	assertTokenRangesEqual(t, line, []Token{
 		_CreateExpectedCell('<', tcell.StyleDefault.Reverse(true)),
 		_CreateExpectedCell('å', tcell.StyleDefault),
