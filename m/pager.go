@@ -99,45 +99,61 @@ func NewPager(r *Reader) *Pager {
 }
 
 func (p *Pager) _AddLine(logger *log.Logger, lineNumber int, line string) {
-	pos := 0
-	stringIndexAtColumnZero := p.leftColumnZeroBased
-	if p.leftColumnZeroBased > 0 {
-		// Indicate that it's possible to scroll left
-		p.screen.SetContent(pos, lineNumber, '<', nil, tcell.StyleDefault.Reverse(true))
-		pos++
+	width, _ := p.screen.Size()
+	tokens := _CreateScreenLine(logger, lineNumber, p.leftColumnZeroBased, width, line, p.searchPattern)
+	for column, token := range tokens {
+		p.screen.SetContent(column, lineNumber, token.Rune, nil, token.Style)
+	}
+}
 
-		// This code can be verified by searching for "monkeys" in
-		// sample-files/long-and-wide.txt and scrolling right. If the
-		// "monkeys" highlight is in the right place both before and
-		// after scrolling right then this code is good.
-		stringIndexAtColumnZero--
+func _CreateScreenLine(
+	logger *log.Logger,
+	lineNumber int,
+	stringIndexAtColumnZero int,
+	screenColumnsCount int,
+	line string,
+	search *regexp.Regexp,
+) []Token {
+	var returnMe []Token
+	if stringIndexAtColumnZero > 0 {
+		// Indicate that it's possible to scroll left
+		returnMe = append(returnMe, Token{
+			Rune:  '<',
+			Style: tcell.StyleDefault.Reverse(true),
+		})
 	}
 
 	tokens, plainString := TokensFromString(logger, line)
-	if p.leftColumnZeroBased >= len(tokens) {
-		// Nothing to display, never mind
-		return
+	if stringIndexAtColumnZero >= len(tokens) {
+		// Nothing (more) to display, never mind
+		return returnMe
 	}
 
-	matchRanges := GetMatchRanges(plainString, p.searchPattern)
-	for _, token := range tokens[p.leftColumnZeroBased:] {
-		width, _ := p.screen.Size()
-		if pos >= width {
-			// Indicate that this line continues to the right
-			p.screen.SetContent(pos-1, lineNumber, '>', nil, tcell.StyleDefault.Reverse(true))
+	matchRanges := GetMatchRanges(plainString, search)
+	for _, token := range tokens[stringIndexAtColumnZero:] {
+		if len(returnMe) >= screenColumnsCount {
+			// We are trying to add a character to the right of the screen.
+			// Indicate that this line continues to the right.
+			returnMe[len(returnMe)-1] = Token{
+				Rune:  '>',
+				Style: tcell.StyleDefault.Reverse(true),
+			}
 			break
 		}
 
 		style := token.Style
-		if matchRanges.InRange(pos + stringIndexAtColumnZero) {
+		if matchRanges.InRange(len(returnMe) + stringIndexAtColumnZero) {
 			// Search hits in reverse video
 			style = style.Reverse(true)
 		}
 
-		p.screen.SetContent(pos, lineNumber, token.Rune, nil, style)
-
-		pos++
+		returnMe = append(returnMe, Token{
+			Rune:  token.Rune,
+			Style: style,
+		})
 	}
+
+	return returnMe
 }
 
 func (p *Pager) _AddSearchFooter() {
