@@ -63,3 +63,13 @@ func TestNoMatch(t *testing.T) {
 	assert.Assert(t, !matchRanges.InRange(3))
 	assert.Assert(t, !matchRanges.InRange(4))
 }
+
+func TestEndMatch(t *testing.T) {
+	// This test verifies that the match ranges are by rune rather than by byte
+	unicodes := "-ä"
+	matchRanges := GetMatchRanges(&unicodes, regexp.MustCompile("ä"))
+
+	assert.Assert(t, !matchRanges.InRange(0)) // -
+	assert.Assert(t, matchRanges.InRange(1))  // ä
+	assert.Assert(t, !matchRanges.InRange(2)) // Past the end
+}
