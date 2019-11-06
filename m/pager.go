@@ -115,12 +115,14 @@ func _CreateScreenLine(
 	search *regexp.Regexp,
 ) []Token {
 	var returnMe []Token
+	searchHitDelta := 0
 	if stringIndexAtColumnZero > 0 {
 		// Indicate that it's possible to scroll left
 		returnMe = append(returnMe, Token{
 			Rune:  '<',
 			Style: tcell.StyleDefault.Reverse(true),
 		})
+		searchHitDelta = -1
 	}
 
 	tokens, plainString := TokensFromString(logger, line)
@@ -142,7 +144,7 @@ func _CreateScreenLine(
 		}
 
 		style := token.Style
-		if matchRanges.InRange(len(returnMe) + stringIndexAtColumnZero) {
+		if matchRanges.InRange(len(returnMe) + stringIndexAtColumnZero + searchHitDelta) {
 			// Search hits in reverse video
 			style = style.Reverse(true)
 		}

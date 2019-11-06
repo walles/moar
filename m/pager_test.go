@@ -329,3 +329,16 @@ func TestCreateScreenLineScrolledUtf8SearchHit(t *testing.T) {
 		_CreateExpectedCell('ö', tcell.StyleDefault),
 	})
 }
+
+func TestCreateScreenLineScrolled2Utf8SearchHit(t *testing.T) {
+	pattern := regexp.MustCompile("ä")
+
+	line := _CreateScreenLine(nil, 0, 2, 4, "åååäö", pattern)
+
+	assertTokenRangesEqual(t, line, []Token{
+		_CreateExpectedCell('<', tcell.StyleDefault.Reverse(true)),
+		_CreateExpectedCell('å', tcell.StyleDefault),
+		_CreateExpectedCell('ä', tcell.StyleDefault.Reverse(true)),
+		_CreateExpectedCell('ö', tcell.StyleDefault),
+	})
+}
