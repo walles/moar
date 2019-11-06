@@ -24,6 +24,11 @@ func _ToRunePositions(byteIndices [][]int, matchedString *string) [][2]int {
 
 	var returnMe [][2]int
 
+	if len(byteIndices) == 0 {
+		// Nothing to see here, move along
+		return returnMe
+	}
+
 	fromByte := byteIndices[len(returnMe)][0]
 	toByte := byteIndices[len(returnMe)][1]
 	fromRune := -1
