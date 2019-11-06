@@ -39,3 +39,15 @@ func TestInRange(t *testing.T) {
 	assert.Assert(t, !matchRanges.InRange(4))  // a
 	assert.Assert(t, !matchRanges.InRange(5))  // After end
 }
+
+func TestUtf8(t *testing.T) {
+	// This test verifies that the match ranges are by rune rather than by byte
+	unicodes := "-ä-ä-"
+	matchRanges := GetMatchRanges(&unicodes, regexp.MustCompile("ä"))
+
+	assert.Assert(t, !matchRanges.InRange(0)) // -
+	assert.Assert(t, matchRanges.InRange(1))  // ä
+	assert.Assert(t, !matchRanges.InRange(2)) // -
+	assert.Assert(t, matchRanges.InRange(3))  // ä
+	assert.Assert(t, !matchRanges.InRange(4)) // -
+}
