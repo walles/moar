@@ -31,6 +31,8 @@ echo
 # FIXME: Make this part of the editable tagging message
 echo "Changes since last release:"
 git log --first-parent --pretty="format:* %s" "$LAST_VERSION"..HEAD | cat
+echo
+echo
 
 # Make an annotated tag for this release
 git tag --annotate "$VERSION"
