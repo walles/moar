@@ -3,7 +3,6 @@ package m
 import (
 	"fmt"
 	"log"
-	"math"
 	"os"
 	"regexp"
 	"time"
@@ -507,7 +506,7 @@ func (p *Pager) _OnKey(logger *log.Logger, key tcell.Key) {
 		p.firstLineOneBased = 1
 
 	case tcell.KeyEnd:
-		p.firstLineOneBased = math.MaxInt32
+		p.firstLineOneBased = p.reader.GetLineCount()
 
 	case tcell.KeyPgDn:
 		_, height := p.screen.Size()
@@ -565,7 +564,7 @@ func (p *Pager) _OnRune(logger *log.Logger, char rune) {
 		p.firstLineOneBased = 1
 
 	case '>', 'G':
-		p.firstLineOneBased = math.MaxInt32
+		p.firstLineOneBased = p.reader.GetLineCount()
 
 	case 'f', ' ':
 		_, height := p.screen.Size()
