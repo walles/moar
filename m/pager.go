@@ -682,6 +682,15 @@ func (p *Pager) StartPaging(logger *log.Logger, screen tcell.Screen) {
 			case tcell.WheelDown:
 				// Clipping is done in _AddLines()
 				p.firstLineOneBased++
+
+			case tcell.WheelRight:
+				p.leftColumnZeroBased += 16
+
+			case tcell.WheelLeft:
+				p.leftColumnZeroBased -= 16
+				if p.leftColumnZeroBased < 0 {
+					p.leftColumnZeroBased = 0
+				}
 			}
 
 		case *tcell.EventResize:
