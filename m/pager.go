@@ -611,6 +611,7 @@ func (p *Pager) StartPaging(logger *log.Logger, screen tcell.Screen) {
 	}
 
 	p.screen = screen
+	screen.EnableMouse()
 	screen.Show()
 	p._Redraw(logger, "")
 
@@ -670,6 +671,17 @@ func (p *Pager) StartPaging(logger *log.Logger, screen tcell.Screen) {
 				p._OnRune(logger, ev.Rune())
 			} else {
 				p._OnKey(logger, ev.Key())
+			}
+
+		case *tcell.EventMouse:
+			switch ev.Buttons() {
+			case tcell.WheelUp:
+				// Clipping is done in _AddLines()
+				p.firstLineOneBased--
+
+			case tcell.WheelDown:
+				// Clipping is done in _AddLines()
+				p.firstLineOneBased++
 			}
 
 		case *tcell.EventResize:
