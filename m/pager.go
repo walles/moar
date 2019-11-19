@@ -40,6 +40,8 @@ type Pager struct {
 
 	isShowingHelp bool
 	preHelpState  *_PreHelpState
+
+	lineNumbersWanted bool
 }
 
 type _PreHelpState struct {
@@ -60,6 +62,7 @@ Quitting
 Moving around
 -------------
 * Arrow keys
+* Left / right can be used to hide / show line numbers
 * PageUp / 'b' and PageDown / 'f'
 * Half page 'u'p / 'd'own
 * Home and End for start / end of the document
@@ -98,6 +101,7 @@ func NewPager(r *Reader) *Pager {
 		reader:            r,
 		quit:              false,
 		firstLineOneBased: 1,
+		lineNumbersWanted: true,
 	}
 }
 
@@ -106,7 +110,7 @@ func (p *Pager) _AddLine(logger *log.Logger, fileLineNumber *int, maxPrefixLengt
 
 	prefixLength := 0
 	lineNumberString := ""
-	if fileLineNumber != nil {
+	if maxPrefixLength > 0 && fileLineNumber != nil {
 		prefixLength = maxPrefixLength
 		lineNumberString = fmt.Sprintf("%*d ", prefixLength-1, *fileLineNumber)
 	}
@@ -206,6 +210,10 @@ func (p *Pager) _AddLines(logger *log.Logger, spinner string) {
 	// Offsets figured out through trial-and-error...
 	lastLineOneBased := lines.firstLineOneBased + len(lines.lines) - 1
 	maxPrefixLength := len(strconv.Itoa(lastLineOneBased)) + 1
+
+	if !p.lineNumbersWanted {
+		maxPrefixLength = 0
+	}
 
 	screenLineNumber := 0
 	for i, line := range lines.lines {
