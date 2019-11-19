@@ -3,6 +3,7 @@ package m
 import (
 	"io/ioutil"
 	"math"
+	"os"
 	"os/exec"
 	"path"
 	"runtime"
@@ -140,6 +141,34 @@ func TestGetLines(t *testing.T) {
 		_TestGetLines(t, reader)
 		_TestGetLineCount(t, reader)
 	}
+}
+
+func TestGetLongLine(t *testing.T) {
+	file := "../sample-files/very-long-line.txt"
+	reader, err := NewReaderFromFilename(file)
+	if err != nil {
+		panic(err)
+	}
+	if err := reader._Wait(); err != nil {
+		panic(err)
+	}
+
+	lines := reader.GetLines(1, 5)
+	assert.Equal(t, lines.firstLineOneBased, 1)
+	assert.Equal(t, len(lines.lines), 1)
+
+	line := lines.lines[0]
+	assert.Assert(t, strings.HasPrefix(line, "1 2 3 4"))
+	assert.Assert(t, strings.HasSuffix(line, "0123456789"))
+
+	stat, err := os.Stat(file)
+	if err != nil {
+		panic(err)
+	}
+	fileSize := stat.Size()
+
+	// The "+1" is because the Reader strips off the ending linefeed
+	assert.Equal(t, len(line)+1, fileSize)
 }
 
 func _GetReaderWithLineCount(totalLines int) *Reader {
