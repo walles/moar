@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"regexp"
+	"strconv"
 	"time"
 	"unicode"
 	"unicode/utf8"
@@ -100,13 +101,13 @@ func NewPager(r *Reader) *Pager {
 	}
 }
 
-func (p *Pager) _AddLine(logger *log.Logger, fileLineNumber *int, screenLineNumber int, line string) {
+func (p *Pager) _AddLine(logger *log.Logger, fileLineNumber *int, maxPrefixLength int, screenLineNumber int, line string) {
 	screenWidth, _ := p.screen.Size()
 
 	prefixLength := 0
 	lineNumberString := ""
 	if fileLineNumber != nil {
-		prefixLength = 3
+		prefixLength = maxPrefixLength
 		lineNumberString = fmt.Sprintf("%*d ", prefixLength-1, *fileLineNumber)
 	}
 
@@ -200,10 +201,16 @@ func (p *Pager) _AddLines(logger *log.Logger, spinner string) {
 	// display starts scrolling visibly.
 	p.firstLineOneBased = lines.firstLineOneBased
 
+	// Count the length of the last line number
+	//
+	// Offsets figured out through trial-and-error...
+	lastLineOneBased := lines.firstLineOneBased + len(lines.lines) - 1
+	maxPrefixLength := len(strconv.Itoa(lastLineOneBased)) + 1
+
 	screenLineNumber := 0
 	for i, line := range lines.lines {
 		lineNumber := p.firstLineOneBased + i
-		p._AddLine(logger, &lineNumber, screenLineNumber, line)
+		p._AddLine(logger, &lineNumber, maxPrefixLength, screenLineNumber, line)
 		screenLineNumber++
 	}
 
@@ -212,7 +219,7 @@ func (p *Pager) _AddLines(logger *log.Logger, spinner string) {
 		// This happens when we're done
 		eofSpinner = "---"
 	}
-	p._AddLine(logger, nil, screenLineNumber, _EofMarkerFormat+eofSpinner)
+	p._AddLine(logger, nil, 0, screenLineNumber, _EofMarkerFormat+eofSpinner)
 
 	switch p.mode {
 	case _Searching:
