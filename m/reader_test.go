@@ -30,6 +30,12 @@ func _TestGetLineCount(t *testing.T, reader *Reader) {
 	if err != nil {
 		t.Error("Error counting lines of", *reader.name, err)
 	}
+
+	if strings.HasSuffix(*reader.name, "/line-without-newline.txt") {
+		// "wc -l" thinks this file contains zero lines
+		fileLineCount = 1
+	}
+
 	if reader.GetLineCount() != fileLineCount {
 		t.Errorf("Got %d lines but expected %d: <%s>",
 			reader.GetLineCount(), fileLineCount, *reader.name)
