@@ -92,10 +92,12 @@ func TokensFromString(logger *log.Logger, s string) ([]Token, *string) {
 		}
 	}
 
-	plainString := ""
+	var stringBuilder strings.Builder
+	stringBuilder.Grow(len(tokens))
 	for _, token := range tokens {
-		plainString += string(token.Rune)
+		stringBuilder.WriteRune(token.Rune)
 	}
+	plainString := stringBuilder.String()
 	return tokens, &plainString
 }
 
