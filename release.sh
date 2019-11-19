@@ -30,7 +30,7 @@ echo
 
 # FIXME: Make this part of the editable tagging message
 echo "Changes since last release:"
-git log --first-parent --pretty="format:* %s" "$LAST_VERSION"..HEAD | cat
+git log --first-parent --pretty="format:* %s" "$LAST_VERSION"..HEAD | sed 's/ diff.*//'
 echo
 echo
 
