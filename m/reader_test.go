@@ -168,7 +168,7 @@ func TestGetLongLine(t *testing.T) {
 	fileSize := stat.Size()
 
 	// The "+1" is because the Reader strips off the ending linefeed
-	assert.Equal(t, len(line)+1, fileSize)
+	assert.Equal(t, len(line)+1, int(fileSize))
 }
 
 func _GetReaderWithLineCount(totalLines int) *Reader {
