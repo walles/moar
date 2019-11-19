@@ -83,12 +83,44 @@ func _ReadStream(stream io.Reader, reader *Reader, fromFilter *exec.Cmd) {
 		}
 	}()
 
-	scanner := bufio.NewScanner(stream)
-	for scanner.Scan() {
-		text := scanner.Text()
+	bufioReader := bufio.NewReader(stream)
+	for {
+		keepReadingLine := true
+		var completeLine []byte
+		eof := false
+
+		var lineBytes []byte
+		var err error
+		for keepReadingLine {
+			lineBytes, keepReadingLine, err = bufioReader.ReadLine()
+			if err != nil {
+				if err == io.EOF {
+					eof = true
+					break
+				}
+
+				if reader.err == nil {
+					// Store the error unless it overwrites one we already have
+					reader.lock.Lock()
+					reader.err = fmt.Errorf("Error reading line from input stream: %w", err)
+					reader.lock.Unlock()
+				}
+				break
+			}
+
+			completeLine = append(completeLine, lineBytes...)
+		}
+
+		if eof {
+			break
+		}
+
+		if reader.err != nil {
+			break
+		}
 
 		reader.lock.Lock()
-		reader.lines = append(reader.lines, text)
+		reader.lines = append(reader.lines, string(lineBytes))
 		reader.lock.Unlock()
 
 		// This is how to do a non-blocking write to a channel:
@@ -98,13 +130,6 @@ func _ReadStream(stream io.Reader, reader *Reader, fromFilter *exec.Cmd) {
 		default:
 			// Default case required for the write to be non-blocking
 		}
-	}
-
-	if err := scanner.Err(); err != nil {
-		reader.lock.Lock()
-		reader.err = fmt.Errorf("Error reading line from input stream: %w", err)
-		reader.lock.Unlock()
-		return
 	}
 }
 
