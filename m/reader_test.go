@@ -157,17 +157,18 @@ func TestGetLongLine(t *testing.T) {
 	assert.Equal(t, lines.firstLineOneBased, 1)
 	assert.Equal(t, len(lines.lines), 1)
 
+	line := lines.lines[0]
+	assert.Assert(t, strings.HasPrefix(line, "1 2 3 4"))
+	assert.Assert(t, strings.HasSuffix(line, "0123456789"))
+
 	stat, err := os.Stat(file)
 	if err != nil {
 		panic(err)
 	}
 	fileSize := stat.Size()
 
-	line := lines.lines[0]
-	assert.Equal(t, len(line), fileSize)
-
-	assert.Assert(t, strings.HasPrefix(line, "1 2 3 4"))
-	assert.Assert(t, strings.HasSuffix(line, "0123456789"))
+	// The "+1" is because the Reader strips off the ending linefeed
+	assert.Equal(t, len(line)+1, fileSize)
 }
 
 func _GetReaderWithLineCount(totalLines int) *Reader {
