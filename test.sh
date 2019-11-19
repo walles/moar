@@ -3,7 +3,7 @@
 set -e -o pipefail
 
 # Unit tests first
-go test github.com/walles/moar/m
+go test -timeout 20s github.com/walles/moar/m
 
 # Ensure we can cross compile
 # NOTE: Make sure this list matches the one in release.sh

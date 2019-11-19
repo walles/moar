@@ -12,6 +12,7 @@ import (
 	"regexp"
 	"strings"
 	"sync"
+	"time"
 )
 
 // Reader reads a file into an array of strings.
@@ -54,9 +55,18 @@ func _ReadStream(stream io.Reader, reader *Reader, fromFilter *exec.Cmd) {
 			return
 		}
 
-		// FIXME: Can Wait()ing here stall? Should we release the lock while Wait()ing?
+		// Give the filter a little time to go away
+		timer := time.AfterFunc(2*time.Second, func() {
+			fromFilter.Process.Kill()
+		})
+
 		err := fromFilter.Wait()
+		timer.Stop()
+
 		if reader.err == nil {
+			// NOTE: This could mean that our Wait()ing on the filter above
+			// timed out.
+			//
 			// FIXME: Add filter stderr contents to the error reported here
 			reader.err = err
 		}
