@@ -504,6 +504,16 @@ func (p *Pager) _OnSearchKey(logger *log.Logger, key tcell.Key) {
 }
 
 func (p *Pager) _MoveRight(delta int) {
+	if p.showLineNumbers && delta > 0 {
+		p.showLineNumbers = false
+		return
+	}
+
+	if p.leftColumnZeroBased == 0 && delta < 0 {
+		p.showLineNumbers = true
+		return
+	}
+
 	result := p.leftColumnZeroBased + delta
 	if result < 0 {
 		p.leftColumnZeroBased = 0
