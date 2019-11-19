@@ -22,6 +22,9 @@ const (
 	_NotFound  _PagerMode = 2
 )
 
+// Styling of line numbers
+var _NumberStyle = tcell.StyleDefault.Dim(true)
+
 // Pager is the main on-screen pager
 type Pager struct {
 	reader              *Reader
@@ -97,17 +100,32 @@ func NewPager(r *Reader) *Pager {
 	}
 }
 
-func (p *Pager) _AddLine(logger *log.Logger, lineNumber int, line string) {
-	width, _ := p.screen.Size()
-	tokens := _CreateScreenLine(logger, lineNumber, p.leftColumnZeroBased, width, line, p.searchPattern)
+func (p *Pager) _AddLine(logger *log.Logger, fileLineNumber *int, screenLineNumber int, line string) {
+	screenWidth, _ := p.screen.Size()
+
+	prefixLength := 0
+	lineNumberString := ""
+	if fileLineNumber != nil {
+		prefixLength = 3
+		lineNumberString = fmt.Sprintf("%*d ", prefixLength-1, *fileLineNumber)
+	}
+
+	for column, digit := range lineNumberString {
+		if column >= prefixLength {
+			break
+		}
+
+		p.screen.SetContent(column, screenLineNumber, digit, nil, _NumberStyle)
+	}
+
+	tokens := _CreateScreenLine(logger, p.leftColumnZeroBased, screenWidth-prefixLength, line, p.searchPattern)
 	for column, token := range tokens {
-		p.screen.SetContent(column, lineNumber, token.Rune, nil, token.Style)
+		p.screen.SetContent(column+prefixLength, screenLineNumber, token.Rune, nil, token.Style)
 	}
 }
 
 func _CreateScreenLine(
 	logger *log.Logger,
-	lineNumber int,
 	stringIndexAtColumnZero int,
 	screenColumnsCount int,
 	line string,
@@ -183,8 +201,9 @@ func (p *Pager) _AddLines(logger *log.Logger, spinner string) {
 	p.firstLineOneBased = lines.firstLineOneBased
 
 	screenLineNumber := 0
-	for _, line := range lines.lines {
-		p._AddLine(logger, screenLineNumber, line)
+	for i, line := range lines.lines {
+		lineNumber := p.firstLineOneBased + i
+		p._AddLine(logger, &lineNumber, screenLineNumber, line)
 		screenLineNumber++
 	}
 
@@ -193,7 +212,7 @@ func (p *Pager) _AddLines(logger *log.Logger, spinner string) {
 		// This happens when we're done
 		eofSpinner = "---"
 	}
-	p._AddLine(logger, screenLineNumber, _EofMarkerFormat+eofSpinner)
+	p._AddLine(logger, nil, screenLineNumber, _EofMarkerFormat+eofSpinner)
 
 	switch p.mode {
 	case _Searching:
