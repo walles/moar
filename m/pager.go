@@ -763,5 +763,7 @@ func (p *Pager) StartPaging(logger *log.Logger, screen tcell.Screen) {
 		p._Redraw(logger, spinner)
 	}
 
-	// FIXME: Log p.reader.err if it's non-nil
+	if p.reader.err != nil {
+		logger.Printf("Reader reported an error: %s", p.reader.err.Error())
+	}
 }
