@@ -58,6 +58,23 @@ func _PrintUsage(output io.Writer) {
 	}
 }
 
+// PrintProblemsHeader prints bug reporting information to stderr
+func PrintProblemsHeader() {
+	fmt.Fprintln(os.Stderr, "Please post the following report at <https://github.com/walles/moar/issues>,")
+	fmt.Fprintln(os.Stderr, "or e-mail it to johan.walles@gmail.com.")
+	fmt.Fprintln(os.Stderr)
+	fmt.Fprintln(os.Stderr, "Version:", versionString)
+	fmt.Fprintln(os.Stderr, "LANG   :", os.Getenv("LANG"))
+	fmt.Fprintln(os.Stderr, "TERM   :", os.Getenv("TERM"))
+	fmt.Fprintln(os.Stderr)
+	fmt.Fprintln(os.Stderr, "GOOS    :", runtime.GOOS)
+	fmt.Fprintln(os.Stderr, "GOARCH  :", runtime.GOARCH)
+	fmt.Fprintln(os.Stderr, "Compiler:", runtime.Compiler)
+	fmt.Fprintln(os.Stderr, "NumCPU  :", runtime.NumCPU())
+
+	fmt.Fprintln(os.Stderr)
+}
+
 func main() {
 	// FIXME: If we get a CTRL-C, get terminal back into a useful state before terminating
 
@@ -67,21 +84,7 @@ func main() {
 			return
 		}
 
-		// On any panic or warnings, also print system info and how to report bugs
-		fmt.Fprintln(os.Stderr, "Please post the following crash report at <https://github.com/walles/moar/issues>,")
-		fmt.Fprintln(os.Stderr, "or e-mail it to johan.walles@gmail.com.")
-		fmt.Fprintln(os.Stderr)
-		fmt.Fprintln(os.Stderr, "Version:", versionString)
-		fmt.Fprintln(os.Stderr, "LANG   :", os.Getenv("LANG"))
-		fmt.Fprintln(os.Stderr, "TERM   :", os.Getenv("TERM"))
-		fmt.Fprintln(os.Stderr)
-		fmt.Fprintln(os.Stderr, "GOOS    :", runtime.GOOS)
-		fmt.Fprintln(os.Stderr, "GOARCH  :", runtime.GOARCH)
-		fmt.Fprintln(os.Stderr, "Compiler:", runtime.Compiler)
-		fmt.Fprintln(os.Stderr, "NumCPU  :", runtime.NumCPU())
-
-		fmt.Fprintln(os.Stderr)
-
+		PrintProblemsHeader()
 		panic(err)
 	}()
 
@@ -161,6 +164,8 @@ func _StartPaging(reader *m.Reader) {
 		}
 
 		if len(loglines.String()) > 0 {
+			PrintProblemsHeader()
+
 			// FIXME: Don't print duplicate log messages more than once,
 			// maybe invent our own logger for this?
 			fmt.Fprintf(os.Stderr, "%s", loglines.String())
