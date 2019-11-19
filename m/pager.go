@@ -41,7 +41,7 @@ type Pager struct {
 	isShowingHelp bool
 	preHelpState  *_PreHelpState
 
-	lineNumbersWanted bool
+	showLineNumbers bool
 }
 
 type _PreHelpState struct {
@@ -101,7 +101,7 @@ func NewPager(r *Reader) *Pager {
 		reader:            r,
 		quit:              false,
 		firstLineOneBased: 1,
-		lineNumbersWanted: true,
+		showLineNumbers:   true,
 	}
 }
 
@@ -211,7 +211,7 @@ func (p *Pager) _AddLines(logger *log.Logger, spinner string) {
 	lastLineOneBased := lines.firstLineOneBased + len(lines.lines) - 1
 	maxPrefixLength := len(strconv.Itoa(lastLineOneBased)) + 1
 
-	if !p.lineNumbersWanted {
+	if !p.showLineNumbers {
 		maxPrefixLength = 0
 	}
 
@@ -503,6 +503,15 @@ func (p *Pager) _OnSearchKey(logger *log.Logger, key tcell.Key) {
 	}
 }
 
+func (p *Pager) _MoveRight(delta int) {
+	result := p.leftColumnZeroBased + delta
+	if result < 0 {
+		p.leftColumnZeroBased = 0
+	} else {
+		p.leftColumnZeroBased = result
+	}
+}
+
 func (p *Pager) _OnKey(logger *log.Logger, key tcell.Key) {
 	if p.mode == _Searching {
 		p._OnSearchKey(logger, key)
@@ -528,13 +537,10 @@ func (p *Pager) _OnKey(logger *log.Logger, key tcell.Key) {
 		p.firstLineOneBased++
 
 	case tcell.KeyRight:
-		p.leftColumnZeroBased += 16
+		p._MoveRight(16)
 
 	case tcell.KeyLeft:
-		p.leftColumnZeroBased -= 16
-		if p.leftColumnZeroBased < 0 {
-			p.leftColumnZeroBased = 0
-		}
+		p._MoveRight(-16)
 
 	case tcell.KeyHome:
 		p.firstLineOneBased = 1
@@ -718,13 +724,10 @@ func (p *Pager) StartPaging(logger *log.Logger, screen tcell.Screen) {
 				p.firstLineOneBased++
 
 			case tcell.WheelRight:
-				p.leftColumnZeroBased += 16
+				p._MoveRight(16)
 
 			case tcell.WheelLeft:
-				p.leftColumnZeroBased -= 16
-				if p.leftColumnZeroBased < 0 {
-					p.leftColumnZeroBased = 0
-				}
+				p._MoveRight(-16)
 			}
 
 		case *tcell.EventResize:
