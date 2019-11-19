@@ -64,9 +64,8 @@ func _ReadStream(stream io.Reader, reader *Reader, fromFilter *exec.Cmd) {
 		timer.Stop()
 
 		if reader.err == nil {
-			// NOTE: This could mean that our Wait()ing on the filter above
-			// timed out.
-			//
+			// Don't overwrite any existing problem report
+
 			// FIXME: Add filter stderr contents to the error reported here
 			reader.err = err
 		}
@@ -103,7 +102,7 @@ func _ReadStream(stream io.Reader, reader *Reader, fromFilter *exec.Cmd) {
 
 	if err := scanner.Err(); err != nil {
 		reader.lock.Lock()
-		reader.err = err
+		reader.err = fmt.Errorf("Error reading line from input stream: %w", err)
 		reader.lock.Unlock()
 		return
 	}
