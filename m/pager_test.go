@@ -99,6 +99,7 @@ func TestBrokenUtf8(t *testing.T) {
 func _StartPaging(t *testing.T, reader *Reader) []tcell.SimCell {
 	screen := tcell.NewSimulationScreen("UTF-8")
 	pager := NewPager(reader)
+	pager.showLineNumbers = false
 	pager.Quit()
 
 	var loglines strings.Builder
@@ -267,12 +268,12 @@ func assertTokenRangesEqual(t *testing.T, actual []Token, expected []Token) {
 }
 
 func TestCreateScreenLineBase(t *testing.T) {
-	line := _CreateScreenLine(nil, 0, 0, 3, "", nil)
+	line := _CreateScreenLine(nil, 0, 3, "", nil)
 	assert.Assert(t, len(line) == 0)
 }
 
 func TestCreateScreenLineOverflowRight(t *testing.T) {
-	line := _CreateScreenLine(nil, 0, 0, 3, "012345", nil)
+	line := _CreateScreenLine(nil, 0, 3, "012345", nil)
 	assertTokenRangesEqual(t, line, []Token{
 		_CreateExpectedCell('0', tcell.StyleDefault),
 		_CreateExpectedCell('1', tcell.StyleDefault),
@@ -281,7 +282,7 @@ func TestCreateScreenLineOverflowRight(t *testing.T) {
 }
 
 func TestCreateScreenLineUnderflowLeft(t *testing.T) {
-	line := _CreateScreenLine(nil, 0, 1, 3, "012", nil)
+	line := _CreateScreenLine(nil, 1, 3, "012", nil)
 	assertTokenRangesEqual(t, line, []Token{
 		_CreateExpectedCell('<', tcell.StyleDefault.Reverse(true)),
 		_CreateExpectedCell('1', tcell.StyleDefault),
@@ -295,7 +296,7 @@ func TestCreateScreenLineSearchHit(t *testing.T) {
 		panic(err)
 	}
 
-	line := _CreateScreenLine(nil, 0, 0, 3, "abc", pattern)
+	line := _CreateScreenLine(nil, 0, 3, "abc", pattern)
 	assertTokenRangesEqual(t, line, []Token{
 		_CreateExpectedCell('a', tcell.StyleDefault),
 		_CreateExpectedCell('b', tcell.StyleDefault.Reverse(true)),
@@ -309,7 +310,7 @@ func TestCreateScreenLineUtf8SearchHit(t *testing.T) {
 		panic(err)
 	}
 
-	line := _CreateScreenLine(nil, 0, 0, 3, "åäö", pattern)
+	line := _CreateScreenLine(nil, 0, 3, "åäö", pattern)
 	assertTokenRangesEqual(t, line, []Token{
 		_CreateExpectedCell('å', tcell.StyleDefault),
 		_CreateExpectedCell('ä', tcell.StyleDefault.Reverse(true)),
@@ -320,7 +321,7 @@ func TestCreateScreenLineUtf8SearchHit(t *testing.T) {
 func TestCreateScreenLineScrolledUtf8SearchHit(t *testing.T) {
 	pattern := regexp.MustCompile("ä")
 
-	line := _CreateScreenLine(nil, 0, 1, 4, "ååäö", pattern)
+	line := _CreateScreenLine(nil, 1, 4, "ååäö", pattern)
 
 	assertTokenRangesEqual(t, line, []Token{
 		_CreateExpectedCell('<', tcell.StyleDefault.Reverse(true)),
@@ -333,7 +334,7 @@ func TestCreateScreenLineScrolledUtf8SearchHit(t *testing.T) {
 func TestCreateScreenLineScrolled2Utf8SearchHit(t *testing.T) {
 	pattern := regexp.MustCompile("ä")
 
-	line := _CreateScreenLine(nil, 0, 2, 4, "åååäö", pattern)
+	line := _CreateScreenLine(nil, 2, 4, "åååäö", pattern)
 
 	assertTokenRangesEqual(t, line, []Token{
 		_CreateExpectedCell('<', tcell.StyleDefault.Reverse(true)),

@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"regexp"
+	"strconv"
 	"time"
 	"unicode"
 	"unicode/utf8"
@@ -22,6 +23,9 @@ const (
 	_NotFound  _PagerMode = 2
 )
 
+// Styling of line numbers
+var _NumberStyle = tcell.StyleDefault.Dim(true)
+
 // Pager is the main on-screen pager
 type Pager struct {
 	reader              *Reader
@@ -36,6 +40,8 @@ type Pager struct {
 
 	isShowingHelp bool
 	preHelpState  *_PreHelpState
+
+	showLineNumbers bool
 }
 
 type _PreHelpState struct {
@@ -56,6 +62,7 @@ Quitting
 Moving around
 -------------
 * Arrow keys
+* Left / right can be used to hide / show line numbers
 * PageUp / 'b' and PageDown / 'f'
 * Half page 'u'p / 'd'own
 * Home and End for start / end of the document
@@ -94,20 +101,36 @@ func NewPager(r *Reader) *Pager {
 		reader:            r,
 		quit:              false,
 		firstLineOneBased: 1,
+		showLineNumbers:   true,
 	}
 }
 
-func (p *Pager) _AddLine(logger *log.Logger, lineNumber int, line string) {
-	width, _ := p.screen.Size()
-	tokens := _CreateScreenLine(logger, lineNumber, p.leftColumnZeroBased, width, line, p.searchPattern)
+func (p *Pager) _AddLine(logger *log.Logger, fileLineNumber *int, maxPrefixLength int, screenLineNumber int, line string) {
+	screenWidth, _ := p.screen.Size()
+
+	prefixLength := 0
+	lineNumberString := ""
+	if maxPrefixLength > 0 && fileLineNumber != nil {
+		prefixLength = maxPrefixLength
+		lineNumberString = fmt.Sprintf("%*d ", prefixLength-1, *fileLineNumber)
+	}
+
+	for column, digit := range lineNumberString {
+		if column >= prefixLength {
+			break
+		}
+
+		p.screen.SetContent(column, screenLineNumber, digit, nil, _NumberStyle)
+	}
+
+	tokens := _CreateScreenLine(logger, p.leftColumnZeroBased, screenWidth-prefixLength, line, p.searchPattern)
 	for column, token := range tokens {
-		p.screen.SetContent(column, lineNumber, token.Rune, nil, token.Style)
+		p.screen.SetContent(column+prefixLength, screenLineNumber, token.Rune, nil, token.Style)
 	}
 }
 
 func _CreateScreenLine(
 	logger *log.Logger,
-	lineNumber int,
 	stringIndexAtColumnZero int,
 	screenColumnsCount int,
 	line string,
@@ -182,9 +205,20 @@ func (p *Pager) _AddLines(logger *log.Logger, spinner string) {
 	// display starts scrolling visibly.
 	p.firstLineOneBased = lines.firstLineOneBased
 
+	// Count the length of the last line number
+	//
+	// Offsets figured out through trial-and-error...
+	lastLineOneBased := lines.firstLineOneBased + len(lines.lines) - 1
+	maxPrefixLength := len(strconv.Itoa(lastLineOneBased)) + 1
+
+	if !p.showLineNumbers {
+		maxPrefixLength = 0
+	}
+
 	screenLineNumber := 0
-	for _, line := range lines.lines {
-		p._AddLine(logger, screenLineNumber, line)
+	for i, line := range lines.lines {
+		lineNumber := p.firstLineOneBased + i
+		p._AddLine(logger, &lineNumber, maxPrefixLength, screenLineNumber, line)
 		screenLineNumber++
 	}
 
@@ -193,7 +227,7 @@ func (p *Pager) _AddLines(logger *log.Logger, spinner string) {
 		// This happens when we're done
 		eofSpinner = "---"
 	}
-	p._AddLine(logger, screenLineNumber, _EofMarkerFormat+eofSpinner)
+	p._AddLine(logger, nil, 0, screenLineNumber, _EofMarkerFormat+eofSpinner)
 
 	switch p.mode {
 	case _Searching:
@@ -469,6 +503,25 @@ func (p *Pager) _OnSearchKey(logger *log.Logger, key tcell.Key) {
 	}
 }
 
+func (p *Pager) _MoveRight(delta int) {
+	if p.showLineNumbers && delta > 0 {
+		p.showLineNumbers = false
+		return
+	}
+
+	if p.leftColumnZeroBased == 0 && delta < 0 {
+		p.showLineNumbers = true
+		return
+	}
+
+	result := p.leftColumnZeroBased + delta
+	if result < 0 {
+		p.leftColumnZeroBased = 0
+	} else {
+		p.leftColumnZeroBased = result
+	}
+}
+
 func (p *Pager) _OnKey(logger *log.Logger, key tcell.Key) {
 	if p.mode == _Searching {
 		p._OnSearchKey(logger, key)
@@ -494,13 +547,10 @@ func (p *Pager) _OnKey(logger *log.Logger, key tcell.Key) {
 		p.firstLineOneBased++
 
 	case tcell.KeyRight:
-		p.leftColumnZeroBased += 16
+		p._MoveRight(16)
 
 	case tcell.KeyLeft:
-		p.leftColumnZeroBased -= 16
-		if p.leftColumnZeroBased < 0 {
-			p.leftColumnZeroBased = 0
-		}
+		p._MoveRight(-16)
 
 	case tcell.KeyHome:
 		p.firstLineOneBased = 1
@@ -684,13 +734,10 @@ func (p *Pager) StartPaging(logger *log.Logger, screen tcell.Screen) {
 				p.firstLineOneBased++
 
 			case tcell.WheelRight:
-				p.leftColumnZeroBased += 16
+				p._MoveRight(16)
 
 			case tcell.WheelLeft:
-				p.leftColumnZeroBased -= 16
-				if p.leftColumnZeroBased < 0 {
-					p.leftColumnZeroBased = 0
-				}
+				p._MoveRight(-16)
 			}
 
 		case *tcell.EventResize:
