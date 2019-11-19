@@ -120,7 +120,7 @@ func _ReadStream(stream io.Reader, reader *Reader, fromFilter *exec.Cmd) {
 		}
 
 		reader.lock.Lock()
-		reader.lines = append(reader.lines, string(lineBytes))
+		reader.lines = append(reader.lines, string(completeLine))
 		reader.lock.Unlock()
 
 		// This is how to do a non-blocking write to a channel:
