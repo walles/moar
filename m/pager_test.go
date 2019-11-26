@@ -343,3 +343,31 @@ func TestCreateScreenLineScrolled2Utf8SearchHit(t *testing.T) {
 		_CreateExpectedCell('ö', tcell.StyleDefault),
 	})
 }
+
+func TestFindFirstLineOneBasedSimple(t *testing.T) {
+	reader := NewReaderFromStream(strings.NewReader("AB"), nil)
+	pager := NewPager(reader)
+
+	// Wait for reader to finish reading
+	<-reader.done
+
+	pager.searchPattern = ToPattern("AB")
+
+	hitLine := pager._FindFirstHitLineOneBased(nil, 1, false)
+	assert.Check(t, hitLine != nil)
+	assert.Check(t, *hitLine == 1)
+}
+
+func TestFindFirstLineOneBasedAnsi(t *testing.T) {
+	reader := NewReaderFromStream(strings.NewReader("A\x1b[30mB"), nil)
+	pager := NewPager(reader)
+
+	// Wait for reader to finish reading
+	<-reader.done
+
+	pager.searchPattern = ToPattern("AB")
+
+	hitLine := pager._FindFirstHitLineOneBased(nil, 1, false)
+	assert.Check(t, hitLine != nil)
+	assert.Check(t, *hitLine == 1)
+}

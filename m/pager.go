@@ -286,13 +286,13 @@ func (p *Pager) Quit() {
 	p.preHelpState = nil
 }
 
-func (p *Pager) _ScrollToSearchHits() {
+func (p *Pager) _ScrollToSearchHits(logger *log.Logger) {
 	if p.searchPattern == nil {
 		// This is not a search
 		return
 	}
 
-	firstHitLine := p._FindFirstHitLineOneBased(p.firstLineOneBased, false)
+	firstHitLine := p._FindFirstHitLineOneBased(logger, p.firstLineOneBased, false)
 	if firstHitLine == nil {
 		// No match, give up
 		return
@@ -315,7 +315,7 @@ func (p *Pager) _GetLastVisibleLineOneBased() int {
 	return firstVisibleLineOneBased + windowHeight - 2
 }
 
-func (p *Pager) _FindFirstHitLineOneBased(firstLineOneBased int, backwards bool) *int {
+func (p *Pager) _FindFirstHitLineOneBased(logger *log.Logger, firstLineOneBased int, backwards bool) *int {
 	lineNumber := firstLineOneBased
 	for {
 		line := p.reader.GetLine(lineNumber)
@@ -324,7 +324,8 @@ func (p *Pager) _FindFirstHitLineOneBased(firstLineOneBased int, backwards bool)
 			return nil
 		}
 
-		if p.searchPattern.MatchString(*line) {
+		_, lineText := TokensFromString(logger, *line)
+		if p.searchPattern.MatchString(*lineText) {
 			return &lineNumber
 		}
 
@@ -336,7 +337,7 @@ func (p *Pager) _FindFirstHitLineOneBased(firstLineOneBased int, backwards bool)
 	}
 }
 
-func (p *Pager) _ScrollToNextSearchHit() {
+func (p *Pager) _ScrollToNextSearchHit(logger *log.Logger) {
 	if p.searchPattern == nil {
 		// Nothing to search for, never mind
 		return
@@ -363,7 +364,7 @@ func (p *Pager) _ScrollToNextSearchHit() {
 		panic(fmt.Sprint("Unknown search mode when finding next: ", p.mode))
 	}
 
-	firstHitLine := p._FindFirstHitLineOneBased(firstSearchLineOneBased, false)
+	firstHitLine := p._FindFirstHitLineOneBased(logger, firstSearchLineOneBased, false)
 	if firstHitLine == nil {
 		p.mode = _NotFound
 		return
@@ -371,7 +372,7 @@ func (p *Pager) _ScrollToNextSearchHit() {
 	p.firstLineOneBased = *firstHitLine
 }
 
-func (p *Pager) _ScrollToPreviousSearchHit() {
+func (p *Pager) _ScrollToPreviousSearchHit(logger *log.Logger) {
 	if p.searchPattern == nil {
 		// Nothing to search for, never mind
 		return
@@ -398,7 +399,7 @@ func (p *Pager) _ScrollToPreviousSearchHit() {
 		panic(fmt.Sprint("Unknown search mode when finding previous: ", p.mode))
 	}
 
-	firstHitLine := p._FindFirstHitLineOneBased(firstSearchLineOneBased, true)
+	firstHitLine := p._FindFirstHitLineOneBased(logger, firstSearchLineOneBased, true)
 	if firstHitLine == nil {
 		p.mode = _NotFound
 		return
@@ -406,10 +407,10 @@ func (p *Pager) _ScrollToPreviousSearchHit() {
 	p.firstLineOneBased = *firstHitLine
 }
 
-func (p *Pager) _UpdateSearchPattern() {
+func (p *Pager) _UpdateSearchPattern(logger *log.Logger) {
 	p.searchPattern = ToPattern(p.searchString)
 
-	p._ScrollToSearchHits()
+	p._ScrollToSearchHits(logger)
 
 	// FIXME: If the user is typing, indicate to user if we didn't find anything
 }
@@ -476,7 +477,7 @@ func (p *Pager) _OnSearchKey(logger *log.Logger, key tcell.Key) {
 		}
 
 		p.searchString = removeLastChar(p.searchString)
-		p._UpdateSearchPattern()
+		p._UpdateSearchPattern(logger)
 
 	case tcell.KeyUp:
 		// Clipping is done in _AddLines()
@@ -573,7 +574,7 @@ func (p *Pager) _OnKey(logger *log.Logger, key tcell.Key) {
 
 func (p *Pager) _OnSearchRune(logger *log.Logger, char rune) {
 	p.searchString = p.searchString + string(char)
-	p._UpdateSearchPattern()
+	p._UpdateSearchPattern(logger)
 }
 
 func (p *Pager) _OnRune(logger *log.Logger, char rune) {
@@ -638,10 +639,10 @@ func (p *Pager) _OnRune(logger *log.Logger, char rune) {
 		p.searchPattern = nil
 
 	case 'n':
-		p._ScrollToNextSearchHit()
+		p._ScrollToNextSearchHit(logger)
 
 	case 'p', 'N':
-		p._ScrollToPreviousSearchHit()
+		p._ScrollToPreviousSearchHit(logger)
 
 	default:
 		logger.Printf("Unhandled rune keypress '%s'", string(char))
