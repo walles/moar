@@ -101,63 +101,75 @@ func TokensFromString(s string) ([]Token, *string) {
 	return tokens, &plainString
 }
 
+func _ConsumeBold(runes []rune, index int) (int, *Token) {
+	if index+2 >= len(runes) {
+		// Not enough runes left for a bold
+		return index, nil
+	}
+
+	if runes[index+1] != '\b' {
+		// No backspace in the middle, never mind
+		return index, nil
+	}
+
+	if runes[index] != runes[index+2] {
+		// First and last rune not the same, never mind
+		return index, nil
+	}
+
+	// We have a match!
+	return index + 3, &Token{
+		Rune:  runes[index],
+		Style: manPageBold,
+	}
+}
+
+func _ConsumeUnderline(runes []rune, index int) (int, *Token) {
+	if index+2 >= len(runes) {
+		// Not enough runes left for a underline
+		return index, nil
+	}
+
+	if runes[index+1] != '\b' {
+		// No backspace in the middle, never mind
+		return index, nil
+	}
+
+	if runes[index] != '_' {
+		// No underline, never mind
+		return index, nil
+	}
+
+	// We have a match!
+	return index + 3, &Token{
+		Rune:  runes[index+2],
+		Style: manPageUnderline,
+	}
+}
+
 func _TokensFromStyledString(styledString _StyledString) []Token {
-	tokens := make([]Token, 0, len(styledString.String)+1)
-	oneBack := '\x00'
-	twoBack := '\x00'
-	for _, char := range []rune(styledString.String) {
-		if oneBack == '\x08' && twoBack != '\x00' {
-			// Something-Backspace-Something
+	runes := []rune(styledString.String)
+	tokens := make([]Token, 0, len(runes))
 
-			replacement := (*Token)(nil)
+	for index := 0; index < len(runes); index++ {
+		nextIndex, token := _ConsumeBold(runes, index)
+		if nextIndex != index {
+			tokens = append(tokens, *token)
+			index = nextIndex - 1
+			continue
+		}
 
-			if char == twoBack {
-				replacement = &Token{
-					Rune:  twoBack,
-					Style: manPageBold,
-				}
-			}
-
-			if twoBack == '_' {
-				replacement = &Token{
-					Rune:  char,
-					Style: manPageUnderline,
-				}
-			}
-
-			// FIXME: Man page formatting fails, if I do (in bash)...
-			//   "man printf|hexdump -C|grep -10 leading| grep --color 08"
-			// ... I get...
-			//   "000003e0  20 20 20 20 20 20 20 20  2b 08 2b 08 6f 08 6f 20  |        +.+.o.o |"
-			// ... wich "less" renders as a bold "o". We should as well.
-			//
-			// I don't get the logic though, the sequence is:
-			//   plus-backspace-plus-backspace-o-backspace-o
-			//
-			// Maybe the interpretation should be:
-			//   "Make a bold +, then erase that and replace it with a bold o"?
-			//
-			// Used for bullet points, maybe we should just replace the whole thing with
-			// a unicode bullet point in bold?
-
-			if replacement != nil {
-				tokens = append(tokens[0:len(tokens)-2], *replacement)
-
-				twoBack = oneBack
-				oneBack = char
-				continue
-			}
-
-			// No match, just keep going
+		nextIndex, token = _ConsumeUnderline(runes, index)
+		if nextIndex != index {
+			tokens = append(tokens, *token)
+			index = nextIndex - 1
+			continue
 		}
 
 		tokens = append(tokens, Token{
-			Rune:  char,
+			Rune:  runes[index],
 			Style: styledString.Style,
 		})
-
-		twoBack = oneBack
-		oneBack = char
 	}
 
 	return tokens
