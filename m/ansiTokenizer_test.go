@@ -65,6 +65,14 @@ func testManPages(t *testing.T) {
 		Token{Rune: 'b', Style: tcell.StyleDefault.Underline(true)},
 		Token{Rune: 'c', Style: tcell.StyleDefault},
 	}, tokens)
+
+	// Bullet point
+	tokens, _ = TokensFromString("a+\bob")
+	assert.Equal(t, []Token{
+		Token{Rune: 'a', Style: tcell.StyleDefault},
+		Token{Rune: '•', Style: tcell.StyleDefault},
+		Token{Rune: 'b', Style: tcell.StyleDefault},
+	}, tokens)
 }
 
 func TestConsumeCompositeColorHappy(t *testing.T) {

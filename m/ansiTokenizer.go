@@ -101,6 +101,7 @@ func TokensFromString(s string) ([]Token, *string) {
 	return tokens, &plainString
 }
 
+// Consume 'x<x', where '<' is backspace and the result is a bold 'x'
 func _ConsumeBold(runes []rune, index int) (int, *Token) {
 	if index+2 >= len(runes) {
 		// Not enough runes left for a bold
@@ -124,6 +125,7 @@ func _ConsumeBold(runes []rune, index int) (int, *Token) {
 	}
 }
 
+// Consume '_<x', where '<' is backspace and the result is an underlined 'x'
 func _ConsumeUnderline(runes []rune, index int) (int, *Token) {
 	if index+2 >= len(runes) {
 		// Not enough runes left for a underline
@@ -147,12 +149,43 @@ func _ConsumeUnderline(runes []rune, index int) (int, *Token) {
 	}
 }
 
+// Consume '+<o', where '<' is backspace and the result is a unicode bullet.
+//
+// Used on man pages, try "man printf" on macOS for one example.
+func _ConsumeBullet(runes []rune, index int) (int, *Token) {
+	if index+6 >= len(runes) {
+		// Not enough runes left for a bullet
+		return index, nil
+	}
+
+	pattern := "+\bo"
+	for delta, patternChar := range pattern {
+		if rune(patternChar) != runes[index+delta] {
+			// Bullet pattern mismatch, never mind
+			return index, nil
+		}
+	}
+
+	// We have a match!
+	return index + len(pattern), &Token{
+		Rune:  '•', // Unicode bullet point
+		Style: tcell.StyleDefault,
+	}
+}
+
 func _TokensFromStyledString(styledString _StyledString) []Token {
 	runes := []rune(styledString.String)
 	tokens := make([]Token, 0, len(runes))
 
 	for index := 0; index < len(runes); index++ {
-		nextIndex, token := _ConsumeBold(runes, index)
+		nextIndex, token := _ConsumeBullet(runes, index)
+		if nextIndex != index {
+			tokens = append(tokens, *token)
+			index = nextIndex - 1
+			continue
+		}
+
+		nextIndex, token = _ConsumeBold(runes, index)
 		if nextIndex != index {
 			tokens = append(tokens, *token)
 			index = nextIndex - 1
