@@ -24,17 +24,17 @@ type Token struct {
 
 // SetManPageFormatFromEnv parses LESS_TERMCAP_xx environment variables and
 // adapts the moar output accordingly.
-func SetManPageFormatFromEnv(logger *log.Logger) {
+func SetManPageFormatFromEnv() {
 	// Requested here: https://github.com/walles/moar/issues/14
 
 	lessTermcapMd := os.Getenv("LESS_TERMCAP_md")
 	if lessTermcapMd != "" {
-		manPageBold = _TermcapToStyle(logger, lessTermcapMd)
+		manPageBold = _TermcapToStyle(lessTermcapMd)
 	}
 
 	lessTermcapUs := os.Getenv("LESS_TERMCAP_us")
 	if lessTermcapUs != "" {
-		manPageUnderline = _TermcapToStyle(logger, lessTermcapUs)
+		manPageUnderline = _TermcapToStyle(lessTermcapUs)
 	}
 }
 
@@ -44,20 +44,20 @@ func _ResetManPageFormatForTesting() {
 	manPageUnderline = tcell.StyleDefault.Underline(true)
 }
 
-func _TermcapToStyle(logger *log.Logger, termcap string) tcell.Style {
+func _TermcapToStyle(termcap string) tcell.Style {
 	// Add a character to be sure we have one to take the format from
-	tokens, _ := TokensFromString(logger, termcap+"x")
+	tokens, _ := TokensFromString(termcap + "x")
 	return tokens[len(tokens)-1].Style
 }
 
 // TokensFromString turns a (formatted) string into a series of tokens,
 // and an unformatted string
-func TokensFromString(logger *log.Logger, s string) ([]Token, *string) {
+func TokensFromString(s string) ([]Token, *string) {
 	var tokens []Token
 
 	styleBrokenUtf8 := tcell.StyleDefault.Background(7).Foreground(1)
 
-	for _, styledString := range _StyledStringsFromString(logger, s) {
+	for _, styledString := range _StyledStringsFromString(s) {
 		for _, token := range _TokensFromStyledString(styledString) {
 			switch token.Rune {
 
@@ -168,7 +168,7 @@ type _StyledString struct {
 	Style  tcell.Style
 }
 
-func _StyledStringsFromString(logger *log.Logger, s string) []_StyledString {
+func _StyledStringsFromString(s string) []_StyledString {
 	// This function was inspired by the
 	// https://golang.org/pkg/regexp/#Regexp.Split source code
 
@@ -193,7 +193,7 @@ func _StyledStringsFromString(logger *log.Logger, s string) []_StyledString {
 		}
 
 		matchedPart := s[match[0]:match[1]]
-		style = _UpdateStyle(logger, style, matchedPart)
+		style = _UpdateStyle(style, matchedPart)
 
 		beg = match[1]
 	}
@@ -209,7 +209,7 @@ func _StyledStringsFromString(logger *log.Logger, s string) []_StyledString {
 }
 
 // _UpdateStyle parses a string of the form "ESC[33m" into changes to style
-func _UpdateStyle(logger *log.Logger, style tcell.Style, escapeSequence string) tcell.Style {
+func _UpdateStyle(style tcell.Style, escapeSequence string) tcell.Style {
 	numbers := strings.Split(escapeSequence[2:len(escapeSequence)-1], ";")
 	index := 0
 	for index < len(numbers) {
@@ -253,7 +253,7 @@ func _UpdateStyle(logger *log.Logger, style tcell.Style, escapeSequence string) 
 			var color *tcell.Color
 			index, color, err = consumeCompositeColor(numbers, index-1)
 			if err != nil {
-				logger.Printf("Foreground: %s", err.Error())
+				log.Printf("Foreground: %s", err.Error())
 				return style
 			}
 			style = style.Foreground(*color)
@@ -282,7 +282,7 @@ func _UpdateStyle(logger *log.Logger, style tcell.Style, escapeSequence string) 
 			var color *tcell.Color
 			index, color, err = consumeCompositeColor(numbers, index-1)
 			if err != nil {
-				logger.Printf("Background: %s", err.Error())
+				log.Printf("Background: %s", err.Error())
 				return style
 			}
 			style = style.Background(*color)
@@ -290,7 +290,7 @@ func _UpdateStyle(logger *log.Logger, style tcell.Style, escapeSequence string) 
 			style = style.Background(tcell.ColorDefault)
 
 		default:
-			logger.Printf("Unrecognized ANSI SGR code <%s>", number)
+			log.Printf("Unrecognized ANSI SGR code <%s>", number)
 		}
 	}
 

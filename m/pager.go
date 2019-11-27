@@ -105,7 +105,7 @@ func NewPager(r *Reader) *Pager {
 	}
 }
 
-func (p *Pager) _AddLine(logger *log.Logger, fileLineNumber *int, maxPrefixLength int, screenLineNumber int, line string) {
+func (p *Pager) _AddLine(fileLineNumber *int, maxPrefixLength int, screenLineNumber int, line string) {
 	screenWidth, _ := p.screen.Size()
 
 	prefixLength := 0
@@ -123,14 +123,13 @@ func (p *Pager) _AddLine(logger *log.Logger, fileLineNumber *int, maxPrefixLengt
 		p.screen.SetContent(column, screenLineNumber, digit, nil, _NumberStyle)
 	}
 
-	tokens := _CreateScreenLine(logger, p.leftColumnZeroBased, screenWidth-prefixLength, line, p.searchPattern)
+	tokens := _CreateScreenLine(p.leftColumnZeroBased, screenWidth-prefixLength, line, p.searchPattern)
 	for column, token := range tokens {
 		p.screen.SetContent(column+prefixLength, screenLineNumber, token.Rune, nil, token.Style)
 	}
 }
 
 func _CreateScreenLine(
-	logger *log.Logger,
 	stringIndexAtColumnZero int,
 	screenColumnsCount int,
 	line string,
@@ -147,7 +146,7 @@ func _CreateScreenLine(
 		searchHitDelta = -1
 	}
 
-	tokens, plainString := TokensFromString(logger, line)
+	tokens, plainString := TokensFromString(line)
 	if stringIndexAtColumnZero >= len(tokens) {
 		// Nothing (more) to display, never mind
 		return returnMe
@@ -193,7 +192,7 @@ func (p *Pager) _AddSearchFooter() {
 	p.screen.SetContent(pos, height-1, ' ', nil, tcell.StyleDefault.Reverse(true))
 }
 
-func (p *Pager) _AddLines(logger *log.Logger, spinner string) {
+func (p *Pager) _AddLines(spinner string) {
 	_, height := p.screen.Size()
 	wantedLineCount := height - 1
 
@@ -218,7 +217,7 @@ func (p *Pager) _AddLines(logger *log.Logger, spinner string) {
 	screenLineNumber := 0
 	for i, line := range lines.lines {
 		lineNumber := p.firstLineOneBased + i
-		p._AddLine(logger, &lineNumber, maxPrefixLength, screenLineNumber, line)
+		p._AddLine(&lineNumber, maxPrefixLength, screenLineNumber, line)
 		screenLineNumber++
 	}
 
@@ -227,7 +226,7 @@ func (p *Pager) _AddLines(logger *log.Logger, spinner string) {
 		// This happens when we're done
 		eofSpinner = "---"
 	}
-	p._AddLine(logger, nil, 0, screenLineNumber, _EofMarkerFormat+eofSpinner)
+	p._AddLine(nil, 0, screenLineNumber, _EofMarkerFormat+eofSpinner)
 
 	switch p.mode {
 	case _Searching:
@@ -263,10 +262,10 @@ func (p *Pager) _SetFooter(footer string) {
 	}
 }
 
-func (p *Pager) _Redraw(logger *log.Logger, spinner string) {
+func (p *Pager) _Redraw(spinner string) {
 	p.screen.Clear()
 
-	p._AddLines(logger, spinner)
+	p._AddLines(spinner)
 
 	p.screen.Show()
 }
@@ -286,13 +285,13 @@ func (p *Pager) Quit() {
 	p.preHelpState = nil
 }
 
-func (p *Pager) _ScrollToSearchHits(logger *log.Logger) {
+func (p *Pager) _ScrollToSearchHits() {
 	if p.searchPattern == nil {
 		// This is not a search
 		return
 	}
 
-	firstHitLine := p._FindFirstHitLineOneBased(logger, p.firstLineOneBased, false)
+	firstHitLine := p._FindFirstHitLineOneBased(p.firstLineOneBased, false)
 	if firstHitLine == nil {
 		// No match, give up
 		return
@@ -315,7 +314,7 @@ func (p *Pager) _GetLastVisibleLineOneBased() int {
 	return firstVisibleLineOneBased + windowHeight - 2
 }
 
-func (p *Pager) _FindFirstHitLineOneBased(logger *log.Logger, firstLineOneBased int, backwards bool) *int {
+func (p *Pager) _FindFirstHitLineOneBased(firstLineOneBased int, backwards bool) *int {
 	lineNumber := firstLineOneBased
 	for {
 		line := p.reader.GetLine(lineNumber)
@@ -324,7 +323,7 @@ func (p *Pager) _FindFirstHitLineOneBased(logger *log.Logger, firstLineOneBased 
 			return nil
 		}
 
-		_, lineText := TokensFromString(logger, *line)
+		_, lineText := TokensFromString(*line)
 		if p.searchPattern.MatchString(*lineText) {
 			return &lineNumber
 		}
@@ -337,7 +336,7 @@ func (p *Pager) _FindFirstHitLineOneBased(logger *log.Logger, firstLineOneBased 
 	}
 }
 
-func (p *Pager) _ScrollToNextSearchHit(logger *log.Logger) {
+func (p *Pager) _ScrollToNextSearchHit() {
 	if p.searchPattern == nil {
 		// Nothing to search for, never mind
 		return
@@ -364,7 +363,7 @@ func (p *Pager) _ScrollToNextSearchHit(logger *log.Logger) {
 		panic(fmt.Sprint("Unknown search mode when finding next: ", p.mode))
 	}
 
-	firstHitLine := p._FindFirstHitLineOneBased(logger, firstSearchLineOneBased, false)
+	firstHitLine := p._FindFirstHitLineOneBased(firstSearchLineOneBased, false)
 	if firstHitLine == nil {
 		p.mode = _NotFound
 		return
@@ -372,7 +371,7 @@ func (p *Pager) _ScrollToNextSearchHit(logger *log.Logger) {
 	p.firstLineOneBased = *firstHitLine
 }
 
-func (p *Pager) _ScrollToPreviousSearchHit(logger *log.Logger) {
+func (p *Pager) _ScrollToPreviousSearchHit() {
 	if p.searchPattern == nil {
 		// Nothing to search for, never mind
 		return
@@ -399,7 +398,7 @@ func (p *Pager) _ScrollToPreviousSearchHit(logger *log.Logger) {
 		panic(fmt.Sprint("Unknown search mode when finding previous: ", p.mode))
 	}
 
-	firstHitLine := p._FindFirstHitLineOneBased(logger, firstSearchLineOneBased, true)
+	firstHitLine := p._FindFirstHitLineOneBased(firstSearchLineOneBased, true)
 	if firstHitLine == nil {
 		p.mode = _NotFound
 		return
@@ -407,10 +406,10 @@ func (p *Pager) _ScrollToPreviousSearchHit(logger *log.Logger) {
 	p.firstLineOneBased = *firstHitLine
 }
 
-func (p *Pager) _UpdateSearchPattern(logger *log.Logger) {
+func (p *Pager) _UpdateSearchPattern() {
 	p.searchPattern = ToPattern(p.searchString)
 
-	p._ScrollToSearchHits(logger)
+	p._ScrollToSearchHits()
 
 	// FIXME: If the user is typing, indicate to user if we didn't find anything
 }
@@ -466,7 +465,7 @@ func removeLastChar(s string) string {
 	return s[:len(s)-size]
 }
 
-func (p *Pager) _OnSearchKey(logger *log.Logger, key tcell.Key) {
+func (p *Pager) _OnSearchKey(key tcell.Key) {
 	switch key {
 	case tcell.KeyEscape, tcell.KeyEnter:
 		p.mode = _Viewing
@@ -477,7 +476,7 @@ func (p *Pager) _OnSearchKey(logger *log.Logger, key tcell.Key) {
 		}
 
 		p.searchString = removeLastChar(p.searchString)
-		p._UpdateSearchPattern(logger)
+		p._UpdateSearchPattern()
 
 	case tcell.KeyUp:
 		// Clipping is done in _AddLines()
@@ -500,7 +499,7 @@ func (p *Pager) _OnSearchKey(logger *log.Logger, key tcell.Key) {
 		p.mode = _Viewing
 
 	default:
-		logger.Printf("Unhandled search key event %v", key)
+		log.Printf("Unhandled search key event %v", key)
 	}
 }
 
@@ -523,9 +522,9 @@ func (p *Pager) _MoveRight(delta int) {
 	}
 }
 
-func (p *Pager) _OnKey(logger *log.Logger, key tcell.Key) {
+func (p *Pager) _OnKey(key tcell.Key) {
 	if p.mode == _Searching {
-		p._OnSearchKey(logger, key)
+		p._OnSearchKey(key)
 		return
 	}
 	if p.mode != _Viewing && p.mode != _NotFound {
@@ -568,18 +567,18 @@ func (p *Pager) _OnKey(logger *log.Logger, key tcell.Key) {
 		p.firstLineOneBased -= (height - 1)
 
 	default:
-		logger.Printf("Unhandled key event %v", key)
+		log.Printf("Unhandled key event %v", key)
 	}
 }
 
-func (p *Pager) _OnSearchRune(logger *log.Logger, char rune) {
+func (p *Pager) _OnSearchRune(char rune) {
 	p.searchString = p.searchString + string(char)
-	p._UpdateSearchPattern(logger)
+	p._UpdateSearchPattern()
 }
 
-func (p *Pager) _OnRune(logger *log.Logger, char rune) {
+func (p *Pager) _OnRune(char rune) {
 	if p.mode == _Searching {
-		p._OnSearchRune(logger, char)
+		p._OnSearchRune(char)
 		return
 	}
 	if p.mode != _Viewing && p.mode != _NotFound {
@@ -639,22 +638,22 @@ func (p *Pager) _OnRune(logger *log.Logger, char rune) {
 		p.searchPattern = nil
 
 	case 'n':
-		p._ScrollToNextSearchHit(logger)
+		p._ScrollToNextSearchHit()
 
 	case 'p', 'N':
-		p._ScrollToPreviousSearchHit(logger)
+		p._ScrollToPreviousSearchHit()
 
 	default:
-		logger.Printf("Unhandled rune keypress '%s'", string(char))
+		log.Printf("Unhandled rune keypress '%s'", string(char))
 	}
 }
 
 // StartPaging brings up the pager on screen
-func (p *Pager) StartPaging(logger *log.Logger, screen tcell.Screen) {
+func (p *Pager) StartPaging(screen tcell.Screen) {
 	// We want to match the terminal theme, see screen.Init() source code
 	os.Setenv("TCELL_TRUECOLOR", "disable")
 
-	SetManPageFormatFromEnv(logger)
+	SetManPageFormatFromEnv()
 
 	if e := screen.Init(); e != nil {
 		fmt.Fprintf(os.Stderr, "%v\n", e)
@@ -664,7 +663,7 @@ func (p *Pager) StartPaging(logger *log.Logger, screen tcell.Screen) {
 	p.screen = screen
 	screen.EnableMouse()
 	screen.Show()
-	p._Redraw(logger, "")
+	p._Redraw("")
 
 	go func() {
 		for {
@@ -719,9 +718,9 @@ func (p *Pager) StartPaging(logger *log.Logger, screen tcell.Screen) {
 		switch ev := ev.(type) {
 		case *tcell.EventKey:
 			if ev.Key() == tcell.KeyRune {
-				p._OnRune(logger, ev.Rune())
+				p._OnRune(ev.Rune())
 			} else {
-				p._OnKey(logger, ev.Key())
+				p._OnKey(ev.Key())
 			}
 
 		case *tcell.EventMouse:
@@ -755,16 +754,16 @@ func (p *Pager) StartPaging(logger *log.Logger, screen tcell.Screen) {
 			}
 
 		default:
-			logger.Printf("Unhandled event type: %v", ev)
+			log.Printf("Unhandled event type: %v", ev)
 		}
 
 		// FIXME: If more events are ready, skip this redraw, that
 		// should speed up mouse wheel scrolling
 
-		p._Redraw(logger, spinner)
+		p._Redraw(spinner)
 	}
 
 	if p.reader.err != nil {
-		logger.Printf("Reader reported an error: %s", p.reader.err.Error())
+		log.Printf("Reader reported an error: %s", p.reader.err.Error())
 	}
 }

@@ -31,9 +31,9 @@ func TestTokenize(t *testing.T) {
 			lineNumber++
 
 			var loglines strings.Builder
-			logger := log.New(&loglines, "", 0)
+			log.SetOutput(&loglines)
 
-			tokens, plainString := TokensFromString(logger, line)
+			tokens, plainString := TokensFromString(line)
 			if len(tokens) != utf8.RuneCountInString(*plainString) {
 				t.Errorf("%s:%d: len(tokens)=%d, len(plainString)=%d for: <%s>",
 					fileName, lineNumber,
@@ -51,7 +51,7 @@ func TestTokenize(t *testing.T) {
 
 func testManPages(t *testing.T) {
 	// Bold
-	tokens, _ := TokensFromString(nil, "ab\bbc")
+	tokens, _ := TokensFromString("ab\bbc")
 	assert.Equal(t, []Token{
 		Token{Rune: 'a', Style: tcell.StyleDefault},
 		Token{Rune: 'b', Style: tcell.StyleDefault.Bold(true)},
@@ -59,7 +59,7 @@ func testManPages(t *testing.T) {
 	}, tokens)
 
 	// Underline
-	tokens, _ = TokensFromString(nil, "ab\b_c")
+	tokens, _ = TokensFromString("ab\b_c")
 	assert.Equal(t, []Token{
 		Token{Rune: 'a', Style: tcell.StyleDefault},
 		Token{Rune: 'b', Style: tcell.StyleDefault.Underline(true)},
