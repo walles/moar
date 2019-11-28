@@ -59,6 +59,10 @@ Quitting
 --------
 * Press 'q' or ESC to quit
 
+Miscellaneous
+-------------
+* Press CTRL-l to refresh screen if it has become garbled
+
 Moving around
 -------------
 * Arrow keys
@@ -523,6 +527,13 @@ func (p *Pager) _MoveRight(delta int) {
 }
 
 func (p *Pager) _OnKey(key tcell.Key) {
+	if key == tcell.KeyCtrlL {
+		// This is useful when we're piping in from something writing to both
+		// stdout and stderr.
+		p.screen.Sync()
+		return
+	}
+
 	if p.mode == _Searching {
 		p._OnSearchKey(key)
 		return
