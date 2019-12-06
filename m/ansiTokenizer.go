@@ -2,7 +2,7 @@ package m
 
 import (
 	"fmt"
-	"log"
+	log "github.com/sirupsen/logrus"
 	"os"
 	"regexp"
 	"strconv"
@@ -298,7 +298,7 @@ func _UpdateStyle(style tcell.Style, escapeSequence string) tcell.Style {
 			var color *tcell.Color
 			index, color, err = consumeCompositeColor(numbers, index-1)
 			if err != nil {
-				log.Printf("Foreground: %s", err.Error())
+				log.Warnf("Foreground: %s", err.Error())
 				return style
 			}
 			style = style.Foreground(*color)
@@ -327,7 +327,7 @@ func _UpdateStyle(style tcell.Style, escapeSequence string) tcell.Style {
 			var color *tcell.Color
 			index, color, err = consumeCompositeColor(numbers, index-1)
 			if err != nil {
-				log.Printf("Background: %s", err.Error())
+				log.Warnf("Background: %s", err.Error())
 				return style
 			}
 			style = style.Background(*color)
@@ -335,7 +335,7 @@ func _UpdateStyle(style tcell.Style, escapeSequence string) tcell.Style {
 			style = style.Background(tcell.ColorDefault)
 
 		default:
-			log.Printf("Unrecognized ANSI SGR code <%s>", number)
+			log.Warnf("Unrecognized ANSI SGR code <%s>", number)
 		}
 	}
 

@@ -2,7 +2,7 @@ package m
 
 import (
 	"fmt"
-	"log"
+	log "github.com/sirupsen/logrus"
 	"os"
 	"regexp"
 	"strconv"
@@ -503,7 +503,7 @@ func (p *Pager) _OnSearchKey(key tcell.Key) {
 		p.mode = _Viewing
 
 	default:
-		log.Printf("Unhandled search key event %v", key)
+		log.Debugf("Unhandled search key event %v", key)
 	}
 }
 
@@ -578,7 +578,7 @@ func (p *Pager) _OnKey(key tcell.Key) {
 		p.firstLineOneBased -= (height - 1)
 
 	default:
-		log.Printf("Unhandled key event %v", key)
+		log.Debugf("Unhandled key event %v", key)
 	}
 }
 
@@ -655,7 +655,7 @@ func (p *Pager) _OnRune(char rune) {
 		p._ScrollToPreviousSearchHit()
 
 	default:
-		log.Printf("Unhandled rune keypress '%s'", string(char))
+		log.Debugf("Unhandled rune keypress '%s'", string(char))
 	}
 }
 
@@ -765,7 +765,7 @@ func (p *Pager) StartPaging(screen tcell.Screen) {
 			}
 
 		default:
-			log.Printf("Unhandled event type: %v", ev)
+			log.Warnf("Unhandled event type: %v", ev)
 		}
 
 		// FIXME: If more events are ready, skip this redraw, that
@@ -775,6 +775,6 @@ func (p *Pager) StartPaging(screen tcell.Screen) {
 	}
 
 	if p.reader.err != nil {
-		log.Printf("Reader reported an error: %s", p.reader.err.Error())
+		log.Warnf("Reader reported an error: %s", p.reader.err.Error())
 	}
 }

@@ -2,7 +2,7 @@ package m
 
 import (
 	"bufio"
-	"log"
+	log "github.com/sirupsen/logrus"
 	"os"
 	"strings"
 	"testing"

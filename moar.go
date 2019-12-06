@@ -3,8 +3,8 @@ package main
 import (
 	"flag"
 	"fmt"
+	log "github.com/sirupsen/logrus"
 	"io"
-	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -92,6 +92,7 @@ func main() {
 		_PrintUsage(os.Stdout)
 	}
 	printVersion := flag.Bool("version", false, "Prints the moar version number")
+	debug := flag.Bool("debug", false, "Print debug logs after exiting")
 
 	// FIXME: Support --no-highlight
 
@@ -99,6 +100,11 @@ func main() {
 	if *printVersion {
 		fmt.Println(versionString)
 		os.Exit(0)
+	}
+
+	log.SetLevel(log.InfoLevel)
+	if *debug {
+		log.SetLevel(log.DebugLevel)
 	}
 
 	stdinIsRedirected := !terminal.IsTerminal(int(os.Stdin.Fd()))
