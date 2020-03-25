@@ -2,11 +2,12 @@ package m
 
 import (
 	"fmt"
-	log "github.com/sirupsen/logrus"
 	"os"
 	"regexp"
 	"strconv"
 	"strings"
+
+	log "github.com/sirupsen/logrus"
 
 	"github.com/gdamore/tcell"
 )
@@ -272,6 +273,9 @@ func _UpdateStyle(style tcell.Style, escapeSequence string) tcell.Style {
 
 		case "7":
 			style = style.Reverse(true)
+
+		case "24":
+			style = style.Underline(false)
 
 		case "27":
 			style = style.Reverse(false)

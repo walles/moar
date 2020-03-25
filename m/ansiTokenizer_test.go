@@ -2,11 +2,12 @@ package m
 
 import (
 	"bufio"
-	log "github.com/sirupsen/logrus"
 	"os"
 	"strings"
 	"testing"
 	"unicode/utf8"
+
+	log "github.com/sirupsen/logrus"
 
 	"gotest.tools/assert"
 
@@ -47,6 +48,14 @@ func TestTokenize(t *testing.T) {
 			}
 		}
 	}
+}
+
+func TestUnderline(t *testing.T) {
+	tokens, _ := TokensFromString("a\x1b[4mb\x1b[24mc")
+	assert.Equal(t, len(tokens), 3)
+	assert.Equal(t, tokens[0], Token{Rune: 'a', Style: tcell.StyleDefault})
+	assert.Equal(t, tokens[1], Token{Rune: 'b', Style: tcell.StyleDefault.Underline(true)})
+	assert.Equal(t, tokens[2], Token{Rune: 'c', Style: tcell.StyleDefault})
 }
 
 func testManPages(t *testing.T) {
