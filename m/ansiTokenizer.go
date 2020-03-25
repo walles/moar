@@ -154,7 +154,7 @@ func _ConsumeUnderline(runes []rune, index int) (int, *Token) {
 //
 // Used on man pages, try "man printf" on macOS for one example.
 func _ConsumeBullet(runes []rune, index int) (int, *Token) {
-	if index+6 >= len(runes) {
+	if index+2 >= len(runes) {
 		// Not enough runes left for a bullet
 		return index, nil
 	}

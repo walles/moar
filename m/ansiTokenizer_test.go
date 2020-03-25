@@ -58,30 +58,27 @@ func TestUnderline(t *testing.T) {
 	assert.Equal(t, tokens[2], Token{Rune: 'c', Style: tcell.StyleDefault})
 }
 
-func testManPages(t *testing.T) {
+func TestManPages(t *testing.T) {
 	// Bold
 	tokens, _ := TokensFromString("ab\bbc")
-	assert.Equal(t, []Token{
-		Token{Rune: 'a', Style: tcell.StyleDefault},
-		Token{Rune: 'b', Style: tcell.StyleDefault.Bold(true)},
-		Token{Rune: 'c', Style: tcell.StyleDefault},
-	}, tokens)
+	assert.Equal(t, len(tokens), 3)
+	assert.Equal(t, tokens[0], Token{Rune: 'a', Style: tcell.StyleDefault})
+	assert.Equal(t, tokens[1], Token{Rune: 'b', Style: tcell.StyleDefault.Bold(true)})
+	assert.Equal(t, tokens[2], Token{Rune: 'c', Style: tcell.StyleDefault})
 
 	// Underline
-	tokens, _ = TokensFromString("ab\b_c")
-	assert.Equal(t, []Token{
-		Token{Rune: 'a', Style: tcell.StyleDefault},
-		Token{Rune: 'b', Style: tcell.StyleDefault.Underline(true)},
-		Token{Rune: 'c', Style: tcell.StyleDefault},
-	}, tokens)
+	tokens, _ = TokensFromString("a_\bbc")
+	assert.Equal(t, len(tokens), 3)
+	assert.Equal(t, tokens[0], Token{Rune: 'a', Style: tcell.StyleDefault})
+	assert.Equal(t, tokens[1], Token{Rune: 'b', Style: tcell.StyleDefault.Underline(true)})
+	assert.Equal(t, tokens[2], Token{Rune: 'c', Style: tcell.StyleDefault})
 
 	// Bullet point
 	tokens, _ = TokensFromString("a+\bob")
-	assert.Equal(t, []Token{
-		Token{Rune: 'a', Style: tcell.StyleDefault},
-		Token{Rune: '•', Style: tcell.StyleDefault},
-		Token{Rune: 'b', Style: tcell.StyleDefault},
-	}, tokens)
+	assert.Equal(t, len(tokens), 3)
+	assert.Equal(t, tokens[0], Token{Rune: 'a', Style: tcell.StyleDefault})
+	assert.Equal(t, tokens[1], Token{Rune: '•', Style: tcell.StyleDefault})
+	assert.Equal(t, tokens[2], Token{Rune: 'b', Style: tcell.StyleDefault})
 }
 
 func TestConsumeCompositeColorHappy(t *testing.T) {
