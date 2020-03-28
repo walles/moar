@@ -2,6 +2,7 @@ package m
 
 import (
 	"bufio"
+	"bytes"
 	"fmt"
 	"io"
 	"math"
@@ -13,6 +14,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	log "github.com/sirupsen/logrus"
 )
 
 // Reader reads a file into an array of strings.
@@ -23,10 +26,11 @@ import (
 //
 // This package should provide query methods for the struct, no peeking!!
 type Reader struct {
-	lines []string
-	name  *string
-	lock  *sync.Mutex
-	err   error
+	lines   []string
+	name    *string
+	lock    *sync.Mutex
+	err     error
+	_stderr io.Reader
 
 	done           chan bool
 	moreLinesAdded chan bool
@@ -60,14 +64,23 @@ func _ReadStream(stream io.Reader, reader *Reader, fromFilter *exec.Cmd) {
 			fromFilter.Process.Kill()
 		})
 
+		stderrText := ""
+		if reader._stderr != nil {
+			// Drain the reader's stderr into a string for possible inclusion in an error message
+			buffer := new(bytes.Buffer)
+			buffer.ReadFrom(reader._stderr)
+			stderrText = strings.TrimSpace(buffer.String())
+		}
+
 		err := fromFilter.Wait()
 		timer.Stop()
 
+		// Don't overwrite any existing problem report
 		if reader.err == nil {
-			// Don't overwrite any existing problem report
-
-			// FIXME: Add filter stderr contents to the error reported here
 			reader.err = err
+			if err != nil && stderrText != "" {
+				reader.err = fmt.Errorf("%s: %w", stderrText, err)
+			}
 		}
 
 		// FIXME: Report any filter printouts to stderr to the user
@@ -191,6 +204,13 @@ func NewReaderFromCommand(filename string, filterCommand ...string) (*Reader, er
 		return nil, err
 	}
 
+	filterErr, err := filter.StderrPipe()
+	if err != nil {
+		// The error stream is only used in case of failures, and having it
+		// nil is fine, so just log this and move along.
+		log.Warnf("Stderr not available from %s: %s", filterCommand[0], err.Error())
+	}
+
 	err = filter.Start()
 	if err != nil {
 		return nil, err
@@ -199,6 +219,7 @@ func NewReaderFromCommand(filename string, filterCommand ...string) (*Reader, er
 	reader := NewReaderFromStream(filterOut, filter)
 	reader.lock.Lock()
 	reader.name = &filename
+	reader._stderr = filterErr
 	reader.lock.Unlock()
 	return reader, nil
 }
