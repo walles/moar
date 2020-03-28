@@ -241,11 +241,19 @@ func TestFilterPermissionDenied(t *testing.T) {
 }
 
 func TestFilterFileNotFound(t *testing.T) {
-	// The example file name needs to be one supported by one of our filters.
-	// ".md" is good, it is supported by highlight.
-	_, err := NewReaderFromFilename("/doesntexist.md")
-	assert.Check(t, err != nil, "Opening non-existing file should have been an error")
-	assert.Check(t, strings.HasPrefix(err.Error(), "open /doesntexist.md: "), err.Error())
+	// What happens if the filter cannot read its input file?
+	NonExistentPath := "/does-not-exist"
+
+	reader, err := NewReaderFromCommand(NonExistentPath, "cat")
+
+	// Creating should be fine, it's waiting for it to finish that should fail.
+	// Feel free to re-evaluate in the future.
+	assert.Check(t, err == nil)
+
+	err = reader._Wait()
+	assert.Check(t, err != nil)
+
+	assert.Check(t, strings.Contains(err.Error(), NonExistentPath), err.Error())
 }
 
 func TestFilterNotAFile(t *testing.T) {
