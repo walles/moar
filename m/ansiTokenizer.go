@@ -150,16 +150,16 @@ func _ConsumeUnderline(runes []rune, index int) (int, *Token) {
 	}
 }
 
-// Consume '+<o', where '<' is backspace and the result is a unicode bullet.
+// Consume '+<+<o<o', where '<' is backspace and the result is a unicode bullet.
 //
 // Used on man pages, try "man printf" on macOS for one example.
 func _ConsumeBullet(runes []rune, index int) (int, *Token) {
-	if index+2 >= len(runes) {
+	pattern := "+\b+\bo\bo"
+	if index+len(pattern) > len(runes) {
 		// Not enough runes left for a bullet
 		return index, nil
 	}
 
-	pattern := "+\bo"
 	for delta, patternChar := range pattern {
 		if rune(patternChar) != runes[index+delta] {
 			// Bullet pattern mismatch, never mind

@@ -73,8 +73,9 @@ func TestManPages(t *testing.T) {
 	assert.Equal(t, tokens[1], Token{Rune: 'b', Style: tcell.StyleDefault.Underline(true)})
 	assert.Equal(t, tokens[2], Token{Rune: 'c', Style: tcell.StyleDefault})
 
-	// Bullet point
-	tokens, _ = TokensFromString("a+\bob")
+	// Bullet point, taken from doing this on my macOS system:
+	// env PAGER="hexdump -C" man printf | moar
+	tokens, _ = TokensFromString("a+\b+\bo\bob")
 	assert.Equal(t, len(tokens), 3)
 	assert.Equal(t, tokens[0], Token{Rune: 'a', Style: tcell.StyleDefault})
 	assert.Equal(t, tokens[1], Token{Rune: '•', Style: tcell.StyleDefault})
