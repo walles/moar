@@ -150,28 +150,36 @@ func _ConsumeUnderline(runes []rune, index int) (int, *Token) {
 	}
 }
 
-// Consume '+<+<o<o', where '<' is backspace and the result is a unicode bullet.
+// Consume '+<+<o<o' / '+<o', where '<' is backspace and the result is a unicode bullet.
 //
 // Used on man pages, try "man printf" on macOS for one example.
 func _ConsumeBullet(runes []rune, index int) (int, *Token) {
-	pattern := "+\b+\bo\bo"
-	if index+len(pattern) > len(runes) {
-		// Not enough runes left for a bullet
-		return index, nil
-	}
+	patterns := []string{"+\bo", "+\b+\bo\bo"}
+	for _, pattern := range patterns {
+		if index+len(pattern) > len(runes) {
+			// Not enough runes left for a bullet
+			continue
+		}
 
-	for delta, patternChar := range pattern {
-		if rune(patternChar) != runes[index+delta] {
-			// Bullet pattern mismatch, never mind
-			return index, nil
+		mismatch := false
+		for delta, patternChar := range pattern {
+			if rune(patternChar) != runes[index+delta] {
+				// Bullet pattern mismatch, never mind
+				mismatch = true
+			}
+		}
+		if mismatch {
+			continue
+		}
+
+		// We have a match!
+		return index + len(pattern), &Token{
+			Rune:  '•', // Unicode bullet point
+			Style: tcell.StyleDefault,
 		}
 	}
 
-	// We have a match!
-	return index + len(pattern), &Token{
-		Rune:  '•', // Unicode bullet point
-		Style: tcell.StyleDefault,
-	}
+	return index, nil
 }
 
 func _TokensFromStyledString(styledString _StyledString) []Token {
