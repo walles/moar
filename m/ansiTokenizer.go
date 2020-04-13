@@ -276,11 +276,17 @@ func _UpdateStyle(style tcell.Style, escapeSequence string) tcell.Style {
 		case "1":
 			style = style.Bold(true)
 
+		case "3":
+			style = style.Italic(true)
+
 		case "4":
 			style = style.Underline(true)
 
 		case "7":
 			style = style.Reverse(true)
+
+		case "23":
+			style = style.Italic(false)
 
 		case "24":
 			style = style.Underline(false)
