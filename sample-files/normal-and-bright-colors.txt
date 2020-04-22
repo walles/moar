@@ -1,0 +1,17 @@
+[30mBlack[m
+[31mRed[m
+[32mGreen[m
+[33mYellow[m
+[34mBlue[m
+[35mMagenta[m
+[36mCyan[m
+[37mWhite[m
+
+[90mBright Black[m
+[91mBright Red[m
+[92mBright Green[m
+[93mBright Yellow[m
+[94mBright Blue[m
+[95mBright Magenta[m
+[96mBright Cyan[m
+[97mBright White[m
