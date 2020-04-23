@@ -47,6 +47,12 @@ If a binary for your platform is not available, please
 [file a ticket](https://github.com/walles/moar/releases) or contact
 <johan.walles@gmail.com>.
 
+Debian / Ubuntu
+---------------
+
+[A Request for Packaging is open](https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=944035),
+please help!
+
 Setting Moar as Your Default Pager
 ----------------------------------
 
