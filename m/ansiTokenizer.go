@@ -352,31 +352,28 @@ func _UpdateStyle(style tcell.Style, escapeSequence string) tcell.Style {
 		case "49":
 			style = style.Background(tcell.ColorDefault)
 
-		// Bright foreground colors. Treat them as their plain counterparts.
+		// Bright foreground colors.
 		//
 		// After testing vs less and cat on iTerm2 3.3.9 / macOS Catalina
-		// 10.15.4 that's how they seem to handle this.
-		//
-		// Counter examples welcome.
-		//
-		// Wikipedia indicates we should maybe use bold as well for these:
-		// https://en.wikipedia.org/wiki/ANSI_escape_code#3/4_bit
+		// 10.15.4 that's how they seem to handle this, tested with:
+		// * TERM=xterm-256color
+		// * TERM=screen-256color
 		case "90":
-			style = style.Foreground(0)
+			style = style.Foreground(8)
 		case "91":
-			style = style.Foreground(1)
+			style = style.Foreground(9)
 		case "92":
-			style = style.Foreground(2)
+			style = style.Foreground(10)
 		case "93":
-			style = style.Foreground(3)
+			style = style.Foreground(11)
 		case "94":
-			style = style.Foreground(4)
+			style = style.Foreground(12)
 		case "95":
-			style = style.Foreground(5)
+			style = style.Foreground(13)
 		case "96":
-			style = style.Foreground(6)
+			style = style.Foreground(14)
 		case "97":
-			style = style.Foreground(7)
+			style = style.Foreground(15)
 
 		default:
 			log.Warnf("Unrecognized ANSI SGR code <%s>", number)
