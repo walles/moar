@@ -2,13 +2,14 @@ package m
 
 import (
 	"fmt"
-	log "github.com/sirupsen/logrus"
 	"os"
 	"regexp"
 	"strconv"
 	"time"
 	"unicode"
 	"unicode/utf8"
+
+	log "github.com/sirupsen/logrus"
 
 	"github.com/gdamore/tcell"
 )
@@ -66,6 +67,7 @@ Miscellaneous
 Moving around
 -------------
 * Arrow keys
+* 'h', 'l' for left and right (as in vim)
 * Left / right can be used to hide / show line numbers
 * PageUp / 'b' and PageDown / 'f'
 * Half page 'u'p / 'd'own
@@ -240,7 +242,7 @@ func (p *Pager) _AddLines(spinner string) {
 		p._SetFooter("Not found: " + p.searchString)
 
 	case _Viewing:
-		helpText := "Press ESC / q to exit, '/' to search, 'h' for help"
+		helpText := "Press ESC / q to exit, '/' to search, '?' for help"
 		if p.isShowingHelp {
 			helpText = "Press ESC / q to exit help, '/' to search"
 		}
@@ -600,7 +602,7 @@ func (p *Pager) _OnRune(char rune) {
 	case 'q':
 		p.Quit()
 
-	case 'h':
+	case '?':
 		if !p.isShowingHelp {
 			p.preHelpState = &_PreHelpState{
 				reader:              p.reader,
@@ -620,6 +622,14 @@ func (p *Pager) _OnRune(char rune) {
 	case 'j', 'e':
 		// Clipping is done in _AddLines()
 		p.firstLineOneBased++
+
+	case 'l':
+		// vim right
+		p._MoveRight(16)
+
+	case 'h':
+		// vim left
+		p._MoveRight(-16)
 
 	case '<', 'g':
 		p.firstLineOneBased = 1
