@@ -103,6 +103,9 @@ Install (into `/usr/local/bin`) from source:
 Making a new Release
 --------------------
 
+Make sure that [screenshot.png](screenshot.png) matches moar's current UI.
+If it doesn't, scale a window to 81x16 characters and make a new one.
+
 Execute `release.sh` and follow instructions.
 
 TODO
