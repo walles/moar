@@ -276,6 +276,9 @@ func _UpdateStyle(style tcell.Style, escapeSequence string) tcell.Style {
 		case "1":
 			style = style.Bold(true)
 
+		case "2":
+			style = style.Dim(true)
+
 		case "3":
 			style = style.Italic(true)
 
@@ -284,6 +287,9 @@ func _UpdateStyle(style tcell.Style, escapeSequence string) tcell.Style {
 
 		case "7":
 			style = style.Reverse(true)
+
+		case "22":
+			style = style.Bold(false).Dim(false)
 
 		case "23":
 			style = style.Italic(false)
