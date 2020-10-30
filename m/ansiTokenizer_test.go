@@ -11,7 +11,7 @@ import (
 
 	"gotest.tools/assert"
 
-	"github.com/gdamore/tcell"
+	"github.com/gdamore/tcell/v2"
 )
 
 // Verify that we can tokenize all lines in ../sample-files/*
@@ -96,7 +96,9 @@ func TestConsumeCompositeColorHappy(t *testing.T) {
 	newIndex, color, err := consumeCompositeColor([]string{"38", "5", "74"}, 0)
 	assert.NilError(t, err)
 	assert.Equal(t, newIndex, 3)
-	assert.Equal(t, *color, tcell.Color74)
+
+	// This comparison is a workaround for https://github.com/gdamore/tcell/issues/404
+	assert.Equal(t, *color-16, tcell.Color74-tcell.Color16)
 
 	// 24 bit color
 	newIndex, color, err = consumeCompositeColor([]string{"38", "2", "10", "20", "30"}, 0)
@@ -111,7 +113,9 @@ func TestConsumeCompositeColorHappyMidSequence(t *testing.T) {
 	newIndex, color, err := consumeCompositeColor([]string{"whatever", "38", "5", "74"}, 1)
 	assert.NilError(t, err)
 	assert.Equal(t, newIndex, 4)
-	assert.Equal(t, *color, tcell.Color74)
+
+	// This comparison is a workaround for https://github.com/gdamore/tcell/issues/404
+	assert.Equal(t, *color-16, tcell.Color74-tcell.Color16)
 
 	// 24 bit color
 	newIndex, color, err = consumeCompositeColor([]string{"whatever", "38", "2", "10", "20", "30"}, 1)

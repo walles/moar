@@ -3,7 +3,6 @@ package main
 import (
 	"flag"
 	"fmt"
-	log "github.com/sirupsen/logrus"
 	"io"
 	"os"
 	"os/exec"
@@ -11,7 +10,9 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/gdamore/tcell"
+	log "github.com/sirupsen/logrus"
+
+	"github.com/gdamore/tcell/v2"
 	"github.com/walles/moar/m"
 
 	"golang.org/x/crypto/ssh/terminal"
