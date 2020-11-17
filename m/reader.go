@@ -231,6 +231,13 @@ func _CanHighlight(filename string) bool {
 		return false
 	}
 
+	if extension == ".txt" {
+		// Highlighting text files won't be of much use.
+		//
+		// Also: https://github.com/walles/moar/issues/29
+		return false
+	}
+
 	// Remove leading dot from the extension
 	extension = extension[1:]
 

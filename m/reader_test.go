@@ -158,7 +158,7 @@ func TestGetLongLine(t *testing.T) {
 	assert.Equal(t, len(lines.lines), 1)
 
 	line := lines.lines[0]
-	assert.Assert(t, strings.HasPrefix(line, "1 2 3 4"), line)
+	assert.Assert(t, strings.HasPrefix(line, "1 2 3 4"), "<%s>", line)
 	assert.Assert(t, strings.HasSuffix(line, "0123456789"), line)
 
 	stat, err := os.Stat(file)
