@@ -41,7 +41,7 @@ Installing
 1. Download `moar` for your platform from
    <https://github.com/walles/moar/releases/latest>
 1. `chmod a+x moar-*-*-*`
-1. `sudo mv moar-*-*-* /usr/local/bin`
+1. `sudo mv moar-*-*-* /usr/local/bin/moar`
 
 And now you can just invoke `moar` from the prompt!
 
