@@ -96,9 +96,7 @@ func TestConsumeCompositeColorHappy(t *testing.T) {
 	newIndex, color, err := consumeCompositeColor([]string{"38", "5", "74"}, 0)
 	assert.NilError(t, err)
 	assert.Equal(t, newIndex, 3)
-
-	// This comparison is a workaround for https://github.com/gdamore/tcell/issues/404
-	assert.Equal(t, *color-16, tcell.Color74-tcell.Color16)
+	assert.Equal(t, *color, tcell.Color74)
 
 	// 24 bit color
 	newIndex, color, err = consumeCompositeColor([]string{"38", "2", "10", "20", "30"}, 0)
@@ -113,9 +111,7 @@ func TestConsumeCompositeColorHappyMidSequence(t *testing.T) {
 	newIndex, color, err := consumeCompositeColor([]string{"whatever", "38", "5", "74"}, 1)
 	assert.NilError(t, err)
 	assert.Equal(t, newIndex, 4)
-
-	// This comparison is a workaround for https://github.com/gdamore/tcell/issues/404
-	assert.Equal(t, *color-16, tcell.Color74-tcell.Color16)
+	assert.Equal(t, *color, tcell.Color74)
 
 	// 24 bit color
 	newIndex, color, err = consumeCompositeColor([]string{"whatever", "38", "2", "10", "20", "30"}, 1)
@@ -180,4 +176,9 @@ func TestConsumeCompositeColorIncomplete24Bit(t *testing.T) {
 	_, color, err = consumeCompositeColor([]string{"whatever", "38", "2", "10", "20"}, 1)
 	assert.Equal(t, err.Error(), "Incomplete 24 bit color sequence, expected N8;2;R;G;Bm: <CSI 38;2;10;20m>")
 	assert.Assert(t, color == nil)
+}
+
+func TestUpdateStyle(t *testing.T) {
+	numberColored := _UpdateStyle(tcell.StyleDefault, "\x1b[33m")
+	assert.Equal(t, numberColored, tcell.StyleDefault.Foreground(tcell.ColorOlive))
 }

@@ -428,7 +428,8 @@ func consumeCompositeColor(numbers []string, index int) (int, *tcell.Color, erro
 			return -1, nil, err
 		}
 
-		colorValue := tcell.Color(colorNumber)
+		// Workaround for https://github.com/gdamore/tcell/issues/404
+		colorValue := tcell.Color(int64(tcell.Color16) - 16 + int64(colorNumber))
 		return index + 1, &colorValue, nil
 	}
 
