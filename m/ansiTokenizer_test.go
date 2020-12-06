@@ -11,7 +11,7 @@ import (
 
 	"gotest.tools/assert"
 
-	"github.com/gdamore/tcell"
+	"github.com/gdamore/tcell/v2"
 )
 
 // Verify that we can tokenize all lines in ../sample-files/*
@@ -176,4 +176,9 @@ func TestConsumeCompositeColorIncomplete24Bit(t *testing.T) {
 	_, color, err = consumeCompositeColor([]string{"whatever", "38", "2", "10", "20"}, 1)
 	assert.Equal(t, err.Error(), "Incomplete 24 bit color sequence, expected N8;2;R;G;Bm: <CSI 38;2;10;20m>")
 	assert.Assert(t, color == nil)
+}
+
+func TestUpdateStyle(t *testing.T) {
+	numberColored := _UpdateStyle(tcell.StyleDefault, "\x1b[33m")
+	assert.Equal(t, numberColored, tcell.StyleDefault.Foreground(tcell.ColorOlive))
 }
