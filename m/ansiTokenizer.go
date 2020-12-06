@@ -56,7 +56,7 @@ func _TermcapToStyle(termcap string) tcell.Style {
 func TokensFromString(s string) ([]Token, *string) {
 	var tokens []Token
 
-	styleBrokenUtf8 := tcell.StyleDefault.Background(7).Foreground(1)
+	styleBrokenUtf8 := tcell.StyleDefault.Background(tcell.ColorSilver).Foreground(tcell.ColorMaroon)
 
 	for _, styledString := range _StyledStringsFromString(s) {
 		for _, token := range _TokensFromStyledString(styledString) {
@@ -300,23 +300,23 @@ func _UpdateStyle(style tcell.Style, escapeSequence string) tcell.Style {
 		case "27":
 			style = style.Reverse(false)
 
-		// Foreground colors
+		// Foreground colors, https://pkg.go.dev/github.com/gdamore/tcell#Color
 		case "30":
-			style = style.Foreground(0)
+			style = style.Foreground(tcell.ColorBlack)
 		case "31":
-			style = style.Foreground(1)
+			style = style.Foreground(tcell.ColorMaroon)
 		case "32":
-			style = style.Foreground(2)
+			style = style.Foreground(tcell.ColorGreen)
 		case "33":
-			style = style.Foreground(3)
+			style = style.Foreground(tcell.ColorOlive)
 		case "34":
-			style = style.Foreground(4)
+			style = style.Foreground(tcell.ColorNavy)
 		case "35":
-			style = style.Foreground(5)
+			style = style.Foreground(tcell.ColorPurple)
 		case "36":
-			style = style.Foreground(6)
+			style = style.Foreground(tcell.ColorTeal)
 		case "37":
-			style = style.Foreground(7)
+			style = style.Foreground(tcell.ColorSilver)
 		case "38":
 			var err error = nil
 			var color *tcell.Color
@@ -329,23 +329,23 @@ func _UpdateStyle(style tcell.Style, escapeSequence string) tcell.Style {
 		case "39":
 			style = style.Foreground(tcell.ColorDefault)
 
-		// Background colors
+		// Background colors, see https://pkg.go.dev/github.com/gdamore/tcell#Color
 		case "40":
-			style = style.Background(0)
+			style = style.Background(tcell.ColorBlack)
 		case "41":
-			style = style.Background(1)
+			style = style.Background(tcell.ColorMaroon)
 		case "42":
-			style = style.Background(2)
+			style = style.Background(tcell.ColorGreen)
 		case "43":
-			style = style.Background(3)
+			style = style.Background(tcell.ColorOlive)
 		case "44":
-			style = style.Background(4)
+			style = style.Background(tcell.ColorNavy)
 		case "45":
-			style = style.Background(5)
+			style = style.Background(tcell.ColorPurple)
 		case "46":
-			style = style.Background(6)
+			style = style.Background(tcell.ColorTeal)
 		case "47":
-			style = style.Background(7)
+			style = style.Background(tcell.ColorSilver)
 		case "48":
 			var err error = nil
 			var color *tcell.Color
@@ -358,28 +358,28 @@ func _UpdateStyle(style tcell.Style, escapeSequence string) tcell.Style {
 		case "49":
 			style = style.Background(tcell.ColorDefault)
 
-		// Bright foreground colors.
+		// Bright foreground colors: see https://pkg.go.dev/github.com/gdamore/tcell#Color
 		//
 		// After testing vs less and cat on iTerm2 3.3.9 / macOS Catalina
 		// 10.15.4 that's how they seem to handle this, tested with:
 		// * TERM=xterm-256color
 		// * TERM=screen-256color
 		case "90":
-			style = style.Foreground(8)
+			style = style.Foreground(tcell.ColorGray)
 		case "91":
-			style = style.Foreground(9)
+			style = style.Foreground(tcell.ColorRed)
 		case "92":
-			style = style.Foreground(10)
+			style = style.Foreground(tcell.ColorLime)
 		case "93":
-			style = style.Foreground(11)
+			style = style.Foreground(tcell.ColorYellow)
 		case "94":
-			style = style.Foreground(12)
+			style = style.Foreground(tcell.ColorBlue)
 		case "95":
-			style = style.Foreground(13)
+			style = style.Foreground(tcell.ColorFuchsia)
 		case "96":
-			style = style.Foreground(14)
+			style = style.Foreground(tcell.ColorAqua)
 		case "97":
-			style = style.Foreground(15)
+			style = style.Foreground(tcell.ColorWhite)
 
 		default:
 			log.Warnf("Unrecognized ANSI SGR code <%s>", number)

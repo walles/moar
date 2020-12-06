@@ -54,14 +54,14 @@ func TestFgColorRendering(t *testing.T) {
 	}
 
 	var answers = []Token{
-		_CreateExpectedCell('a', tcell.StyleDefault.Foreground(0)),
-		_CreateExpectedCell('b', tcell.StyleDefault.Foreground(1)),
-		_CreateExpectedCell('c', tcell.StyleDefault.Foreground(2)),
-		_CreateExpectedCell('d', tcell.StyleDefault.Foreground(3)),
-		_CreateExpectedCell('e', tcell.StyleDefault.Foreground(4)),
-		_CreateExpectedCell('f', tcell.StyleDefault.Foreground(5)),
-		_CreateExpectedCell('g', tcell.StyleDefault.Foreground(6)),
-		_CreateExpectedCell('h', tcell.StyleDefault.Foreground(7)),
+		_CreateExpectedCell('a', tcell.StyleDefault.Foreground(tcell.ColorBlack)),
+		_CreateExpectedCell('b', tcell.StyleDefault.Foreground(tcell.ColorMaroon)),
+		_CreateExpectedCell('c', tcell.StyleDefault.Foreground(tcell.ColorGreen)),
+		_CreateExpectedCell('d', tcell.StyleDefault.Foreground(tcell.ColorOlive)),
+		_CreateExpectedCell('e', tcell.StyleDefault.Foreground(tcell.ColorNavy)),
+		_CreateExpectedCell('f', tcell.StyleDefault.Foreground(tcell.ColorPurple)),
+		_CreateExpectedCell('g', tcell.StyleDefault.Foreground(tcell.ColorTeal)),
+		_CreateExpectedCell('h', tcell.StyleDefault.Foreground(tcell.ColorSilver)),
 		_CreateExpectedCell('i', tcell.StyleDefault),
 	}
 
@@ -83,7 +83,7 @@ func TestBrokenUtf8(t *testing.T) {
 		_CreateExpectedCell('a', tcell.StyleDefault),
 		_CreateExpectedCell('b', tcell.StyleDefault),
 		_CreateExpectedCell('c', tcell.StyleDefault),
-		_CreateExpectedCell('?', tcell.StyleDefault.Foreground(1).Background(7)),
+		_CreateExpectedCell('?', tcell.StyleDefault.Foreground(tcell.ColorMaroon).Background(tcell.ColorSilver)),
 		_CreateExpectedCell('d', tcell.StyleDefault),
 		_CreateExpectedCell('e', tcell.StyleDefault),
 		_CreateExpectedCell('f', tcell.StyleDefault),
@@ -175,13 +175,13 @@ func TestCodeHighlighting(t *testing.T) {
 	}
 
 	var answers = []Token{
-		_CreateExpectedCell('p', tcell.StyleDefault.Foreground(3)),
-		_CreateExpectedCell('a', tcell.StyleDefault.Foreground(3)),
-		_CreateExpectedCell('c', tcell.StyleDefault.Foreground(3)),
-		_CreateExpectedCell('k', tcell.StyleDefault.Foreground(3)),
-		_CreateExpectedCell('a', tcell.StyleDefault.Foreground(3)),
-		_CreateExpectedCell('g', tcell.StyleDefault.Foreground(3)),
-		_CreateExpectedCell('e', tcell.StyleDefault.Foreground(3)),
+		_CreateExpectedCell('p', tcell.StyleDefault.Foreground(tcell.ColorOlive)),
+		_CreateExpectedCell('a', tcell.StyleDefault.Foreground(tcell.ColorOlive)),
+		_CreateExpectedCell('c', tcell.StyleDefault.Foreground(tcell.ColorOlive)),
+		_CreateExpectedCell('k', tcell.StyleDefault.Foreground(tcell.ColorOlive)),
+		_CreateExpectedCell('a', tcell.StyleDefault.Foreground(tcell.ColorOlive)),
+		_CreateExpectedCell('g', tcell.StyleDefault.Foreground(tcell.ColorOlive)),
+		_CreateExpectedCell('e', tcell.StyleDefault.Foreground(tcell.ColorOlive)),
 		_CreateExpectedCell(' ', tcell.StyleDefault),
 		_CreateExpectedCell('m', tcell.StyleDefault),
 	}
@@ -214,7 +214,7 @@ func TestManPageFormatting(t *testing.T) {
 	_TestManPageFormatting(t, "_\x08x", _CreateExpectedCell('x', tcell.StyleDefault.Underline(true)))
 
 	// Corner cases
-	_TestManPageFormatting(t, "\x08", _CreateExpectedCell('<', tcell.StyleDefault.Foreground(1).Background(7)))
+	_TestManPageFormatting(t, "\x08", _CreateExpectedCell('<', tcell.StyleDefault.Foreground(tcell.ColorMaroon).Background(tcell.ColorSilver)))
 
 	// FIXME: Test two consecutive backspaces
 
