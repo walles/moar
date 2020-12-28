@@ -72,6 +72,27 @@ Issues
 Issues are tracked [here](https://github.com/walles/moar/issues), or
 you can send questions to <johan.walles@gmail.com>.
 
+Embedding
+---------
+
+Here's how to embed `moar` in your app:
+
+```go
+package main
+
+import (
+	"github.com/walles/moar/m"
+)
+
+func main() {
+	err := m.PageString("Months", "March, April\nMay")
+	if err != nil {
+		// Handle pager problems
+		panic(err)
+	}
+}
+```
+
 Developing
 ----------
 
