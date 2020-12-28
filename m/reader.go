@@ -177,10 +177,13 @@ func NewReaderFromStream(reader io.Reader, fromFilter *exec.Cmd) *Reader {
 // NewReaderFromText creates a Reader from a block of text
 func NewReaderFromText(name string, text string) *Reader {
 	noExternalNewlines := strings.Trim(text, "\n")
+	done := make(chan bool, 1)
+	done <- true
 	return &Reader{
 		name:  &name,
 		lines: strings.Split(noExternalNewlines, "\n"),
 		lock:  &sync.Mutex{},
+		done:  done,
 	}
 }
 
