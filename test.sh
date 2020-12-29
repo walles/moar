@@ -2,7 +2,7 @@
 
 set -e -o pipefail
 
-echo Test that we only pass tcell.Color constants to these methods, not numbers
+# Test that we only pass tcell.Color constants to these methods, not numbers
 grep -En 'Foreground\([1-9]' ./*.go ./*/*.go && exit 1
 grep -En 'Background\([1-9]' ./*.go ./*/*.go && exit 1
 

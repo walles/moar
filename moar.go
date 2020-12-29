@@ -20,7 +20,7 @@ import (
 
 var versionString = "Should be set when building, please use build.sh to build"
 
-func _PrintUsage(output io.Writer) {
+func printUsage(output io.Writer) {
 	// This controls where PrintDefaults() prints, see below
 	flag.CommandLine.SetOutput(output)
 
@@ -90,7 +90,7 @@ func main() {
 	}()
 
 	flag.Usage = func() {
-		_PrintUsage(os.Stdout)
+		printUsage(os.Stdout)
 	}
 	printVersion := flag.Bool("version", false, "Prints the moar version number")
 	debug := flag.Bool("debug", false, "Print debug logs after exiting")
@@ -118,14 +118,14 @@ func main() {
 	if stdinIsRedirected && !stdoutIsRedirected {
 		// Display input pipe contents
 		reader := m.NewReaderFromStream(os.Stdin, nil)
-		_StartPaging(reader)
+		startPaging(reader)
 		return
 	}
 
 	if len(flag.Args()) != 1 {
 		fmt.Fprintln(os.Stderr, "ERROR: Expected exactly one filename, got: ", flag.Args())
 		fmt.Fprintln(os.Stderr)
-		_PrintUsage(os.Stderr)
+		printUsage(os.Stderr)
 
 		os.Exit(1)
 	}
@@ -150,10 +150,10 @@ func main() {
 		fmt.Fprintf(os.Stderr, "%v\n", err)
 		os.Exit(1)
 	}
-	_StartPaging(reader)
+	startPaging(reader)
 }
 
-func _StartPaging(reader *m.Reader) {
+func startPaging(reader *m.Reader) {
 	screen, e := tcell.NewScreen()
 	if e != nil {
 		panic(e)

@@ -14,12 +14,12 @@ func GetMatchRanges(String *string, Pattern *regexp.Regexp) *MatchRanges {
 	}
 
 	return &MatchRanges{
-		Matches: _ToRunePositions(Pattern.FindAllStringIndex(*String, -1), String),
+		Matches: toRunePositions(Pattern.FindAllStringIndex(*String, -1), String),
 	}
 }
 
 // Convert byte indices to rune indices
-func _ToRunePositions(byteIndices [][]int, matchedString *string) [][2]int {
+func toRunePositions(byteIndices [][]int, matchedString *string) [][2]int {
 	// FIXME: Will this function need to handle overlapping ranges?
 
 	var returnMe [][2]int

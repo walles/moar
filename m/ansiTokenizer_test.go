@@ -17,7 +17,7 @@ import (
 // Verify that we can tokenize all lines in ../sample-files/*
 // without logging any errors
 func TestTokenize(t *testing.T) {
-	for _, fileName := range _GetTestFiles() {
+	for _, fileName := range getTestFiles() {
 		file, err := os.Open(fileName)
 		if err != nil {
 			t.Errorf("Error opening file <%s>: %s", fileName, err.Error())
@@ -179,6 +179,6 @@ func TestConsumeCompositeColorIncomplete24Bit(t *testing.T) {
 }
 
 func TestUpdateStyle(t *testing.T) {
-	numberColored := _UpdateStyle(tcell.StyleDefault, "\x1b[33m")
+	numberColored := updateStyle(tcell.StyleDefault, "\x1b[33m")
 	assert.Equal(t, numberColored, tcell.StyleDefault.Foreground(tcell.ColorOlive))
 }

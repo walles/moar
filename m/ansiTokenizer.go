@@ -30,22 +30,22 @@ func SetManPageFormatFromEnv() {
 
 	lessTermcapMd := os.Getenv("LESS_TERMCAP_md")
 	if lessTermcapMd != "" {
-		manPageBold = _TermcapToStyle(lessTermcapMd)
+		manPageBold = termcapToStyle(lessTermcapMd)
 	}
 
 	lessTermcapUs := os.Getenv("LESS_TERMCAP_us")
 	if lessTermcapUs != "" {
-		manPageUnderline = _TermcapToStyle(lessTermcapUs)
+		manPageUnderline = termcapToStyle(lessTermcapUs)
 	}
 }
 
 // Used from tests
-func _ResetManPageFormatForTesting() {
+func resetManPageFormatForTesting() {
 	manPageBold = tcell.StyleDefault.Bold(true)
 	manPageUnderline = tcell.StyleDefault.Underline(true)
 }
 
-func _TermcapToStyle(termcap string) tcell.Style {
+func termcapToStyle(termcap string) tcell.Style {
 	// Add a character to be sure we have one to take the format from
 	tokens, _ := TokensFromString(termcap + "x")
 	return tokens[len(tokens)-1].Style
@@ -58,8 +58,8 @@ func TokensFromString(s string) ([]Token, *string) {
 
 	styleBrokenUtf8 := tcell.StyleDefault.Background(tcell.ColorSilver).Foreground(tcell.ColorMaroon)
 
-	for _, styledString := range _StyledStringsFromString(s) {
-		for _, token := range _TokensFromStyledString(styledString) {
+	for _, styledString := range styledStringsFromString(s) {
+		for _, token := range tokensFromStyledString(styledString) {
 			switch token.Rune {
 
 			case '\x09': // TAB
@@ -103,7 +103,7 @@ func TokensFromString(s string) ([]Token, *string) {
 }
 
 // Consume 'x<x', where '<' is backspace and the result is a bold 'x'
-func _ConsumeBold(runes []rune, index int) (int, *Token) {
+func consumeBold(runes []rune, index int) (int, *Token) {
 	if index+2 >= len(runes) {
 		// Not enough runes left for a bold
 		return index, nil
@@ -127,7 +127,7 @@ func _ConsumeBold(runes []rune, index int) (int, *Token) {
 }
 
 // Consume '_<x', where '<' is backspace and the result is an underlined 'x'
-func _ConsumeUnderline(runes []rune, index int) (int, *Token) {
+func consumeUnderline(runes []rune, index int) (int, *Token) {
 	if index+2 >= len(runes) {
 		// Not enough runes left for a underline
 		return index, nil
@@ -153,7 +153,7 @@ func _ConsumeUnderline(runes []rune, index int) (int, *Token) {
 // Consume '+<+<o<o' / '+<o', where '<' is backspace and the result is a unicode bullet.
 //
 // Used on man pages, try "man printf" on macOS for one example.
-func _ConsumeBullet(runes []rune, index int) (int, *Token) {
+func consumeBullet(runes []rune, index int) (int, *Token) {
 	patterns := []string{"+\bo", "+\b+\bo\bo"}
 	for _, pattern := range patterns {
 		if index+len(pattern) > len(runes) {
@@ -182,26 +182,26 @@ func _ConsumeBullet(runes []rune, index int) (int, *Token) {
 	return index, nil
 }
 
-func _TokensFromStyledString(styledString _StyledString) []Token {
+func tokensFromStyledString(styledString _StyledString) []Token {
 	runes := []rune(styledString.String)
 	tokens := make([]Token, 0, len(runes))
 
 	for index := 0; index < len(runes); index++ {
-		nextIndex, token := _ConsumeBullet(runes, index)
+		nextIndex, token := consumeBullet(runes, index)
 		if nextIndex != index {
 			tokens = append(tokens, *token)
 			index = nextIndex - 1
 			continue
 		}
 
-		nextIndex, token = _ConsumeBold(runes, index)
+		nextIndex, token = consumeBold(runes, index)
 		if nextIndex != index {
 			tokens = append(tokens, *token)
 			index = nextIndex - 1
 			continue
 		}
 
-		nextIndex, token = _ConsumeUnderline(runes, index)
+		nextIndex, token = consumeUnderline(runes, index)
 		if nextIndex != index {
 			tokens = append(tokens, *token)
 			index = nextIndex - 1
@@ -222,7 +222,7 @@ type _StyledString struct {
 	Style  tcell.Style
 }
 
-func _StyledStringsFromString(s string) []_StyledString {
+func styledStringsFromString(s string) []_StyledString {
 	// This function was inspired by the
 	// https://golang.org/pkg/regexp/#Regexp.Split source code
 
@@ -247,7 +247,7 @@ func _StyledStringsFromString(s string) []_StyledString {
 		}
 
 		matchedPart := s[match[0]:match[1]]
-		style = _UpdateStyle(style, matchedPart)
+		style = updateStyle(style, matchedPart)
 
 		beg = match[1]
 	}
@@ -262,8 +262,8 @@ func _StyledStringsFromString(s string) []_StyledString {
 	return styledStrings
 }
 
-// _UpdateStyle parses a string of the form "ESC[33m" into changes to style
-func _UpdateStyle(style tcell.Style, escapeSequence string) tcell.Style {
+// updateStyle parses a string of the form "ESC[33m" into changes to style
+func updateStyle(style tcell.Style, escapeSequence string) tcell.Style {
 	numbers := strings.Split(escapeSequence[2:len(escapeSequence)-1], ";")
 	index := 0
 	for index < len(numbers) {

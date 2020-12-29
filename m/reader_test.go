@@ -14,7 +14,7 @@ import (
 	"gotest.tools/assert"
 )
 
-func _TestGetLineCount(t *testing.T, reader *Reader) {
+func testGetLineCount(t *testing.T, reader *Reader) {
 	if strings.Contains(*reader.name, "compressed") {
 		// We are no good at counting lines of compressed files, never mind
 		return
@@ -43,7 +43,7 @@ func _TestGetLineCount(t *testing.T, reader *Reader) {
 	}
 }
 
-func _TestGetLines(t *testing.T, reader *Reader) {
+func testGetLines(t *testing.T, reader *Reader) {
 	t.Logf("Testing file: %s...", *reader.name)
 
 	lines := reader.GetLines(1, 10)
@@ -102,7 +102,7 @@ func _TestGetLines(t *testing.T, reader *Reader) {
 	}
 }
 
-func _GetSamplesDir() string {
+func getSamplesDir() string {
 	// From: https://coderwall.com/p/_fmbug/go-get-path-to-current-file
 	_, filename, _, ok := runtime.Caller(0)
 	if !ok {
@@ -112,8 +112,8 @@ func _GetSamplesDir() string {
 	return path.Join(path.Dir(filename), "../sample-files")
 }
 
-func _GetTestFiles() []string {
-	files, err := ioutil.ReadDir(_GetSamplesDir())
+func getTestFiles() []string {
+	files, err := ioutil.ReadDir(getSamplesDir())
 	if err != nil {
 		panic(err)
 	}
@@ -127,7 +127,7 @@ func _GetTestFiles() []string {
 }
 
 func TestGetLines(t *testing.T) {
-	for _, file := range _GetTestFiles() {
+	for _, file := range getTestFiles() {
 		reader, err := NewReaderFromFilename(file)
 		if err != nil {
 			t.Errorf("Error opening file <%s>: %s", file, err.Error())
@@ -138,8 +138,8 @@ func TestGetLines(t *testing.T) {
 			continue
 		}
 
-		_TestGetLines(t, reader)
-		_TestGetLineCount(t, reader)
+		testGetLines(t, reader)
+		testGetLineCount(t, reader)
 	}
 }
 
@@ -171,7 +171,7 @@ func TestGetLongLine(t *testing.T) {
 	assert.Equal(t, len(line)+1, int(fileSize))
 }
 
-func _GetReaderWithLineCount(totalLines int) *Reader {
+func getReaderWithLineCount(totalLines int) *Reader {
 	reader := NewReaderFromStream(strings.NewReader(strings.Repeat("x\n", totalLines)), nil)
 	if err := reader._Wait(); err != nil {
 		panic(err)
@@ -180,20 +180,20 @@ func _GetReaderWithLineCount(totalLines int) *Reader {
 	return reader
 }
 
-func _TestStatusText(t *testing.T, fromLine int, toLine int, totalLines int, expected string) {
-	testMe := _GetReaderWithLineCount(totalLines)
+func testStatusText(t *testing.T, fromLine int, toLine int, totalLines int, expected string) {
+	testMe := getReaderWithLineCount(totalLines)
 	linesRequested := toLine - fromLine + 1
 	statusText := testMe.GetLines(fromLine, linesRequested).statusText
 	assert.Equal(t, statusText, expected)
 }
 
 func TestStatusText(t *testing.T) {
-	_TestStatusText(t, 1, 10, 20, "1-10/20 50%")
-	_TestStatusText(t, 1, 5, 5, "1-5/5 100%")
-	_TestStatusText(t, 998, 999, 1000, "998-999/1000 99%")
+	testStatusText(t, 1, 10, 20, "1-10/20 50%")
+	testStatusText(t, 1, 5, 5, "1-5/5 100%")
+	testStatusText(t, 998, 999, 1000, "998-999/1000 99%")
 
-	_TestStatusText(t, 0, 0, 0, "<empty>")
-	_TestStatusText(t, 1, 1, 1, "1-1/1 100%")
+	testStatusText(t, 0, 0, 0, "<empty>")
+	testStatusText(t, 1, 1, 1, "1-1/1 100%")
 
 	// Test with filename
 	testMe, err := NewReaderFromFilename("/dev/null")
@@ -208,8 +208,8 @@ func TestStatusText(t *testing.T) {
 	assert.Equal(t, statusText, "null: <empty>")
 }
 
-func _TestCompressedFile(t *testing.T, filename string) {
-	filenameWithPath := _GetSamplesDir() + "/" + filename
+func testCompressedFile(t *testing.T, filename string) {
+	filenameWithPath := getSamplesDir() + "/" + filename
 	reader, e := NewReaderFromFilename(filenameWithPath)
 	if e != nil {
 		t.Errorf("Error opening file <%s>: %s", filenameWithPath, e.Error())
@@ -223,9 +223,9 @@ func _TestCompressedFile(t *testing.T, filename string) {
 }
 
 func TestCompressedFiles(t *testing.T) {
-	_TestCompressedFile(t, "compressed.txt.gz")
-	_TestCompressedFile(t, "compressed.txt.bz2")
-	_TestCompressedFile(t, "compressed.txt.xz")
+	testCompressedFile(t, "compressed.txt.gz")
+	testCompressedFile(t, "compressed.txt.bz2")
+	testCompressedFile(t, "compressed.txt.xz")
 }
 
 func TestFilterNotInstalled(t *testing.T) {

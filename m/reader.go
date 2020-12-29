@@ -20,11 +20,10 @@ import (
 
 // Reader reads a file into an array of strings.
 //
-// When this thing grows up it's going to do the reading in the
-// background, and it will return parts of the read data upon
-// request.
+// It does the reading in the background, and it returns parts of the read data
+// upon request.
 //
-// This package should provide query methods for the struct, no peeking!!
+// This package provides query methods for the struct, no peeking!!
 type Reader struct {
 	lines   []string
 	name    *string
@@ -47,7 +46,7 @@ type Lines struct {
 	statusText string
 }
 
-func _ReadStream(stream io.Reader, reader *Reader, fromFilter *exec.Cmd) {
+func readStream(stream io.Reader, reader *Reader, fromFilter *exec.Cmd) {
 	// FIXME: Close the stream when done reading it?
 
 	defer func() {
@@ -169,7 +168,7 @@ func NewReaderFromStream(reader io.Reader, fromFilter *exec.Cmd) *Reader {
 
 	// FIXME: Make sure that if we panic somewhere inside of this goroutine,
 	// the main program terminates and prints our panic stack trace.
-	go _ReadStream(reader, &returnMe, fromFilter)
+	go readStream(reader, &returnMe, fromFilter)
 
 	return &returnMe
 }
@@ -227,7 +226,7 @@ func NewReaderFromCommand(filename string, filterCommand ...string) (*Reader, er
 	return reader, nil
 }
 
-func _CanHighlight(filename string) bool {
+func canHighlight(filename string) bool {
 	extension := filepath.Ext(filename)
 	if len(extension) <= 1 {
 		// No extension or a single "."
@@ -275,7 +274,7 @@ func _CanHighlight(filename string) bool {
 	return false
 }
 
-func _TryOpen(filename string) error {
+func tryOpen(filename string) error {
 	// Try opening the file
 	tryMe, err := os.Open(filename)
 	if err != nil {
@@ -297,7 +296,7 @@ func _TryOpen(filename string) error {
 
 // NewReaderFromFilename creates a new file reader
 func NewReaderFromFilename(filename string) (*Reader, error) {
-	fileError := _TryOpen(filename)
+	fileError := tryOpen(filename)
 	if fileError != nil {
 		return nil, fileError
 	}
@@ -314,7 +313,7 @@ func NewReaderFromFilename(filename string) (*Reader, error) {
 
 	// Highlight input file using highlight:
 	// http://www.andre-simon.de/doku/highlight/en/highlight.php
-	if _CanHighlight(filename) {
+	if canHighlight(filename) {
 		highlighted, err := NewReaderFromCommand(filename, "highlight", "--out-format=esc", "-i")
 		if err == nil {
 			return highlighted, err

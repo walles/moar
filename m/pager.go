@@ -129,13 +129,13 @@ func (p *Pager) _AddLine(fileLineNumber *int, maxPrefixLength int, screenLineNum
 		p.screen.SetContent(column, screenLineNumber, digit, nil, _NumberStyle)
 	}
 
-	tokens := _CreateScreenLine(p.leftColumnZeroBased, screenWidth-prefixLength, line, p.searchPattern)
+	tokens := createScreenLine(p.leftColumnZeroBased, screenWidth-prefixLength, line, p.searchPattern)
 	for column, token := range tokens {
 		p.screen.SetContent(column+prefixLength, screenLineNumber, token.Rune, nil, token.Style)
 	}
 }
 
-func _CreateScreenLine(
+func createScreenLine(
 	stringIndexAtColumnZero int,
 	screenColumnsCount int,
 	line string,
