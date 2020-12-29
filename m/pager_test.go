@@ -12,7 +12,7 @@ import (
 )
 
 func TestUnicodeRendering(t *testing.T) {
-	reader := NewReaderFromStream(strings.NewReader("åäö"), nil)
+	reader := NewReaderFromStream(strings.NewReader("åäö"))
 	if err := reader._Wait(); err != nil {
 		panic(err)
 	}
@@ -48,7 +48,7 @@ func createExpectedCell(Rune rune, Style tcell.Style) Token {
 
 func TestFgColorRendering(t *testing.T) {
 	reader := NewReaderFromStream(strings.NewReader(
-		"\x1b[30ma\x1b[31mb\x1b[32mc\x1b[33md\x1b[34me\x1b[35mf\x1b[36mg\x1b[37mh\x1b[0mi"), nil)
+		"\x1b[30ma\x1b[31mb\x1b[32mc\x1b[33md\x1b[34me\x1b[35mf\x1b[36mg\x1b[37mh\x1b[0mi"))
 	if err := reader._Wait(); err != nil {
 		panic(err)
 	}
@@ -73,8 +73,7 @@ func TestFgColorRendering(t *testing.T) {
 
 func TestBrokenUtf8(t *testing.T) {
 	// The broken UTF8 character in the middle is based on "©" = 0xc2a9
-	reader := NewReaderFromStream(strings.NewReader(
-		"abc\xc2def"), nil)
+	reader := NewReaderFromStream(strings.NewReader("abc\xc2def"))
 	if err := reader._Wait(); err != nil {
 		panic(err)
 	}
@@ -114,7 +113,7 @@ func startPaging(t *testing.T, reader *Reader) []tcell.SimCell {
 
 // assertIndexOfFirstX verifies the (zero-based) index of the first 'x'
 func assertIndexOfFirstX(t *testing.T, s string, expectedIndex int) {
-	reader := NewReaderFromStream(strings.NewReader(s), nil)
+	reader := NewReaderFromStream(strings.NewReader(s))
 	if err := reader._Wait(); err != nil {
 		panic(err)
 	}
@@ -193,7 +192,7 @@ func TestCodeHighlighting(t *testing.T) {
 }
 
 func testManPageFormatting(t *testing.T, input string, expected Token) {
-	reader := NewReaderFromStream(strings.NewReader(input), nil)
+	reader := NewReaderFromStream(strings.NewReader(input))
 	if err := reader._Wait(); err != nil {
 		panic(err)
 	}
@@ -343,7 +342,7 @@ func TestCreateScreenLineScrolled2Utf8SearchHit(t *testing.T) {
 }
 
 func TestFindFirstLineOneBasedSimple(t *testing.T) {
-	reader := NewReaderFromStream(strings.NewReader("AB"), nil)
+	reader := NewReaderFromStream(strings.NewReader("AB"))
 	pager := NewPager(reader)
 
 	// Wait for reader to finish reading
@@ -357,7 +356,7 @@ func TestFindFirstLineOneBasedSimple(t *testing.T) {
 }
 
 func TestFindFirstLineOneBasedAnsi(t *testing.T) {
-	reader := NewReaderFromStream(strings.NewReader("A\x1b[30mB"), nil)
+	reader := NewReaderFromStream(strings.NewReader("A\x1b[30mB"))
 	pager := NewPager(reader)
 
 	// Wait for reader to finish reading

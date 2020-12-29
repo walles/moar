@@ -146,10 +146,15 @@ func readStream(stream io.Reader, reader *Reader, fromFilter *exec.Cmd) {
 }
 
 // NewReaderFromStream creates a new stream reader
+func NewReaderFromStream(reader io.Reader) *Reader {
+	return newReaderFromStream(reader, nil)
+}
+
+// newReaderFromStream creates a new stream reader
 //
 // If fromFilter is not nil this method will wait() for it,
 // and effectively takes over ownership for it.
-func NewReaderFromStream(reader io.Reader, fromFilter *exec.Cmd) *Reader {
+func newReaderFromStream(reader io.Reader, fromFilter *exec.Cmd) *Reader {
 	var lines []string
 	var lock = &sync.Mutex{}
 	done := make(chan bool, 1)
@@ -196,8 +201,8 @@ func (r *Reader) _Wait() error {
 	return r.err
 }
 
-// NewReaderFromCommand creates a new reader by running a file through a filter
-func NewReaderFromCommand(filename string, filterCommand ...string) (*Reader, error) {
+// newReaderFromCommand creates a new reader by running a file through a filter
+func newReaderFromCommand(filename string, filterCommand ...string) (*Reader, error) {
 	filterWithFilename := append(filterCommand, filename)
 	filter := exec.Command(filterWithFilename[0], filterWithFilename[1:]...)
 
@@ -218,7 +223,7 @@ func NewReaderFromCommand(filename string, filterCommand ...string) (*Reader, er
 		return nil, err
 	}
 
-	reader := NewReaderFromStream(filterOut, filter)
+	reader := newReaderFromStream(filterOut, filter)
 	reader.lock.Lock()
 	reader.name = &filename
 	reader._stderr = filterErr
@@ -302,19 +307,19 @@ func NewReaderFromFilename(filename string) (*Reader, error) {
 	}
 
 	if strings.HasSuffix(filename, ".gz") {
-		return NewReaderFromCommand(filename, "gzip", "-d", "-c")
+		return newReaderFromCommand(filename, "gzip", "-d", "-c")
 	}
 	if strings.HasSuffix(filename, ".bz2") {
-		return NewReaderFromCommand(filename, "bzip2", "-d", "-c")
+		return newReaderFromCommand(filename, "bzip2", "-d", "-c")
 	}
 	if strings.HasSuffix(filename, ".xz") {
-		return NewReaderFromCommand(filename, "xz", "-d", "-c")
+		return newReaderFromCommand(filename, "xz", "-d", "-c")
 	}
 
 	// Highlight input file using highlight:
 	// http://www.andre-simon.de/doku/highlight/en/highlight.php
 	if canHighlight(filename) {
-		highlighted, err := NewReaderFromCommand(filename, "highlight", "--out-format=esc", "-i")
+		highlighted, err := newReaderFromCommand(filename, "highlight", "--out-format=esc", "-i")
 		if err == nil {
 			return highlighted, err
 		}
@@ -325,7 +330,7 @@ func NewReaderFromFilename(filename string) (*Reader, error) {
 		return nil, err
 	}
 
-	reader := NewReaderFromStream(stream, nil)
+	reader := NewReaderFromStream(stream)
 	reader.lock.Lock()
 	reader.name = &filename
 	reader.lock.Unlock()

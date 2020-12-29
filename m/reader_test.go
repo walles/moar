@@ -172,7 +172,7 @@ func TestGetLongLine(t *testing.T) {
 }
 
 func getReaderWithLineCount(totalLines int) *Reader {
-	reader := NewReaderFromStream(strings.NewReader(strings.Repeat("x\n", totalLines)), nil)
+	reader := NewReaderFromStream(strings.NewReader(strings.Repeat("x\n", totalLines)))
 	if err := reader._Wait(); err != nil {
 		panic(err)
 	}
@@ -244,7 +244,7 @@ func TestFilterFileNotFound(t *testing.T) {
 	// What happens if the filter cannot read its input file?
 	NonExistentPath := "/does-not-exist"
 
-	reader, err := NewReaderFromCommand(NonExistentPath, "cat")
+	reader, err := newReaderFromCommand(NonExistentPath, "cat")
 
 	// Creating should be fine, it's waiting for it to finish that should fail.
 	// Feel free to re-evaluate in the future.
