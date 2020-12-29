@@ -12,7 +12,7 @@ import (
 )
 
 func TestUnicodeRendering(t *testing.T) {
-	reader := NewReaderFromStream(strings.NewReader("åäö"))
+	reader := NewReaderFromStream(nil, strings.NewReader("åäö"))
 	if err := reader._Wait(); err != nil {
 		panic(err)
 	}
@@ -47,7 +47,7 @@ func createExpectedCell(Rune rune, Style tcell.Style) Token {
 }
 
 func TestFgColorRendering(t *testing.T) {
-	reader := NewReaderFromStream(strings.NewReader(
+	reader := NewReaderFromStream(nil, strings.NewReader(
 		"\x1b[30ma\x1b[31mb\x1b[32mc\x1b[33md\x1b[34me\x1b[35mf\x1b[36mg\x1b[37mh\x1b[0mi"))
 	if err := reader._Wait(); err != nil {
 		panic(err)
@@ -73,7 +73,7 @@ func TestFgColorRendering(t *testing.T) {
 
 func TestBrokenUtf8(t *testing.T) {
 	// The broken UTF8 character in the middle is based on "©" = 0xc2a9
-	reader := NewReaderFromStream(strings.NewReader("abc\xc2def"))
+	reader := NewReaderFromStream(nil, strings.NewReader("abc\xc2def"))
 	if err := reader._Wait(); err != nil {
 		panic(err)
 	}
@@ -113,7 +113,7 @@ func startPaging(t *testing.T, reader *Reader) []tcell.SimCell {
 
 // assertIndexOfFirstX verifies the (zero-based) index of the first 'x'
 func assertIndexOfFirstX(t *testing.T, s string, expectedIndex int) {
-	reader := NewReaderFromStream(strings.NewReader(s))
+	reader := NewReaderFromStream(nil, strings.NewReader(s))
 	if err := reader._Wait(); err != nil {
 		panic(err)
 	}
@@ -192,7 +192,7 @@ func TestCodeHighlighting(t *testing.T) {
 }
 
 func testManPageFormatting(t *testing.T, input string, expected Token) {
-	reader := NewReaderFromStream(strings.NewReader(input))
+	reader := NewReaderFromStream(nil, strings.NewReader(input))
 	if err := reader._Wait(); err != nil {
 		panic(err)
 	}
@@ -221,23 +221,23 @@ func TestManPageFormatting(t *testing.T) {
 }
 
 func TestToPattern(t *testing.T) {
-	assert.Assert(t, ToPattern("") == nil)
+	assert.Assert(t, toPattern("") == nil)
 
 	// Test regexp matching
-	assert.Assert(t, ToPattern("G.*S").MatchString("GRIIIS"))
-	assert.Assert(t, !ToPattern("G.*S").MatchString("gRIIIS"))
+	assert.Assert(t, toPattern("G.*S").MatchString("GRIIIS"))
+	assert.Assert(t, !toPattern("G.*S").MatchString("gRIIIS"))
 
 	// Test case insensitive regexp matching
-	assert.Assert(t, ToPattern("g.*s").MatchString("GRIIIS"))
-	assert.Assert(t, ToPattern("g.*s").MatchString("gRIIIS"))
+	assert.Assert(t, toPattern("g.*s").MatchString("GRIIIS"))
+	assert.Assert(t, toPattern("g.*s").MatchString("gRIIIS"))
 
 	// Test non-regexp matching
-	assert.Assert(t, ToPattern(")G").MatchString(")G"))
-	assert.Assert(t, !ToPattern(")G").MatchString(")g"))
+	assert.Assert(t, toPattern(")G").MatchString(")G"))
+	assert.Assert(t, !toPattern(")G").MatchString(")g"))
 
 	// Test case insensitive non-regexp matching
-	assert.Assert(t, ToPattern(")g").MatchString(")G"))
-	assert.Assert(t, ToPattern(")g").MatchString(")g"))
+	assert.Assert(t, toPattern(")g").MatchString(")G"))
+	assert.Assert(t, toPattern(")g").MatchString(")g"))
 }
 
 func assertTokenRangesEqual(t *testing.T, actual []Token, expected []Token) {
@@ -342,13 +342,13 @@ func TestCreateScreenLineScrolled2Utf8SearchHit(t *testing.T) {
 }
 
 func TestFindFirstLineOneBasedSimple(t *testing.T) {
-	reader := NewReaderFromStream(strings.NewReader("AB"))
+	reader := NewReaderFromStream(nil, strings.NewReader("AB"))
 	pager := NewPager(reader)
 
 	// Wait for reader to finish reading
 	<-reader.done
 
-	pager.searchPattern = ToPattern("AB")
+	pager.searchPattern = toPattern("AB")
 
 	hitLine := pager._FindFirstHitLineOneBased(1, false)
 	assert.Check(t, hitLine != nil)
@@ -356,13 +356,13 @@ func TestFindFirstLineOneBasedSimple(t *testing.T) {
 }
 
 func TestFindFirstLineOneBasedAnsi(t *testing.T) {
-	reader := NewReaderFromStream(strings.NewReader("A\x1b[30mB"))
+	reader := NewReaderFromStream(nil, strings.NewReader("A\x1b[30mB"))
 	pager := NewPager(reader)
 
 	// Wait for reader to finish reading
 	<-reader.done
 
-	pager.searchPattern = ToPattern("AB")
+	pager.searchPattern = toPattern("AB")
 
 	hitLine := pager._FindFirstHitLineOneBased(1, false)
 	assert.Check(t, hitLine != nil)

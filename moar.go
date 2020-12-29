@@ -59,8 +59,8 @@ func printUsage(output io.Writer) {
 	}
 }
 
-// PrintProblemsHeader prints bug reporting information to stderr
-func PrintProblemsHeader() {
+// printProblemsHeader prints bug reporting information to stderr
+func printProblemsHeader() {
 	fmt.Fprintln(os.Stderr, "Please post the following report at <https://github.com/walles/moar/issues>,")
 	fmt.Fprintln(os.Stderr, "or e-mail it to johan.walles@gmail.com.")
 	fmt.Fprintln(os.Stderr)
@@ -85,7 +85,7 @@ func main() {
 			return
 		}
 
-		PrintProblemsHeader()
+		printProblemsHeader()
 		panic(err)
 	}()
 
@@ -117,7 +117,7 @@ func main() {
 
 	if stdinIsRedirected && !stdoutIsRedirected {
 		// Display input pipe contents
-		reader := m.NewReaderFromStream(os.Stdin)
+		reader := m.NewReaderFromStream(nil, os.Stdin)
 		startPaging(reader)
 		return
 	}
@@ -171,7 +171,7 @@ func startPaging(reader *m.Reader) {
 		}
 
 		if len(loglines.String()) > 0 {
-			PrintProblemsHeader()
+			printProblemsHeader()
 
 			// FIXME: Don't print duplicate log messages more than once,
 			// maybe invent our own logger for this?

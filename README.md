@@ -75,23 +75,32 @@ you can send questions to <johan.walles@gmail.com>.
 Embedding
 ---------
 
-Here's how to embed `moar` in your app:
+Here's one way to embed `moar` in your app:
 
 ```go
 package main
 
 import (
+	"bytes"
+	"fmt"
+
 	"github.com/walles/moar/m"
 )
 
 func main() {
-	err := m.PageString("Months", "March, April\nMay")
-	if err != nil {
-		// Handle pager problems
-		panic(err)
+	buf := bytes.Buffer{}
+	fmt.Fprintln(&buf, "March")
+	fmt.Fprintln(&buf, "April")
+	name := "Months"
+	e := m.Page(m.NewReaderFromStream(&name, &buf))
+	if e != nil {
+		panic(e)
 	}
 }
 ```
+
+The `m.Page()` parameter can also be initialized using `NewReaderFromText()` or
+`NewReaderFromFilename()`.
 
 Developing
 ----------

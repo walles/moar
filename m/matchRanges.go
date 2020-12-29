@@ -7,8 +7,8 @@ type MatchRanges struct {
 	Matches [][2]int
 }
 
-// GetMatchRanges locates one or more regexp matches in a string
-func GetMatchRanges(String *string, Pattern *regexp.Regexp) *MatchRanges {
+// getMatchRanges locates one or more regexp matches in a string
+func getMatchRanges(String *string, Pattern *regexp.Regexp) *MatchRanges {
 	if Pattern == nil {
 		return nil
 	}

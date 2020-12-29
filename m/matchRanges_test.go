@@ -11,7 +11,7 @@ import (
 var _TestString = "mamma"
 
 func TestGetMatchRanges(t *testing.T) {
-	matchRanges := GetMatchRanges(&_TestString, regexp.MustCompile("m+"))
+	matchRanges := getMatchRanges(&_TestString, regexp.MustCompile("m+"))
 	assert.Equal(t, len(matchRanges.Matches), 2) // Two matches
 
 	assert.DeepEqual(t, matchRanges.Matches[0][0], 0) // First match starts at 0
@@ -22,14 +22,14 @@ func TestGetMatchRanges(t *testing.T) {
 }
 
 func TestGetMatchRangesNilPattern(t *testing.T) {
-	matchRanges := GetMatchRanges(&_TestString, nil)
+	matchRanges := getMatchRanges(&_TestString, nil)
 	assert.Assert(t, matchRanges == nil)
 	assert.Assert(t, !matchRanges.InRange(0))
 }
 
 func TestInRange(t *testing.T) {
 	// Should match the one in TestGetMatchRanges()
-	matchRanges := GetMatchRanges(&_TestString, regexp.MustCompile("m+"))
+	matchRanges := getMatchRanges(&_TestString, regexp.MustCompile("m+"))
 
 	assert.Assert(t, !matchRanges.InRange(-1)) // Before start
 	assert.Assert(t, matchRanges.InRange(0))   // m
@@ -43,7 +43,7 @@ func TestInRange(t *testing.T) {
 func TestUtf8(t *testing.T) {
 	// This test verifies that the match ranges are by rune rather than by byte
 	unicodes := "-ä-ä-"
-	matchRanges := GetMatchRanges(&unicodes, regexp.MustCompile("ä"))
+	matchRanges := getMatchRanges(&unicodes, regexp.MustCompile("ä"))
 
 	assert.Assert(t, !matchRanges.InRange(0)) // -
 	assert.Assert(t, matchRanges.InRange(1))  // ä
@@ -55,7 +55,7 @@ func TestUtf8(t *testing.T) {
 func TestNoMatch(t *testing.T) {
 	// This test verifies that the match ranges are by rune rather than by byte
 	unicodes := "gris"
-	matchRanges := GetMatchRanges(&unicodes, regexp.MustCompile("apa"))
+	matchRanges := getMatchRanges(&unicodes, regexp.MustCompile("apa"))
 
 	assert.Assert(t, !matchRanges.InRange(0))
 	assert.Assert(t, !matchRanges.InRange(1))
@@ -67,7 +67,7 @@ func TestNoMatch(t *testing.T) {
 func TestEndMatch(t *testing.T) {
 	// This test verifies that the match ranges are by rune rather than by byte
 	unicodes := "-ä"
-	matchRanges := GetMatchRanges(&unicodes, regexp.MustCompile("ä"))
+	matchRanges := getMatchRanges(&unicodes, regexp.MustCompile("ä"))
 
 	assert.Assert(t, !matchRanges.InRange(0)) // -
 	assert.Assert(t, matchRanges.InRange(1))  // ä

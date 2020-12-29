@@ -146,8 +146,13 @@ func readStream(stream io.Reader, reader *Reader, fromFilter *exec.Cmd) {
 }
 
 // NewReaderFromStream creates a new stream reader
-func NewReaderFromStream(reader io.Reader) *Reader {
-	return newReaderFromStream(reader, nil)
+func NewReaderFromStream(name *string, reader io.Reader) *Reader {
+	mReader := newReaderFromStream(reader, nil)
+	mReader.lock.Lock()
+	mReader.name = name
+	mReader.lock.Unlock()
+
+	return mReader
 }
 
 // newReaderFromStream creates a new stream reader
@@ -178,7 +183,10 @@ func newReaderFromStream(reader io.Reader, fromFilter *exec.Cmd) *Reader {
 	return &returnMe
 }
 
-// NewReaderFromText creates a Reader from a block of text
+// NewReaderFromText creates a Reader from a block of text.
+//
+// First parameter is the name of this Reader. This name will be displayed by
+// Moar in the bottom left corner of the screen.
 func NewReaderFromText(name string, text string) *Reader {
 	noExternalNewlines := strings.Trim(text, "\n")
 	done := make(chan bool, 1)
@@ -299,7 +307,11 @@ func tryOpen(filename string) error {
 	return err
 }
 
-// NewReaderFromFilename creates a new file reader
+// NewReaderFromFilename creates a new file reader.
+//
+// The Reader will try to uncompress various compressed file format, and also
+// apply highlighting to the file using highlight:
+// http://www.andre-simon.de/doku/highlight/en/highlight.php
 func NewReaderFromFilename(filename string) (*Reader, error) {
 	fileError := tryOpen(filename)
 	if fileError != nil {
@@ -330,10 +342,7 @@ func NewReaderFromFilename(filename string) (*Reader, error) {
 		return nil, err
 	}
 
-	reader := NewReaderFromStream(stream)
-	reader.lock.Lock()
-	reader.name = &filename
-	reader.lock.Unlock()
+	reader := NewReaderFromStream(&filename, stream)
 	return reader, nil
 }
 

@@ -47,13 +47,13 @@ func resetManPageFormatForTesting() {
 
 func termcapToStyle(termcap string) tcell.Style {
 	// Add a character to be sure we have one to take the format from
-	tokens, _ := TokensFromString(termcap + "x")
+	tokens, _ := tokensFromString(termcap + "x")
 	return tokens[len(tokens)-1].Style
 }
 
-// TokensFromString turns a (formatted) string into a series of tokens,
+// tokensFromString turns a (formatted) string into a series of tokens,
 // and an unformatted string
-func TokensFromString(s string) ([]Token, *string) {
+func tokensFromString(s string) ([]Token, *string) {
 	var tokens []Token
 
 	styleBrokenUtf8 := tcell.StyleDefault.Background(tcell.ColorSilver).Foreground(tcell.ColorMaroon)
