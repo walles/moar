@@ -17,7 +17,7 @@ import (
 // Verify that we can tokenize all lines in ../sample-files/*
 // without logging any errors
 func TestTokenize(t *testing.T) {
-	for _, fileName := range _GetTestFiles() {
+	for _, fileName := range getTestFiles() {
 		file, err := os.Open(fileName)
 		if err != nil {
 			t.Errorf("Error opening file <%s>: %s", fileName, err.Error())
@@ -34,7 +34,7 @@ func TestTokenize(t *testing.T) {
 			var loglines strings.Builder
 			log.SetOutput(&loglines)
 
-			tokens, plainString := TokensFromString(line)
+			tokens, plainString := tokensFromString(line)
 			if len(tokens) != utf8.RuneCountInString(*plainString) {
 				t.Errorf("%s:%d: len(tokens)=%d, len(plainString)=%d for: <%s>",
 					fileName, lineNumber,
@@ -51,7 +51,7 @@ func TestTokenize(t *testing.T) {
 }
 
 func TestUnderline(t *testing.T) {
-	tokens, _ := TokensFromString("a\x1b[4mb\x1b[24mc")
+	tokens, _ := tokensFromString("a\x1b[4mb\x1b[24mc")
 	assert.Equal(t, len(tokens), 3)
 	assert.Equal(t, tokens[0], Token{Rune: 'a', Style: tcell.StyleDefault})
 	assert.Equal(t, tokens[1], Token{Rune: 'b', Style: tcell.StyleDefault.Underline(true)})
@@ -60,14 +60,14 @@ func TestUnderline(t *testing.T) {
 
 func TestManPages(t *testing.T) {
 	// Bold
-	tokens, _ := TokensFromString("ab\bbc")
+	tokens, _ := tokensFromString("ab\bbc")
 	assert.Equal(t, len(tokens), 3)
 	assert.Equal(t, tokens[0], Token{Rune: 'a', Style: tcell.StyleDefault})
 	assert.Equal(t, tokens[1], Token{Rune: 'b', Style: tcell.StyleDefault.Bold(true)})
 	assert.Equal(t, tokens[2], Token{Rune: 'c', Style: tcell.StyleDefault})
 
 	// Underline
-	tokens, _ = TokensFromString("a_\bbc")
+	tokens, _ = tokensFromString("a_\bbc")
 	assert.Equal(t, len(tokens), 3)
 	assert.Equal(t, tokens[0], Token{Rune: 'a', Style: tcell.StyleDefault})
 	assert.Equal(t, tokens[1], Token{Rune: 'b', Style: tcell.StyleDefault.Underline(true)})
@@ -75,7 +75,7 @@ func TestManPages(t *testing.T) {
 
 	// Bullet point 1, taken from doing this on my macOS system:
 	// env PAGER="hexdump -C" man printf | moar
-	tokens, _ = TokensFromString("a+\b+\bo\bob")
+	tokens, _ = tokensFromString("a+\b+\bo\bob")
 	assert.Equal(t, len(tokens), 3)
 	assert.Equal(t, tokens[0], Token{Rune: 'a', Style: tcell.StyleDefault})
 	assert.Equal(t, tokens[1], Token{Rune: '•', Style: tcell.StyleDefault})
@@ -83,7 +83,7 @@ func TestManPages(t *testing.T) {
 
 	// Bullet point 2, taken from doing this using the "fish" shell on my macOS system:
 	// man printf | hexdump -C | moar
-	tokens, _ = TokensFromString("a+\bob")
+	tokens, _ = tokensFromString("a+\bob")
 	assert.Equal(t, len(tokens), 3)
 	assert.Equal(t, tokens[0], Token{Rune: 'a', Style: tcell.StyleDefault})
 	assert.Equal(t, tokens[1], Token{Rune: '•', Style: tcell.StyleDefault})
@@ -179,6 +179,6 @@ func TestConsumeCompositeColorIncomplete24Bit(t *testing.T) {
 }
 
 func TestUpdateStyle(t *testing.T) {
-	numberColored := _UpdateStyle(tcell.StyleDefault, "\x1b[33m")
+	numberColored := updateStyle(tcell.StyleDefault, "\x1b[33m")
 	assert.Equal(t, numberColored, tcell.StyleDefault.Foreground(tcell.ColorOlive))
 }

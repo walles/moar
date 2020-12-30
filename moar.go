@@ -20,7 +20,7 @@ import (
 
 var versionString = "Should be set when building, please use build.sh to build"
 
-func _PrintUsage(output io.Writer) {
+func printUsage(output io.Writer) {
 	// This controls where PrintDefaults() prints, see below
 	flag.CommandLine.SetOutput(output)
 
@@ -59,8 +59,8 @@ func _PrintUsage(output io.Writer) {
 	}
 }
 
-// PrintProblemsHeader prints bug reporting information to stderr
-func PrintProblemsHeader() {
+// printProblemsHeader prints bug reporting information to stderr
+func printProblemsHeader() {
 	fmt.Fprintln(os.Stderr, "Please post the following report at <https://github.com/walles/moar/issues>,")
 	fmt.Fprintln(os.Stderr, "or e-mail it to johan.walles@gmail.com.")
 	fmt.Fprintln(os.Stderr)
@@ -85,12 +85,12 @@ func main() {
 			return
 		}
 
-		PrintProblemsHeader()
+		printProblemsHeader()
 		panic(err)
 	}()
 
 	flag.Usage = func() {
-		_PrintUsage(os.Stdout)
+		printUsage(os.Stdout)
 	}
 	printVersion := flag.Bool("version", false, "Prints the moar version number")
 	debug := flag.Bool("debug", false, "Print debug logs after exiting")
@@ -117,15 +117,15 @@ func main() {
 
 	if stdinIsRedirected && !stdoutIsRedirected {
 		// Display input pipe contents
-		reader := m.NewReaderFromStream(os.Stdin, nil)
-		_StartPaging(reader)
+		reader := m.NewReaderFromStream(nil, os.Stdin)
+		startPaging(reader)
 		return
 	}
 
 	if len(flag.Args()) != 1 {
 		fmt.Fprintln(os.Stderr, "ERROR: Expected exactly one filename, got: ", flag.Args())
 		fmt.Fprintln(os.Stderr)
-		_PrintUsage(os.Stderr)
+		printUsage(os.Stderr)
 
 		os.Exit(1)
 	}
@@ -150,10 +150,10 @@ func main() {
 		fmt.Fprintf(os.Stderr, "%v\n", err)
 		os.Exit(1)
 	}
-	_StartPaging(reader)
+	startPaging(reader)
 }
 
-func _StartPaging(reader *m.Reader) {
+func startPaging(reader *m.Reader) {
 	screen, e := tcell.NewScreen()
 	if e != nil {
 		panic(e)
@@ -171,7 +171,7 @@ func _StartPaging(reader *m.Reader) {
 		}
 
 		if len(loglines.String()) > 0 {
-			PrintProblemsHeader()
+			printProblemsHeader()
 
 			// FIXME: Don't print duplicate log messages more than once,
 			// maybe invent our own logger for this?

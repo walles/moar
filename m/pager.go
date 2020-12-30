@@ -129,13 +129,13 @@ func (p *Pager) _AddLine(fileLineNumber *int, maxPrefixLength int, screenLineNum
 		p.screen.SetContent(column, screenLineNumber, digit, nil, _NumberStyle)
 	}
 
-	tokens := _CreateScreenLine(p.leftColumnZeroBased, screenWidth-prefixLength, line, p.searchPattern)
+	tokens := createScreenLine(p.leftColumnZeroBased, screenWidth-prefixLength, line, p.searchPattern)
 	for column, token := range tokens {
 		p.screen.SetContent(column+prefixLength, screenLineNumber, token.Rune, nil, token.Style)
 	}
 }
 
-func _CreateScreenLine(
+func createScreenLine(
 	stringIndexAtColumnZero int,
 	screenColumnsCount int,
 	line string,
@@ -152,13 +152,13 @@ func _CreateScreenLine(
 		searchHitDelta = -1
 	}
 
-	tokens, plainString := TokensFromString(line)
+	tokens, plainString := tokensFromString(line)
 	if stringIndexAtColumnZero >= len(tokens) {
 		// Nothing (more) to display, never mind
 		return returnMe
 	}
 
-	matchRanges := GetMatchRanges(plainString, search)
+	matchRanges := getMatchRanges(plainString, search)
 	for _, token := range tokens[stringIndexAtColumnZero:] {
 		if len(returnMe) >= screenColumnsCount {
 			// We are trying to add a character to the right of the screen.
@@ -329,7 +329,7 @@ func (p *Pager) _FindFirstHitLineOneBased(firstLineOneBased int, backwards bool)
 			return nil
 		}
 
-		_, lineText := TokensFromString(*line)
+		_, lineText := tokensFromString(*line)
 		if p.searchPattern.MatchString(*lineText) {
 			return &lineNumber
 		}
@@ -413,21 +413,21 @@ func (p *Pager) _ScrollToPreviousSearchHit() {
 }
 
 func (p *Pager) _UpdateSearchPattern() {
-	p.searchPattern = ToPattern(p.searchString)
+	p.searchPattern = toPattern(p.searchString)
 
 	p._ScrollToSearchHits()
 
 	// FIXME: If the user is typing, indicate to user if we didn't find anything
 }
 
-// ToPattern compiles a search string into a pattern.
+// toPattern compiles a search string into a pattern.
 //
 // If the string contains only lower-case letter the pattern will be case insensitive.
 //
 // If the string is empty the pattern will be nil.
 //
 // If the string does not compile into a regexp the pattern will match the string verbatim
-func ToPattern(compileMe string) *regexp.Regexp {
+func toPattern(compileMe string) *regexp.Regexp {
 	if len(compileMe) == 0 {
 		return nil
 	}

@@ -20,11 +20,10 @@ import (
 
 // Reader reads a file into an array of strings.
 //
-// When this thing grows up it's going to do the reading in the
-// background, and it will return parts of the read data upon
-// request.
+// It does the reading in the background, and it returns parts of the read data
+// upon request.
 //
-// This package should provide query methods for the struct, no peeking!!
+// This package provides query methods for the struct, no peeking!!
 type Reader struct {
 	lines   []string
 	name    *string
@@ -47,7 +46,7 @@ type Lines struct {
 	statusText string
 }
 
-func _ReadStream(stream io.Reader, reader *Reader, fromFilter *exec.Cmd) {
+func readStream(stream io.Reader, reader *Reader, fromFilter *exec.Cmd) {
 	// FIXME: Close the stream when done reading it?
 
 	defer func() {
@@ -147,10 +146,20 @@ func _ReadStream(stream io.Reader, reader *Reader, fromFilter *exec.Cmd) {
 }
 
 // NewReaderFromStream creates a new stream reader
+func NewReaderFromStream(name *string, reader io.Reader) *Reader {
+	mReader := newReaderFromStream(reader, nil)
+	mReader.lock.Lock()
+	mReader.name = name
+	mReader.lock.Unlock()
+
+	return mReader
+}
+
+// newReaderFromStream creates a new stream reader
 //
 // If fromFilter is not nil this method will wait() for it,
 // and effectively takes over ownership for it.
-func NewReaderFromStream(reader io.Reader, fromFilter *exec.Cmd) *Reader {
+func newReaderFromStream(reader io.Reader, fromFilter *exec.Cmd) *Reader {
 	var lines []string
 	var lock = &sync.Mutex{}
 	done := make(chan bool, 1)
@@ -169,12 +178,15 @@ func NewReaderFromStream(reader io.Reader, fromFilter *exec.Cmd) *Reader {
 
 	// FIXME: Make sure that if we panic somewhere inside of this goroutine,
 	// the main program terminates and prints our panic stack trace.
-	go _ReadStream(reader, &returnMe, fromFilter)
+	go readStream(reader, &returnMe, fromFilter)
 
 	return &returnMe
 }
 
-// NewReaderFromText creates a Reader from a block of text
+// NewReaderFromText creates a Reader from a block of text.
+//
+// First parameter is the name of this Reader. This name will be displayed by
+// Moar in the bottom left corner of the screen.
 func NewReaderFromText(name string, text string) *Reader {
 	noExternalNewlines := strings.Trim(text, "\n")
 	done := make(chan bool, 1)
@@ -197,8 +209,8 @@ func (r *Reader) _Wait() error {
 	return r.err
 }
 
-// NewReaderFromCommand creates a new reader by running a file through a filter
-func NewReaderFromCommand(filename string, filterCommand ...string) (*Reader, error) {
+// newReaderFromCommand creates a new reader by running a file through a filter
+func newReaderFromCommand(filename string, filterCommand ...string) (*Reader, error) {
 	filterWithFilename := append(filterCommand, filename)
 	filter := exec.Command(filterWithFilename[0], filterWithFilename[1:]...)
 
@@ -219,7 +231,7 @@ func NewReaderFromCommand(filename string, filterCommand ...string) (*Reader, er
 		return nil, err
 	}
 
-	reader := NewReaderFromStream(filterOut, filter)
+	reader := newReaderFromStream(filterOut, filter)
 	reader.lock.Lock()
 	reader.name = &filename
 	reader._stderr = filterErr
@@ -227,7 +239,7 @@ func NewReaderFromCommand(filename string, filterCommand ...string) (*Reader, er
 	return reader, nil
 }
 
-func _CanHighlight(filename string) bool {
+func canHighlight(filename string) bool {
 	extension := filepath.Ext(filename)
 	if len(extension) <= 1 {
 		// No extension or a single "."
@@ -275,7 +287,7 @@ func _CanHighlight(filename string) bool {
 	return false
 }
 
-func _TryOpen(filename string) error {
+func tryOpen(filename string) error {
 	// Try opening the file
 	tryMe, err := os.Open(filename)
 	if err != nil {
@@ -295,27 +307,31 @@ func _TryOpen(filename string) error {
 	return err
 }
 
-// NewReaderFromFilename creates a new file reader
+// NewReaderFromFilename creates a new file reader.
+//
+// The Reader will try to uncompress various compressed file format, and also
+// apply highlighting to the file using highlight:
+// http://www.andre-simon.de/doku/highlight/en/highlight.php
 func NewReaderFromFilename(filename string) (*Reader, error) {
-	fileError := _TryOpen(filename)
+	fileError := tryOpen(filename)
 	if fileError != nil {
 		return nil, fileError
 	}
 
 	if strings.HasSuffix(filename, ".gz") {
-		return NewReaderFromCommand(filename, "gzip", "-d", "-c")
+		return newReaderFromCommand(filename, "gzip", "-d", "-c")
 	}
 	if strings.HasSuffix(filename, ".bz2") {
-		return NewReaderFromCommand(filename, "bzip2", "-d", "-c")
+		return newReaderFromCommand(filename, "bzip2", "-d", "-c")
 	}
 	if strings.HasSuffix(filename, ".xz") {
-		return NewReaderFromCommand(filename, "xz", "-d", "-c")
+		return newReaderFromCommand(filename, "xz", "-d", "-c")
 	}
 
 	// Highlight input file using highlight:
 	// http://www.andre-simon.de/doku/highlight/en/highlight.php
-	if _CanHighlight(filename) {
-		highlighted, err := NewReaderFromCommand(filename, "highlight", "--out-format=esc", "-i")
+	if canHighlight(filename) {
+		highlighted, err := newReaderFromCommand(filename, "highlight", "--out-format=esc", "-i")
 		if err == nil {
 			return highlighted, err
 		}
@@ -326,10 +342,7 @@ func NewReaderFromFilename(filename string) (*Reader, error) {
 		return nil, err
 	}
 
-	reader := NewReaderFromStream(stream, nil)
-	reader.lock.Lock()
-	reader.name = &filename
-	reader.lock.Unlock()
+	reader := NewReaderFromStream(&filename, stream)
 	return reader, nil
 }
 
