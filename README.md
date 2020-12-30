@@ -91,10 +91,12 @@ func main() {
 	buf := bytes.Buffer{}
 	fmt.Fprintln(&buf, "March")
 	fmt.Fprintln(&buf, "April")
+
 	name := "Months"
-	e := m.Page(m.NewReaderFromStream(&name, &buf))
-	if e != nil {
-		panic(e)
+	err := m.Page(m.NewReaderFromStream(&name, &buf))
+	if err != nil {
+		// Handle paging problems
+		panic(err)
 	}
 }
 ```
