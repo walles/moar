@@ -172,7 +172,7 @@ func TestGetLongLine(t *testing.T) {
 }
 
 func getReaderWithLineCount(totalLines int) *Reader {
-	reader := NewReaderFromStream(nil, strings.NewReader(strings.Repeat("x\n", totalLines)))
+	reader := NewReaderFromStream("", strings.NewReader(strings.Repeat("x\n", totalLines)))
 	if err := reader._Wait(); err != nil {
 		panic(err)
 	}

@@ -146,11 +146,19 @@ func readStream(stream io.Reader, reader *Reader, fromFilter *exec.Cmd) {
 }
 
 // NewReaderFromStream creates a new stream reader
-func NewReaderFromStream(name *string, reader io.Reader) *Reader {
+//
+// The name can be an empty string ("").
+//
+// If non-empty, the name will be displayed by the pager in the bottom left
+// corner to help the user keep track of what is being paged.
+func NewReaderFromStream(name string, reader io.Reader) *Reader {
 	mReader := newReaderFromStream(reader, nil)
-	mReader.lock.Lock()
-	mReader.name = name
-	mReader.lock.Unlock()
+
+	if len(name) > 0 {
+		mReader.lock.Lock()
+		mReader.name = &name
+		mReader.lock.Unlock()
+	}
 
 	return mReader
 }
@@ -342,7 +350,7 @@ func NewReaderFromFilename(filename string) (*Reader, error) {
 		return nil, err
 	}
 
-	reader := NewReaderFromStream(&filename, stream)
+	reader := NewReaderFromStream(filename, stream)
 	return reader, nil
 }
 

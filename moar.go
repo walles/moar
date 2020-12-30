@@ -117,7 +117,7 @@ func main() {
 
 	if stdinIsRedirected && !stdoutIsRedirected {
 		// Display input pipe contents
-		reader := m.NewReaderFromStream(nil, os.Stdin)
+		reader := m.NewReaderFromStream("", os.Stdin)
 		startPaging(reader)
 		return
 	}
