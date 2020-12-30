@@ -4,7 +4,7 @@ VERSION="$(git describe --dirty)"
 
 BINARY="moar"
 if [ -n "$GOOS$GOARCH" ] ; then
-    BINARY="$BINARY-$VERSION-$GOOS-$GOARCH"
+    BINARY="releases/$BINARY-$VERSION-$GOOS-$GOARCH"
 fi
 
 # Linker flags trick below from here:

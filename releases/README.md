@@ -1,0 +1,1 @@
+The `release.sh` and the `test.sh` scripts will populate this directory.

@@ -51,4 +51,4 @@ git push --tags
 # upload them for the user.
 echo
 echo "Please upload the following binaries to <https://github.com/walles/moar/releases/tag/$VERSION>:"
-file moar-"$VERSION"-*-*
+file releases/moar-"$VERSION"-*-*
