@@ -10,9 +10,8 @@ doesn't work that way,
 
 Doing the right thing includes:
 
-* **Syntax highlight** source code by default if
-  [Highlight](http://www.andre-simon.de/doku/highlight/en/highlight.php)
-  is installed.
+* **Syntax highlight** source code by default using
+  [Chroma](https://github.com/alecthomas/chroma)
 * **Search is incremental** / find-as-you-type just like in
   [Chrome](http://www.google.com/chrome) or
   [Emacs](http://www.gnu.org/software/emacs/)
@@ -106,14 +105,7 @@ The `m.Page()` parameter can also be initialized using `NewReaderFromText()` or
 Developing
 ----------
 
-First, install [Highlight](http://www.andre-simon.de/zip/download.php),
-otherwise the test suite won't pass:
-
-* On macOS: [`brew install highlight`](https://brew.sh/)
-* On Ubuntu: [`sudo apt-get install highlight`](https://packages.ubuntu.com/search?suite=all&searchon=names&keywords=highlight)
-* Elsewhere, follow [instructions](http://www.andre-simon.de/zip/download.php)
-
-Also, you need the [go tools](https://golang.org/doc/install).
+You need the [go tools](https://golang.org/doc/install).
 
 Run tests:
 

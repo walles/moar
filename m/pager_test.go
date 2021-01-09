@@ -156,8 +156,6 @@ func TestTabHandling(t *testing.T) {
 	assertIndexOfFirstX(t, "\x09Johan\x09x", 12)
 }
 
-// This test assumes highlight is installed:
-// http://www.andre-simon.de/zip/download.php
 func TestCodeHighlighting(t *testing.T) {
 	// From: https://coderwall.com/p/_fmbug/go-get-path-to-current-file
 	_, filename, _, ok := runtime.Caller(0)
