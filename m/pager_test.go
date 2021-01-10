@@ -171,16 +171,18 @@ func TestCodeHighlighting(t *testing.T) {
 		panic(err)
 	}
 
+	packageKeywordStyle := tcell.StyleDefault.Bold(true).Foreground(tcell.NewHexColor(0x6AB825))
+	packageNameStyle := tcell.StyleDefault.Foreground(tcell.NewHexColor(0xD0D0D0))
 	var answers = []Token{
-		createExpectedCell('p', tcell.StyleDefault.Foreground(tcell.ColorOlive)),
-		createExpectedCell('a', tcell.StyleDefault.Foreground(tcell.ColorOlive)),
-		createExpectedCell('c', tcell.StyleDefault.Foreground(tcell.ColorOlive)),
-		createExpectedCell('k', tcell.StyleDefault.Foreground(tcell.ColorOlive)),
-		createExpectedCell('a', tcell.StyleDefault.Foreground(tcell.ColorOlive)),
-		createExpectedCell('g', tcell.StyleDefault.Foreground(tcell.ColorOlive)),
-		createExpectedCell('e', tcell.StyleDefault.Foreground(tcell.ColorOlive)),
-		createExpectedCell(' ', tcell.StyleDefault),
-		createExpectedCell('m', tcell.StyleDefault),
+		createExpectedCell('p', packageKeywordStyle),
+		createExpectedCell('a', packageKeywordStyle),
+		createExpectedCell('c', packageKeywordStyle),
+		createExpectedCell('k', packageKeywordStyle),
+		createExpectedCell('a', packageKeywordStyle),
+		createExpectedCell('g', packageKeywordStyle),
+		createExpectedCell('e', packageKeywordStyle),
+		createExpectedCell(' ', packageNameStyle),
+		createExpectedCell('m', packageNameStyle),
 	}
 
 	contents := startPaging(t, reader)
