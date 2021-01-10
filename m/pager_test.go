@@ -156,8 +156,6 @@ func TestTabHandling(t *testing.T) {
 	assertIndexOfFirstX(t, "\x09Johan\x09x", 12)
 }
 
-// This test assumes highlight is installed:
-// http://www.andre-simon.de/zip/download.php
 func TestCodeHighlighting(t *testing.T) {
 	// From: https://coderwall.com/p/_fmbug/go-get-path-to-current-file
 	_, filename, _, ok := runtime.Caller(0)
@@ -173,16 +171,18 @@ func TestCodeHighlighting(t *testing.T) {
 		panic(err)
 	}
 
+	packageKeywordStyle := tcell.StyleDefault.Bold(true).Foreground(tcell.NewHexColor(0x6AB825))
+	packageNameStyle := tcell.StyleDefault.Foreground(tcell.NewHexColor(0xD0D0D0))
 	var answers = []Token{
-		createExpectedCell('p', tcell.StyleDefault.Foreground(tcell.ColorOlive)),
-		createExpectedCell('a', tcell.StyleDefault.Foreground(tcell.ColorOlive)),
-		createExpectedCell('c', tcell.StyleDefault.Foreground(tcell.ColorOlive)),
-		createExpectedCell('k', tcell.StyleDefault.Foreground(tcell.ColorOlive)),
-		createExpectedCell('a', tcell.StyleDefault.Foreground(tcell.ColorOlive)),
-		createExpectedCell('g', tcell.StyleDefault.Foreground(tcell.ColorOlive)),
-		createExpectedCell('e', tcell.StyleDefault.Foreground(tcell.ColorOlive)),
-		createExpectedCell(' ', tcell.StyleDefault),
-		createExpectedCell('m', tcell.StyleDefault),
+		createExpectedCell('p', packageKeywordStyle),
+		createExpectedCell('a', packageKeywordStyle),
+		createExpectedCell('c', packageKeywordStyle),
+		createExpectedCell('k', packageKeywordStyle),
+		createExpectedCell('a', packageKeywordStyle),
+		createExpectedCell('g', packageKeywordStyle),
+		createExpectedCell('e', packageKeywordStyle),
+		createExpectedCell(' ', packageNameStyle),
+		createExpectedCell('m', packageNameStyle),
 	}
 
 	contents := startPaging(t, reader)

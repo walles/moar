@@ -5,17 +5,21 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"math"
 	"os"
 	"os/exec"
 	"path"
-	"path/filepath"
-	"regexp"
 	"strings"
 	"sync"
 	"time"
 
 	log "github.com/sirupsen/logrus"
+
+	"github.com/alecthomas/chroma"
+	"github.com/alecthomas/chroma/formatters"
+	"github.com/alecthomas/chroma/lexers"
+	"github.com/alecthomas/chroma/styles"
 )
 
 // Reader reads a file into an array of strings.
@@ -197,11 +201,15 @@ func newReaderFromStream(reader io.Reader, fromFilter *exec.Cmd) *Reader {
 // Moar in the bottom left corner of the screen.
 func NewReaderFromText(name string, text string) *Reader {
 	noExternalNewlines := strings.Trim(text, "\n")
+	lines := []string{}
+	if len(noExternalNewlines) > 0 {
+		lines = strings.Split(noExternalNewlines, "\n")
+	}
 	done := make(chan bool, 1)
 	done <- true
 	return &Reader{
 		name:  &name,
-		lines: strings.Split(noExternalNewlines, "\n"),
+		lines: lines,
 		lock:  &sync.Mutex{},
 		done:  done,
 	}
@@ -247,54 +255,6 @@ func newReaderFromCommand(filename string, filterCommand ...string) (*Reader, er
 	return reader, nil
 }
 
-func canHighlight(filename string) bool {
-	extension := filepath.Ext(filename)
-	if len(extension) <= 1 {
-		// No extension or a single "."
-		return false
-	}
-
-	if extension == ".txt" {
-		// Highlighting text files won't be of much use.
-		//
-		// Also: https://github.com/walles/moar/issues/29
-		return false
-	}
-
-	// Remove leading dot from the extension
-	extension = extension[1:]
-
-	// Check file extension vs "highlight --list-scripts=langs" before calling
-	// highlight, otherwise files with unsupported extensions (like .log) get
-	// messed upp.
-	highlight := exec.Command("highlight", "--list-scripts=langs")
-	outBytes, err := highlight.CombinedOutput()
-	if err != nil {
-		return false
-	}
-
-	extensionMatcher := regexp.MustCompile("[^() ]+")
-
-	outString := string(outBytes)
-	outLines := strings.Split(outString, "\n")
-	for _, line := range outLines {
-		parts := strings.Split(line, ": ")
-		if len(parts) < 2 {
-			continue
-		}
-
-		// Pick out all extensions from this line
-		for _, supportedExtension := range extensionMatcher.FindAllString(parts[1], -1) {
-			if extension == supportedExtension {
-				return true
-			}
-		}
-	}
-
-	// No match
-	return false
-}
-
 func tryOpen(filename string) error {
 	// Try opening the file
 	tryMe, err := os.Open(filename)
@@ -307,7 +267,10 @@ func tryOpen(filename string) error {
 	buffer := make([]byte, 1)
 	_, err = tryMe.Read(buffer)
 
-	if err != nil && err.Error() == "EOF" {
+	if err == nil {
+		return nil
+	}
+	if err.Error() == "EOF" {
 		// Empty file, this is fine
 		return nil
 	}
@@ -318,8 +281,8 @@ func tryOpen(filename string) error {
 // NewReaderFromFilename creates a new file reader.
 //
 // The Reader will try to uncompress various compressed file format, and also
-// apply highlighting to the file using highlight:
-// http://www.andre-simon.de/doku/highlight/en/highlight.php
+// apply highlighting to the file using Chroma:
+// https://github.com/alecthomas/chroma
 func NewReaderFromFilename(filename string) (*Reader, error) {
 	fileError := tryOpen(filename)
 	if fileError != nil {
@@ -336,21 +299,54 @@ func NewReaderFromFilename(filename string) (*Reader, error) {
 		return newReaderFromCommand(filename, "xz", "-d", "-c")
 	}
 
-	// Highlight input file using highlight:
-	// http://www.andre-simon.de/doku/highlight/en/highlight.php
-	if canHighlight(filename) {
-		highlighted, err := newReaderFromCommand(filename, "highlight", "--out-format=esc", "-i")
-		if err == nil {
-			return highlighted, err
+	if strings.HasSuffix(filename, ".txt") {
+		// Not much point in highlighting text files, prefer streaming these
+		stream, err := os.Open(filename)
+		if err != nil {
+			return nil, err
 		}
+
+		return NewReaderFromStream(filename, stream), nil
 	}
 
-	stream, err := os.Open(filename)
+	// Highlight input file using Chroma:
+	// https://github.com/alecthomas/chroma
+	lexer := lexers.Match(filename)
+	if lexer == nil {
+		lexer = lexers.Fallback
+	}
+
+	// See: https://github.com/alecthomas/chroma#identifying-the-language
+	// FIXME: Do we actually need this? We should profile our reader performance
+	// with and without.
+	lexer = chroma.Coalesce(lexer)
+
+	formatter := formatters.Get("terminal16m")
+	if formatter == nil {
+		formatter = formatters.Fallback
+	}
+
+	contents, err := ioutil.ReadFile(filename)
 	if err != nil {
 		return nil, err
 	}
 
-	reader := NewReaderFromStream(filename, stream)
+	iterator, err := lexer.Tokenise(nil, string(contents))
+	if err != nil {
+		return nil, err
+	}
+
+	var stringBuffer bytes.Buffer
+	err = formatter.Format(&stringBuffer, styles.Native, iterator)
+	highlighted := stringBuffer.String()
+
+	// If buffer ends with SGR Reset ("<ESC>[0m"), remove it. Chroma sometimes
+	// (always?) puts one of those by itself on the last line, making us believe
+	// there is one line too many.
+	sgrReset := "\x1b[0m"
+	highlighted = strings.TrimSuffix(highlighted, sgrReset)
+
+	reader := NewReaderFromText(filename, highlighted)
 	return reader, nil
 }
 

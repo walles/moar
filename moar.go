@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"runtime"
 	"strings"
@@ -31,14 +30,6 @@ func printUsage(output io.Writer) {
 	fmt.Fprintln(output)
 
 	flag.PrintDefaults()
-
-	_, err := exec.LookPath("highlight")
-	if err != nil {
-		// Highlight not installed
-		fmt.Fprintln(output)
-		fmt.Fprintln(output, "To enable syntax highlighting when viewing source code, install")
-		fmt.Fprintln(output, "Highlight (http://www.andre-simon.de/zip/download.php).")
-	}
 
 	moarPath, err := filepath.Abs(os.Args[0])
 	if err == nil {
