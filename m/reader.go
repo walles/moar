@@ -328,9 +328,16 @@ func NewReaderFromFilename(filename string) (*Reader, error) {
 
 	var stringBuffer bytes.Buffer
 	err = formatter.Format(&stringBuffer, styles.Native, iterator)
+	highlighted := stringBuffer.String()
+
+	// If buffer ends with SGR Reset ("<ESC>[0m"), remove it. Chroma sometimes
+	// (always?) puts one of those by itself on the last line, making us believe
+	// there is one line too many.
+	sgrReset := "\x1b[0m"
+	highlighted = strings.TrimSuffix(highlighted, sgrReset)
 
 	// FIXME: Do basename(filename) first?
-	reader := NewReaderFromText(filename, stringBuffer.String())
+	reader := NewReaderFromText(filename, highlighted)
 	return reader, nil
 }
 
