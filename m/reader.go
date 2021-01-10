@@ -299,6 +299,16 @@ func NewReaderFromFilename(filename string) (*Reader, error) {
 		return newReaderFromCommand(filename, "xz", "-d", "-c")
 	}
 
+	if strings.HasSuffix(filename, ".txt") {
+		// Not much point in highlighting text files, prefer streaming these
+		stream, err := os.Open(filename)
+		if err != nil {
+			return nil, err
+		}
+
+		return NewReaderFromStream(filename, stream), nil
+	}
+
 	// Highlight input file using Chroma:
 	// https://github.com/alecthomas/chroma
 	lexer := lexers.Match(filename)
