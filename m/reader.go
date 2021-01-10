@@ -346,7 +346,6 @@ func NewReaderFromFilename(filename string) (*Reader, error) {
 	sgrReset := "\x1b[0m"
 	highlighted = strings.TrimSuffix(highlighted, sgrReset)
 
-	// FIXME: Do basename(filename) first?
 	reader := NewReaderFromText(filename, highlighted)
 	return reader, nil
 }
