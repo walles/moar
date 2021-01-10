@@ -201,11 +201,15 @@ func newReaderFromStream(reader io.Reader, fromFilter *exec.Cmd) *Reader {
 // Moar in the bottom left corner of the screen.
 func NewReaderFromText(name string, text string) *Reader {
 	noExternalNewlines := strings.Trim(text, "\n")
+	lines := []string{}
+	if len(noExternalNewlines) > 0 {
+		lines = strings.Split(noExternalNewlines, "\n")
+	}
 	done := make(chan bool, 1)
 	done <- true
 	return &Reader{
 		name:  &name,
-		lines: strings.Split(noExternalNewlines, "\n"),
+		lines: lines,
 		lock:  &sync.Mutex{},
 		done:  done,
 	}
