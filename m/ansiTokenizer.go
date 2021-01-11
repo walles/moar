@@ -23,6 +23,44 @@ type Token struct {
 	Style tcell.Style
 }
 
+// A Line represents a line of text that can / will be paged
+type Line struct {
+	raw    *string
+	plain  *string
+	tokens []Token
+}
+
+// NewLine creates a new Line from a (potentially ANSI / man page formatted) string
+func NewLine(raw string) *Line {
+	return &Line{
+		raw:    &raw,
+		plain:  nil,
+		tokens: nil,
+	}
+}
+
+// Tokens returns a representation of the string split into styled tokens
+func (line *Line) Tokens() []Token {
+	line.parse()
+	return line.tokens
+}
+
+// Plain returns a plain text representation of the initial string
+func (line *Line) Plain() string {
+	line.parse()
+	return *line.plain
+}
+
+func (line *Line) parse() {
+	if line.raw == nil {
+		// Already done
+		return
+	}
+
+	line.tokens, line.plain = tokensFromString(*line.raw)
+	line.raw = nil
+}
+
 // SetManPageFormatFromEnv parses LESS_TERMCAP_xx environment variables and
 // adapts the moar output accordingly.
 func SetManPageFormatFromEnv() {

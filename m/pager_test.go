@@ -265,13 +265,15 @@ func assertTokenRangesEqual(t *testing.T, actual []Token, expected []Token) {
 }
 
 func TestCreateScreenLineBase(t *testing.T) {
-	line := createScreenLine(0, 3, "", nil)
-	assert.Assert(t, len(line) == 0)
+	line := NewLine("")
+	screenLine := createScreenLine(0, 3, line, nil)
+	assert.Assert(t, len(screenLine) == 0)
 }
 
 func TestCreateScreenLineOverflowRight(t *testing.T) {
-	line := createScreenLine(0, 3, "012345", nil)
-	assertTokenRangesEqual(t, line, []Token{
+	line := NewLine("012345")
+	screenLine := createScreenLine(0, 3, line, nil)
+	assertTokenRangesEqual(t, screenLine, []Token{
 		createExpectedCell('0', tcell.StyleDefault),
 		createExpectedCell('1', tcell.StyleDefault),
 		createExpectedCell('>', tcell.StyleDefault.Reverse(true)),
@@ -279,8 +281,9 @@ func TestCreateScreenLineOverflowRight(t *testing.T) {
 }
 
 func TestCreateScreenLineUnderflowLeft(t *testing.T) {
-	line := createScreenLine(1, 3, "012", nil)
-	assertTokenRangesEqual(t, line, []Token{
+	line := NewLine("012")
+	screenLine := createScreenLine(1, 3, line, nil)
+	assertTokenRangesEqual(t, screenLine, []Token{
 		createExpectedCell('<', tcell.StyleDefault.Reverse(true)),
 		createExpectedCell('1', tcell.StyleDefault),
 		createExpectedCell('2', tcell.StyleDefault),
@@ -293,8 +296,9 @@ func TestCreateScreenLineSearchHit(t *testing.T) {
 		panic(err)
 	}
 
-	line := createScreenLine(0, 3, "abc", pattern)
-	assertTokenRangesEqual(t, line, []Token{
+	line := NewLine("abc")
+	screenLine := createScreenLine(0, 3, line, pattern)
+	assertTokenRangesEqual(t, screenLine, []Token{
 		createExpectedCell('a', tcell.StyleDefault),
 		createExpectedCell('b', tcell.StyleDefault.Reverse(true)),
 		createExpectedCell('c', tcell.StyleDefault),
@@ -307,8 +311,9 @@ func TestCreateScreenLineUtf8SearchHit(t *testing.T) {
 		panic(err)
 	}
 
-	line := createScreenLine(0, 3, "åäö", pattern)
-	assertTokenRangesEqual(t, line, []Token{
+	line := NewLine("åäö")
+	screenLine := createScreenLine(0, 3, line, pattern)
+	assertTokenRangesEqual(t, screenLine, []Token{
 		createExpectedCell('å', tcell.StyleDefault),
 		createExpectedCell('ä', tcell.StyleDefault.Reverse(true)),
 		createExpectedCell('ö', tcell.StyleDefault),
@@ -318,9 +323,10 @@ func TestCreateScreenLineUtf8SearchHit(t *testing.T) {
 func TestCreateScreenLineScrolledUtf8SearchHit(t *testing.T) {
 	pattern := regexp.MustCompile("ä")
 
-	line := createScreenLine(1, 4, "ååäö", pattern)
+	line := NewLine("ååäö")
+	screenLine := createScreenLine(1, 4, line, pattern)
 
-	assertTokenRangesEqual(t, line, []Token{
+	assertTokenRangesEqual(t, screenLine, []Token{
 		createExpectedCell('<', tcell.StyleDefault.Reverse(true)),
 		createExpectedCell('å', tcell.StyleDefault),
 		createExpectedCell('ä', tcell.StyleDefault.Reverse(true)),
@@ -331,9 +337,10 @@ func TestCreateScreenLineScrolledUtf8SearchHit(t *testing.T) {
 func TestCreateScreenLineScrolled2Utf8SearchHit(t *testing.T) {
 	pattern := regexp.MustCompile("ä")
 
-	line := createScreenLine(2, 4, "åååäö", pattern)
+	line := NewLine("åååäö")
+	screenLine := createScreenLine(2, 4, line, pattern)
 
-	assertTokenRangesEqual(t, line, []Token{
+	assertTokenRangesEqual(t, screenLine, []Token{
 		createExpectedCell('<', tcell.StyleDefault.Reverse(true)),
 		createExpectedCell('å', tcell.StyleDefault),
 		createExpectedCell('ä', tcell.StyleDefault.Reverse(true)),

@@ -111,7 +111,7 @@ func NewPager(r *Reader) *Pager {
 	}
 }
 
-func (p *Pager) _AddLine(fileLineNumber *int, maxPrefixLength int, screenLineNumber int, line string) {
+func (p *Pager) _AddLine(fileLineNumber *int, maxPrefixLength int, screenLineNumber int, line *Line) {
 	screenWidth, _ := p.screen.Size()
 
 	prefixLength := 0
@@ -138,7 +138,7 @@ func (p *Pager) _AddLine(fileLineNumber *int, maxPrefixLength int, screenLineNum
 func createScreenLine(
 	stringIndexAtColumnZero int,
 	screenColumnsCount int,
-	line string,
+	line *Line,
 	search *regexp.Regexp,
 ) []Token {
 	var returnMe []Token
@@ -152,14 +152,14 @@ func createScreenLine(
 		searchHitDelta = -1
 	}
 
-	tokens, plainString := tokensFromString(line)
-	if stringIndexAtColumnZero >= len(tokens) {
+	if stringIndexAtColumnZero >= len(line.Tokens()) {
 		// Nothing (more) to display, never mind
 		return returnMe
 	}
 
-	matchRanges := getMatchRanges(plainString, search)
-	for _, token := range tokens[stringIndexAtColumnZero:] {
+	plain := line.Plain()
+	matchRanges := getMatchRanges(&plain, search)
+	for _, token := range line.Tokens()[stringIndexAtColumnZero:] {
 		if len(returnMe) >= screenColumnsCount {
 			// We are trying to add a character to the right of the screen.
 			// Indicate that this line continues to the right.
@@ -232,7 +232,8 @@ func (p *Pager) _AddLines(spinner string) {
 		// This happens when we're done
 		eofSpinner = "---"
 	}
-	p._AddLine(nil, 0, screenLineNumber, _EofMarkerFormat+eofSpinner)
+	spinnerLine := NewLine(_EofMarkerFormat + eofSpinner)
+	p._AddLine(nil, 0, screenLineNumber, spinnerLine)
 
 	switch p.mode {
 	case _Searching:
@@ -329,8 +330,8 @@ func (p *Pager) _FindFirstHitLineOneBased(firstLineOneBased int, backwards bool)
 			return nil
 		}
 
-		_, lineText := tokensFromString(*line)
-		if p.searchPattern.MatchString(*lineText) {
+		lineText := line.Plain()
+		if p.searchPattern.MatchString(lineText) {
 			return &lineNumber
 		}
 

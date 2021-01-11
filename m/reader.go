@@ -29,7 +29,7 @@ import (
 //
 // This package provides query methods for the struct, no peeking!!
 type Reader struct {
-	lines   []string
+	lines   []*Line
 	name    *string
 	lock    *sync.Mutex
 	err     error
@@ -41,7 +41,7 @@ type Reader struct {
 
 // Lines contains a number of lines from the reader, plus metadata
 type Lines struct {
-	lines []string
+	lines []*Line
 
 	// One-based line number of the first line returned
 	firstLineOneBased int
@@ -136,7 +136,7 @@ func readStream(stream io.Reader, reader *Reader, fromFilter *exec.Cmd) {
 		}
 
 		reader.lock.Lock()
-		reader.lines = append(reader.lines, string(completeLine))
+		reader.lines = append(reader.lines, NewLine(string(completeLine)))
 		reader.lock.Unlock()
 
 		// This is how to do a non-blocking write to a channel:
@@ -172,7 +172,7 @@ func NewReaderFromStream(name string, reader io.Reader) *Reader {
 // If fromFilter is not nil this method will wait() for it,
 // and effectively takes over ownership for it.
 func newReaderFromStream(reader io.Reader, fromFilter *exec.Cmd) *Reader {
-	var lines []string
+	var lines []*Line
 	var lock = &sync.Mutex{}
 	done := make(chan bool, 1)
 
@@ -201,9 +201,11 @@ func newReaderFromStream(reader io.Reader, fromFilter *exec.Cmd) *Reader {
 // Moar in the bottom left corner of the screen.
 func NewReaderFromText(name string, text string) *Reader {
 	noExternalNewlines := strings.Trim(text, "\n")
-	lines := []string{}
+	lines := []*Line{}
 	if len(noExternalNewlines) > 0 {
-		lines = strings.Split(noExternalNewlines, "\n")
+		for _, line := range strings.Split(noExternalNewlines, "\n") {
+			lines = append(lines, NewLine(line))
+		}
 	}
 	done := make(chan bool, 1)
 	done <- true
@@ -380,7 +382,7 @@ func (r *Reader) GetLineCount() int {
 }
 
 // GetLine gets a line. If the requested line number is out of bounds, nil is returned.
-func (r *Reader) GetLine(lineNumberOneBased int) *string {
+func (r *Reader) GetLine(lineNumberOneBased int) *Line {
 	r.lock.Lock()
 	defer r.lock.Unlock()
 
@@ -390,7 +392,7 @@ func (r *Reader) GetLine(lineNumberOneBased int) *string {
 	if lineNumberOneBased > len(r.lines) {
 		return nil
 	}
-	return &r.lines[lineNumberOneBased-1]
+	return r.lines[lineNumberOneBased-1]
 }
 
 // GetLines gets the indicated lines from the input
