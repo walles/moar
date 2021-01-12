@@ -111,27 +111,27 @@ func NewPager(r *Reader) *Pager {
 	}
 }
 
-func (p *Pager) _AddLine(fileLineNumber *int, maxPrefixLength int, screenLineNumber int, line *Line) {
+func (p *Pager) _AddLine(fileLineNumber *int, numberPrefixLength int, screenLineNumber int, line *Line) {
 	screenWidth, _ := p.screen.Size()
 
-	prefixLength := 0
 	lineNumberString := ""
-	if maxPrefixLength > 0 && fileLineNumber != nil {
-		prefixLength = maxPrefixLength
-		lineNumberString = fmt.Sprintf("%*d ", prefixLength-1, *fileLineNumber)
+	if numberPrefixLength > 0 && fileLineNumber != nil {
+		lineNumberString = fmt.Sprintf("%*d ", numberPrefixLength-1, *fileLineNumber)
+	} else {
+		numberPrefixLength = 0
 	}
 
 	for column, digit := range lineNumberString {
-		if column >= prefixLength {
+		if column >= numberPrefixLength {
 			break
 		}
 
 		p.screen.SetContent(column, screenLineNumber, digit, nil, _NumberStyle)
 	}
 
-	tokens := createScreenLine(p.leftColumnZeroBased, screenWidth-prefixLength, line, p.searchPattern)
+	tokens := createScreenLine(p.leftColumnZeroBased, screenWidth-numberPrefixLength, line, p.searchPattern)
 	for column, token := range tokens {
-		p.screen.SetContent(column+prefixLength, screenLineNumber, token.Rune, nil, token.Style)
+		p.screen.SetContent(column+numberPrefixLength, screenLineNumber, token.Rune, nil, token.Style)
 	}
 }
 
@@ -214,16 +214,22 @@ func (p *Pager) _AddLines(spinner string) {
 	//
 	// Offsets figured out through trial-and-error...
 	lastLineOneBased := lines.firstLineOneBased + len(lines.lines) - 1
-	maxPrefixLength := len(strconv.Itoa(lastLineOneBased)) + 1
+	numberPrefixLength := len(strconv.Itoa(lastLineOneBased)) + 1
+	if numberPrefixLength < 4 {
+		// 4 = space for 3 digits followed by one whitespace
+		//
+		// https://github.com/walles/moar/issues/38
+		numberPrefixLength = 4
+	}
 
 	if !p.showLineNumbers {
-		maxPrefixLength = 0
+		numberPrefixLength = 0
 	}
 
 	screenLineNumber := 0
 	for i, line := range lines.lines {
 		lineNumber := p.firstLineOneBased + i
-		p._AddLine(&lineNumber, maxPrefixLength, screenLineNumber, line)
+		p._AddLine(&lineNumber, numberPrefixLength, screenLineNumber, line)
 		screenLineNumber++
 	}
 
