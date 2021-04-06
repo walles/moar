@@ -25,6 +25,7 @@ func Page(reader *Reader) error {
 		if DeInit {
 			screen.Fini()
 		} else {
+			// See: https://github.com/walles/moar/pull/39
 			w, h := screen.Size()
 			screen.ShowCursor(0, h - 1)
 			for x := 0; x < w; x++ {
