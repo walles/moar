@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
+	"time"
 
 	log "github.com/sirupsen/logrus"
 
@@ -98,6 +99,10 @@ func main() {
 	if *debug {
 		log.SetLevel(log.DebugLevel)
 	}
+
+	log.SetFormatter(&log.TextFormatter{
+		TimestampFormat: time.RFC3339Nano,
+	})
 
 	stdinIsRedirected := !terminal.IsTerminal(int(os.Stdin.Fd()))
 	stdoutIsRedirected := !terminal.IsTerminal(int(os.Stdout.Fd()))
