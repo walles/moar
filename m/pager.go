@@ -42,7 +42,8 @@ type Pager struct {
 	isShowingHelp bool
 	preHelpState  *_PreHelpState
 
-	showLineNumbers bool
+	// NewPager shows lines by default, this field can hide them
+	ShowLineNumbers bool
 }
 
 type _PreHelpState struct {
