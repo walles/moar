@@ -97,7 +97,7 @@ func TestBrokenUtf8(t *testing.T) {
 func startPaging(t *testing.T, reader *Reader) []tcell.SimCell {
 	screen := tcell.NewSimulationScreen("UTF-8")
 	pager := NewPager(reader)
-	pager.showLineNumbers = false
+	pager.ShowLineNumbers = false
 	pager.Quit()
 
 	var loglines strings.Builder

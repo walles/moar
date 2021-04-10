@@ -108,7 +108,7 @@ func NewPager(r *Reader) *Pager {
 		reader:            r,
 		quit:              false,
 		firstLineOneBased: 1,
-		showLineNumbers:   true,
+		ShowLineNumbers:   true,
 	}
 }
 
@@ -223,7 +223,7 @@ func (p *Pager) _AddLines(spinner string) {
 		numberPrefixLength = 4
 	}
 
-	if !p.showLineNumbers {
+	if !p.ShowLineNumbers {
 		numberPrefixLength = 0
 	}
 
@@ -518,13 +518,13 @@ func (p *Pager) _OnSearchKey(key tcell.Key) {
 }
 
 func (p *Pager) _MoveRight(delta int) {
-	if p.showLineNumbers && delta > 0 {
-		p.showLineNumbers = false
+	if p.ShowLineNumbers && delta > 0 {
+		p.ShowLineNumbers = false
 		return
 	}
 
 	if p.leftColumnZeroBased == 0 && delta < 0 {
-		p.showLineNumbers = true
+		p.ShowLineNumbers = true
 		return
 	}
 
