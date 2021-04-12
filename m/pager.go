@@ -44,6 +44,10 @@ type Pager struct {
 
 	// NewPager shows lines by default, this field can hide them
 	ShowLineNumbers bool
+
+	// If true, pager will clear the screen on return. If false, pager will
+	// clear the last line, and show the cursor.
+	DeInit bool
 }
 
 type _PreHelpState struct {
@@ -109,6 +113,7 @@ func NewPager(r *Reader) *Pager {
 		quit:              false,
 		firstLineOneBased: 1,
 		ShowLineNumbers:   true,
+		DeInit:            true,
 	}
 }
 
