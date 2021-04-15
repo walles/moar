@@ -225,7 +225,13 @@ func testCompressedFile(t *testing.T, filename string) {
 func TestCompressedFiles(t *testing.T) {
 	testCompressedFile(t, "compressed.txt.gz")
 	testCompressedFile(t, "compressed.txt.bz2")
-	testCompressedFile(t, "compressed.txt.xz")
+
+	_, err := exec.LookPath("xz")
+	if err == nil {
+		testCompressedFile(t, "compressed.txt.xz")
+	} else {
+		t.Log("WARNING: xz not found in path, not testing automatic xz decompression")
+	}
 }
 
 func TestFilterNotInstalled(t *testing.T) {
