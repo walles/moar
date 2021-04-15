@@ -2,7 +2,7 @@
 
 package twin
 
-import "syscall"
+import "os"
 
 func (screen *UnixScreen) setupSigwinchNotification() {
 	screen.sigwinch = make(chan int, 1)
@@ -13,5 +13,9 @@ func (screen *UnixScreen) setupSigwinchNotification() {
 }
 
 func (screen *UnixScreen) setupTtyIn() {
-	screen.ttyIn = syscall.Open("CONIN$", syscall.O_RDONLY, 0)
+	var err error
+	screen.ttyIn, err := os.Open("CONIN$")
+	if err != nil {
+		panic(err)
+	}
 }
