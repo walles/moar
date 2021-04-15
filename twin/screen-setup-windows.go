@@ -14,7 +14,7 @@ func (screen *UnixScreen) setupSigwinchNotification() {
 
 func (screen *UnixScreen) setupTtyIn() {
 	var err error
-	screen.ttyIn, err := os.Open("CONIN$")
+	screen.ttyIn, err = os.Open("CONIN$")
 	if err != nil {
 		panic(err)
 	}
