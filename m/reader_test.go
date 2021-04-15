@@ -127,6 +127,14 @@ func getTestFiles() []string {
 
 func TestGetLines(t *testing.T) {
 	for _, file := range getTestFiles() {
+		if strings.HasSuffix(file, ".xz") {
+			_, err := exec.LookPath("xz")
+			if err != nil {
+				t.Log("Not testing xz compressed file, xz not found in $PATH: ", file)
+				continue
+			}
+		}
+
 		reader, err := NewReaderFromFilename(file)
 		if err != nil {
 			t.Errorf("Error opening file <%s>: %s", file, err.Error())
