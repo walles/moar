@@ -102,15 +102,7 @@ func NewScreen() (Screen, error) {
 
 	screen.setupSigwinchNotification()
 
-	// os.Stdout is a stream that goes to our terminal window.
-	//
-	// So if we read from there, we'll get input from the terminal window.
-	//
-	// Reading from os.Stdin will fail if we're getting data piped into
-	// ourselves from some other command.
-	//
-	// Tested on macOS and Linux, works like a charm!
-	screen.ttyIn = os.Stdout // <- YES, WE SHOULD ASSIGN STDOUT TO TTYIN
+	screen.setupTtyIn()
 	screen.ttyOut = os.Stdout
 
 	// Set input stream to raw mode
@@ -228,7 +220,7 @@ func (screen *UnixScreen) mainLoop() {
 
 		encodedKeyCodeSequences := string(buffer[0:count])
 		if !utf8.ValidString(encodedKeyCodeSequences) {
-			log.Warn("Got invalind UTF-8 sequence on ttyin: ", encodedKeyCodeSequences)
+			log.Warn("Got invalid UTF-8 sequence on ttyin: ", encodedKeyCodeSequences)
 			continue
 		}
 

@@ -41,3 +41,15 @@ func (screen *UnixScreen) setupSigwinchNotification() {
 		}
 	}()
 }
+
+func (screen *UnixScreen) setupTtyIn() {
+	// os.Stdout is a stream that goes to our terminal window.
+	//
+	// So if we read from there, we'll get input from the terminal window.
+	//
+	// Reading from os.Stdin will fail if we're getting data piped into
+	// ourselves from some other command.
+	//
+	// Tested on macOS and Linux, works like a charm!
+	screen.ttyIn = os.Stdout // <- YES, WE SHOULD ASSIGN STDOUT TO TTYIN
+}
