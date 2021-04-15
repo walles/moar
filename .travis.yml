@@ -1,12 +1,11 @@
-# This file inspired by:
-# https://gist.github.com/y0ssar1an/df2dab474520c4086926f672c52db139
-
-dist: xenial
-
 language: go
-
 go:
   - 1.13.x
 
-script:
-  - ./test.sh
+jobs:
+  include:
+  - os: linux
+    dist: xenial
+    script: ./test.sh
+  - os: windows
+    script: go test -timeout 20s github.com/walles/moar/m
