@@ -2,7 +2,6 @@ package m
 
 import (
 	"fmt"
-	"os"
 	"regexp"
 	"strconv"
 	"time"
@@ -10,8 +9,7 @@ import (
 	"unicode/utf8"
 
 	log "github.com/sirupsen/logrus"
-
-	"github.com/gdamore/tcell/v2"
+	"github.com/walles/moar/twin"
 )
 
 // FIXME: Profile the pager while searching through a large file
@@ -24,13 +22,19 @@ const (
 	_NotFound  _PagerMode = 2
 )
 
+type eventSpinnerUpdate struct {
+	spinner string
+}
+
+type eventMoreLinesAvailable struct{}
+
 // Styling of line numbers
-var _NumberStyle = tcell.StyleDefault.Dim(true)
+var _NumberStyle = twin.StyleDefault.WithAttr(twin.AttrDim)
 
 // Pager is the main on-screen pager
 type Pager struct {
 	reader              *Reader
-	screen              tcell.Screen
+	screen              twin.Screen
 	quit                bool
 	firstLineOneBased   int
 	leftColumnZeroBased int
@@ -127,12 +131,12 @@ func (p *Pager) _AddLine(fileLineNumber *int, numberPrefixLength int, screenLine
 			break
 		}
 
-		p.screen.SetContent(column, screenLineNumber, digit, nil, _NumberStyle)
+		p.screen.SetCell(column, screenLineNumber, twin.NewCell(digit, _NumberStyle))
 	}
 
 	tokens := createScreenLine(p.leftColumnZeroBased, screenWidth-numberPrefixLength, line, p.searchPattern)
 	for column, token := range tokens {
-		p.screen.SetContent(column+numberPrefixLength, screenLineNumber, token.Rune, nil, token.Style)
+		p.screen.SetCell(column+numberPrefixLength, screenLineNumber, token)
 	}
 }
 
@@ -141,14 +145,14 @@ func createScreenLine(
 	screenColumnsCount int,
 	line *Line,
 	search *regexp.Regexp,
-) []Token {
-	var returnMe []Token
+) []twin.Cell {
+	var returnMe []twin.Cell
 	searchHitDelta := 0
 	if stringIndexAtColumnZero > 0 {
 		// Indicate that it's possible to scroll left
-		returnMe = append(returnMe, Token{
+		returnMe = append(returnMe, twin.Cell{
 			Rune:  '<',
-			Style: tcell.StyleDefault.Reverse(true),
+			Style: twin.StyleDefault.WithAttr(twin.AttrReverse),
 		})
 		searchHitDelta = -1
 	}
@@ -164,9 +168,9 @@ func createScreenLine(
 		if len(returnMe) >= screenColumnsCount {
 			// We are trying to add a character to the right of the screen.
 			// Indicate that this line continues to the right.
-			returnMe[len(returnMe)-1] = Token{
+			returnMe[len(returnMe)-1] = twin.Cell{
 				Rune:  '>',
-				Style: tcell.StyleDefault.Reverse(true),
+				Style: twin.StyleDefault.WithAttr(twin.AttrReverse),
 			}
 			break
 		}
@@ -174,10 +178,10 @@ func createScreenLine(
 		style := token.Style
 		if matchRanges.InRange(len(returnMe) + stringIndexAtColumnZero + searchHitDelta) {
 			// Search hits in reverse video
-			style = style.Reverse(true)
+			style = style.WithAttr(twin.AttrReverse)
 		}
 
-		returnMe = append(returnMe, Token{
+		returnMe = append(returnMe, twin.Cell{
 			Rune:  token.Rune,
 			Style: style,
 		})
@@ -191,12 +195,12 @@ func (p *Pager) _AddSearchFooter() {
 
 	pos := 0
 	for _, token := range "Search: " + p.searchString {
-		p.screen.SetContent(pos, height-1, token, nil, tcell.StyleDefault)
+		p.screen.SetCell(pos, height-1, twin.NewCell(token, twin.StyleDefault))
 		pos++
 	}
 
 	// Add a cursor
-	p.screen.SetContent(pos, height-1, ' ', nil, tcell.StyleDefault.Reverse(true))
+	p.screen.SetCell(pos, height-1, twin.NewCell(' ', twin.StyleDefault.WithAttr(twin.AttrReverse)))
 }
 
 func (p *Pager) _AddLines(spinner string) {
@@ -265,14 +269,14 @@ func (p *Pager) _SetFooter(footer string) {
 	width, height := p.screen.Size()
 
 	pos := 0
-	footerStyle := tcell.StyleDefault.Reverse(true)
+	footerStyle := twin.StyleDefault.WithAttr(twin.AttrReverse)
 	for _, token := range footer {
-		p.screen.SetContent(pos, height-1, token, nil, footerStyle)
+		p.screen.SetCell(pos, height-1, twin.NewCell(token, footerStyle))
 		pos++
 	}
 
 	for ; pos < width; pos++ {
-		p.screen.SetContent(pos, height-1, ' ', nil, footerStyle)
+		p.screen.SetCell(pos, height-1, twin.NewCell(' ', footerStyle))
 	}
 }
 
@@ -479,12 +483,12 @@ func removeLastChar(s string) string {
 	return s[:len(s)-size]
 }
 
-func (p *Pager) _OnSearchKey(key tcell.Key) {
+func (p *Pager) _OnSearchKey(key twin.KeyCode) {
 	switch key {
-	case tcell.KeyEscape, tcell.KeyEnter:
+	case twin.KeyEscape, twin.KeyEnter:
 		p.mode = _Viewing
 
-	case tcell.KeyBackspace, tcell.KeyDEL:
+	case twin.KeyBackspace, twin.KeyDelete:
 		if len(p.searchString) == 0 {
 			return
 		}
@@ -492,22 +496,22 @@ func (p *Pager) _OnSearchKey(key tcell.Key) {
 		p.searchString = removeLastChar(p.searchString)
 		p._UpdateSearchPattern()
 
-	case tcell.KeyUp:
+	case twin.KeyUp:
 		// Clipping is done in _AddLines()
 		p.firstLineOneBased--
 		p.mode = _Viewing
 
-	case tcell.KeyDown:
+	case twin.KeyDown:
 		// Clipping is done in _AddLines()
 		p.firstLineOneBased++
 		p.mode = _Viewing
 
-	case tcell.KeyPgUp:
+	case twin.KeyPgUp:
 		_, height := p.screen.Size()
 		p.firstLineOneBased -= (height - 1)
 		p.mode = _Viewing
 
-	case tcell.KeyPgDn:
+	case twin.KeyPgDown:
 		_, height := p.screen.Size()
 		p.firstLineOneBased += (height - 1)
 		p.mode = _Viewing
@@ -536,16 +540,9 @@ func (p *Pager) _MoveRight(delta int) {
 	}
 }
 
-func (p *Pager) _OnKey(key tcell.Key) {
-	if key == tcell.KeyCtrlL {
-		// This is useful when we're piping in from something writing to both
-		// stdout and stderr.
-		p.screen.Sync()
-		return
-	}
-
+func (p *Pager) _OnKey(keyCode twin.KeyCode) {
 	if p.mode == _Searching {
-		p._OnSearchKey(key)
+		p._OnSearchKey(keyCode)
 		return
 	}
 	if p.mode != _Viewing && p.mode != _NotFound {
@@ -555,40 +552,40 @@ func (p *Pager) _OnKey(key tcell.Key) {
 	// Reset the not-found marker on non-search keypresses
 	p.mode = _Viewing
 
-	switch key {
-	case tcell.KeyEscape:
+	switch keyCode {
+	case twin.KeyEscape:
 		p.Quit()
 
-	case tcell.KeyUp:
+	case twin.KeyUp:
 		// Clipping is done in _AddLines()
 		p.firstLineOneBased--
 
-	case tcell.KeyDown, tcell.KeyEnter:
+	case twin.KeyDown, twin.KeyEnter:
 		// Clipping is done in _AddLines()
 		p.firstLineOneBased++
 
-	case tcell.KeyRight:
+	case twin.KeyRight:
 		p._MoveRight(16)
 
-	case tcell.KeyLeft:
+	case twin.KeyLeft:
 		p._MoveRight(-16)
 
-	case tcell.KeyHome:
+	case twin.KeyHome:
 		p.firstLineOneBased = 1
 
-	case tcell.KeyEnd:
+	case twin.KeyEnd:
 		p.firstLineOneBased = p.reader.GetLineCount()
 
-	case tcell.KeyPgDn:
+	case twin.KeyPgDown:
 		_, height := p.screen.Size()
 		p.firstLineOneBased += (height - 1)
 
-	case tcell.KeyPgUp:
+	case twin.KeyPgUp:
 		_, height := p.screen.Size()
 		p.firstLineOneBased -= (height - 1)
 
 	default:
-		log.Debugf("Unhandled key event %v", key)
+		log.Debugf("Unhandled key event %v", keyCode)
 	}
 }
 
@@ -678,27 +675,18 @@ func (p *Pager) _OnRune(char rune) {
 }
 
 // StartPaging brings up the pager on screen
-func (p *Pager) StartPaging(screen tcell.Screen) {
-	// We want to match the terminal theme, see screen.Init() source code
-	os.Setenv("TCELL_TRUECOLOR", "disable")
-
+func (p *Pager) StartPaging(screen twin.Screen) {
 	SetManPageFormatFromEnv()
 
-	if e := screen.Init(); e != nil {
-		fmt.Fprintf(os.Stderr, "%v\n", e)
-		os.Exit(1)
-	}
-
 	p.screen = screen
-	screen.EnableMouse()
-	screen.Show()
-	p._Redraw("")
 
 	go func() {
 		for {
-			// Wait for new lines to appear
+			// Wait for new lines to appear...
 			<-p.reader.moreLinesAdded
-			screen.PostEvent(tcell.NewEventInterrupt(nil))
+
+			// ... and notify the main loop so it can show them:
+			screen.Events() <- eventMoreLinesAvailable{}
 
 			// Delay updates a bit so that we don't waste time refreshing
 			// the screen too often.
@@ -711,6 +699,7 @@ func (p *Pager) StartPaging(screen tcell.Screen) {
 	}()
 
 	go func() {
+		// Spin the spinner as long as contents is still loading
 		done := false
 		spinnerFrames := [...]string{"/.\\", "-o-", "\\O/", "| |"}
 		spinnerIndex := 0
@@ -727,7 +716,7 @@ func (p *Pager) StartPaging(screen tcell.Screen) {
 				break
 			}
 
-			screen.PostEvent(tcell.NewEventInterrupt(spinnerFrames[spinnerIndex]))
+			screen.Events() <- eventSpinnerUpdate{spinnerFrames[spinnerIndex]}
 			spinnerIndex++
 			if spinnerIndex >= len(spinnerFrames) {
 				spinnerIndex = 0
@@ -737,59 +726,55 @@ func (p *Pager) StartPaging(screen tcell.Screen) {
 		}
 
 		// Empty our spinner, loading done!
-		screen.PostEvent(tcell.NewEventInterrupt(""))
+		screen.Events() <- eventSpinnerUpdate{""}
 	}()
 
 	// Main loop
 	spinner := ""
 	for !p.quit {
-		ev := screen.PollEvent()
-		switch ev := ev.(type) {
-		case *tcell.EventKey:
-			if ev.Key() == tcell.KeyRune {
-				p._OnRune(ev.Rune())
-			} else {
-				p._OnKey(ev.Key())
-			}
+		if len(screen.Events()) == 0 {
+			// Nothing more to process for now, redraw the screen!
+			p._Redraw(spinner)
+		}
 
-		case *tcell.EventMouse:
-			switch ev.Buttons() {
-			case tcell.WheelUp:
+		event := <-screen.Events()
+		switch event := event.(type) {
+		case twin.EventKeyCode:
+			p._OnKey(event.KeyCode())
+
+		case twin.EventRune:
+			p._OnRune(event.Rune())
+
+		case twin.EventMouse:
+			switch event.Buttons() {
+			case twin.MouseWheelUp:
 				// Clipping is done in _AddLines()
 				p.firstLineOneBased--
 
-			case tcell.WheelDown:
+			case twin.MouseWheelDown:
 				// Clipping is done in _AddLines()
 				p.firstLineOneBased++
 
-			case tcell.WheelRight:
-				p._MoveRight(16)
-
-			case tcell.WheelLeft:
+			case twin.MouseWheelLeft:
 				p._MoveRight(-16)
+
+			case twin.MouseWheelRight:
+				p._MoveRight(16)
 			}
 
-		case *tcell.EventResize:
+		case twin.EventResize:
 			// We'll be implicitly redrawn just by taking another lap in the loop
 
-		case *tcell.EventInterrupt:
-			// This means we got more lines, look for NewEventInterrupt higher up
-			// in this file. Doing nothing here is fine, the refresh happens after
-			// this switch statement.
-			data := ev.Data()
-			if data != nil {
-				// From: https://yourbasic.org/golang/interface-to-string/
-				spinner = fmt.Sprintf("%v", data)
-			}
+		case eventMoreLinesAvailable:
+			// Doing nothing here is fine; screen will be refreshed on the next
+			// iteration of the main loop.
+
+		case eventSpinnerUpdate:
+			spinner = event.spinner
 
 		default:
-			log.Warnf("Unhandled event type: %v", ev)
+			log.Warnf("Unhandled event type: %v", event)
 		}
-
-		// FIXME: If more events are ready, skip this redraw, that
-		// should speed up mouse wheel scrolling
-
-		p._Redraw(spinner)
 	}
 
 	if p.reader.err != nil {

@@ -11,11 +11,10 @@ import (
 	"time"
 
 	log "github.com/sirupsen/logrus"
+	"golang.org/x/term"
 
-	"github.com/gdamore/tcell/v2"
 	"github.com/walles/moar/m"
-
-	"golang.org/x/crypto/ssh/terminal"
+	"github.com/walles/moar/twin"
 )
 
 var versionString = "Should be set when building, please use build.sh to build"
@@ -86,6 +85,7 @@ func main() {
 	}
 	printVersion := flag.Bool("version", false, "Prints the moar version number")
 	debug := flag.Bool("debug", false, "Print debug logs after exiting")
+	trace := flag.Bool("trace", false, "Print trace logs after exiting")
 
 	// FIXME: Support --no-highlight
 
@@ -96,7 +96,9 @@ func main() {
 	}
 
 	log.SetLevel(log.InfoLevel)
-	if *debug {
+	if *trace {
+		log.SetLevel(log.TraceLevel)
+	} else if *debug {
 		log.SetLevel(log.DebugLevel)
 	}
 
@@ -104,8 +106,8 @@ func main() {
 		TimestampFormat: time.RFC3339Nano,
 	})
 
-	stdinIsRedirected := !terminal.IsTerminal(int(os.Stdin.Fd()))
-	stdoutIsRedirected := !terminal.IsTerminal(int(os.Stdout.Fd()))
+	stdinIsRedirected := !term.IsTerminal(int(os.Stdin.Fd()))
+	stdoutIsRedirected := !term.IsTerminal(int(os.Stdout.Fd()))
 	if stdinIsRedirected && stdoutIsRedirected {
 		io.Copy(os.Stdout, os.Stdin)
 		os.Exit(0)
@@ -150,7 +152,7 @@ func main() {
 }
 
 func startPaging(reader *m.Reader) {
-	screen, e := tcell.NewScreen()
+	screen, e := twin.NewScreen()
 	if e != nil {
 		panic(e)
 	}
@@ -158,7 +160,7 @@ func startPaging(reader *m.Reader) {
 	var loglines strings.Builder
 	defer func() {
 		// Restore screen...
-		screen.Fini()
+		screen.Close()
 
 		// ... before printing panic() output, otherwise the output will have
 		// broken linefeeds and be hard to follow.

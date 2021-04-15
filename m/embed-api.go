@@ -1,6 +1,6 @@
 package m
 
-import "github.com/gdamore/tcell/v2"
+import "github.com/walles/moar/twin"
 
 // If true, the Page function will clear the screen on return. If false, the
 // Page function will clear the last line, and show the cursor.
@@ -16,20 +16,21 @@ var DeInit = true
 // Or your could roll your own Reader based on the source code for any of those
 // constructors.
 func Page(reader *Reader) error {
-	screen, e := tcell.NewScreen()
+	screen, e := twin.NewScreen()
 	if e != nil {
 		// Screen setup failed
 		return e
 	}
 	defer func() {
 		if DeInit {
-			screen.Fini()
+			screen.Close()
 		} else {
 			// See: https://github.com/walles/moar/pull/39
+			// FIXME: Consider moving this logic into the twin package.
 			w, h := screen.Size()
-			screen.ShowCursor(0, h - 1)
+			screen.ShowCursorAt(0, h-1)
 			for x := 0; x < w; x++ {
-				screen.SetContent(x, h - 1, ' ', nil, tcell.StyleDefault)
+				screen.SetCell(x, h-1, twin.NewCell(' ', twin.StyleDefault))
 			}
 			screen.Show()
 		}

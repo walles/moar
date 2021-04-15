@@ -9,9 +9,8 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
+	"github.com/walles/moar/twin"
 	"gotest.tools/assert"
-
-	"github.com/gdamore/tcell/v2"
 )
 
 // Verify that we can tokenize all lines in ../sample-files/*
@@ -34,7 +33,7 @@ func TestTokenize(t *testing.T) {
 			var loglines strings.Builder
 			log.SetOutput(&loglines)
 
-			tokens, plainString := tokensFromString(line)
+			tokens, plainString := cellsFromString(line)
 			if len(tokens) != utf8.RuneCountInString(*plainString) {
 				t.Errorf("%s:%d: len(tokens)=%d, len(plainString)=%d for: <%s>",
 					fileName, lineNumber,
@@ -51,43 +50,43 @@ func TestTokenize(t *testing.T) {
 }
 
 func TestUnderline(t *testing.T) {
-	tokens, _ := tokensFromString("a\x1b[4mb\x1b[24mc")
+	tokens, _ := cellsFromString("a\x1b[4mb\x1b[24mc")
 	assert.Equal(t, len(tokens), 3)
-	assert.Equal(t, tokens[0], Token{Rune: 'a', Style: tcell.StyleDefault})
-	assert.Equal(t, tokens[1], Token{Rune: 'b', Style: tcell.StyleDefault.Underline(true)})
-	assert.Equal(t, tokens[2], Token{Rune: 'c', Style: tcell.StyleDefault})
+	assert.Equal(t, tokens[0], twin.Cell{Rune: 'a', Style: twin.StyleDefault})
+	assert.Equal(t, tokens[1], twin.Cell{Rune: 'b', Style: twin.StyleDefault.WithAttr(twin.AttrUnderline)})
+	assert.Equal(t, tokens[2], twin.Cell{Rune: 'c', Style: twin.StyleDefault})
 }
 
 func TestManPages(t *testing.T) {
 	// Bold
-	tokens, _ := tokensFromString("ab\bbc")
+	tokens, _ := cellsFromString("ab\bbc")
 	assert.Equal(t, len(tokens), 3)
-	assert.Equal(t, tokens[0], Token{Rune: 'a', Style: tcell.StyleDefault})
-	assert.Equal(t, tokens[1], Token{Rune: 'b', Style: tcell.StyleDefault.Bold(true)})
-	assert.Equal(t, tokens[2], Token{Rune: 'c', Style: tcell.StyleDefault})
+	assert.Equal(t, tokens[0], twin.Cell{Rune: 'a', Style: twin.StyleDefault})
+	assert.Equal(t, tokens[1], twin.Cell{Rune: 'b', Style: twin.StyleDefault.WithAttr(twin.AttrBold)})
+	assert.Equal(t, tokens[2], twin.Cell{Rune: 'c', Style: twin.StyleDefault})
 
 	// Underline
-	tokens, _ = tokensFromString("a_\bbc")
+	tokens, _ = cellsFromString("a_\bbc")
 	assert.Equal(t, len(tokens), 3)
-	assert.Equal(t, tokens[0], Token{Rune: 'a', Style: tcell.StyleDefault})
-	assert.Equal(t, tokens[1], Token{Rune: 'b', Style: tcell.StyleDefault.Underline(true)})
-	assert.Equal(t, tokens[2], Token{Rune: 'c', Style: tcell.StyleDefault})
+	assert.Equal(t, tokens[0], twin.Cell{Rune: 'a', Style: twin.StyleDefault})
+	assert.Equal(t, tokens[1], twin.Cell{Rune: 'b', Style: twin.StyleDefault.WithAttr(twin.AttrUnderline)})
+	assert.Equal(t, tokens[2], twin.Cell{Rune: 'c', Style: twin.StyleDefault})
 
 	// Bullet point 1, taken from doing this on my macOS system:
 	// env PAGER="hexdump -C" man printf | moar
-	tokens, _ = tokensFromString("a+\b+\bo\bob")
+	tokens, _ = cellsFromString("a+\b+\bo\bob")
 	assert.Equal(t, len(tokens), 3)
-	assert.Equal(t, tokens[0], Token{Rune: 'a', Style: tcell.StyleDefault})
-	assert.Equal(t, tokens[1], Token{Rune: '•', Style: tcell.StyleDefault})
-	assert.Equal(t, tokens[2], Token{Rune: 'b', Style: tcell.StyleDefault})
+	assert.Equal(t, tokens[0], twin.Cell{Rune: 'a', Style: twin.StyleDefault})
+	assert.Equal(t, tokens[1], twin.Cell{Rune: '•', Style: twin.StyleDefault})
+	assert.Equal(t, tokens[2], twin.Cell{Rune: 'b', Style: twin.StyleDefault})
 
 	// Bullet point 2, taken from doing this using the "fish" shell on my macOS system:
 	// man printf | hexdump -C | moar
-	tokens, _ = tokensFromString("a+\bob")
+	tokens, _ = cellsFromString("a+\bob")
 	assert.Equal(t, len(tokens), 3)
-	assert.Equal(t, tokens[0], Token{Rune: 'a', Style: tcell.StyleDefault})
-	assert.Equal(t, tokens[1], Token{Rune: '•', Style: tcell.StyleDefault})
-	assert.Equal(t, tokens[2], Token{Rune: 'b', Style: tcell.StyleDefault})
+	assert.Equal(t, tokens[0], twin.Cell{Rune: 'a', Style: twin.StyleDefault})
+	assert.Equal(t, tokens[1], twin.Cell{Rune: '•', Style: twin.StyleDefault})
+	assert.Equal(t, tokens[2], twin.Cell{Rune: 'b', Style: twin.StyleDefault})
 }
 
 func TestConsumeCompositeColorHappy(t *testing.T) {
@@ -96,13 +95,13 @@ func TestConsumeCompositeColorHappy(t *testing.T) {
 	newIndex, color, err := consumeCompositeColor([]string{"38", "5", "74"}, 0)
 	assert.NilError(t, err)
 	assert.Equal(t, newIndex, 3)
-	assert.Equal(t, *color, tcell.Color74)
+	assert.Equal(t, *color, twin.NewColor256(74))
 
 	// 24 bit color
 	newIndex, color, err = consumeCompositeColor([]string{"38", "2", "10", "20", "30"}, 0)
 	assert.NilError(t, err)
 	assert.Equal(t, newIndex, 5)
-	assert.Equal(t, *color, tcell.NewRGBColor(10, 20, 30))
+	assert.Equal(t, *color, twin.NewColor24Bit(10, 20, 30))
 }
 
 func TestConsumeCompositeColorHappyMidSequence(t *testing.T) {
@@ -111,13 +110,13 @@ func TestConsumeCompositeColorHappyMidSequence(t *testing.T) {
 	newIndex, color, err := consumeCompositeColor([]string{"whatever", "38", "5", "74"}, 1)
 	assert.NilError(t, err)
 	assert.Equal(t, newIndex, 4)
-	assert.Equal(t, *color, tcell.Color74)
+	assert.Equal(t, *color, twin.NewColor256(74))
 
 	// 24 bit color
 	newIndex, color, err = consumeCompositeColor([]string{"whatever", "38", "2", "10", "20", "30"}, 1)
 	assert.NilError(t, err)
 	assert.Equal(t, newIndex, 6)
-	assert.Equal(t, *color, tcell.NewRGBColor(10, 20, 30))
+	assert.Equal(t, *color, twin.NewColor24Bit(10, 20, 30))
 }
 
 func TestConsumeCompositeColorBadPrefix(t *testing.T) {
@@ -179,6 +178,6 @@ func TestConsumeCompositeColorIncomplete24Bit(t *testing.T) {
 }
 
 func TestUpdateStyle(t *testing.T) {
-	numberColored := updateStyle(tcell.StyleDefault, "\x1b[33m")
-	assert.Equal(t, numberColored, tcell.StyleDefault.Foreground(tcell.ColorOlive))
+	numberColored := updateStyle(twin.StyleDefault, "\x1b[33m")
+	assert.Equal(t, numberColored, twin.StyleDefault.Foreground(twin.NewColor16(3)))
 }
