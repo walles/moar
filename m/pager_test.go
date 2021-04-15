@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gdamore/tcell/v2"
+	"github.com/walles/moar/twin"
 	"gotest.tools/assert"
 )
 
@@ -17,33 +17,24 @@ func TestUnicodeRendering(t *testing.T) {
 		panic(err)
 	}
 
-	var answers = []Token{
-		createExpectedCell('å', tcell.StyleDefault),
-		createExpectedCell('ä', tcell.StyleDefault),
-		createExpectedCell('ö', tcell.StyleDefault),
+	var answers = []twin.Cell{
+		twin.NewCell('å', twin.StyleDefault),
+		twin.NewCell('ä', twin.StyleDefault),
+		twin.NewCell('ö', twin.StyleDefault),
 	}
 
-	contents := startPaging(t, reader)
+	contents := startPaging(t, reader).GetRow(0)
 	for pos, expected := range answers {
-		expected.LogDifference(t, contents[pos])
+		logDifference(t, expected, contents[pos])
 	}
 }
 
-func (expected Token) LogDifference(t *testing.T, actual tcell.SimCell) {
-	if actual.Runes[0] == expected.Rune && actual.Style == expected.Style {
+func logDifference(t *testing.T, expected twin.Cell, actual twin.Cell) {
+	if actual.Rune == expected.Rune && actual.Style == expected.Style {
 		return
 	}
 
-	t.Errorf("Expected '%s'/0x%x, got '%s'/0x%x",
-		string(expected.Rune), expected.Style,
-		string(actual.Runes[0]), actual.Style)
-}
-
-func createExpectedCell(Rune rune, Style tcell.Style) Token {
-	return Token{
-		Rune:  Rune,
-		Style: Style,
-	}
+	t.Errorf("Expected %v, got %v", expected, actual)
 }
 
 func TestFgColorRendering(t *testing.T) {
@@ -53,21 +44,21 @@ func TestFgColorRendering(t *testing.T) {
 		panic(err)
 	}
 
-	var answers = []Token{
-		createExpectedCell('a', tcell.StyleDefault.Foreground(tcell.ColorBlack)),
-		createExpectedCell('b', tcell.StyleDefault.Foreground(tcell.ColorMaroon)),
-		createExpectedCell('c', tcell.StyleDefault.Foreground(tcell.ColorGreen)),
-		createExpectedCell('d', tcell.StyleDefault.Foreground(tcell.ColorOlive)),
-		createExpectedCell('e', tcell.StyleDefault.Foreground(tcell.ColorNavy)),
-		createExpectedCell('f', tcell.StyleDefault.Foreground(tcell.ColorPurple)),
-		createExpectedCell('g', tcell.StyleDefault.Foreground(tcell.ColorTeal)),
-		createExpectedCell('h', tcell.StyleDefault.Foreground(tcell.ColorSilver)),
-		createExpectedCell('i', tcell.StyleDefault),
+	var answers = []twin.Cell{
+		twin.NewCell('a', twin.StyleDefault.Foreground(twin.NewColor16(0))),
+		twin.NewCell('b', twin.StyleDefault.Foreground(twin.NewColor16(1))),
+		twin.NewCell('c', twin.StyleDefault.Foreground(twin.NewColor16(2))),
+		twin.NewCell('d', twin.StyleDefault.Foreground(twin.NewColor16(3))),
+		twin.NewCell('e', twin.StyleDefault.Foreground(twin.NewColor16(4))),
+		twin.NewCell('f', twin.StyleDefault.Foreground(twin.NewColor16(5))),
+		twin.NewCell('g', twin.StyleDefault.Foreground(twin.NewColor16(6))),
+		twin.NewCell('h', twin.StyleDefault.Foreground(twin.NewColor16(7))),
+		twin.NewCell('i', twin.StyleDefault),
 	}
 
-	contents := startPaging(t, reader)
+	contents := startPaging(t, reader).GetRow(0)
 	for pos, expected := range answers {
-		expected.LogDifference(t, contents[pos])
+		logDifference(t, expected, contents[pos])
 	}
 }
 
@@ -78,37 +69,37 @@ func TestBrokenUtf8(t *testing.T) {
 		panic(err)
 	}
 
-	var answers = []Token{
-		createExpectedCell('a', tcell.StyleDefault),
-		createExpectedCell('b', tcell.StyleDefault),
-		createExpectedCell('c', tcell.StyleDefault),
-		createExpectedCell('?', tcell.StyleDefault.Foreground(tcell.ColorMaroon).Background(tcell.ColorSilver)),
-		createExpectedCell('d', tcell.StyleDefault),
-		createExpectedCell('e', tcell.StyleDefault),
-		createExpectedCell('f', tcell.StyleDefault),
+	var answers = []twin.Cell{
+		twin.NewCell('a', twin.StyleDefault),
+		twin.NewCell('b', twin.StyleDefault),
+		twin.NewCell('c', twin.StyleDefault),
+		twin.NewCell('?', twin.StyleDefault.Foreground(twin.NewColor16(7)).Background(twin.NewColor16(1))),
+		twin.NewCell('d', twin.StyleDefault),
+		twin.NewCell('e', twin.StyleDefault),
+		twin.NewCell('f', twin.StyleDefault),
 	}
 
-	contents := startPaging(t, reader)
+	contents := startPaging(t, reader).GetRow(0)
 	for pos, expected := range answers {
-		expected.LogDifference(t, contents[pos])
+		logDifference(t, expected, contents[pos])
 	}
 }
 
-func startPaging(t *testing.T, reader *Reader) []tcell.SimCell {
-	screen := tcell.NewSimulationScreen("UTF-8")
+func startPaging(t *testing.T, reader *Reader) *twin.FakeScreen {
+	screen := twin.NewFakeScreen(20, 10)
 	pager := NewPager(reader)
 	pager.ShowLineNumbers = false
+
+	// Tell our Pager to quit immediately
 	pager.Quit()
 
-	var loglines strings.Builder
+	// Except for just quitting, this also associates our FakeScreen with the Pager
 	pager.StartPaging(screen)
-	contents, _, _ := screen.GetContents()
 
-	if len(loglines.String()) > 0 {
-		t.Logf("%s", loglines.String())
-	}
+	// This makes sure at least one frame gets rendered
+	pager._Redraw("")
 
-	return contents
+	return screen
 }
 
 // assertIndexOfFirstX verifies the (zero-based) index of the first 'x'
@@ -118,9 +109,9 @@ func assertIndexOfFirstX(t *testing.T, s string, expectedIndex int) {
 		panic(err)
 	}
 
-	contents := startPaging(t, reader)
+	contents := startPaging(t, reader).GetRow(0)
 	for pos, cell := range contents {
-		if cell.Runes[0] != 'x' {
+		if cell.Rune != 'x' {
 			continue
 		}
 
@@ -171,27 +162,27 @@ func TestCodeHighlighting(t *testing.T) {
 		panic(err)
 	}
 
-	packageKeywordStyle := tcell.StyleDefault.Bold(true).Foreground(tcell.NewHexColor(0x6AB825))
-	packageNameStyle := tcell.StyleDefault.Foreground(tcell.NewHexColor(0xD0D0D0))
-	var answers = []Token{
-		createExpectedCell('p', packageKeywordStyle),
-		createExpectedCell('a', packageKeywordStyle),
-		createExpectedCell('c', packageKeywordStyle),
-		createExpectedCell('k', packageKeywordStyle),
-		createExpectedCell('a', packageKeywordStyle),
-		createExpectedCell('g', packageKeywordStyle),
-		createExpectedCell('e', packageKeywordStyle),
-		createExpectedCell(' ', packageNameStyle),
-		createExpectedCell('m', packageNameStyle),
+	packageKeywordStyle := twin.StyleDefault.WithAttr(twin.AttrBold).Foreground(twin.NewColorHex(0x6AB825))
+	packageNameStyle := twin.StyleDefault.Foreground(twin.NewColorHex(0xD0D0D0))
+	var answers = []twin.Cell{
+		twin.NewCell('p', packageKeywordStyle),
+		twin.NewCell('a', packageKeywordStyle),
+		twin.NewCell('c', packageKeywordStyle),
+		twin.NewCell('k', packageKeywordStyle),
+		twin.NewCell('a', packageKeywordStyle),
+		twin.NewCell('g', packageKeywordStyle),
+		twin.NewCell('e', packageKeywordStyle),
+		twin.NewCell(' ', packageNameStyle),
+		twin.NewCell('m', packageNameStyle),
 	}
 
-	contents := startPaging(t, reader)
+	contents := startPaging(t, reader).GetRow(0)
 	for pos, expected := range answers {
-		expected.LogDifference(t, contents[pos])
+		logDifference(t, expected, contents[pos])
 	}
 }
 
-func testManPageFormatting(t *testing.T, input string, expected Token) {
+func testManPageFormatting(t *testing.T, input string, expected twin.Cell) {
 	reader := NewReaderFromStream("", strings.NewReader(input))
 	if err := reader._Wait(); err != nil {
 		panic(err)
@@ -203,17 +194,17 @@ func testManPageFormatting(t *testing.T, input string, expected Token) {
 	os.Setenv("LESS_TERMCAP_us", "")
 	resetManPageFormatForTesting()
 
-	contents := startPaging(t, reader)
-	expected.LogDifference(t, contents[0])
-	assert.Equal(t, contents[1].Runes[0], ' ')
+	contents := startPaging(t, reader).GetRow(0)
+	logDifference(t, expected, contents[0])
+	assert.Equal(t, contents[1].Rune, ' ')
 }
 
 func TestManPageFormatting(t *testing.T) {
-	testManPageFormatting(t, "N\x08N", createExpectedCell('N', tcell.StyleDefault.Bold(true)))
-	testManPageFormatting(t, "_\x08x", createExpectedCell('x', tcell.StyleDefault.Underline(true)))
+	testManPageFormatting(t, "N\x08N", twin.NewCell('N', twin.StyleDefault.WithAttr(twin.AttrBold)))
+	testManPageFormatting(t, "_\x08x", twin.NewCell('x', twin.StyleDefault.WithAttr(twin.AttrUnderline)))
 
 	// Corner cases
-	testManPageFormatting(t, "\x08", createExpectedCell('<', tcell.StyleDefault.Foreground(tcell.ColorMaroon).Background(tcell.ColorSilver)))
+	testManPageFormatting(t, "\x08", twin.NewCell('<', twin.StyleDefault.Foreground(twin.NewColor16(7)).Background(twin.NewColor16(1))))
 
 	// FIXME: Test two consecutive backspaces
 
@@ -240,7 +231,7 @@ func TestToPattern(t *testing.T) {
 	assert.Assert(t, toPattern(")g").MatchString(")g"))
 }
 
-func assertTokenRangesEqual(t *testing.T, actual []Token, expected []Token) {
+func assertTokenRangesEqual(t *testing.T, actual []twin.Cell, expected []twin.Cell) {
 	if len(actual) != len(expected) {
 		t.Errorf("String lengths mismatch; expected %d but got %d",
 			len(expected), len(actual))
@@ -257,10 +248,7 @@ func assertTokenRangesEqual(t *testing.T, actual []Token, expected []Token) {
 			continue
 		}
 
-		t.Errorf("At (0-based) position %d: Expected '%s'/0x%x, got '%s'/0x%x",
-			pos,
-			string(expectedToken.Rune), expectedToken.Style,
-			string(actualToken.Rune), actualToken.Style)
+		t.Errorf("At (0-based) position %d: Expected %v, got %v", pos, expectedToken, actualToken)
 	}
 }
 
@@ -273,20 +261,20 @@ func TestCreateScreenLineBase(t *testing.T) {
 func TestCreateScreenLineOverflowRight(t *testing.T) {
 	line := NewLine("012345")
 	screenLine := createScreenLine(0, 3, line, nil)
-	assertTokenRangesEqual(t, screenLine, []Token{
-		createExpectedCell('0', tcell.StyleDefault),
-		createExpectedCell('1', tcell.StyleDefault),
-		createExpectedCell('>', tcell.StyleDefault.Reverse(true)),
+	assertTokenRangesEqual(t, screenLine, []twin.Cell{
+		twin.NewCell('0', twin.StyleDefault),
+		twin.NewCell('1', twin.StyleDefault),
+		twin.NewCell('>', twin.StyleDefault.WithAttr(twin.AttrReverse)),
 	})
 }
 
 func TestCreateScreenLineUnderflowLeft(t *testing.T) {
 	line := NewLine("012")
 	screenLine := createScreenLine(1, 3, line, nil)
-	assertTokenRangesEqual(t, screenLine, []Token{
-		createExpectedCell('<', tcell.StyleDefault.Reverse(true)),
-		createExpectedCell('1', tcell.StyleDefault),
-		createExpectedCell('2', tcell.StyleDefault),
+	assertTokenRangesEqual(t, screenLine, []twin.Cell{
+		twin.NewCell('<', twin.StyleDefault.WithAttr(twin.AttrReverse)),
+		twin.NewCell('1', twin.StyleDefault),
+		twin.NewCell('2', twin.StyleDefault),
 	})
 }
 
@@ -298,10 +286,10 @@ func TestCreateScreenLineSearchHit(t *testing.T) {
 
 	line := NewLine("abc")
 	screenLine := createScreenLine(0, 3, line, pattern)
-	assertTokenRangesEqual(t, screenLine, []Token{
-		createExpectedCell('a', tcell.StyleDefault),
-		createExpectedCell('b', tcell.StyleDefault.Reverse(true)),
-		createExpectedCell('c', tcell.StyleDefault),
+	assertTokenRangesEqual(t, screenLine, []twin.Cell{
+		twin.NewCell('a', twin.StyleDefault),
+		twin.NewCell('b', twin.StyleDefault.WithAttr(twin.AttrReverse)),
+		twin.NewCell('c', twin.StyleDefault),
 	})
 }
 
@@ -313,10 +301,10 @@ func TestCreateScreenLineUtf8SearchHit(t *testing.T) {
 
 	line := NewLine("åäö")
 	screenLine := createScreenLine(0, 3, line, pattern)
-	assertTokenRangesEqual(t, screenLine, []Token{
-		createExpectedCell('å', tcell.StyleDefault),
-		createExpectedCell('ä', tcell.StyleDefault.Reverse(true)),
-		createExpectedCell('ö', tcell.StyleDefault),
+	assertTokenRangesEqual(t, screenLine, []twin.Cell{
+		twin.NewCell('å', twin.StyleDefault),
+		twin.NewCell('ä', twin.StyleDefault.WithAttr(twin.AttrReverse)),
+		twin.NewCell('ö', twin.StyleDefault),
 	})
 }
 
@@ -326,11 +314,11 @@ func TestCreateScreenLineScrolledUtf8SearchHit(t *testing.T) {
 	line := NewLine("ååäö")
 	screenLine := createScreenLine(1, 4, line, pattern)
 
-	assertTokenRangesEqual(t, screenLine, []Token{
-		createExpectedCell('<', tcell.StyleDefault.Reverse(true)),
-		createExpectedCell('å', tcell.StyleDefault),
-		createExpectedCell('ä', tcell.StyleDefault.Reverse(true)),
-		createExpectedCell('ö', tcell.StyleDefault),
+	assertTokenRangesEqual(t, screenLine, []twin.Cell{
+		twin.NewCell('<', twin.StyleDefault.WithAttr(twin.AttrReverse)),
+		twin.NewCell('å', twin.StyleDefault),
+		twin.NewCell('ä', twin.StyleDefault.WithAttr(twin.AttrReverse)),
+		twin.NewCell('ö', twin.StyleDefault),
 	})
 }
 
@@ -340,11 +328,11 @@ func TestCreateScreenLineScrolled2Utf8SearchHit(t *testing.T) {
 	line := NewLine("åååäö")
 	screenLine := createScreenLine(2, 4, line, pattern)
 
-	assertTokenRangesEqual(t, screenLine, []Token{
-		createExpectedCell('<', tcell.StyleDefault.Reverse(true)),
-		createExpectedCell('å', tcell.StyleDefault),
-		createExpectedCell('ä', tcell.StyleDefault.Reverse(true)),
-		createExpectedCell('ö', tcell.StyleDefault),
+	assertTokenRangesEqual(t, screenLine, []twin.Cell{
+		twin.NewCell('<', twin.StyleDefault.WithAttr(twin.AttrReverse)),
+		twin.NewCell('å', twin.StyleDefault),
+		twin.NewCell('ä', twin.StyleDefault.WithAttr(twin.AttrReverse)),
+		twin.NewCell('ö', twin.StyleDefault),
 	})
 }
 

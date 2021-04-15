@@ -42,7 +42,7 @@ fi
 
 echo Test --version...
 ./moar --version > /dev/null  # Should exit with code 0
-diff -u <(./moar --version) <(git describe --tags --dirty)
+diff -u <(./moar --version) <(git describe --tags --dirty --always)
 
 # FIXME: On unknown command line options, test that help text goes to stderr
 
