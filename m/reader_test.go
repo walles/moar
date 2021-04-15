@@ -196,7 +196,7 @@ func TestStatusText(t *testing.T) {
 	testStatusText(t, 1, 1, 1, "1-1/1 100%")
 
 	// Test with filename
-	testMe, err := NewReaderFromFilename("/dev/null")
+	testMe, err := NewReaderFromFilename(getSamplesDir() + "/empty")
 	if err != nil {
 		panic(err)
 	}
@@ -205,7 +205,7 @@ func TestStatusText(t *testing.T) {
 	}
 
 	statusText := testMe.GetLines(0, 0).statusText
-	assert.Equal(t, statusText, "null: <empty>")
+	assert.Equal(t, statusText, "empty: <empty>")
 }
 
 func testCompressedFile(t *testing.T, filename string) {
