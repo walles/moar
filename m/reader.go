@@ -29,6 +29,9 @@ type Reader struct {
 	err     error
 	_stderr io.Reader
 
+	// Have we had our contents replaced using setText()?
+	replaced bool
+
 	done           chan bool
 	moreLinesAdded chan bool
 }
@@ -48,13 +51,13 @@ func readStream(stream io.Reader, reader *Reader, fromFilter *exec.Cmd) {
 	// FIXME: Close the stream when done reading it?
 
 	defer func() {
-		reader.lock.Lock()
-		defer reader.lock.Unlock()
-
 		if fromFilter == nil {
 			reader.done <- true
 			return
 		}
+
+		reader.lock.Lock()
+		defer reader.lock.Unlock()
 
 		// Give the filter a little time to go away
 		timer := time.AfterFunc(2*time.Second, func() {
@@ -116,12 +119,12 @@ func readStream(stream io.Reader, reader *Reader, fromFilter *exec.Cmd) {
 					break
 				}
 
+				reader.lock.Lock()
 				if reader.err == nil {
 					// Store the error unless it overwrites one we already have
-					reader.lock.Lock()
 					reader.err = fmt.Errorf("error reading line from input stream: %w", err)
-					reader.lock.Unlock()
 				}
+				reader.lock.Unlock()
 				break
 			}
 
@@ -137,6 +140,11 @@ func readStream(stream io.Reader, reader *Reader, fromFilter *exec.Cmd) {
 		}
 
 		reader.lock.Lock()
+		if reader.replaced {
+			// Somebody called setText(), never mind reading the rest of this stream
+			reader.lock.Unlock()
+			break
+		}
 		reader.lines = append(reader.lines, NewLine(string(completeLine)))
 		reader.lock.Unlock()
 
@@ -304,23 +312,28 @@ func NewReaderFromFilename(filename string) (*Reader, error) {
 		return newReaderFromCommand(filename, "xz", "-d", "-c")
 	}
 
-	if strings.HasSuffix(filename, ".txt") {
-		// Not much point in highlighting text files, prefer streaming these
-		stream, err := os.Open(filename)
-		if err != nil {
-			return nil, err
-		}
-
-		return NewReaderFromStream(filename, stream), nil
-	}
-
-	highlighted, err := highlight(filename)
+	stream, err := os.Open(filename)
 	if err != nil {
 		return nil, err
 	}
+	returnMe := NewReaderFromStream(filename, stream)
 
-	reader := NewReaderFromText(filename, *highlighted)
-	return reader, nil
+	if strings.HasSuffix(filename, ".txt") {
+		// Not much point in highlighting text files, prefer streaming these
+		return returnMe, nil
+	}
+
+	go func() {
+		highlighted, err := highlight(filename)
+		if err != nil {
+			log.Warn("Highlighting failed: ", err)
+			return
+		}
+
+		returnMe.setText(*highlighted)
+	}()
+
+	return returnMe, nil
 }
 
 // _CreateStatusUnlocked() assumes that its caller is holding the lock
@@ -412,5 +425,28 @@ func (r *Reader) _GetLinesUnlocked(firstLineOneBased int, wantedLineCount int) *
 		lines:             r.lines[firstLineZeroBased : lastLineZeroBased+1],
 		firstLineOneBased: firstLineOneBased,
 		statusText:        r._CreateStatusUnlocked(firstLineOneBased, lastLineZeroBased+1),
+	}
+}
+
+// Replace reader contents with the given text and mark as done
+func (reader *Reader) setText(text string) {
+	lines := []*Line{}
+	for _, line := range strings.Split(text, "\n") {
+		lines = append(lines, NewLine(line))
+	}
+
+	reader.lock.Lock()
+	reader.lines = lines
+	reader.replaced = true
+	reader.lock.Unlock()
+
+	select {
+	case reader.done <- true:
+	default:
+	}
+
+	select {
+	case reader.moreLinesAdded <- true:
+	default:
 	}
 }
