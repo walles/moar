@@ -17,6 +17,9 @@ const _TabSize = 4
 var manPageBold = tcell.StyleDefault.Bold(true)
 var manPageUnderline = tcell.StyleDefault.Underline(true)
 
+// ESC[...m: https://en.wikipedia.org/wiki/ANSI_escape_code#SGR
+var sgrSequencePattern = regexp.MustCompile("\x1b\\[([0-9;]*m)")
+
 // Token is a rune with a style to be written to a cell on screen
 type Token struct {
 	Rune  rune
@@ -192,7 +195,7 @@ func consumeUnderline(runes []rune, index int) (int, *Token) {
 //
 // Used on man pages, try "man printf" on macOS for one example.
 func consumeBullet(runes []rune, index int) (int, *Token) {
-	patterns := []string{"+\bo", "+\b+\bo\bo"}
+	patterns := [][]byte{[]byte("+\bo"), []byte("+\b+\bo\bo")}
 	for _, pattern := range patterns {
 		if index+len(pattern) > len(runes) {
 			// Not enough runes left for a bullet
@@ -200,10 +203,11 @@ func consumeBullet(runes []rune, index int) (int, *Token) {
 		}
 
 		mismatch := false
-		for delta, patternChar := range pattern {
-			if rune(patternChar) != runes[index+delta] {
+		for delta, patternByte := range pattern {
+			if patternByte != byte(runes[index+delta]) {
 				// Bullet pattern mismatch, never mind
 				mismatch = true
+				break
 			}
 		}
 		if mismatch {
@@ -264,9 +268,7 @@ func styledStringsFromString(s string) []_StyledString {
 	// This function was inspired by the
 	// https://golang.org/pkg/regexp/#Regexp.Split source code
 
-	pattern := regexp.MustCompile("\x1b\\[([0-9;]*m)")
-
-	matches := pattern.FindAllStringIndex(s, -1)
+	matches := sgrSequencePattern.FindAllStringIndex(s, -1)
 	styledStrings := make([]_StyledString, 0, len(matches)+1)
 
 	style := tcell.StyleDefault

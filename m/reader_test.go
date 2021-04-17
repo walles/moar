@@ -3,7 +3,6 @@ package m
 import (
 	"io/ioutil"
 	"math"
-	"os"
 	"os/exec"
 	"path"
 	"runtime"
@@ -128,6 +127,14 @@ func getTestFiles() []string {
 
 func TestGetLines(t *testing.T) {
 	for _, file := range getTestFiles() {
+		if strings.HasSuffix(file, ".xz") {
+			_, err := exec.LookPath("xz")
+			if err != nil {
+				t.Log("Not testing xz compressed file, xz not found in $PATH: ", file)
+				continue
+			}
+		}
+
 		reader, err := NewReaderFromFilename(file)
 		if err != nil {
 			t.Errorf("Error opening file <%s>: %s", file, err.Error())
@@ -161,14 +168,7 @@ func TestGetLongLine(t *testing.T) {
 	assert.Assert(t, strings.HasPrefix(line.Plain(), "1 2 3 4"), "<%s>", line)
 	assert.Assert(t, strings.HasSuffix(line.Plain(), "0123456789"), line)
 
-	stat, err := os.Stat(file)
-	if err != nil {
-		panic(err)
-	}
-	fileSize := stat.Size()
-
-	// The "+1" is because the Reader strips off the ending linefeed
-	assert.Equal(t, len(line.Plain())+1, int(fileSize))
+	assert.Equal(t, len(line.Plain()), 100021)
 }
 
 func getReaderWithLineCount(totalLines int) *Reader {
@@ -196,7 +196,7 @@ func TestStatusText(t *testing.T) {
 	testStatusText(t, 1, 1, 1, "1-1/1 100%")
 
 	// Test with filename
-	testMe, err := NewReaderFromFilename("/dev/null")
+	testMe, err := NewReaderFromFilename(getSamplesDir() + "/empty")
 	if err != nil {
 		panic(err)
 	}
@@ -205,7 +205,7 @@ func TestStatusText(t *testing.T) {
 	}
 
 	statusText := testMe.GetLines(0, 0).statusText
-	assert.Equal(t, statusText, "null: <empty>")
+	assert.Equal(t, statusText, "empty: <empty>")
 }
 
 func testCompressedFile(t *testing.T, filename string) {
@@ -225,7 +225,13 @@ func testCompressedFile(t *testing.T, filename string) {
 func TestCompressedFiles(t *testing.T) {
 	testCompressedFile(t, "compressed.txt.gz")
 	testCompressedFile(t, "compressed.txt.bz2")
-	testCompressedFile(t, "compressed.txt.xz")
+
+	_, err := exec.LookPath("xz")
+	if err == nil {
+		testCompressedFile(t, "compressed.txt.xz")
+	} else {
+		t.Log("WARNING: xz not found in path, not testing automatic xz decompression")
+	}
 }
 
 func TestFilterNotInstalled(t *testing.T) {
