@@ -55,8 +55,11 @@ type UnixScreen struct {
 	events           chan Event
 	oldTerminalState *term.State
 
-	ttyIn  *os.File
-	ttyOut *os.File
+	ttyIn        *os.File
+	oldTtyInMode uint32 // Used on Windows
+
+	ttyOut        *os.File
+	oldTtyOutMode uint32 // Used on Windows
 }
 
 // Cell is a rune with a style to be written to a cell on screen
@@ -118,6 +121,7 @@ func (screen *UnixScreen) Close() {
 	screen.enableMouseTracking(false)
 	screen.setAlternateScreenMode(false)
 	term.Restore(int(screen.ttyIn.Fd()), screen.oldTerminalState)
+	screen.restoreTtyInTtyOut()
 }
 
 func (screen *UnixScreen) Events() chan Event {
