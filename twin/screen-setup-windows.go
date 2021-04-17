@@ -23,6 +23,17 @@ func (screen *UnixScreen) setupTtyInTtyOut() {
 
 	// Set input stream to raw mode
 	var err error
+	stdin := windows.Handle(screen.ttyIn.Fd())
+	var originalMode uint32
+	err = windows.GetConsoleMode(stdin, &originalMode)
+	if err != nil {
+		panic(err)
+	}
+	err = windows.SetConsoleMode(stdin, originalMode|windows.ENABLE_VIRTUAL_TERMINAL_INPUT)
+	if err != nil {
+		panic(err)
+	}
+
 	screen.oldTerminalState, err = term.MakeRaw(int(screen.ttyIn.Fd()))
 	if err != nil {
 		panic(err)
@@ -32,7 +43,12 @@ func (screen *UnixScreen) setupTtyInTtyOut() {
 
 	// Enable console colors, from: https://stackoverflow.com/a/52579002
 	stdout := windows.Handle(screen.ttyOut.Fd())
-	var originalMode uint32
-	windows.GetConsoleMode(stdout, &originalMode)
-	windows.SetConsoleMode(stdout, originalMode|windows.ENABLE_VIRTUAL_TERMINAL_PROCESSING)
+	err = windows.GetConsoleMode(stdout, &originalMode)
+	if err != nil {
+		panic(err)
+	}
+	err = windows.SetConsoleMode(stdout, originalMode|windows.ENABLE_VIRTUAL_TERMINAL_PROCESSING)
+	if err != nil {
+		panic(err)
+	}
 }
