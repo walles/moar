@@ -87,11 +87,12 @@ import (
 )
 
 func main() {
-	buf := bytes.Buffer{}
-	fmt.Fprintln(&buf, "March")
-	fmt.Fprintln(&buf, "April")
+	buf := new(bytes.Buffer)
+	for range [99]struct{}{} {
+		fmt.Fprintln(buf, "Moar")
+	}
 
-	err := m.Page(m.NewReaderFromStream("Months", &buf))
+	err := m.NewPager(m.NewReaderFromStream("Moar", buf)).Page()
 	if err != nil {
 		// Handle paging problems
 		panic(err)
@@ -99,7 +100,7 @@ func main() {
 }
 ```
 
-The `m.Page()` parameter can also be initialized using `NewReaderFromText()` or
+`m.Reader` can also be initialized using `NewReaderFromText()` or
 `NewReaderFromFilename()`.
 
 Developing
