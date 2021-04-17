@@ -63,3 +63,10 @@ func (screen *UnixScreen) setupTtyInTtyOut() {
 
 	screen.ttyOut = os.Stdout
 }
+
+func (screen *UnixScreen) restoreTtyInTtyOut() {
+	err := term.Restore(int(screen.ttyIn.Fd()), screen.oldTerminalState)
+	if err != nil {
+		panic(err)
+	}
+}

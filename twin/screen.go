@@ -52,14 +52,14 @@ type UnixScreen struct {
 	// not this channel has been signalled
 	sigwinch chan int
 
-	events           chan Event
-	oldTerminalState *term.State
+	events chan Event
 
-	ttyIn        *os.File
-	oldTtyInMode uint32 // Used on Windows
+	ttyIn            *os.File
+	oldTerminalState *term.State //lint:ignore U1000 Not used on Windows
+	oldTtyInMode     uint32      //lint:ignore U1000 Windows only
 
 	ttyOut        *os.File
-	oldTtyOutMode uint32 // Used on Windows
+	oldTtyOutMode uint32 //lint:ignore U1000 Windows only
 }
 
 // Cell is a rune with a style to be written to a cell on screen
@@ -120,7 +120,6 @@ func (screen *UnixScreen) Close() {
 	screen.hideCursor(false)
 	screen.enableMouseTracking(false)
 	screen.setAlternateScreenMode(false)
-	term.Restore(int(screen.ttyIn.Fd()), screen.oldTerminalState)
 	screen.restoreTtyInTtyOut()
 }
 
