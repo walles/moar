@@ -101,17 +101,7 @@ func NewScreen() (Screen, error) {
 	screen.events = make(chan Event, 80)
 
 	screen.setupSigwinchNotification()
-
-	screen.setupTtyIn()
-	screen.ttyOut = os.Stdout
-
-	// Set input stream to raw mode
-	var err error
-	screen.oldTerminalState, err = term.MakeRaw(int(screen.ttyIn.Fd()))
-	if err != nil {
-		panic(err)
-	}
-
+	screen.setupTtyInTtyOut()
 	screen.setAlternateScreenMode(true)
 	screen.enableMouseTracking(true)
 	screen.hideCursor(true)

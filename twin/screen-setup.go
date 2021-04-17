@@ -8,6 +8,7 @@ import (
 	"syscall"
 
 	log "github.com/sirupsen/logrus"
+	"golang.org/x/term"
 )
 
 func (screen *UnixScreen) setupSigwinchNotification() {
@@ -42,7 +43,7 @@ func (screen *UnixScreen) setupSigwinchNotification() {
 	}()
 }
 
-func (screen *UnixScreen) setupTtyIn() {
+func (screen *UnixScreen) setupTtyInTtyOut() {
 	// os.Stdout is a stream that goes to our terminal window.
 	//
 	// So if we read from there, we'll get input from the terminal window.
@@ -52,4 +53,13 @@ func (screen *UnixScreen) setupTtyIn() {
 	//
 	// Tested on macOS and Linux, works like a charm!
 	screen.ttyIn = os.Stdout // <- YES, WE SHOULD ASSIGN STDOUT TO TTYIN
+
+	// Set input stream to raw mode
+	var err error
+	screen.oldTerminalState, err = term.MakeRaw(int(screen.ttyIn.Fd()))
+	if err != nil {
+		panic(err)
+	}
+
+	screen.ttyOut = os.Stdout
 }
