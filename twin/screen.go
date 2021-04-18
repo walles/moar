@@ -104,7 +104,10 @@ func NewScreen() (Screen, error) {
 	screen.events = make(chan Event, 80)
 
 	screen.setupSigwinchNotification()
-	screen.setupTtyInTtyOut()
+	err := screen.setupTtyInTtyOut()
+	if err != nil {
+		return nil, err
+	}
 	screen.setAlternateScreenMode(true)
 	screen.enableMouseTracking(true)
 	screen.hideCursor(true)

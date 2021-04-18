@@ -43,7 +43,7 @@ func (screen *UnixScreen) setupSigwinchNotification() {
 	}()
 }
 
-func (screen *UnixScreen) setupTtyInTtyOut() {
+func (screen *UnixScreen) setupTtyInTtyOut() error {
 	// os.Stdout is a stream that goes to our terminal window.
 	//
 	// So if we read from there, we'll get input from the terminal window.
@@ -58,15 +58,18 @@ func (screen *UnixScreen) setupTtyInTtyOut() {
 	var err error
 	screen.oldTerminalState, err = term.MakeRaw(int(screen.ttyIn.Fd()))
 	if err != nil {
-		panic(err)
+		return err
 	}
 
 	screen.ttyOut = os.Stdout
+	return nil
 }
 
-func (screen *UnixScreen) restoreTtyInTtyOut() {
+func (screen *UnixScreen) restoreTtyInTtyOut() error {
 	err := term.Restore(int(screen.ttyIn.Fd()), screen.oldTerminalState)
 	if err != nil {
-		panic(err)
+		return err
 	}
+
+	return nil
 }
