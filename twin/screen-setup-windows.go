@@ -18,6 +18,10 @@ func (screen *UnixScreen) setupSigwinchNotification() {
 }
 
 func (screen *UnixScreen) setupTtyInTtyOut() {
+	if !term.IsTerminal(int(os.Stdin.Fd())) {
+		panic("Getting piped data on stdin is not supported on Windows, fixes needed in screen-setup-windows.go.")
+	}
+
 	// This won't work if we're getting data piped to us, contributions welcome.
 	screen.ttyIn = os.Stdin
 
