@@ -8,4 +8,6 @@ jobs:
     dist: xenial
     script: ./test.sh
   - os: windows
-    script: go test -timeout 20s github.com/walles/moar/m
+    script:
+    - go build
+    - go test -timeout 20s github.com/walles/moar/m
