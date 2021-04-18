@@ -8,44 +8,37 @@ import (
 	"strings"
 
 	log "github.com/sirupsen/logrus"
-
-	"github.com/gdamore/tcell/v2"
+	"github.com/walles/moar/twin"
 )
 
 const _TabSize = 4
 
-var manPageBold = tcell.StyleDefault.Bold(true)
-var manPageUnderline = tcell.StyleDefault.Underline(true)
+var manPageBold = twin.StyleDefault.WithAttr(twin.AttrBold)
+var manPageUnderline = twin.StyleDefault.WithAttr(twin.AttrUnderline)
 
 // ESC[...m: https://en.wikipedia.org/wiki/ANSI_escape_code#SGR
 var sgrSequencePattern = regexp.MustCompile("\x1b\\[([0-9;]*m)")
 
-// Token is a rune with a style to be written to a cell on screen
-type Token struct {
-	Rune  rune
-	Style tcell.Style
-}
-
 // A Line represents a line of text that can / will be paged
 type Line struct {
-	raw    *string
-	plain  *string
-	tokens []Token
+	raw   *string
+	plain *string
+	cells []twin.Cell
 }
 
 // NewLine creates a new Line from a (potentially ANSI / man page formatted) string
 func NewLine(raw string) *Line {
 	return &Line{
-		raw:    &raw,
-		plain:  nil,
-		tokens: nil,
+		raw:   &raw,
+		plain: nil,
+		cells: nil,
 	}
 }
 
 // Tokens returns a representation of the string split into styled tokens
-func (line *Line) Tokens() []Token {
+func (line *Line) Tokens() []twin.Cell {
 	line.parse()
-	return line.tokens
+	return line.cells
 }
 
 // Plain returns a plain text representation of the initial string
@@ -60,7 +53,7 @@ func (line *Line) parse() {
 		return
 	}
 
-	line.tokens, line.plain = tokensFromString(*line.raw)
+	line.cells, line.plain = cellsFromString(*line.raw)
 	line.raw = nil
 }
 
@@ -82,22 +75,23 @@ func SetManPageFormatFromEnv() {
 
 // Used from tests
 func resetManPageFormatForTesting() {
-	manPageBold = tcell.StyleDefault.Bold(true)
-	manPageUnderline = tcell.StyleDefault.Underline(true)
+	manPageBold = twin.StyleDefault.WithAttr(twin.AttrBold)
+	manPageUnderline = twin.StyleDefault.WithAttr(twin.AttrUnderline)
 }
 
-func termcapToStyle(termcap string) tcell.Style {
+func termcapToStyle(termcap string) twin.Style {
 	// Add a character to be sure we have one to take the format from
-	tokens, _ := tokensFromString(termcap + "x")
-	return tokens[len(tokens)-1].Style
+	cells, _ := cellsFromString(termcap + "x")
+	return cells[len(cells)-1].Style
 }
 
-// tokensFromString turns a (formatted) string into a series of tokens,
+// cellsFromString turns a (formatted) string into a series of screen cells,
 // and an unformatted string
-func tokensFromString(s string) ([]Token, *string) {
-	var tokens []Token
+func cellsFromString(s string) ([]twin.Cell, *string) {
+	var tokens []twin.Cell
 
-	styleBrokenUtf8 := tcell.StyleDefault.Background(tcell.ColorSilver).Foreground(tcell.ColorMaroon)
+	// Specs: https://en.wikipedia.org/wiki/ANSI_escape_code#3-bit_and_4-bit
+	styleBrokenUtf8 := twin.StyleDefault.Background(twin.NewColor16(1)).Foreground(twin.NewColor16(7))
 
 	for _, styledString := range styledStringsFromString(s) {
 		for _, token := range tokensFromStyledString(styledString) {
@@ -105,7 +99,7 @@ func tokensFromString(s string) ([]Token, *string) {
 
 			case '\x09': // TAB
 				for {
-					tokens = append(tokens, Token{
+					tokens = append(tokens, twin.Cell{
 						Rune:  ' ',
 						Style: styledString.Style,
 					})
@@ -117,13 +111,13 @@ func tokensFromString(s string) ([]Token, *string) {
 				}
 
 			case '�': // Go's broken-UTF8 marker
-				tokens = append(tokens, Token{
+				tokens = append(tokens, twin.Cell{
 					Rune:  '?',
 					Style: styleBrokenUtf8,
 				})
 
 			case '\x08': // Backspace
-				tokens = append(tokens, Token{
+				tokens = append(tokens, twin.Cell{
 					Rune:  '<',
 					Style: styleBrokenUtf8,
 				})
@@ -144,7 +138,7 @@ func tokensFromString(s string) ([]Token, *string) {
 }
 
 // Consume 'x<x', where '<' is backspace and the result is a bold 'x'
-func consumeBold(runes []rune, index int) (int, *Token) {
+func consumeBold(runes []rune, index int) (int, *twin.Cell) {
 	if index+2 >= len(runes) {
 		// Not enough runes left for a bold
 		return index, nil
@@ -161,14 +155,14 @@ func consumeBold(runes []rune, index int) (int, *Token) {
 	}
 
 	// We have a match!
-	return index + 3, &Token{
+	return index + 3, &twin.Cell{
 		Rune:  runes[index],
 		Style: manPageBold,
 	}
 }
 
 // Consume '_<x', where '<' is backspace and the result is an underlined 'x'
-func consumeUnderline(runes []rune, index int) (int, *Token) {
+func consumeUnderline(runes []rune, index int) (int, *twin.Cell) {
 	if index+2 >= len(runes) {
 		// Not enough runes left for a underline
 		return index, nil
@@ -185,7 +179,7 @@ func consumeUnderline(runes []rune, index int) (int, *Token) {
 	}
 
 	// We have a match!
-	return index + 3, &Token{
+	return index + 3, &twin.Cell{
 		Rune:  runes[index+2],
 		Style: manPageUnderline,
 	}
@@ -194,7 +188,7 @@ func consumeUnderline(runes []rune, index int) (int, *Token) {
 // Consume '+<+<o<o' / '+<o', where '<' is backspace and the result is a unicode bullet.
 //
 // Used on man pages, try "man printf" on macOS for one example.
-func consumeBullet(runes []rune, index int) (int, *Token) {
+func consumeBullet(runes []rune, index int) (int, *twin.Cell) {
 	patterns := [][]byte{[]byte("+\bo"), []byte("+\b+\bo\bo")}
 	for _, pattern := range patterns {
 		if index+len(pattern) > len(runes) {
@@ -215,18 +209,18 @@ func consumeBullet(runes []rune, index int) (int, *Token) {
 		}
 
 		// We have a match!
-		return index + len(pattern), &Token{
+		return index + len(pattern), &twin.Cell{
 			Rune:  '•', // Unicode bullet point
-			Style: tcell.StyleDefault,
+			Style: twin.StyleDefault,
 		}
 	}
 
 	return index, nil
 }
 
-func tokensFromStyledString(styledString _StyledString) []Token {
+func tokensFromStyledString(styledString _StyledString) []twin.Cell {
 	runes := []rune(styledString.String)
-	tokens := make([]Token, 0, len(runes))
+	tokens := make([]twin.Cell, 0, len(runes))
 
 	for index := 0; index < len(runes); index++ {
 		nextIndex, token := consumeBullet(runes, index)
@@ -250,7 +244,7 @@ func tokensFromStyledString(styledString _StyledString) []Token {
 			continue
 		}
 
-		tokens = append(tokens, Token{
+		tokens = append(tokens, twin.Cell{
 			Rune:  runes[index],
 			Style: styledString.Style,
 		})
@@ -261,7 +255,7 @@ func tokensFromStyledString(styledString _StyledString) []Token {
 
 type _StyledString struct {
 	String string
-	Style  tcell.Style
+	Style  twin.Style
 }
 
 func styledStringsFromString(s string) []_StyledString {
@@ -271,7 +265,7 @@ func styledStringsFromString(s string) []_StyledString {
 	matches := sgrSequencePattern.FindAllStringIndex(s, -1)
 	styledStrings := make([]_StyledString, 0, len(matches)+1)
 
-	style := tcell.StyleDefault
+	style := twin.StyleDefault
 
 	beg := 0
 	end := 0
@@ -303,7 +297,7 @@ func styledStringsFromString(s string) []_StyledString {
 }
 
 // updateStyle parses a string of the form "ESC[33m" into changes to style
-func updateStyle(style tcell.Style, escapeSequence string) tcell.Style {
+func updateStyle(style twin.Style, escapeSequence string) twin.Style {
 	numbers := strings.Split(escapeSequence[2:len(escapeSequence)-1], ";")
 	index := 0
 	for index < len(numbers) {
@@ -311,55 +305,55 @@ func updateStyle(style tcell.Style, escapeSequence string) tcell.Style {
 		index++
 		switch strings.TrimLeft(number, "0") {
 		case "":
-			style = tcell.StyleDefault
+			style = twin.StyleDefault
 
 		case "1":
-			style = style.Bold(true)
+			style = style.WithAttr(twin.AttrBold)
 
 		case "2":
-			style = style.Dim(true)
+			style = style.WithAttr(twin.AttrDim)
 
 		case "3":
-			style = style.Italic(true)
+			style = style.WithAttr(twin.AttrItalic)
 
 		case "4":
-			style = style.Underline(true)
+			style = style.WithAttr(twin.AttrUnderline)
 
 		case "7":
-			style = style.Reverse(true)
+			style = style.WithAttr(twin.AttrReverse)
 
 		case "22":
-			style = style.Bold(false).Dim(false)
+			style = style.WithoutAttr(twin.AttrBold).WithoutAttr(twin.AttrDim)
 
 		case "23":
-			style = style.Italic(false)
+			style = style.WithoutAttr(twin.AttrItalic)
 
 		case "24":
-			style = style.Underline(false)
+			style = style.WithoutAttr(twin.AttrUnderline)
 
 		case "27":
-			style = style.Reverse(false)
+			style = style.WithoutAttr(twin.AttrReverse)
 
 		// Foreground colors, https://pkg.go.dev/github.com/gdamore/tcell#Color
 		case "30":
-			style = style.Foreground(tcell.ColorBlack)
+			style = style.Foreground(twin.NewColor16(0))
 		case "31":
-			style = style.Foreground(tcell.ColorMaroon)
+			style = style.Foreground(twin.NewColor16(1))
 		case "32":
-			style = style.Foreground(tcell.ColorGreen)
+			style = style.Foreground(twin.NewColor16(2))
 		case "33":
-			style = style.Foreground(tcell.ColorOlive)
+			style = style.Foreground(twin.NewColor16(3))
 		case "34":
-			style = style.Foreground(tcell.ColorNavy)
+			style = style.Foreground(twin.NewColor16(4))
 		case "35":
-			style = style.Foreground(tcell.ColorPurple)
+			style = style.Foreground(twin.NewColor16(5))
 		case "36":
-			style = style.Foreground(tcell.ColorTeal)
+			style = style.Foreground(twin.NewColor16(6))
 		case "37":
-			style = style.Foreground(tcell.ColorSilver)
+			style = style.Foreground(twin.NewColor16(7))
 		case "38":
 			var err error = nil
-			var color *tcell.Color
+			var color *twin.Color
 			index, color, err = consumeCompositeColor(numbers, index-1)
 			if err != nil {
 				log.Warnf("Foreground: %s", err.Error())
@@ -367,28 +361,28 @@ func updateStyle(style tcell.Style, escapeSequence string) tcell.Style {
 			}
 			style = style.Foreground(*color)
 		case "39":
-			style = style.Foreground(tcell.ColorDefault)
+			style = style.Foreground(twin.ColorDefault)
 
-		// Background colors, see https://pkg.go.dev/github.com/gdamore/tcell#Color
+		// Background colors, see https://pkg.go.dev/github.com/gdamore/Color
 		case "40":
-			style = style.Background(tcell.ColorBlack)
+			style = style.Background(twin.NewColor16(0))
 		case "41":
-			style = style.Background(tcell.ColorMaroon)
+			style = style.Background(twin.NewColor16(1))
 		case "42":
-			style = style.Background(tcell.ColorGreen)
+			style = style.Background(twin.NewColor16(2))
 		case "43":
-			style = style.Background(tcell.ColorOlive)
+			style = style.Background(twin.NewColor16(3))
 		case "44":
-			style = style.Background(tcell.ColorNavy)
+			style = style.Background(twin.NewColor16(4))
 		case "45":
-			style = style.Background(tcell.ColorPurple)
+			style = style.Background(twin.NewColor16(5))
 		case "46":
-			style = style.Background(tcell.ColorTeal)
+			style = style.Background(twin.NewColor16(6))
 		case "47":
-			style = style.Background(tcell.ColorSilver)
+			style = style.Background(twin.NewColor16(7))
 		case "48":
 			var err error = nil
-			var color *tcell.Color
+			var color *twin.Color
 			index, color, err = consumeCompositeColor(numbers, index-1)
 			if err != nil {
 				log.Warnf("Background: %s", err.Error())
@@ -396,30 +390,30 @@ func updateStyle(style tcell.Style, escapeSequence string) tcell.Style {
 			}
 			style = style.Background(*color)
 		case "49":
-			style = style.Background(tcell.ColorDefault)
+			style = style.Background(twin.ColorDefault)
 
-		// Bright foreground colors: see https://pkg.go.dev/github.com/gdamore/tcell#Color
+		// Bright foreground colors: see https://pkg.go.dev/github.com/gdamore/Color
 		//
 		// After testing vs less and cat on iTerm2 3.3.9 / macOS Catalina
 		// 10.15.4 that's how they seem to handle this, tested with:
 		// * TERM=xterm-256color
 		// * TERM=screen-256color
 		case "90":
-			style = style.Foreground(tcell.ColorGray)
+			style = style.Foreground(twin.NewColor16(8))
 		case "91":
-			style = style.Foreground(tcell.ColorRed)
+			style = style.Foreground(twin.NewColor16(9))
 		case "92":
-			style = style.Foreground(tcell.ColorLime)
+			style = style.Foreground(twin.NewColor16(10))
 		case "93":
-			style = style.Foreground(tcell.ColorYellow)
+			style = style.Foreground(twin.NewColor16(11))
 		case "94":
-			style = style.Foreground(tcell.ColorBlue)
+			style = style.Foreground(twin.NewColor16(12))
 		case "95":
-			style = style.Foreground(tcell.ColorFuchsia)
+			style = style.Foreground(twin.NewColor16(13))
 		case "96":
-			style = style.Foreground(tcell.ColorAqua)
+			style = style.Foreground(twin.NewColor16(14))
 		case "97":
-			style = style.Foreground(tcell.ColorWhite)
+			style = style.Foreground(twin.NewColor16(15))
 
 		default:
 			log.Warnf("Unrecognized ANSI SGR code <%s>", number)
@@ -435,7 +429,7 @@ func updateStyle(style tcell.Style, escapeSequence string) tcell.Style {
 // This method will return:
 // * The first index in the string that this function did not consume
 // * A color value that can be applied to a style
-func consumeCompositeColor(numbers []string, index int) (int, *tcell.Color, error) {
+func consumeCompositeColor(numbers []string, index int) (int, *twin.Color, error) {
 	baseIndex := index
 	if numbers[index] != "38" && numbers[index] != "48" {
 		err := fmt.Errorf(
@@ -468,8 +462,7 @@ func consumeCompositeColor(numbers []string, index int) (int, *tcell.Color, erro
 			return -1, nil, err
 		}
 
-		// Workaround for https://github.com/gdamore/tcell/issues/404
-		colorValue := tcell.Color(int64(tcell.Color16) - 16 + int64(colorNumber))
+		colorValue := twin.NewColor256(uint8(colorNumber))
 		return index + 1, &colorValue, nil
 	}
 
@@ -489,21 +482,21 @@ func consumeCompositeColor(numbers []string, index int) (int, *tcell.Color, erro
 		if err != nil {
 			return -1, nil, err
 		}
-		rValue := int32(rValueX)
+		rValue := uint8(rValueX)
 
 		gValueX, err := strconv.Atoi(numbers[gIndex])
 		if err != nil {
 			return -1, nil, err
 		}
-		gValue := int32(gValueX)
+		gValue := uint8(gValueX)
 
 		bValueX, err := strconv.Atoi(numbers[bIndex])
 		if err != nil {
 			return -1, nil, err
 		}
-		bValue := int32(bValueX)
+		bValue := uint8(bValueX)
 
-		colorValue := tcell.NewRGBColor(rValue, gValue, bValue)
+		colorValue := twin.NewColor24Bit(rValue, gValue, bValue)
 		return bIndex + 1, &colorValue, nil
 	}
 
