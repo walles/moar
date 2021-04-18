@@ -90,6 +90,10 @@ var MOUSE_EVENT_REGEX = regexp.MustCompile("^\x1b\\[<([0-9]+);([0-9]+);([0-9]+)M
 // NewScreen() requires Close() to be called after you are done with your new
 // screen, most likely somewhere in your shutdown code.
 func NewScreen() (Screen, error) {
+	if !term.IsTerminal(int(os.Stdout.Fd())) {
+		return nil, fmt.Errorf("stdout (fd=%d) must be a terminal for paging to work", os.Stdout.Fd())
+	}
+
 	screen := UnixScreen{}
 
 	// The number "80" here is from manual testing on my MacBook:
