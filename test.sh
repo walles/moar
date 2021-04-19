@@ -9,15 +9,28 @@ grep -En 'Background\([1-9]' ./*.go ./*/*.go && exit 1
 # Compile test first
 ./build.sh
 
-# Linting first
-MISFORMATTED="$(gofmt -l .)"
+# Linting
+MISFORMATTED="$(gofmt -l -s .)"
 if [ -n "$MISFORMATTED" ]; then
   echo >&2 "==="
-  echo >&2 "ERROR: The following files are not formatted, run './build.sh', './test.sh' or 'go fmt .' to fix:"
+  echo >&2 "ERROR: The following files are not formatted, run './build.sh', './test.sh' or 'gofmt -s -w .' to fix:"
   echo >&2 "$MISFORMATTED"
   echo >&2 "==="
   exit 1
 fi
+
+# "go vet" catches fmt-placeholders-vs-args problems (and others)
+if ! go vet . ./twin ./m ; then
+  if [ -n "${CI}" ]; then
+    echo >&2 "==="
+    echo >&2 "=== Please run './test.sh' before pushing to see these issues locally rather than in CI"
+    echo >&2 "==="
+  fi
+  exit 1
+fi
+
+# FIXME: Add https://staticcheck.io/docs/
+# FIXME: Add https://github.com/kisielk/errcheck
 
 # Unit tests first
 go test -timeout 20s ./...
