@@ -7,7 +7,7 @@ grep -En 'Foreground\([1-9]' ./*.go ./*/*.go && exit 1
 grep -En 'Background\([1-9]' ./*.go ./*/*.go && exit 1
 
 # Unit tests first
-go test -timeout 20s github.com/walles/moar/m
+go test -timeout 20s ./...
 
 # Ensure we can cross compile
 # NOTE: Make sure this list matches the one in release.sh
