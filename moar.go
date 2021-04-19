@@ -132,7 +132,7 @@ func main() {
 		// Pump from file by given name onto stdout which is redirected
 		input, err := os.Open(flag.Arg(0))
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "ERROR: %s\n", err)
+			fmt.Fprintf(os.Stderr, "ERROR: %s\n")
 			os.Exit(1)
 		}
 		defer input.Close()
