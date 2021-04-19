@@ -12,8 +12,10 @@ grep -En 'Background\([1-9]' ./*.go ./*/*.go && exit 1
 # Linting first
 MISFORMATTED="$(gofmt -l .)"
 if [ -n "$MISFORMATTED" ]; then
-  echo "ERROR: The following files are not formatted, run './build.sh', './test.sh' or 'go fmt .' to fix:"
-  echo "$MISFORMATTED"
+  echo >&2 "==="
+  echo >&2 "ERROR: The following files are not formatted, run './build.sh', './test.sh' or 'go fmt .' to fix:"
+  echo >&2 "$MISFORMATTED"
+  echo >&2 "==="
   exit 1
 fi
 
