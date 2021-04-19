@@ -23,10 +23,10 @@ func printUsage(output io.Writer) {
 	// This controls where PrintDefaults() prints, see below
 	flag.CommandLine.SetOutput(output)
 
-	fmt.Fprintln(output, "Usage:")
+	fmt.Fprintln(output, "Usage:")
 	fmt.Fprintln(output, "  moar [options] <file>")
-	fmt.Fprintln(output, "  ... | moar")
-	fmt.Fprintln(output, "  moar < file")
+	fmt.Fprintln(output, "  ... | moar")
+	fmt.Fprintln(output, "  moar < file")
 	fmt.Fprintln(output)
 
 	flag.PrintDefaults()
@@ -46,7 +46,7 @@ func printUsage(output io.Writer) {
 			fmt.Fprintf(output, "   export PAGER=%s\n", moarPath)
 		}
 	} else {
-		// FIXME: Report this error?
+		log.Warn("Unable to find moar binary ", err)
 	}
 }
 

@@ -118,7 +118,7 @@ func readStream(stream io.Reader, reader *Reader, fromFilter *exec.Cmd) {
 				if reader.err == nil {
 					// Store the error unless it overwrites one we already have
 					reader.lock.Lock()
-					reader.err = fmt.Errorf("Error reading line from input stream: %w", err)
+					reader.err = fmt.Errorf("error reading line from input stream: %w", err)
 					reader.lock.Unlock()
 				}
 				break
@@ -340,6 +340,9 @@ func NewReaderFromFilename(filename string) (*Reader, error) {
 
 	var stringBuffer bytes.Buffer
 	err = formatter.Format(&stringBuffer, styles.Native, iterator)
+	if err != nil {
+		return nil, err
+	}
 	highlighted := stringBuffer.String()
 
 	// If buffer ends with SGR Reset ("<ESC>[0m"), remove it. Chroma sometimes

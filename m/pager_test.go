@@ -346,7 +346,6 @@ func TestFindFirstLineOneBasedSimple(t *testing.T) {
 	pager.searchPattern = toPattern("AB")
 
 	hitLine := pager._FindFirstHitLineOneBased(1, false)
-	assert.Check(t, hitLine != nil)
 	assert.Check(t, *hitLine == 1)
 }
 
@@ -360,6 +359,5 @@ func TestFindFirstLineOneBasedAnsi(t *testing.T) {
 	pager.searchPattern = toPattern("AB")
 
 	hitLine := pager._FindFirstHitLineOneBased(1, false)
-	assert.Check(t, hitLine != nil)
 	assert.Check(t, *hitLine == 1)
 }
