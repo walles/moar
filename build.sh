@@ -2,7 +2,7 @@
 
 if [ -z ${CI+x} ]; then
     # Local build, not in CI, format source
-    go fmt ./... .
+    go fmt .
 fi
 
 VERSION="$(git describe --tags --dirty --always)"

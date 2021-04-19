@@ -6,6 +6,17 @@ set -e -o pipefail
 grep -En 'Foreground\([1-9]' ./*.go ./*/*.go && exit 1
 grep -En 'Background\([1-9]' ./*.go ./*/*.go && exit 1
 
+# Compile test first
+./build.sh
+
+# Linting first
+MISFORMATTED="$(gofmt -l .)"
+if [ -n "$MISFORMATTED" ]; then
+  echo "ERROR: The following files are not formatted, run './build.sh', './test.sh' or 'go fmt .' to fix:"
+  echo "$MISFORMATTED"
+  exit 1
+fi
+
 # Unit tests first
 go test -timeout 20s ./...
 
@@ -13,9 +24,6 @@ go test -timeout 20s ./...
 # NOTE: Make sure this list matches the one in release.sh
 GOOS=linux GOARCH=386 ./build.sh
 GOOS=darwin GOARCH=amd64 ./build.sh
-
-# Make sure we have a runnable binary for the current platform when done
-./build.sh
 
 # Verify sending the output to a file
 RESULT="$(mktemp)"
