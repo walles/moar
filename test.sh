@@ -19,7 +19,16 @@ if [ -n "$MISFORMATTED" ]; then
   exit 1
 fi
 
-# FIXME: Add "go vet", catches fmt-placeholders-vs-args problems
+# "go vet" catches fmt-placeholders-vs-args problems (and others)
+if ! go vet . ./twin ./m ; then
+  if [ -n "${CI}" ]; then
+    echo >&2 "==="
+    echo >&2 "=== Please run './test.sh' before pushing to see these issues locally rather than in CI"
+    echo >&2 "==="
+  fi
+  exit 1
+fi
+
 # FIXME: Add https://staticcheck.io/docs/
 # FIXME: Add https://github.com/kisielk/errcheck
 
