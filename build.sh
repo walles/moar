@@ -1,9 +1,14 @@
 #!/bin/bash
 
+if [ -z ${CI+x} ]; then
+    # Local build, not in CI, format source
+    go fmt .
+fi
+
 VERSION="$(git describe --tags --dirty --always)"
 
 BINARY="moar"
-if [ -n "$GOOS$GOARCH" ] ; then
+if [ -n "$GOOS$GOARCH" ]; then
     BINARY="releases/$BINARY-$VERSION-$GOOS-$GOARCH"
 fi
 
