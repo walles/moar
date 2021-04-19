@@ -2,6 +2,9 @@
 
 set -e -o pipefail
 
+# Latest version: https://github.com/dominikh/go-tools/releases/latest
+STATICCHECK_VERSION=2020.2.3
+
 # Test that we only pass tcell.Color constants to these methods, not numbers
 grep -En 'Foreground\([1-9]' ./*.go ./*/*.go && exit 1
 grep -En 'Background\([1-9]' ./*.go ./*/*.go && exit 1
@@ -21,6 +24,17 @@ fi
 
 # "go vet" catches fmt-placeholders-vs-args problems (and others)
 if ! go vet . ./twin ./m ; then
+  if [ -n "${CI}" ]; then
+    echo >&2 "==="
+    echo >&2 "=== Please run './test.sh' before pushing to see these issues locally rather than in CI"
+    echo >&2 "==="
+  fi
+  exit 1
+fi
+
+# Docs: https://staticcheck.io/docs/
+go get "honnef.co/go/tools/cmd/staticcheck@${STATICCHECK_VERSION}"
+if ! "$(go env GOPATH)/bin/staticcheck" -f stylish . ./... ; then
   if [ -n "${CI}" ]; then
     echo >&2 "==="
     echo >&2 "=== Please run './test.sh' before pushing to see these issues locally rather than in CI"
