@@ -6,6 +6,7 @@ require (
 	github.com/alecthomas/chroma v0.8.2
 	github.com/google/go-cmp v0.5.5 // indirect
 	github.com/google/renameio v0.1.0 // indirect
+	github.com/kisielk/errcheck v1.6.0 // indirect
 	github.com/konsorten/go-windows-terminal-sequences v1.0.1 // indirect
 	github.com/rogpeppe/go-internal v1.3.0 // indirect
 	github.com/sirupsen/logrus v1.8.1
