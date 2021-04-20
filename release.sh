@@ -21,8 +21,14 @@ git tag | cat
 
 # ... and ask for a new version number.
 echo
-echo "Please provide a version number for the new release:"
+echo "Please provide a version number on the form 'v1.2.3' for the new release:"
 read -r VERSION
+
+# https://github.com/walles/moar/issues/47
+if ! echo "$VERSION" | grep -q -E '^v[0-9]+\.[0-9]+\.[0-9]+$' ; then
+  echo "ERROR: Version number must be on the form: v1.2.3: $VERSION"
+  exit 1
+fi
 
 # List changes since last release as inspiration...
 LAST_VERSION="$(git describe --abbrev=0)"
