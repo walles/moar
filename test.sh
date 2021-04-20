@@ -9,6 +9,7 @@ STATICCHECK_VERSION=2020.2.3
 ERRCHECK_VERSION=v1.6.0
 
 # Install our linters
+echo Installing linters...
 go get "honnef.co/go/tools/cmd/staticcheck@${STATICCHECK_VERSION}" "github.com/kisielk/errcheck@${ERRCHECK_VERSION}"
 
 # Test that we only pass tcell.Color constants to these methods, not numbers

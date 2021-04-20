@@ -108,9 +108,50 @@ func main() {
 		TimestampFormat: time.RFC3339Nano,
 	})
 
+	if len(flag.Args()) > 1 {
+		fmt.Fprintln(os.Stderr, "ERROR: Expected exactly one filename, or data piped from stdin, got: ", flag.Args())
+		fmt.Fprintln(os.Stderr)
+		printUsage(os.Stderr)
+
+		os.Exit(1)
+	}
+
 	stdinIsRedirected := !term.IsTerminal(int(os.Stdin.Fd()))
 	stdoutIsRedirected := !term.IsTerminal(int(os.Stdout.Fd()))
+	var inputFilename *string
+	if len(flag.Args()) == 1 {
+		word := flag.Arg(0)
+		inputFilename = &word
+	}
+
+	if inputFilename == nil && !stdinIsRedirected {
+		fmt.Fprintln(os.Stderr, "ERROR: Filename or input pipe required")
+		fmt.Fprintln(os.Stderr, "")
+		printUsage(os.Stderr)
+		os.Exit(1)
+	}
+
+	if inputFilename != nil && stdoutIsRedirected {
+		// Pump file to stdout.
+		//
+		// If we get both redirected stdin and an input filename, we must prefer
+		// to copy the file, because that's how less works.
+		inputFile, err := os.Open(*inputFilename)
+		if err != nil {
+			fmt.Fprintln(os.Stderr, "ERROR: Failed to open", inputFile, ": ")
+			os.Exit(1)
+		}
+
+		_, err = io.Copy(os.Stdout, inputFile)
+		if err != nil {
+			log.Fatal("Failed to copy ", inputFilename, " to stdout: ", err)
+		}
+		os.Exit(0)
+	}
+
 	if stdinIsRedirected && stdoutIsRedirected {
+		// Must be done after trying to pump the input filename to stdout to be
+		// compatible with less, see above.
 		_, err := io.Copy(os.Stdout, os.Stdin)
 		if err != nil {
 			log.Fatal("Failed to copy stdin to stdout: ", err)
@@ -118,53 +159,20 @@ func main() {
 		os.Exit(0)
 	}
 
-	if stdinIsRedirected && !stdoutIsRedirected {
+	// INVARIANT: At this point, stdoutIsRedirected is false and we should
+	// proceed with paging.
+
+	if stdinIsRedirected {
 		// Display input pipe contents
 		reader := m.NewReaderFromStream("", os.Stdin)
 		startPaging(reader)
 		return
 	}
 
-	if len(flag.Args()) != 1 {
-		fmt.Fprintln(os.Stderr, "ERROR: Expected exactly one filename, got: ", flag.Args())
-		fmt.Fprintln(os.Stderr)
-		printUsage(os.Stderr)
-
-		os.Exit(1)
-	}
-
-	if stdoutIsRedirected {
-		// Pump from file by given name onto stdout which is redirected
-		input, err := os.Open(flag.Arg(0))
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "ERROR opening %s: %s\n", flag.Arg(0), err)
-			os.Exit(1)
-		}
-		defer func() {
-			err := input.Close()
-			if err != nil {
-				log.Warn("Closing ", flag.Arg(0), " failed: ", err)
-
-				// NOTE: No os.Exit(1) here.
-				//
-				// Leaking this one file descriptior isn't serious enough to
-				// warrant panicking or exiting with a non-zero code, so just
-				// keep going.
-			}
-		}()
-
-		// Copy input file to redirected stdout
-		_, err = io.Copy(os.Stdout, input)
-		if err != nil {
-			log.Fatal("Failed to copy ", flag.Arg(0), " to stdout: ", err)
-		}
-		os.Exit(0)
-	}
-
 	// Display the input file contents
-	reader, err := m.NewReaderFromFilename(flag.Arg(0))
+	reader, err := m.NewReaderFromFilename(*inputFilename)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "%v\n", err)
+		fmt.Fprintf(os.Stderr, "ERROR: %v\n", err)
 		os.Exit(1)
 	}
 	startPaging(reader)
