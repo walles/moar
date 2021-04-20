@@ -433,7 +433,7 @@ func consumeCompositeColor(numbers []string, index int) (int, *twin.Color, error
 	baseIndex := index
 	if numbers[index] != "38" && numbers[index] != "48" {
 		err := fmt.Errorf(
-			"Unknown start of color sequence <%s>, expected 38 (foreground) or 48 (background): <CSI %sm>",
+			"unknown start of color sequence <%s>, expected 38 (foreground) or 48 (background): <CSI %sm>",
 			numbers[index],
 			strings.Join(numbers[baseIndex:], ";"))
 		return -1, nil, err
@@ -442,7 +442,7 @@ func consumeCompositeColor(numbers []string, index int) (int, *twin.Color, error
 	index++
 	if index >= len(numbers) {
 		err := fmt.Errorf(
-			"Incomplete color sequence: <CSI %sm>",
+			"incomplete color sequence: <CSI %sm>",
 			strings.Join(numbers[baseIndex:], ";"))
 		return -1, nil, err
 	}
@@ -452,7 +452,7 @@ func consumeCompositeColor(numbers []string, index int) (int, *twin.Color, error
 		index++
 		if index >= len(numbers) {
 			err := fmt.Errorf(
-				"Incomplete 8 bit color sequence: <CSI %sm>",
+				"incomplete 8 bit color sequence: <CSI %sm>",
 				strings.Join(numbers[baseIndex:], ";"))
 			return -1, nil, err
 		}
@@ -473,7 +473,7 @@ func consumeCompositeColor(numbers []string, index int) (int, *twin.Color, error
 		bIndex := index + 3
 		if bIndex >= len(numbers) {
 			err := fmt.Errorf(
-				"Incomplete 24 bit color sequence, expected N8;2;R;G;Bm: <CSI %sm>",
+				"incomplete 24 bit color sequence, expected N8;2;R;G;Bm: <CSI %sm>",
 				strings.Join(numbers[baseIndex:], ";"))
 			return -1, nil, err
 		}
@@ -501,7 +501,7 @@ func consumeCompositeColor(numbers []string, index int) (int, *twin.Color, error
 	}
 
 	err := fmt.Errorf(
-		"Unknown color type <%s>, expected 5 (8 bit color) or 2 (24 bit color): <CSI %sm>",
+		"unknown color type <%s>, expected 5 (8 bit color) or 2 (24 bit color): <CSI %sm>",
 		numbers[index],
 		strings.Join(numbers[baseIndex:], ";"))
 	return -1, nil, err
