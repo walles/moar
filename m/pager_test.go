@@ -190,8 +190,12 @@ func testManPageFormatting(t *testing.T, input string, expected twin.Cell) {
 
 	// Without these three lines the man page tests will fail if either of these
 	// environment variables are set when the tests are run.
-	os.Setenv("LESS_TERMCAP_md", "")
-	os.Setenv("LESS_TERMCAP_us", "")
+	if err := os.Setenv("LESS_TERMCAP_md", ""); err != nil {
+		panic(err)
+	}
+	if err := os.Setenv("LESS_TERMCAP_us", ""); err != nil {
+		panic(err)
+	}
 	resetManPageFormatForTesting()
 
 	contents := startPaging(t, reader).GetRow(0)

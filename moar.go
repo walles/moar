@@ -23,11 +23,13 @@ func printUsage(output io.Writer) {
 	// This controls where PrintDefaults() prints, see below
 	flag.CommandLine.SetOutput(output)
 
-	fmt.Fprintln(output, "Usage:")
-	fmt.Fprintln(output, "  moar [options] <file>")
-	fmt.Fprintln(output, "  ... | moar")
-	fmt.Fprintln(output, "  moar < file")
-	fmt.Fprintln(output)
+	// FIXME: Log if any of these printouts fail?
+
+	_, _ = fmt.Fprintln(output, "Usage:")
+	_, _ = fmt.Fprintln(output, "  moar [options] <file>")
+	_, _ = fmt.Fprintln(output, "  ... | moar")
+	_, _ = fmt.Fprintln(output, "  moar < file")
+	_, _ = fmt.Fprintln(output)
 
 	flag.PrintDefaults()
 
@@ -39,11 +41,11 @@ func printUsage(output io.Writer) {
 		}
 		if pagerValue != moarPath {
 			// We're not the default pager
-			fmt.Fprintln(output)
-			fmt.Fprintln(output, "To make Moar your default pager, put the following line in")
-			fmt.Fprintln(output, "your .bashrc or .bash_profile and it will be default in all")
-			fmt.Fprintln(output, "new terminal windows:")
-			fmt.Fprintf(output, "   export PAGER=%s\n", moarPath)
+			_, _ = fmt.Fprintln(output)
+			_, _ = fmt.Fprintln(output, "To make Moar your default pager, put the following line in")
+			_, _ = fmt.Fprintln(output, "your .bashrc or .bash_profile and it will be default in all")
+			_, _ = fmt.Fprintln(output, "new terminal windows:")
+			_, _ = fmt.Fprintf(output, "   export PAGER=%s\n", moarPath)
 		}
 	} else {
 		log.Warn("Unable to find moar binary ", err)
@@ -109,7 +111,10 @@ func main() {
 	stdinIsRedirected := !term.IsTerminal(int(os.Stdin.Fd()))
 	stdoutIsRedirected := !term.IsTerminal(int(os.Stdout.Fd()))
 	if stdinIsRedirected && stdoutIsRedirected {
-		io.Copy(os.Stdout, os.Stdin)
+		_, err := io.Copy(os.Stdout, os.Stdin)
+		if err != nil {
+			log.Fatal("Failed to copy stdin to stdout: ", err)
+		}
 		os.Exit(0)
 	}
 
@@ -132,13 +137,27 @@ func main() {
 		// Pump from file by given name onto stdout which is redirected
 		input, err := os.Open(flag.Arg(0))
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "ERROR: %s\n", err)
+			fmt.Fprintf(os.Stderr, "ERROR opening %s: %s\n", flag.Arg(0), err)
 			os.Exit(1)
 		}
-		defer input.Close()
+		defer func() {
+			err := input.Close()
+			if err != nil {
+				log.Warn("Closing ", flag.Arg(0), " failed: ", err)
+
+				// NOTE: No os.Exit(1) here.
+				//
+				// Leaking this one file descriptior isn't serious enough to
+				// warrant panicking or exiting with a non-zero code, so just
+				// keep going.
+			}
+		}()
 
 		// Copy input file to redirected stdout
-		io.Copy(os.Stdout, input)
+		_, err = io.Copy(os.Stdout, input)
+		if err != nil {
+			log.Fatal("Failed to copy ", flag.Arg(0), " to stdout: ", err)
+		}
 		os.Exit(0)
 	}
 

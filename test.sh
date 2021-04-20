@@ -5,6 +5,12 @@ set -e -o pipefail
 # Latest version: https://github.com/dominikh/go-tools/releases/latest
 STATICCHECK_VERSION=2020.2.3
 
+# Latest version: https://github.com/kisielk/errcheck/releases/latest
+ERRCHECK_VERSION=v1.6.0
+
+# Install our linters
+go get "honnef.co/go/tools/cmd/staticcheck@${STATICCHECK_VERSION}" "github.com/kisielk/errcheck@${ERRCHECK_VERSION}"
+
 # Test that we only pass tcell.Color constants to these methods, not numbers
 grep -En 'Foreground\([1-9]' ./*.go ./*/*.go && exit 1
 grep -En 'Background\([1-9]' ./*.go ./*/*.go && exit 1
@@ -13,6 +19,7 @@ grep -En 'Background\([1-9]' ./*.go ./*/*.go && exit 1
 ./build.sh
 
 # Linting
+echo "Checking code formatting..."
 MISFORMATTED="$(gofmt -l -s .)"
 if [ -n "$MISFORMATTED" ]; then
   echo >&2 "==="
@@ -23,28 +30,37 @@ if [ -n "$MISFORMATTED" ]; then
 fi
 
 # "go vet" catches fmt-placeholders-vs-args problems (and others)
+echo "Running go vet..."
 if ! go vet . ./twin ./m ; then
   if [ -n "${CI}" ]; then
     echo >&2 "==="
-    echo >&2 "=== Please run './test.sh' before pushing to see these issues locally rather than in CI"
+    echo >&2 "=== Please run './test.sh' before pushing to see the above issues locally rather than in CI"
     echo >&2 "==="
   fi
   exit 1
 fi
 
 # Docs: https://staticcheck.io/docs/
-go get "honnef.co/go/tools/cmd/staticcheck@${STATICCHECK_VERSION}"
+echo "Running staticcheck..."
 if ! "$(go env GOPATH)/bin/staticcheck" -f stylish . ./... ; then
   if [ -n "${CI}" ]; then
     echo >&2 "==="
-    echo >&2 "=== Please run './test.sh' before pushing to see these issues locally rather than in CI"
+    echo >&2 "=== Please run './test.sh' before pushing to see the above issues locally rather than in CI"
     echo >&2 "==="
   fi
   exit 1
 fi
 
-# FIXME: Add https://staticcheck.io/docs/
-# FIXME: Add https://github.com/kisielk/errcheck
+# Checks for unused error return values: https://github.com/kisielk/errcheck
+echo "Running errcheck to check for unused error return values..."
+if ! "$(go env GOPATH)/bin/errcheck" . ./... ; then
+  if [ -n "${CI}" ]; then
+    echo >&2 "==="
+    echo >&2 "=== Please run './test.sh' before pushing to see the above issues locally rather than in CI"
+    echo >&2 "==="
+  fi
+  exit 1
+fi
 
 # Unit tests first
 go test -timeout 20s ./...

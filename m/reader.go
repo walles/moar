@@ -64,15 +64,22 @@ func readStream(stream io.Reader, reader *Reader, fromFilter *exec.Cmd) {
 
 		// Give the filter a little time to go away
 		timer := time.AfterFunc(2*time.Second, func() {
-			fromFilter.Process.Kill()
+			// FIXME: Regarding error handling, maybe we should log all errors
+			// except for "process doesn't exist"? If the process is not there
+			// it likely means the process finished up by itself without our
+			// help.
+			_ = fromFilter.Process.Kill()
 		})
 
 		stderrText := ""
 		if reader._stderr != nil {
 			// Drain the reader's stderr into a string for possible inclusion in an error message
-			buffer := new(bytes.Buffer)
-			buffer.ReadFrom(reader._stderr)
-			stderrText = strings.TrimSpace(buffer.String())
+			// From: https://stackoverflow.com/a/9650373/473672
+			if buffer, err := ioutil.ReadAll(reader._stderr); err == nil {
+				stderrText = strings.TrimSpace(string(buffer))
+			} else {
+				log.Warn("Draining filter stderr failed: ", err)
+			}
 		}
 
 		err := fromFilter.Wait()
@@ -263,18 +270,20 @@ func tryOpen(filename string) error {
 	if err != nil {
 		return err
 	}
-	defer tryMe.Close()
 
 	// Try reading a byte
 	buffer := make([]byte, 1)
 	_, err = tryMe.Read(buffer)
 
-	if err == nil {
-		return nil
-	}
-	if err.Error() == "EOF" {
+	if err != nil && err.Error() == "EOF" {
 		// Empty file, this is fine
-		return nil
+		err = nil
+	}
+
+	closeErr := tryMe.Close()
+	if err == nil && closeErr != nil {
+		// Everything worked up until Close(), report the Close() error
+		return closeErr
 	}
 
 	return err
