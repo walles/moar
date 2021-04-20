@@ -127,7 +127,11 @@ func (screen *UnixScreen) Close() {
 	screen.hideCursor(false)
 	screen.enableMouseTracking(false)
 	screen.setAlternateScreenMode(false)
-	screen.restoreTtyInTtyOut()
+
+	err := screen.restoreTtyInTtyOut()
+	if err != nil {
+		log.Warn("Problem restoring TTY state: ", err)
+	}
 }
 
 func (screen *UnixScreen) Events() chan Event {

@@ -34,7 +34,7 @@ echo "Running go vet..."
 if ! go vet . ./twin ./m ; then
   if [ -n "${CI}" ]; then
     echo >&2 "==="
-    echo >&2 "=== Please run './test.sh' before pushing to see these issues locally rather than in CI"
+    echo >&2 "=== Please run './test.sh' before pushing to see the above issues locally rather than in CI"
     echo >&2 "==="
   fi
   exit 1
@@ -45,18 +45,18 @@ echo "Running staticcheck..."
 if ! "$(go env GOPATH)/bin/staticcheck" -f stylish . ./... ; then
   if [ -n "${CI}" ]; then
     echo >&2 "==="
-    echo >&2 "=== Please run './test.sh' before pushing to see these issues locally rather than in CI"
+    echo >&2 "=== Please run './test.sh' before pushing to see the above issues locally rather than in CI"
     echo >&2 "==="
   fi
   exit 1
 fi
 
 # Checks for unused error return values: https://github.com/kisielk/errcheck
-echo "Running errcheck..."
+echo "Running errcheck to check for unused error return values..."
 if ! "$(go env GOPATH)/bin/errcheck" . ./... ; then
   if [ -n "${CI}" ]; then
     echo >&2 "==="
-    echo >&2 "=== Please run './test.sh' before pushing to see these issues locally rather than in CI"
+    echo >&2 "=== Please run './test.sh' before pushing to see the above issues locally rather than in CI"
     echo >&2 "==="
   fi
   exit 1

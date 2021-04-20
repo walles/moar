@@ -22,7 +22,11 @@ func TestTokenize(t *testing.T) {
 			t.Errorf("Error opening file <%s>: %s", fileName, err.Error())
 			continue
 		}
-		defer file.Close()
+		defer func() {
+			if err := file.Close(); err != nil {
+				panic(err)
+			}
+		}()
 
 		scanner := bufio.NewScanner(file)
 		lineNumber := 0
