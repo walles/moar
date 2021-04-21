@@ -25,7 +25,7 @@ func (screen *UnixScreen) setupTtyInTtyOut() error {
 		// A fix might be centered about opening "CONIN$" as screen.ttyIn rather
 		// than using os.Stdin, but I never got that working fully.
 		// Contributions welcome.
-		return fmt.Errorf("Getting piped data on stdin is not supported on Windows, fixes needed in here: https://github.com/walles/moar/blob/walles/fix-windows/twin/screen-setup.go")
+		return fmt.Errorf("Getting piped data on stdin is not supported on Windows, fixes needed in here: https://github.com/walles/moar/blob/walles/fix-windows/twin/screen-setup-windows.go")
 	}
 
 	// This won't work if we're getting data piped to us, contributions welcome.
