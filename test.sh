@@ -82,7 +82,8 @@ if ! "$(go env GOPATH)/bin/errcheck" . ./... ; then
   exit 1
 fi
 
-# Unit tests first
+# Unit tests
+echo "Running unit tests..."
 go test -timeout 20s ./...
 
 # Ensure we can cross compile
@@ -96,8 +97,6 @@ function cleanup {
   rm -rf "$RESULT"
 }
 trap cleanup EXIT
-
-echo Running to-file redirection tests...
 
 echo Test reading from redirected stdin, writing to redirected stdout...
 ./moar < moar.go > "$RESULT"
