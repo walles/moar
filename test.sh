@@ -12,6 +12,24 @@ ERRCHECK_VERSION=v1.6.0
 echo Installing linters...
 go get "honnef.co/go/tools/cmd/staticcheck@${STATICCHECK_VERSION}" "github.com/kisielk/errcheck@${ERRCHECK_VERSION}"
 
+if [ -n "${CI}" ]; then
+  # We want our linter versions listed in go.mod: https://github.com/walles/moar/pull/48
+  #
+  # Otherwise you'll get a change recorded every time you do './test.sh' locally, and we don't want that.
+  MODIFIED="$(git status --porcelain | grep -v '^??')"
+  if [ -n "${MODIFIED}" ]; then
+    # The above "go get" invocation modified go.mod
+    echo >&2 "==="
+    echo >&2 "ERROR: go.mod modified by installing linters, run './test.sh' locally or this, commit your changes and try again:"
+
+    # Must match the actual "go get" line higher up in this script
+    echo >&2 '$' go get "honnef.co/go/tools/cmd/staticcheck@${STATICCHECK_VERSION}" "github.com/kisielk/errcheck@${ERRCHECK_VERSION}"
+
+    echo >&2 "==="
+    exit 1
+  fi
+fi
+
 # Test that we only pass tcell.Color constants to these methods, not numbers
 grep -En 'Foreground\([1-9]' ./*.go ./*/*.go && exit 1
 grep -En 'Background\([1-9]' ./*.go ./*/*.go && exit 1
