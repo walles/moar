@@ -147,7 +147,53 @@ func TestGetLines(t *testing.T) {
 
 		testGetLines(t, reader)
 		testGetLineCount(t, reader)
+		testHighlightingLineCount(t, file)
 	}
+}
+
+func testHighlightingLineCount(t *testing.T, filenameWithPath string) {
+	// This won't work on compressed files
+	if strings.HasSuffix(filenameWithPath, ".xz") {
+		return
+	}
+	if strings.HasSuffix(filenameWithPath, ".bz2") {
+		return
+	}
+	if strings.HasSuffix(filenameWithPath, ".gz") {
+		return
+	}
+
+	// Load the unformatted file
+	rawBytes, err := ioutil.ReadFile(filenameWithPath)
+	if err != nil {
+		panic(err)
+	}
+	rawContents := string(rawBytes)
+
+	// Count its lines
+	rawLinefeedsCount := strings.Count(rawContents, "\n")
+	rawRunes := []rune(rawContents)
+	rawFileEndsWithNewline := true // Special case empty files
+	if len(rawRunes) > 0 {
+		rawFileEndsWithNewline = rawRunes[len(rawRunes)-1] == '\n'
+	}
+	rawLinesCount := rawLinefeedsCount
+	if !rawFileEndsWithNewline {
+		rawLinesCount += 1
+	}
+
+	// Then load the same file using one of our Readers
+	reader, err := NewReaderFromFilename(filenameWithPath)
+	if err != nil {
+		panic(err)
+	}
+	err = reader._Wait()
+	if err != nil {
+		panic(err)
+	}
+
+	highlightedLinesCount := reader.GetLineCount()
+	assert.Check(t, rawLinesCount == highlightedLinesCount)
 }
 
 func TestGetLongLine(t *testing.T) {
