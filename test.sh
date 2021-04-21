@@ -16,10 +16,11 @@ if [ -n "${CI}" ]; then
   # We want our linter versions listed in go.mod: https://github.com/walles/moar/pull/48
   #
   # Otherwise you'll get a change recorded every time you do './test.sh' locally, and we don't want that.
-  MODIFIED="$(git status --porcelain | grep -v '^??')"
+  MODIFIED="$(git status --porcelain go.mod go.sum)"
   if [ -n "${MODIFIED}" ]; then
     # The above "go get" invocation modified go.mod
     echo >&2 "==="
+    git --no-pager diff
     echo >&2 "ERROR: go.mod modified by installing linters, run './test.sh' locally or this, commit your changes and try again:"
 
     # Must match the actual "go get" line higher up in this script
