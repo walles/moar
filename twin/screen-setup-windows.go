@@ -3,8 +3,8 @@
 package twin
 
 import (
-	"fmt"
 	"os"
+	"syscall"
 
 	"golang.org/x/sys/windows"
 	"golang.org/x/term"
@@ -19,20 +19,14 @@ func (screen *UnixScreen) setupSigwinchNotification() {
 }
 
 func (screen *UnixScreen) setupTtyInTtyOut() error {
-	if !term.IsTerminal(int(os.Stdin.Fd())) {
-		// See the counterpart method in screen-setup.go for inspiration.
-		//
-		// A fix might be centered about opening "CONIN$" as screen.ttyIn rather
-		// than using os.Stdin, but I never got that working fully.
-		// Contributions welcome.
-		return fmt.Errorf("Stdin must be a terminal for now. To fix, go here: https://github.com/walles/moar/blob/master/twin/screen-setup-windows.go")
+	in, err := syscall.Open("CONIN$", syscall.O_RDWR, 0)
+	if err != nil {
+		return err
 	}
 
-	// This won't work if we're getting data piped to us, contributions welcome.
-	screen.ttyIn = os.Stdin
+	screen.ttyIn = os.NewFile(uintptr(in), "/dev/tty")
 
 	// Set input stream to raw mode
-	var err error
 	stdin := windows.Handle(screen.ttyIn.Fd())
 	err = windows.GetConsoleMode(stdin, &screen.oldTtyInMode)
 	if err != nil {
