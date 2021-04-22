@@ -114,6 +114,12 @@ Run tests:
 ./test.sh
 ```
 
+Run microbenchmarks:
+
+```bash
+go test -bench . ./...
+```
+
 Build + run:
 
 ```bash

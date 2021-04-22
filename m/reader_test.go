@@ -311,3 +311,24 @@ func TestFilterFileNotFound(t *testing.T) {
 func TestFilterNotAFile(t *testing.T) {
 	// FIXME: Test what happens if the filter command fails because the target is not a file
 }
+
+// How long does it take to read a file?
+//
+// This can be slow due to highlighting.
+//
+// Run with: go test -bench . ./...
+func BenchmarkReaderDone(b *testing.B) {
+	filename := getSamplesDir() + "/../m/pager.go" // This is our longest .go file
+	b.ResetTimer()
+	for n := 0; n < b.N; n++ {
+		// This is our longest .go file
+		readMe, err := NewReaderFromFilename(filename)
+		if err != nil {
+			panic(err)
+		}
+		err = readMe._Wait()
+		if err != nil {
+			panic(err)
+		}
+	}
+}
