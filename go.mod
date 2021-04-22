@@ -1,6 +1,6 @@
 module github.com/walles/moar
 
-go 1.13
+go 1.16
 
 require (
 	github.com/alecthomas/chroma v0.8.2
