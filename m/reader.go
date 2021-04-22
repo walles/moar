@@ -345,6 +345,11 @@ func NewReaderFromFilename(filename string) (*Reader, error) {
 			return
 		}
 
+		if highlighted == nil {
+			// No highlighting would be done, never mind
+			return
+		}
+
 		returnMe.setText(*highlighted)
 	}()
 
