@@ -455,6 +455,12 @@ func (reader *Reader) setText(text string) {
 		lines = append(lines, NewLine(line))
 	}
 
+	if len(lines) > 0 && strings.HasSuffix(text, "\n") {
+		// Input ends with an empty line. This makes our line count be
+		// off-by-one, fix that!
+		lines = lines[0 : len(lines)-1]
+	}
+
 	reader.lock.Lock()
 	reader.lines = lines
 	reader.replaced = true
