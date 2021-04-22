@@ -2,15 +2,18 @@
 
 set -e -o pipefail
 
-# Latest version: https://github.com/dominikh/go-tools/releases/latest
+# If you want to bump this, check here for the most recent release version:
+# https://github.com/dominikh/go-tools/releases/latest
 STATICCHECK_VERSION=2020.2.3
 
-# Latest version: https://github.com/kisielk/errcheck/releases/latest
+# If you want to bump this, check here for the most recent release version:
+# https://github.com/kisielk/errcheck/releases/latest
 ERRCHECK_VERSION=v1.6.0
 
 # Install our linters
 echo Installing linters...
-go get "honnef.co/go/tools/cmd/staticcheck@${STATICCHECK_VERSION}" "github.com/kisielk/errcheck@${ERRCHECK_VERSION}"
+go install "honnef.co/go/tools/cmd/staticcheck@${STATICCHECK_VERSION}"
+go install "github.com/kisielk/errcheck@${ERRCHECK_VERSION}"
 
 if [ -n "${CI}" ]; then
   # We want our linter versions listed in go.mod: https://github.com/walles/moar/pull/48
