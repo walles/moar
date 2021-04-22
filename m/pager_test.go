@@ -13,9 +13,6 @@ import (
 
 func TestUnicodeRendering(t *testing.T) {
 	reader := NewReaderFromStream("", strings.NewReader("åäö"))
-	if err := reader._Wait(); err != nil {
-		panic(err)
-	}
 
 	var answers = []twin.Cell{
 		twin.NewCell('å', twin.StyleDefault),
@@ -40,9 +37,6 @@ func logDifference(t *testing.T, expected twin.Cell, actual twin.Cell) {
 func TestFgColorRendering(t *testing.T) {
 	reader := NewReaderFromStream("", strings.NewReader(
 		"\x1b[30ma\x1b[31mb\x1b[32mc\x1b[33md\x1b[34me\x1b[35mf\x1b[36mg\x1b[37mh\x1b[0mi"))
-	if err := reader._Wait(); err != nil {
-		panic(err)
-	}
 
 	var answers = []twin.Cell{
 		twin.NewCell('a', twin.StyleDefault.Foreground(twin.NewColor16(0))),
@@ -65,9 +59,6 @@ func TestFgColorRendering(t *testing.T) {
 func TestBrokenUtf8(t *testing.T) {
 	// The broken UTF8 character in the middle is based on "©" = 0xc2a9
 	reader := NewReaderFromStream("", strings.NewReader("abc\xc2def"))
-	if err := reader._Wait(); err != nil {
-		panic(err)
-	}
 
 	var answers = []twin.Cell{
 		twin.NewCell('a', twin.StyleDefault),
@@ -86,6 +77,11 @@ func TestBrokenUtf8(t *testing.T) {
 }
 
 func startPaging(t *testing.T, reader *Reader) *twin.FakeScreen {
+	err := reader._Wait()
+	if err != nil {
+		panic(err)
+	}
+
 	screen := twin.NewFakeScreen(20, 10)
 	pager := NewPager(reader)
 	pager.ShowLineNumbers = false
@@ -105,9 +101,6 @@ func startPaging(t *testing.T, reader *Reader) *twin.FakeScreen {
 // assertIndexOfFirstX verifies the (zero-based) index of the first 'x'
 func assertIndexOfFirstX(t *testing.T, s string, expectedIndex int) {
 	reader := NewReaderFromStream("", strings.NewReader(s))
-	if err := reader._Wait(); err != nil {
-		panic(err)
-	}
 
 	contents := startPaging(t, reader).GetRow(0)
 	for pos, cell := range contents {
@@ -158,9 +151,6 @@ func TestCodeHighlighting(t *testing.T) {
 	if err != nil {
 		panic(err)
 	}
-	if err := reader._Wait(); err != nil {
-		panic(err)
-	}
 
 	packageKeywordStyle := twin.StyleDefault.WithAttr(twin.AttrBold).Foreground(twin.NewColorHex(0x6AB825))
 	packageNameStyle := twin.StyleDefault.Foreground(twin.NewColorHex(0xD0D0D0))
@@ -184,9 +174,6 @@ func TestCodeHighlighting(t *testing.T) {
 
 func testManPageFormatting(t *testing.T, input string, expected twin.Cell) {
 	reader := NewReaderFromStream("", strings.NewReader(input))
-	if err := reader._Wait(); err != nil {
-		panic(err)
-	}
 
 	// Without these three lines the man page tests will fail if either of these
 	// environment variables are set when the tests are run.

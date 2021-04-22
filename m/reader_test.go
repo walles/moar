@@ -326,9 +326,11 @@ func BenchmarkReaderDone(b *testing.B) {
 		if err != nil {
 			panic(err)
 		}
-		err = readMe._Wait()
-		if err != nil {
-			panic(err)
+
+		// Wait for the reader to finish
+		<-readMe.done
+		if readMe.err != nil {
+			panic(readMe.err)
 		}
 	}
 }

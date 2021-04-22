@@ -32,8 +32,9 @@ type Reader struct {
 	// Have we had our contents replaced using setText()?
 	replaced bool
 
-	done           chan bool
-	moreLinesAdded chan bool
+	done             chan bool
+	highlightingDone chan bool // Used by tests
+	moreLinesAdded   chan bool
 }
 
 // Lines contains a number of lines from the reader, plus metadata
@@ -166,6 +167,7 @@ func readStream(stream io.Reader, reader *Reader, fromFilter *exec.Cmd) {
 // corner to help the user keep track of what is being paged.
 func NewReaderFromStream(name string, reader io.Reader) *Reader {
 	mReader := newReaderFromStream(reader, nil)
+	mReader.highlightingDone <- true // No highlighting of streams = nothing left to do = Done!
 
 	if len(name) > 0 {
 		mReader.lock.Lock()
@@ -184,6 +186,7 @@ func newReaderFromStream(reader io.Reader, fromFilter *exec.Cmd) *Reader {
 	var lines []*Line
 	var lock = &sync.Mutex{}
 	done := make(chan bool, 1)
+	highlightingDone := make(chan bool, 1)
 
 	// This needs to be size 1. If it would be 0, and we add more lines while the
 	// pager is processing, the pager would miss the lines added while it was
@@ -191,10 +194,11 @@ func newReaderFromStream(reader io.Reader, fromFilter *exec.Cmd) *Reader {
 	moreLinesAdded := make(chan bool, 1)
 
 	returnMe := Reader{
-		lines:          lines,
-		lock:           lock,
-		done:           done,
-		moreLinesAdded: moreLinesAdded,
+		lines:            lines,
+		lock:             lock,
+		done:             done,
+		moreLinesAdded:   moreLinesAdded,
+		highlightingDone: highlightingDone,
 	}
 
 	// FIXME: Make sure that if we panic somewhere inside of this goroutine,
@@ -217,19 +221,26 @@ func NewReaderFromText(name string, text string) *Reader {
 		}
 	}
 	done := make(chan bool, 1)
+	highlightingDone := make(chan bool, 1)
 	done <- true
-	return &Reader{
-		name:  &name,
-		lines: lines,
-		lock:  &sync.Mutex{},
-		done:  done,
+	returnMe := &Reader{
+		name:             &name,
+		lines:            lines,
+		lock:             &sync.Mutex{},
+		done:             done,
+		highlightingDone: highlightingDone,
 	}
+
+	returnMe.highlightingDone <- true // No highlighting to do = nothing left = Done!
+
+	return returnMe
 }
 
-// Wait for reader to finish reading. Used by tests.
+// Wait for reader to finish reading and highlighting. Used by tests.
 func (r *Reader) _Wait() error {
 	// Wait for our goroutine to finish
 	<-r.done
+	<-r.highlightingDone
 
 	r.lock.Lock()
 	defer r.lock.Unlock()
@@ -259,6 +270,7 @@ func newReaderFromCommand(filename string, filterCommand ...string) (*Reader, er
 	}
 
 	reader := newReaderFromStream(filterOut, filter)
+	reader.highlightingDone <- true // No highlighting to do == nothing left == Done!
 	reader.lock.Lock()
 	reader.name = &filename
 	reader._stderr = filterErr
@@ -316,14 +328,17 @@ func NewReaderFromFilename(filename string) (*Reader, error) {
 	if err != nil {
 		return nil, err
 	}
-	returnMe := NewReaderFromStream(filename, stream)
 
-	if strings.HasSuffix(filename, ".txt") {
-		// Not much point in highlighting text files, prefer streaming these
-		return returnMe, nil
-	}
+	returnMe := newReaderFromStream(stream, nil)
+	returnMe.lock.Lock()
+	returnMe.name = &filename
+	returnMe.lock.Unlock()
 
 	go func() {
+		defer func() {
+			returnMe.highlightingDone <- true
+		}()
+
 		highlighted, err := highlight(filename)
 		if err != nil {
 			log.Warn("Highlighting failed: ", err)
