@@ -1,6 +1,9 @@
 package m
 
 import (
+	"fmt"
+	"io"
+	"io/ioutil"
 	"os"
 	"regexp"
 	"runtime"
@@ -351,4 +354,95 @@ func TestFindFirstLineOneBasedAnsi(t *testing.T) {
 
 	hitLine := pager._FindFirstHitLineOneBased(1, false)
 	assert.Check(t, *hitLine == 1)
+}
+
+func benchmarkSearch(b *testing.B, highlighted bool) {
+	template := "pager_test-*.txt"
+	if highlighted {
+		template = "pager_test-*.go"
+	}
+	goTempFile, err := ioutil.TempFile("", template)
+	if err != nil {
+		panic(err)
+	}
+
+	goTempFileName := goTempFile.Name()
+
+	// Pick a go file so we get something with highlighting
+	_, sourceFilename, _, ok := runtime.Caller(0)
+	if !ok {
+		panic("Getting current filename failed")
+	}
+
+	// Copy filename into goTempFile N times
+	for n := 0; n < b.N; n++ {
+		fromSelf, err := os.Open(sourceFilename)
+		if err != nil {
+			panic(err)
+		}
+
+		_, err = io.Copy(goTempFile, fromSelf)
+		if err != nil {
+			panic(err)
+		}
+
+		err = fromSelf.Close()
+		if err != nil {
+			panic(err)
+		}
+	}
+
+	// This is mostly to ensure everything is flushed
+	err = goTempFile.Close()
+	if err != nil {
+		panic(err)
+	}
+
+	reader, err := NewReaderFromFilename(goTempFileName)
+	if err != nil {
+		panic(err)
+	}
+	pager := NewPager(reader)
+
+	// The [] around the 't' is there to make sure it doesn't match, remember
+	// we're searching through this very file.
+	pager.searchPattern = regexp.MustCompile("This won'[t] match anything")
+
+	// Wait for reader to finish reading...
+	<-reader.done
+
+	// ... and finish highlighting
+	<-reader.highlightingDone
+
+	// Clean up after the reader is done, but before we start clocking the
+	// search.
+	err = os.Remove(goTempFileName)
+	if err != nil {
+		panic(err)
+	}
+
+	b.ResetTimer()
+
+	// This test will search through all the N copies we made of our file
+	hitLine := pager._FindFirstHitLineOneBased(1, false)
+
+	if hitLine != nil {
+		panic(fmt.Errorf("This test is meant to scan the whole file without finding anything"))
+	}
+}
+
+// How long does it take to search a highlighted file for some regex?
+//
+// Run with: go test -bench . ./...
+func BenchmarkHighlightedSearch(b *testing.B) {
+	benchmarkSearch(b, true)
+}
+
+// How long does it take to search a plain text file for some regex?
+//
+// Search performance was a problem for me when I had a 600MB file to search in.
+//
+// Run with: go test -bench . ./...
+func BenchmarkPlainTextSearch(b *testing.B) {
+	benchmarkSearch(b, false)
 }
