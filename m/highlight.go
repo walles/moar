@@ -12,12 +12,23 @@ import (
 )
 
 // Read and highlight a file using Chroma: https://github.com/alecthomas/chroma
+//
+// Returns nil if highlighting would be a no-op.
 func highlight(filename string) (*string, error) {
 	// Highlight input file using Chroma:
 	// https://github.com/alecthomas/chroma
 	lexer := lexers.Match(filename)
 	if lexer == nil {
-		lexer = lexers.Fallback
+		return nil, nil
+	}
+
+	// FIXME: Can we test for the lexer implementation class instead? That
+	// should be more resilient towards this arbitrary string changing if we
+	// upgrade Chroma at some point.
+	if lexer.Config().Name == "plaintext" {
+		// This highlighter doesn't provide any highlighting, but not doing
+		// anything at all is cheaper and simpler, so we do that.
+		return nil, nil
 	}
 
 	// See: https://github.com/alecthomas/chroma#identifying-the-language
