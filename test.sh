@@ -5,15 +5,21 @@ set -e -o pipefail
 # If you want to bump this, check here for the most recent release version:
 # https://github.com/dominikh/go-tools/releases/latest
 STATICCHECK_VERSION=2020.2.3
+STATICCHECK="$(go env GOPATH)/bin/staticcheck"
 
 # If you want to bump this, check here for the most recent release version:
 # https://github.com/kisielk/errcheck/releases/latest
 ERRCHECK_VERSION=v1.6.0
+ERRCHECK="$(go env GOPATH)/bin/errcheck"
 
 # Install our linters
 echo Installing linters...
-go install "honnef.co/go/tools/cmd/staticcheck@${STATICCHECK_VERSION}"
-go install "github.com/kisielk/errcheck@${ERRCHECK_VERSION}"
+if [ "$0" -nt "$STATICCHECK" ] ; then
+  go install "honnef.co/go/tools/cmd/staticcheck@${STATICCHECK_VERSION}"
+fi
+if [ "$0" -nt "$ERRCHECK" ] ; then
+  go install "github.com/kisielk/errcheck@${ERRCHECK_VERSION}"
+fi
 
 # Test that we only pass tcell.Color constants to these methods, not numbers
 grep -En 'Foreground\([1-9]' ./*.go ./*/*.go && exit 1
@@ -46,7 +52,7 @@ fi
 
 # Docs: https://staticcheck.io/docs/
 echo "Running staticcheck..."
-if ! "$(go env GOPATH)/bin/staticcheck" -f stylish . ./... ; then
+if ! "$STATICCHECK" -f stylish . ./... ; then
   if [ -n "${CI}" ]; then
     echo >&2 "==="
     echo >&2 "=== Please run './test.sh' before pushing to see the above issues locally rather than in CI"
@@ -57,7 +63,7 @@ fi
 
 # Checks for unused error return values: https://github.com/kisielk/errcheck
 echo "Running errcheck to check for unused error return values..."
-if ! "$(go env GOPATH)/bin/errcheck" . ./... ; then
+if ! "$ERRCHECK" . ./... ; then
   if [ -n "${CI}" ]; then
     echo >&2 "==="
     echo >&2 "=== Please run './test.sh' before pushing to see the above issues locally rather than in CI"
