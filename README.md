@@ -117,7 +117,7 @@ Run tests:
 Run microbenchmarks:
 
 ```bash
-go test -bench . ./...
+go test -run='^$' -bench=. . ./...
 ```
 
 Build + run:

@@ -316,7 +316,7 @@ func TestFilterNotAFile(t *testing.T) {
 //
 // This can be slow due to highlighting.
 //
-// Run with: go test -bench . ./...
+// Run with: go test -run='^$' -bench=. . ./...
 func BenchmarkReaderDone(b *testing.B) {
 	filename := getSamplesDir() + "/../m/pager.go" // This is our longest .go file
 	b.ResetTimer()

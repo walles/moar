@@ -339,7 +339,7 @@ func NewReaderFromFilename(filename string) (*Reader, error) {
 			returnMe.highlightingDone <- true
 		}()
 
-		highlighted, err := highlight(filename)
+		highlighted, err := highlight(filename, false)
 		if err != nil {
 			log.Warn("Highlighting failed: ", err)
 			return

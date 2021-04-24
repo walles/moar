@@ -2,8 +2,6 @@ package m
 
 import (
 	"fmt"
-	"io"
-	"io/ioutil"
 	"os"
 	"regexp"
 	"runtime"
@@ -357,51 +355,38 @@ func TestFindFirstLineOneBasedAnsi(t *testing.T) {
 }
 
 func benchmarkSearch(b *testing.B, highlighted bool) {
-	template := "pager_test-*.txt"
-	if highlighted {
-		template = "pager_test-*.go"
-	}
-	goTempFile, err := ioutil.TempFile("", template)
-	if err != nil {
-		panic(err)
-	}
-
-	goTempFileName := goTempFile.Name()
-
 	// Pick a go file so we get something with highlighting
 	_, sourceFilename, _, ok := runtime.Caller(0)
 	if !ok {
 		panic("Getting current filename failed")
 	}
 
-	// Copy filename into goTempFile N times
+	// Read one copy of the example input
+	var fileContents string
+	if highlighted {
+		highlightedSourceCode, err := highlight(sourceFilename, true)
+		if err != nil {
+			panic(err)
+		}
+		if highlightedSourceCode == nil {
+			panic("Highlighting didn't want to, returned nil")
+		}
+		fileContents = *highlightedSourceCode
+	} else {
+		sourceBytes, err := os.ReadFile(sourceFilename)
+		if err != nil {
+			panic(err)
+		}
+		fileContents = string(sourceBytes)
+	}
+
+	// Duplicate data N times
+	testString := ""
 	for n := 0; n < b.N; n++ {
-		fromSelf, err := os.Open(sourceFilename)
-		if err != nil {
-			panic(err)
-		}
-
-		_, err = io.Copy(goTempFile, fromSelf)
-		if err != nil {
-			panic(err)
-		}
-
-		err = fromSelf.Close()
-		if err != nil {
-			panic(err)
-		}
+		testString += fileContents
 	}
 
-	// This is mostly to ensure everything is flushed
-	err = goTempFile.Close()
-	if err != nil {
-		panic(err)
-	}
-
-	reader, err := NewReaderFromFilename(goTempFileName)
-	if err != nil {
-		panic(err)
-	}
+	reader := NewReaderFromText("hello", testString)
 	pager := NewPager(reader)
 
 	// The [] around the 't' is there to make sure it doesn't match, remember
@@ -414,12 +399,8 @@ func benchmarkSearch(b *testing.B, highlighted bool) {
 	// ... and finish highlighting
 	<-reader.highlightingDone
 
-	// Clean up after the reader is done, but before we start clocking the
-	// search.
-	err = os.Remove(goTempFileName)
-	if err != nil {
-		panic(err)
-	}
+	// I hope forcing a GC here will make numbers more predictable
+	runtime.GC()
 
 	b.ResetTimer()
 
@@ -433,7 +414,7 @@ func benchmarkSearch(b *testing.B, highlighted bool) {
 
 // How long does it take to search a highlighted file for some regex?
 //
-// Run with: go test -bench . ./...
+// Run with: go test -run='^$' -bench=. . ./...
 func BenchmarkHighlightedSearch(b *testing.B) {
 	benchmarkSearch(b, true)
 }
@@ -442,7 +423,7 @@ func BenchmarkHighlightedSearch(b *testing.B) {
 //
 // Search performance was a problem for me when I had a 600MB file to search in.
 //
-// Run with: go test -bench . ./...
+// Run with: go test -run='^$' -bench=. . ./...
 func BenchmarkPlainTextSearch(b *testing.B) {
 	benchmarkSearch(b, false)
 }

@@ -3,22 +3,42 @@ package m
 import (
 	"bytes"
 	"io/ioutil"
+	"os"
 	"strings"
 
 	"github.com/alecthomas/chroma"
 	"github.com/alecthomas/chroma/formatters"
 	"github.com/alecthomas/chroma/lexers"
 	"github.com/alecthomas/chroma/styles"
+
+	log "github.com/sirupsen/logrus"
 )
+
+// Files larger than this won't be highlighted
+const MAX_HIGHLIGHT_SIZE int64 = 1024 * 1024
 
 // Read and highlight a file using Chroma: https://github.com/alecthomas/chroma
 //
+// If force is true, file will always be highlighted. If force is false, files
+// larger than MAX_HIGHLIGHT_SIZE will not be highlighted.
+//
 // Returns nil if highlighting would be a no-op.
-func highlight(filename string) (*string, error) {
+func highlight(filename string, force bool) (*string, error) {
 	// Highlight input file using Chroma:
 	// https://github.com/alecthomas/chroma
+	fileInfo, err := os.Stat(filename)
+	if err != nil {
+		return nil, err
+	}
+	if fileInfo.Size() > MAX_HIGHLIGHT_SIZE {
+		log.Debugf("Not highlighting %s because it is %d bytes large, which is larger than moar's built-in highlighting limit of %d bytes",
+			filename, fileInfo.Size(), MAX_HIGHLIGHT_SIZE)
+		return nil, nil
+	}
+
 	lexer := lexers.Match(filename)
 	if lexer == nil {
+		// No highlighter available for this file type
 		return nil, nil
 	}
 
