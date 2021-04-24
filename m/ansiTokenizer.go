@@ -77,8 +77,23 @@ func termcapToStyle(termcap string) twin.Style {
 
 func withoutFormatting(s string) string {
 	builder := strings.Builder{}
+	builder.Grow(len(s))
 	for _, styledString := range styledStringsFromString(s) {
-		builder.WriteString(styledString.String)
+		for _, char := range styledString.String {
+			if char != '\t' {
+				builder.WriteRune(char)
+				continue
+			}
+
+			// Expand the TAB character
+			for {
+				builder.WriteRune(' ')
+				if (builder.Len())%_TabSize == 0 {
+					// We arrived at the next tab stop
+					break
+				}
+			}
+		}
 	}
 
 	return builder.String()
