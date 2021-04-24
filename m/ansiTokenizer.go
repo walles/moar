@@ -21,6 +21,7 @@ var sgrSequencePattern = regexp.MustCompile("\x1b\\[([0-9;]*m)")
 
 // A Line represents a line of text that can / will be paged
 type Line struct {
+	done  bool
 	raw   *string
 	plain *string
 	cells []twin.Cell
@@ -48,13 +49,13 @@ func (line *Line) Plain() string {
 }
 
 func (line *Line) parse() {
-	if line.raw == nil {
+	if line.done {
 		// Already done
 		return
 	}
 
 	line.cells, line.plain = cellsFromString(*line.raw)
-	line.raw = nil
+	line.done = true
 }
 
 // SetManPageFormatFromEnv parses LESS_TERMCAP_xx environment variables and
