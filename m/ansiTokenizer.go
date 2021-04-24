@@ -13,6 +13,8 @@ import (
 
 const _TabSize = 4
 
+const BACKSPACE = '\b'
+
 var manPageBold = twin.StyleDefault.WithAttr(twin.AttrBold)
 var manPageUnderline = twin.StyleDefault.WithAttr(twin.AttrUnderline)
 
@@ -76,27 +78,31 @@ func termcapToStyle(termcap string) twin.Style {
 }
 
 func withoutFormatting(s string) string {
-	builder := strings.Builder{}
-	builder.Grow(len(s))
+	stripped := make([]rune, 0, len(s))
 	for _, styledString := range styledStringsFromString(s) {
 		for _, char := range styledString.String {
-			if char != '\t' {
-				builder.WriteRune(char)
-				continue
-			}
-
-			// Expand the TAB character
-			for {
-				builder.WriteRune(' ')
-				if (builder.Len())%_TabSize == 0 {
-					// We arrived at the next tab stop
-					break
+			switch char {
+			case '\t':
+				// Expand the TAB character
+				for {
+					stripped = append(stripped, ' ')
+					if (len(stripped))%_TabSize == 0 {
+						// We arrived at the next tab stop
+						break
+					}
 				}
+			case BACKSPACE:
+				if len(stripped) == 0 {
+					continue
+				}
+				stripped = stripped[0 : len(stripped)-1]
+			default:
+				stripped = append(stripped, char)
 			}
 		}
 	}
 
-	return builder.String()
+	return string(stripped)
 }
 
 // Turn a (formatted) string into a series of screen cells
@@ -151,7 +157,7 @@ func consumeBold(runes []rune, index int) (int, *twin.Cell) {
 		return index, nil
 	}
 
-	if runes[index+1] != '\b' {
+	if runes[index+1] != BACKSPACE {
 		// No backspace in the middle, never mind
 		return index, nil
 	}
@@ -175,7 +181,7 @@ func consumeUnderline(runes []rune, index int) (int, *twin.Cell) {
 		return index, nil
 	}
 
-	if runes[index+1] != '\b' {
+	if runes[index+1] != BACKSPACE {
 		// No backspace in the middle, never mind
 		return index, nil
 	}
