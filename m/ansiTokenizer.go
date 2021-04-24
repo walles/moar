@@ -35,23 +35,16 @@ func NewLine(raw string) *Line {
 
 // Tokens returns a representation of the string split into styled tokens
 func (line *Line) Tokens() []twin.Cell {
-	cells, _ := cellsFromString(*line.raw)
-	return cells
+	return cellsFromString(*line.raw)
 }
 
 // Plain returns a plain text representation of the initial string
 func (line *Line) Plain() string {
-	line.parse()
-	return *line.plain
-}
-
-func (line *Line) parse() {
-	if line.plain != nil {
-		// Already done
-		return
+	if line.plain == nil {
+		plain := withoutFormatting(*line.raw)
+		line.plain = &plain
 	}
-
-	_, line.plain = cellsFromString(*line.raw)
+	return *line.plain
 }
 
 // SetManPageFormatFromEnv parses LESS_TERMCAP_xx environment variables and
@@ -78,14 +71,22 @@ func resetManPageFormatForTesting() {
 
 func termcapToStyle(termcap string) twin.Style {
 	// Add a character to be sure we have one to take the format from
-	cells, _ := cellsFromString(termcap + "x")
+	cells := cellsFromString(termcap + "x")
 	return cells[len(cells)-1].Style
 }
 
-// cellsFromString turns a (formatted) string into a series of screen cells,
-// and an unformatted string
-func cellsFromString(s string) ([]twin.Cell, *string) {
-	var tokens []twin.Cell
+func withoutFormatting(s string) string {
+	builder := strings.Builder{}
+	for _, styledString := range styledStringsFromString(s) {
+		builder.WriteString(styledString.String)
+	}
+
+	return builder.String()
+}
+
+// Turn a (formatted) string into a series of screen cells
+func cellsFromString(s string) []twin.Cell {
+	var cells []twin.Cell
 
 	// Specs: https://en.wikipedia.org/wiki/ANSI_escape_code#3-bit_and_4-bit
 	styleBrokenUtf8 := twin.StyleDefault.Background(twin.NewColor16(1)).Foreground(twin.NewColor16(7))
@@ -96,42 +97,36 @@ func cellsFromString(s string) ([]twin.Cell, *string) {
 
 			case '\x09': // TAB
 				for {
-					tokens = append(tokens, twin.Cell{
+					cells = append(cells, twin.Cell{
 						Rune:  ' ',
 						Style: styledString.Style,
 					})
 
-					if (len(tokens))%_TabSize == 0 {
+					if (len(cells))%_TabSize == 0 {
 						// We arrived at the next tab stop
 						break
 					}
 				}
 
 			case '�': // Go's broken-UTF8 marker
-				tokens = append(tokens, twin.Cell{
+				cells = append(cells, twin.Cell{
 					Rune:  '?',
 					Style: styleBrokenUtf8,
 				})
 
 			case '\x08': // Backspace
-				tokens = append(tokens, twin.Cell{
+				cells = append(cells, twin.Cell{
 					Rune:  '<',
 					Style: styleBrokenUtf8,
 				})
 
 			default:
-				tokens = append(tokens, token)
+				cells = append(cells, token)
 			}
 		}
 	}
 
-	var stringBuilder strings.Builder
-	stringBuilder.Grow(len(tokens))
-	for _, token := range tokens {
-		stringBuilder.WriteRune(token.Rune)
-	}
-	plainString := stringBuilder.String()
-	return tokens, &plainString
+	return cells
 }
 
 // Consume 'x<x', where '<' is backspace and the result is a bold 'x'
