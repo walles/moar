@@ -1,6 +1,9 @@
 package m
 
-import "github.com/walles/moar/twin"
+import (
+	"fmt"
+	"github.com/walles/moar/twin"
+)
 
 // Page displays text in a pager.
 func (p *Pager) Page() error {
@@ -10,19 +13,15 @@ func (p *Pager) Page() error {
 		return e
 	}
 	defer func() {
-		if p.DeInit {
-			screen.Close()
-			return
-		}
+		screen.Close()
+		if p.DeInit { return }
 
-		// See: https://github.com/walles/moar/pull/39
 		// FIXME: Consider moving this logic into the twin package.
-		w, h := screen.Size()
-		screen.ShowCursorAt(0, h-1)
-		for x := 0; x < w; x++ {
-			screen.SetCell(x, h-1, twin.NewCell(' ', twin.StyleDefault))
+		_, height := p.screen.Size()
+		lines := p.reader.GetLines(p.firstLineOneBased, height-1).lines
+		for _, line := range lines {
+			fmt.Println(*line.raw)
 		}
-		screen.Show()
 	}()
 
 	p.StartPaging(screen)
