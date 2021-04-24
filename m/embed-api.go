@@ -14,7 +14,9 @@ func (p *Pager) Page() error {
 	}
 	defer func() {
 		screen.Close()
-		if p.DeInit { return }
+		if p.DeInit {
+			return
+		}
 
 		// FIXME: Consider moving this logic into the twin package.
 		_, height := p.screen.Size()
