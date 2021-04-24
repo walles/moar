@@ -21,10 +21,8 @@ var sgrSequencePattern = regexp.MustCompile("\x1b\\[([0-9;]*m)")
 
 // A Line represents a line of text that can / will be paged
 type Line struct {
-	done  bool
 	raw   *string
 	plain *string
-	cells []twin.Cell
 }
 
 // NewLine creates a new Line from a (potentially ANSI / man page formatted) string
@@ -32,14 +30,13 @@ func NewLine(raw string) *Line {
 	return &Line{
 		raw:   &raw,
 		plain: nil,
-		cells: nil,
 	}
 }
 
 // Tokens returns a representation of the string split into styled tokens
 func (line *Line) Tokens() []twin.Cell {
-	line.parse()
-	return line.cells
+	cells, _ := cellsFromString(*line.raw)
+	return cells
 }
 
 // Plain returns a plain text representation of the initial string
@@ -49,13 +46,12 @@ func (line *Line) Plain() string {
 }
 
 func (line *Line) parse() {
-	if line.done {
+	if line.plain != nil {
 		// Already done
 		return
 	}
 
-	line.cells, line.plain = cellsFromString(*line.raw)
-	line.done = true
+	_, line.plain = cellsFromString(*line.raw)
 }
 
 // SetManPageFormatFromEnv parses LESS_TERMCAP_xx environment variables and

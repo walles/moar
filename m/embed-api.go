@@ -2,6 +2,7 @@ package m
 
 import (
 	"fmt"
+
 	"github.com/walles/moar/twin"
 )
 
@@ -18,7 +19,7 @@ func (p *Pager) Page() error {
 			return
 		}
 
-		// FIXME: Consider moving this logic into the twin package.
+		// FIXME: Consider moving this logic into the twin package, or into Pager.
 		_, height := p.screen.Size()
 		lines := p.reader.GetLines(p.firstLineOneBased, height-1).lines
 		for _, line := range lines {
