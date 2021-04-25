@@ -92,6 +92,9 @@ func withoutFormatting(s string) string {
 						break
 					}
 				}
+			case '�': // Go's broken-UTF8 marker
+				stripped = append(stripped, '?')
+				continue
 			case BACKSPACE:
 				if len(stripped) == 0 {
 					continue
