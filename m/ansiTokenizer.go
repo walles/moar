@@ -78,7 +78,25 @@ func termcapToStyle(termcap string) twin.Style {
 	return cells[len(cells)-1].Style
 }
 
+func isPlain(s string) bool {
+	for i := 0; i < len(s); i++ {
+		byteAtIndex := s[i]
+		if byteAtIndex < 32 {
+			return false
+		}
+		if byteAtIndex > 127 {
+			return false
+		}
+	}
+
+	return true
+}
+
 func withoutFormatting(s string) string {
+	if isPlain(s) {
+		return s
+	}
+
 	stripped := make([]rune, 0, len(s))
 	for _, styledString := range styledStringsFromString(s) {
 		for _, token := range tokensFromStyledString(styledString) {
