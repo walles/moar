@@ -57,7 +57,8 @@ func TestTokenize(t *testing.T) {
 			}
 
 			// Tokens and plain have the same lengths, compare contents
-			for index, plainChar := range plainString {
+			plainStringChars := []rune(plainString)
+			for index, plainChar := range plainStringChars {
 				cellChar := tokens[index]
 				if cellChar.Rune == plainChar {
 					continue
