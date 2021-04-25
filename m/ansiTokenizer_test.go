@@ -1,7 +1,6 @@
 package m
 
 import (
-	"bufio"
 	"fmt"
 	"os"
 	"strings"
@@ -40,21 +39,21 @@ func TestTokenize(t *testing.T) {
 			}
 		}()
 
-		scanner := bufio.NewScanner(file)
-		lineNumber := 0
-		for scanner.Scan() {
-			line := scanner.Text()
+		myReader := NewReaderFromStream(fileName, file)
+		<-myReader.done
+		for lineNumber := 1; lineNumber <= myReader.GetLineCount(); lineNumber++ {
+			line := myReader.GetLine(lineNumber)
 			lineNumber++
 
 			var loglines strings.Builder
 			log.SetOutput(&loglines)
 
-			tokens := cellsFromString(line)
-			plainString := withoutFormatting(line)
+			tokens := cellsFromString(*line.raw)
+			plainString := withoutFormatting(*line.raw)
 			if len(tokens) != utf8.RuneCountInString(plainString) {
 				t.Errorf("%s:%d: len(tokens)=%d, len(plainString)=%d for: <%s>",
 					fileName, lineNumber,
-					len(tokens), utf8.RuneCountInString(plainString), line)
+					len(tokens), utf8.RuneCountInString(plainString), *line.raw)
 				continue
 			}
 
