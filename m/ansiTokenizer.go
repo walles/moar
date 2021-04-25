@@ -81,31 +81,31 @@ func termcapToStyle(termcap string) twin.Style {
 func withoutFormatting(s string) string {
 	stripped := make([]rune, 0, len(s))
 	for _, styledString := range styledStringsFromString(s) {
-		for _, char := range styledString.String {
-			switch char {
-			case '\t':
-				// Expand the TAB character
+		for _, token := range tokensFromStyledString(styledString) {
+			switch token.Rune {
+
+			case '\x09': // TAB
 				for {
 					stripped = append(stripped, ' ')
+
 					if (len(stripped))%_TabSize == 0 {
 						// We arrived at the next tab stop
 						break
 					}
 				}
+
 			case '�': // Go's broken-UTF8 marker
 				stripped = append(stripped, '?')
-				continue
+
 			case BACKSPACE:
-				if len(stripped) == 0 {
-					continue
-				}
-				stripped = stripped[0 : len(stripped)-1]
+				stripped = append(stripped, '<')
+
 			default:
-				if !unicode.IsPrint(char) {
+				if !unicode.IsPrint(token.Rune) {
 					stripped = append(stripped, '?')
 					continue
 				}
-				stripped = append(stripped, char)
+				stripped = append(stripped, token.Rune)
 			}
 		}
 	}
