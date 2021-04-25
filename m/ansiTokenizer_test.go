@@ -64,6 +64,11 @@ func TestTokenize(t *testing.T) {
 					continue
 				}
 
+				if cellChar.Rune == '•' && plainChar == 'o' {
+					// Pretty bullets on man pages
+					continue
+				}
+
 				// Chars mismatch!
 				plainStringFromCells := cellsToPlainString(tokens)
 				positionMarker := strings.Repeat(" ", index) + "^"
