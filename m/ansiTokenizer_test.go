@@ -2,9 +2,11 @@ package m
 
 import (
 	"bufio"
+	"fmt"
 	"os"
 	"strings"
 	"testing"
+	"unicode"
 	"unicode/utf8"
 
 	log "github.com/sirupsen/logrus"
@@ -72,9 +74,17 @@ func TestTokenize(t *testing.T) {
 				// Chars mismatch!
 				plainStringFromCells := cellsToPlainString(tokens)
 				positionMarker := strings.Repeat(" ", index) + "^"
-				t.Errorf("%s:%d, 0-based column %d: cell char <%c> != plain char <%c>:\nPlain: %s\nCells: %s\n       %s",
+				cellCharString := string(cellChar.Rune)
+				if !unicode.IsPrint(cellChar.Rune) {
+					cellCharString = fmt.Sprint(int(cellChar.Rune))
+				}
+				plainCharString := string(plainChar)
+				if !unicode.IsPrint(plainChar) {
+					plainCharString = fmt.Sprint(int(plainChar))
+				}
+				t.Errorf("%s:%d, 0-based column %d: cell char <%s> != plain char <%s>:\nPlain: %s\nCells: %s\n       %s",
 					fileName, lineNumber, index,
-					cellChar.Rune, plainChar,
+					cellCharString, plainCharString,
 					plainString,
 					plainStringFromCells,
 					positionMarker,

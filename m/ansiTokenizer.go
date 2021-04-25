@@ -6,6 +6,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"unicode"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/walles/moar/twin"
@@ -97,6 +98,10 @@ func withoutFormatting(s string) string {
 				}
 				stripped = stripped[0 : len(stripped)-1]
 			default:
+				if !unicode.IsPrint(char) {
+					stripped = append(stripped, '?')
+					continue
+				}
 				stripped = append(stripped, char)
 			}
 		}
