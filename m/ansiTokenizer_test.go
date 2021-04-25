@@ -13,6 +13,16 @@ import (
 	"gotest.tools/assert"
 )
 
+// Convert a cells array to a plain string
+func cellsToPlainString(cells []twin.Cell) string {
+	returnMe := ""
+	for _, cell := range cells {
+		returnMe += string(cell.Rune)
+	}
+
+	return returnMe
+}
+
 // Verify that we can tokenize all lines in ../sample-files/*
 // without logging any errors
 func TestTokenize(t *testing.T) {
@@ -49,14 +59,21 @@ func TestTokenize(t *testing.T) {
 			// Tokens and plain have the same lengths, compare contents
 			for index, plainChar := range plainString {
 				cellChar := tokens[index]
-				if cellChar.Rune != plainChar {
-					t.Errorf("%s:%d, 0-based column %d: cell char <%c> != plain char <%c> in <%s>",
-						fileName, lineNumber, index,
-						cellChar.Rune, plainChar,
-						line,
-					)
-					break
+				if cellChar.Rune == plainChar {
+					continue
 				}
+
+				// Chars mismatch!
+				plainStringFromCells := cellsToPlainString(tokens)
+				positionMarker := strings.Repeat(" ", index) + "^"
+				t.Errorf("%s:%d, 0-based column %d: cell char <%c> != plain char <%c>:\nPlain: %s\nCells: %s\n       %s",
+					fileName, lineNumber, index,
+					cellChar.Rune, plainChar,
+					plainString,
+					plainStringFromCells,
+					positionMarker,
+				)
+				break
 			}
 
 			if len(loglines.String()) != 0 {
