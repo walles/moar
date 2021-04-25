@@ -140,13 +140,20 @@ func cellsFromString(s string) []twin.Cell {
 					Style: styleBrokenUtf8,
 				})
 
-			case '\x08': // Backspace
+			case BACKSPACE:
 				cells = append(cells, twin.Cell{
 					Rune:  '<',
 					Style: styleBrokenUtf8,
 				})
 
 			default:
+				if !unicode.IsPrint(token.Rune) {
+					cells = append(cells, twin.Cell{
+						Rune:  '?',
+						Style: styleBrokenUtf8,
+					})
+					continue
+				}
 				cells = append(cells, token)
 			}
 		}
