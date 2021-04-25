@@ -46,6 +46,19 @@ func TestTokenize(t *testing.T) {
 				continue
 			}
 
+			// Tokens and plain have the same lengths, compare contents
+			for index, plainChar := range plainString {
+				cellChar := tokens[index]
+				if cellChar.Rune != plainChar {
+					t.Errorf("%s:%d, 0-based column %d: cell char <%c> != plain char <%c> in <%s>",
+						fileName, lineNumber, index,
+						cellChar.Rune, plainChar,
+						line,
+					)
+					break
+				}
+			}
+
 			if len(loglines.String()) != 0 {
 				t.Errorf("%s: %s", fileName, loglines.String())
 				continue
