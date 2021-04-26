@@ -357,7 +357,21 @@ type _StyledString struct {
 }
 
 func styledStringsFromString(s string) []_StyledString {
-	// This function was inspired by the
+	hasEsc := false
+	for _, currentByte := range []byte(s) {
+		if currentByte == '\x1b' {
+			hasEsc = true
+			break
+		}
+	}
+	if !hasEsc {
+		return []_StyledString{{
+			String: s,
+			Style:  twin.StyleDefault,
+		}}
+	}
+
+	// The rest of this function was inspired by the
 	// https://golang.org/pkg/regexp/#Regexp.Split source code
 
 	matches := sgrSequencePattern.FindAllStringIndex(s, -1)
