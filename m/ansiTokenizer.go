@@ -266,8 +266,28 @@ func consumeBullet(runes []rune, index int) (int, *twin.Cell) {
 
 func tokensFromStyledString(styledString _StyledString) []twin.Cell {
 	runes := []rune(styledString.String)
-	tokens := make([]twin.Cell, 0, len(runes))
 
+	hasBackspace := false
+	for _, runeValue := range runes {
+		if runeValue == BACKSPACE {
+			hasBackspace = true
+			break
+		}
+	}
+
+	tokens := make([]twin.Cell, 0, len(runes))
+	if !hasBackspace {
+		// Shortcut when there's no backspace based formatting to worry about
+		for _, runeValue := range runes {
+			tokens = append(tokens, twin.Cell{
+				Rune:  runeValue,
+				Style: styledString.Style,
+			})
+		}
+		return tokens
+	}
+
+	// Special handling for man page formatted lines
 	for index := 0; index < len(runes); index++ {
 		nextIndex, token := consumeBullet(runes, index)
 		if nextIndex != index {
