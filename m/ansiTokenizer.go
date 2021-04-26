@@ -97,38 +97,45 @@ func withoutFormatting(s string) string {
 		return s
 	}
 
-	stripped := make([]rune, 0, len(s))
+	stripped := strings.Builder{}
+	runeCount := 0
+	stripped.Grow(len(s))
 	for _, styledString := range styledStringsFromString(s) {
 		for _, runeValue := range runesFromStyledString(styledString) {
 			switch runeValue {
 
 			case '\x09': // TAB
 				for {
-					stripped = append(stripped, ' ')
+					stripped.WriteRune(' ')
+					runeCount++
 
-					if (len(stripped))%_TabSize == 0 {
+					if runeCount%_TabSize == 0 {
 						// We arrived at the next tab stop
 						break
 					}
 				}
 
 			case '�': // Go's broken-UTF8 marker
-				stripped = append(stripped, '?')
+				stripped.WriteRune('?')
+				runeCount++
 
 			case BACKSPACE:
-				stripped = append(stripped, '<')
+				stripped.WriteRune('<')
+				runeCount++
 
 			default:
 				if !unicode.IsPrint(runeValue) {
-					stripped = append(stripped, '?')
+					stripped.WriteRune('?')
+					runeCount++
 					continue
 				}
-				stripped = append(stripped, runeValue)
+				stripped.WriteRune(runeValue)
+				runeCount++
 			}
 		}
 	}
 
-	return string(stripped)
+	return stripped.String()
 }
 
 // Turn a (formatted) string into a series of screen cells
