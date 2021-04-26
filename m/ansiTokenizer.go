@@ -99,8 +99,8 @@ func withoutFormatting(s string) string {
 
 	stripped := make([]rune, 0, len(s))
 	for _, styledString := range styledStringsFromString(s) {
-		for _, token := range tokensFromStyledString(styledString) {
-			switch token.Rune {
+		for _, runeValue := range runesFromStyledString(styledString) {
+			switch runeValue {
 
 			case '\x09': // TAB
 				for {
@@ -119,11 +119,11 @@ func withoutFormatting(s string) string {
 				stripped = append(stripped, '<')
 
 			default:
-				if !unicode.IsPrint(token.Rune) {
+				if !unicode.IsPrint(runeValue) {
 					stripped = append(stripped, '?')
 					continue
 				}
-				stripped = append(stripped, token.Rune)
+				stripped = append(stripped, runeValue)
 			}
 		}
 	}
@@ -262,6 +262,31 @@ func consumeBullet(runes []rune, index int) (int, *twin.Cell) {
 	}
 
 	return index, nil
+}
+
+func runesFromStyledString(styledString _StyledString) string {
+	hasBackspace := false
+	for _, byteValue := range []byte(styledString.String) {
+		if byteValue == BACKSPACE {
+			hasBackspace = true
+			break
+		}
+	}
+
+	if !hasBackspace {
+		// Shortcut when there's no backspace based formatting to worry about
+		return styledString.String
+	}
+
+	// Special handling for man page formatted lines
+	cells := tokensFromStyledString(styledString)
+	returnMe := strings.Builder{}
+	returnMe.Grow(len(cells))
+	for _, cell := range cells {
+		returnMe.WriteRune(cell.Rune)
+	}
+
+	return returnMe.String()
 }
 
 func tokensFromStyledString(styledString _StyledString) []twin.Cell {
