@@ -745,12 +745,15 @@ func (p *Pager) StartPaging(screen twin.Screen) {
 		event := <-screen.Events()
 		switch event := event.(type) {
 		case twin.EventKeyCode:
+			log.Trace("Handling key event...")
 			p._OnKey(event.KeyCode())
 
 		case twin.EventRune:
+			log.Trace("Handling rune event...")
 			p._OnRune(event.Rune())
 
 		case twin.EventMouse:
+			log.Trace("Handling mouse event...")
 			switch event.Buttons() {
 			case twin.MouseWheelUp:
 				// Clipping is done in _AddLines()
