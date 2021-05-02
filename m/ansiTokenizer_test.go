@@ -48,12 +48,12 @@ func TestTokenize(t *testing.T) {
 			var loglines strings.Builder
 			log.SetOutput(&loglines)
 
-			tokens := cellsFromString(*line.raw)
-			plainString := withoutFormatting(*line.raw)
+			tokens := cellsFromString(line.raw)
+			plainString := withoutFormatting(line.raw)
 			if len(tokens) != utf8.RuneCountInString(plainString) {
 				t.Errorf("%s:%d: len(tokens)=%d, len(plainString)=%d for: <%s>",
 					fileName, lineNumber,
-					len(tokens), utf8.RuneCountInString(plainString), *line.raw)
+					len(tokens), utf8.RuneCountInString(plainString), line.raw)
 				continue
 			}
 

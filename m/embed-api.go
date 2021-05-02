@@ -23,7 +23,7 @@ func (p *Pager) Page() error {
 		_, height := p.screen.Size()
 		lines := p.reader.GetLines(p.firstLineOneBased, height-1).lines
 		for _, line := range lines {
-			fmt.Println(*line.raw)
+			fmt.Println(line.raw)
 		}
 	}()
 
