@@ -146,7 +146,9 @@ func readStream(stream io.Reader, reader *Reader, fromFilter *exec.Cmd) {
 			reader.lock.Unlock()
 			break
 		}
-		reader.lines = append(reader.lines, NewLine(string(completeLine)))
+		newLineString := string(completeLine)
+		newLine := NewLine(newLineString)
+		reader.lines = append(reader.lines, newLine)
 		reader.lock.Unlock()
 		completeLine = completeLine[:0]
 
