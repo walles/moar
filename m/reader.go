@@ -105,9 +105,9 @@ func readStream(stream io.Reader, reader *Reader, fromFilter *exec.Cmd) {
 	}()
 
 	bufioReader := bufio.NewReader(stream)
+	completeLine := make([]byte, 0)
 	for {
 		keepReadingLine := true
-		var completeLine []byte
 		eof := false
 
 		var lineBytes []byte
@@ -148,6 +148,7 @@ func readStream(stream io.Reader, reader *Reader, fromFilter *exec.Cmd) {
 		}
 		reader.lines = append(reader.lines, NewLine(string(completeLine)))
 		reader.lock.Unlock()
+		completeLine = completeLine[:0]
 
 		// This is how to do a non-blocking write to a channel:
 		// https://gobyexample.com/non-blocking-channel-operations
