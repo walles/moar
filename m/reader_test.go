@@ -3,6 +3,7 @@ package m
 import (
 	"io/ioutil"
 	"math"
+	"os"
 	"os/exec"
 	"path"
 	"runtime"
@@ -323,6 +324,54 @@ func BenchmarkReaderDone(b *testing.B) {
 	for n := 0; n < b.N; n++ {
 		// This is our longest .go file
 		readMe, err := NewReaderFromFilename(filename)
+		if err != nil {
+			panic(err)
+		}
+
+		// Wait for the reader to finish
+		<-readMe.done
+		if readMe.err != nil {
+			panic(readMe.err)
+		}
+	}
+}
+
+// Try loading a large file
+func BenchmarkReadLargeFile(b *testing.B) {
+	// Try loading a file this large
+	const largeSizeBytes = 35_000_000
+
+	// First, create it from something...
+	input_filename := getSamplesDir() + "/../m/pager.go"
+	contents, err := ioutil.ReadFile(input_filename)
+	if err != nil {
+		panic(err)
+	}
+
+	testdir := b.TempDir()
+	largeFileName := testdir + "/large-file"
+	largeFile, err := os.Create(largeFileName)
+	if err != nil {
+		panic(err)
+	}
+
+	totalBytesWritten := 0
+	for totalBytesWritten < largeSizeBytes {
+		written, err := largeFile.Write(contents)
+		if err != nil {
+			panic(err)
+		}
+
+		totalBytesWritten += written
+	}
+	err = largeFile.Close()
+	if err != nil {
+		panic(err)
+	}
+
+	b.ResetTimer()
+	for n := 0; n < b.N; n++ {
+		readMe, err := NewReaderFromFilename(largeFileName)
 		if err != nil {
 			panic(err)
 		}
