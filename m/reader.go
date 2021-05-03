@@ -140,14 +140,15 @@ func readStream(stream io.Reader, reader *Reader, fromFilter *exec.Cmd) {
 			break
 		}
 
+		newLineString := string(completeLine)
+		newLine := NewLine(newLineString)
+
 		reader.lock.Lock()
 		if reader.replaced {
 			// Somebody called setText(), never mind reading the rest of this stream
 			reader.lock.Unlock()
 			break
 		}
-		newLineString := string(completeLine)
-		newLine := NewLine(newLineString)
 		reader.lines = append(reader.lines, newLine)
 		reader.lock.Unlock()
 		completeLine = completeLine[:0]
