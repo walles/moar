@@ -106,6 +106,7 @@ func readStream(stream io.Reader, reader *Reader, fromFilter *exec.Cmd) {
 
 	bufioReader := bufio.NewReader(stream)
 	completeLine := make([]byte, 0)
+	t0 := time.Now().UnixNano()
 	for {
 		keepReadingLine := true
 		eof := false
@@ -161,6 +162,10 @@ func readStream(stream io.Reader, reader *Reader, fromFilter *exec.Cmd) {
 			// Default case required for the write to be non-blocking
 		}
 	}
+
+	t1 := time.Now().UnixNano()
+	dtNanos := t1 - t0
+	log.Debug("Stream read in ", dtNanos/1_000_000, "ms")
 }
 
 // NewReaderFromStream creates a new stream reader
