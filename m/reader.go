@@ -2,6 +2,7 @@ package m
 
 import (
 	"bufio"
+	"bytes"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -175,7 +176,7 @@ func readStream(stream io.Reader, reader *Reader, fromFilter *exec.Cmd) {
 // If non-empty, the name will be displayed by the pager in the bottom left
 // corner to help the user keep track of what is being paged.
 func NewReaderFromStream(name string, reader io.Reader) *Reader {
-	mReader := newReaderFromStream(reader, nil)
+	mReader := newReaderFromStream(reader, 0, nil)
 	mReader.highlightingDone <- true // No highlighting of streams = nothing left to do = Done!
 
 	if len(name) > 0 {
@@ -189,10 +190,20 @@ func NewReaderFromStream(name string, reader io.Reader) *Reader {
 
 // newReaderFromStream creates a new stream reader
 //
-// If fromFilter is not nil this method will wait() for it,
-// and effectively takes over ownership for it.
-func newReaderFromStream(reader io.Reader, fromFilter *exec.Cmd) *Reader {
-	var lines []*Line
+// lineCount is the number of lines that will be in the stream, or 0 for
+// don't-know. It is used for pre-allocating the lines slice, which improves
+// large file loading performance.
+//
+// If fromFilter is not nil this method will wait() for it, and effectively
+// takes over ownership for it.
+func newReaderFromStream(reader io.Reader, lineCount uint64, fromFilter *exec.Cmd) *Reader {
+	// FIXME: Somehow preallocate this slice based on the number of lines in the
+	// reader stream. For our 562MB example file, "wc -l" takes 0.5s, but file
+	// reading becomes 1s faster with this at the right size from the start.
+	//
+	// Net win!
+	lines := make([]*Line, 0, lineCount)
+
 	var lock = &sync.Mutex{}
 	done := make(chan bool, 1)
 	highlightingDone := make(chan bool, 1)
@@ -278,7 +289,7 @@ func newReaderFromCommand(filename string, filterCommand ...string) (*Reader, er
 		return nil, err
 	}
 
-	reader := newReaderFromStream(filterOut, filter)
+	reader := newReaderFromStream(filterOut, 0, filter)
 	reader.highlightingDone <- true // No highlighting to do == nothing left == Done!
 	reader.lock.Lock()
 	reader.name = &filename
@@ -312,6 +323,64 @@ func tryOpen(filename string) error {
 	return err
 }
 
+// From: https://stackoverflow.com/a/52153000/473672
+func countLines(filename string) (uint64, error) {
+	var count uint64
+	const lineBreak = '\n'
+
+	reader, err := os.Open(filename)
+	if err != nil {
+		return 0, err
+	}
+	defer func() {
+		err := reader.Close()
+		if err != nil {
+			log.Warn("Error closing file after counting the lines: ", err)
+		}
+	}()
+
+	t0 := time.Now().UnixNano()
+	buf := make([]byte, bufio.MaxScanTokenSize)
+	lastReadEndsInNewline := true
+	for {
+		bufferSize, err := reader.Read(buf)
+		if err != nil && err != io.EOF {
+			return 0, err
+		}
+
+		if bufferSize > 0 {
+			lastReadEndsInNewline = (buf[bufferSize-1] == lineBreak)
+		}
+
+		var bufPosition int
+		for {
+			i := bytes.IndexByte(buf[bufPosition:], lineBreak)
+			if i == -1 || bufferSize == bufPosition {
+				break
+			}
+			bufPosition += i + 1
+			count++
+		}
+		if err == io.EOF {
+			break
+		}
+	}
+
+	if !lastReadEndsInNewline {
+		// No trailing line feed, this needs special handling
+		count++
+	}
+
+	t1 := time.Now().UnixNano()
+	dtNanos := t1 - t0
+	if count == 0 {
+		log.Debug("Counted ", count, " lines in ", dtNanos/1_000_000, "ms")
+	} else {
+		log.Debug("Counted ", count, " lines in ", dtNanos/1_000_000, "ms at ", dtNanos/int64(count), "ns/line")
+	}
+	return count, nil
+}
+
 // NewReaderFromFilename creates a new file reader.
 //
 // The Reader will try to uncompress various compressed file format, and also
@@ -338,7 +407,12 @@ func NewReaderFromFilename(filename string) (*Reader, error) {
 		return nil, err
 	}
 
-	returnMe := newReaderFromStream(stream, nil)
+	lineCount, err := countLines(filename)
+	if err != nil {
+		return nil, err
+	}
+
+	returnMe := newReaderFromStream(stream, lineCount, nil)
 	returnMe.lock.Lock()
 	returnMe.name = &filename
 	returnMe.lock.Unlock()

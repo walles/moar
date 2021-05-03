@@ -27,19 +27,30 @@ func testGetLineCount(t *testing.T, reader *Reader) {
 	}
 
 	wcNumberString := strings.Split(strings.TrimSpace(string(output)), " ")[0]
-	fileLineCount, err := strconv.Atoi(wcNumberString)
+	wcLineCount, err := strconv.Atoi(wcNumberString)
 	if err != nil {
 		t.Error("Error counting lines of", *reader.name, err)
 	}
 
 	if strings.HasSuffix(*reader.name, "/line-without-newline.txt") {
 		// "wc -l" thinks this file contains zero lines
-		fileLineCount = 1
+		wcLineCount = 1
+	} else if strings.HasSuffix(*reader.name, "/two-lines-no-trailing-newline.txt") {
+		// "wc -l" thinks this file contains one line
+		wcLineCount = 2
 	}
 
-	if reader.GetLineCount() != fileLineCount {
-		t.Errorf("Got %d lines but expected %d: <%s>",
-			reader.GetLineCount(), fileLineCount, *reader.name)
+	if reader.GetLineCount() != wcLineCount {
+		t.Errorf("Got %d lines from the reader but %d lines from wc -l: <%s>",
+			reader.GetLineCount(), wcLineCount, *reader.name)
+	}
+
+	countLinesCount, err := countLines(*reader.name)
+	if err != nil {
+		panic(err)
+	}
+	if countLinesCount != uint64(wcLineCount) {
+		t.Errorf("Got %d lines from wc -l, but %d lines from our countLines() function", wcLineCount, countLinesCount)
 	}
 }
 
