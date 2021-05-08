@@ -49,7 +49,8 @@ type Lines struct {
 	statusText string
 }
 
-func readStream(stream io.Reader, reader *Reader, fromFilter *exec.Cmd) {
+// This function will be update the Reader struct in the background.
+func readStream(stream io.Reader, originalFileName *string, reader *Reader, fromFilter *exec.Cmd) {
 	// FIXME: Close the stream when done reading it?
 
 	defer func() {
@@ -104,6 +105,35 @@ func readStream(stream io.Reader, reader *Reader, fromFilter *exec.Cmd) {
 			// when trying to take the lock for getting more lines.
 		}
 	}()
+
+	if originalFileName != nil {
+		lineCount, err := countLines(*originalFileName)
+		if err == nil {
+			reader.lock.Lock()
+			if len(reader.lines) == 0 {
+				// Pre-allocate space for the exact amount of lines that we
+				// need. Good performance improvement:
+				//
+				// go test -benchmem -benchtime=10s -run='^$' -bench 'ReadLargeFile' ./...
+				reader.lines = make([]*Line, 0, lineCount)
+			} else {
+				// There are already lines in here, this is unexpected.
+				if reader.replaced {
+					// Highlighting already done (because that's how
+					// reader.replaced gets set to true)
+					log.Debug("Highlighting was faster than line counting for a ",
+						len(reader.lines), " lines file, this is unexpected")
+				} else {
+					// Highlighing not done, where the heck did those lines come from?
+					log.Warn("Already had ", len(reader.lines),
+						" lines by the time counting was done, and it's not highlighting")
+				}
+			}
+			reader.lock.Unlock()
+		} else {
+			log.Warn("Line counting failed: ", err)
+		}
+	}
 
 	bufioReader := bufio.NewReader(stream)
 	completeLine := make([]byte, 0)
@@ -176,7 +206,7 @@ func readStream(stream io.Reader, reader *Reader, fromFilter *exec.Cmd) {
 // If non-empty, the name will be displayed by the pager in the bottom left
 // corner to help the user keep track of what is being paged.
 func NewReaderFromStream(name string, reader io.Reader) *Reader {
-	mReader := newReaderFromStream(reader, 0, nil)
+	mReader := newReaderFromStream(reader, nil, nil)
 	mReader.highlightingDone <- true // No highlighting of streams = nothing left to do = Done!
 
 	if len(name) > 0 {
@@ -190,20 +220,15 @@ func NewReaderFromStream(name string, reader io.Reader) *Reader {
 
 // newReaderFromStream creates a new stream reader
 //
-// lineCount is the number of lines that will be in the stream, or 0 for
-// don't-know. It is used for pre-allocating the lines slice, which improves
-// large file loading performance.
+// originalFileName is used for counting the lines in the file. nil for
+// don't-know (streams) or not countable (compressed files). The line count is
+// then used for pre-allocating the lines slice, which improves large file
+// loading performance.
 //
 // If fromFilter is not nil this method will wait() for it, and effectively
 // takes over ownership for it.
-func newReaderFromStream(reader io.Reader, lineCount uint64, fromFilter *exec.Cmd) *Reader {
-	// FIXME: Somehow preallocate this slice based on the number of lines in the
-	// reader stream. For our 562MB example file, "wc -l" takes 0.5s, but file
-	// reading becomes 1s faster with this at the right size from the start.
-	//
-	// Net win!
-	lines := make([]*Line, 0, lineCount)
-
+func newReaderFromStream(reader io.Reader, originalFileName *string, fromFilter *exec.Cmd) *Reader {
+	var lines []*Line
 	var lock = &sync.Mutex{}
 	done := make(chan bool, 1)
 	highlightingDone := make(chan bool, 1)
@@ -223,7 +248,7 @@ func newReaderFromStream(reader io.Reader, lineCount uint64, fromFilter *exec.Cm
 
 	// FIXME: Make sure that if we panic somewhere inside of this goroutine,
 	// the main program terminates and prints our panic stack trace.
-	go readStream(reader, &returnMe, fromFilter)
+	go readStream(reader, originalFileName, &returnMe, fromFilter)
 
 	return &returnMe
 }
@@ -289,7 +314,7 @@ func newReaderFromCommand(filename string, filterCommand ...string) (*Reader, er
 		return nil, err
 	}
 
-	reader := newReaderFromStream(filterOut, 0, filter)
+	reader := newReaderFromStream(filterOut, nil, filter)
 	reader.highlightingDone <- true // No highlighting to do == nothing left == Done!
 	reader.lock.Lock()
 	reader.name = &filename
@@ -407,12 +432,7 @@ func NewReaderFromFilename(filename string) (*Reader, error) {
 		return nil, err
 	}
 
-	lineCount, err := countLines(filename)
-	if err != nil {
-		return nil, err
-	}
-
-	returnMe := newReaderFromStream(stream, lineCount, nil)
+	returnMe := newReaderFromStream(stream, &filename, nil)
 	returnMe.lock.Lock()
 	returnMe.name = &filename
 	returnMe.lock.Unlock()
