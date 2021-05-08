@@ -339,8 +339,8 @@ func tryOpen(filename string) error {
 
 // From: https://stackoverflow.com/a/52153000/473672
 func countLines(filename string) (uint64, error) {
-	var count uint64
 	const lineBreak = '\n'
+	sliceWithSingleLineBreak := []byte{lineBreak}
 
 	reader, err := os.Open(filename)
 	if err != nil {
@@ -353,6 +353,7 @@ func countLines(filename string) (uint64, error) {
 		}
 	}()
 
+	var count uint64
 	t0 := time.Now().UnixNano()
 	buf := make([]byte, bufio.MaxScanTokenSize)
 	lastReadEndsInNewline := true
@@ -366,15 +367,7 @@ func countLines(filename string) (uint64, error) {
 			lastReadEndsInNewline = (buf[bufferSize-1] == lineBreak)
 		}
 
-		var bufPosition int
-		for {
-			i := bytes.IndexByte(buf[bufPosition:], lineBreak)
-			if i == -1 || bufferSize == bufPosition {
-				break
-			}
-			bufPosition += i + 1
-			count++
-		}
+		count += uint64(bytes.Count(buf[:bufferSize], sliceWithSingleLineBreak))
 		if err == io.EOF {
 			break
 		}
