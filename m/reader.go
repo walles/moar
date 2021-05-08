@@ -281,17 +281,6 @@ func NewReaderFromText(name string, text string) *Reader {
 	return returnMe
 }
 
-// Wait for reader to finish reading and highlighting. Used by tests.
-func (r *Reader) _Wait() error {
-	// Wait for our goroutine to finish
-	<-r.done
-	<-r.highlightingDone
-
-	r.lock.Lock()
-	defer r.lock.Unlock()
-	return r.err
-}
-
 // newReaderFromCommand creates a new reader by running a file through a filter
 func newReaderFromCommand(filename string, filterCommand ...string) (*Reader, error) {
 	filterWithFilename := append(filterCommand, filename)

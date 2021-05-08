@@ -78,7 +78,7 @@ func TestBrokenUtf8(t *testing.T) {
 }
 
 func startPaging(t *testing.T, reader *Reader) *twin.FakeScreen {
-	err := reader._Wait()
+	err := reader._wait()
 	if err != nil {
 		panic(err)
 	}
@@ -173,6 +173,11 @@ func TestCodeHighlighting(t *testing.T) {
 	}
 }
 
+func resetManPageFormat() {
+	manPageBold = twin.StyleDefault.WithAttr(twin.AttrBold)
+	manPageUnderline = twin.StyleDefault.WithAttr(twin.AttrUnderline)
+}
+
 func testManPageFormatting(t *testing.T, input string, expected twin.Cell) {
 	reader := NewReaderFromStream("", strings.NewReader(input))
 
@@ -184,7 +189,7 @@ func testManPageFormatting(t *testing.T, input string, expected twin.Cell) {
 	if err := os.Setenv("LESS_TERMCAP_us", ""); err != nil {
 		panic(err)
 	}
-	resetManPageFormatForTesting()
+	resetManPageFormat()
 
 	contents := startPaging(t, reader).GetRow(0)
 	logDifference(t, expected, contents[0])

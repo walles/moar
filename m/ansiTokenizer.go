@@ -66,12 +66,6 @@ func SetManPageFormatFromEnv() {
 	}
 }
 
-// Used from tests
-func resetManPageFormatForTesting() {
-	manPageBold = twin.StyleDefault.WithAttr(twin.AttrBold)
-	manPageUnderline = twin.StyleDefault.WithAttr(twin.AttrUnderline)
-}
-
 func termcapToStyle(termcap string) twin.Style {
 	// Add a character to be sure we have one to take the format from
 	cells := cellsFromString(termcap + "x")

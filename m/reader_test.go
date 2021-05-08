@@ -137,6 +137,17 @@ func getTestFiles() []string {
 	return filenames
 }
 
+// Wait for reader to finish reading and highlighting. Used by tests.
+func (r *Reader) _wait() error {
+	// Wait for our goroutine to finish
+	<-r.done
+	<-r.highlightingDone
+
+	r.lock.Lock()
+	defer r.lock.Unlock()
+	return r.err
+}
+
 func TestGetLines(t *testing.T) {
 	for _, file := range getTestFiles() {
 		if strings.HasSuffix(file, ".xz") {
@@ -152,7 +163,7 @@ func TestGetLines(t *testing.T) {
 			t.Errorf("Error opening file <%s>: %s", file, err.Error())
 			continue
 		}
-		if err := reader._Wait(); err != nil {
+		if err := reader._wait(); err != nil {
 			t.Errorf("Error reading file <%s>: %s", file, err.Error())
 			continue
 		}
@@ -199,7 +210,7 @@ func testHighlightingLineCount(t *testing.T, filenameWithPath string) {
 	if err != nil {
 		panic(err)
 	}
-	err = reader._Wait()
+	err = reader._wait()
 	if err != nil {
 		panic(err)
 	}
@@ -214,7 +225,7 @@ func TestGetLongLine(t *testing.T) {
 	if err != nil {
 		panic(err)
 	}
-	if err := reader._Wait(); err != nil {
+	if err := reader._wait(); err != nil {
 		panic(err)
 	}
 
@@ -231,7 +242,7 @@ func TestGetLongLine(t *testing.T) {
 
 func getReaderWithLineCount(totalLines int) *Reader {
 	reader := NewReaderFromStream("", strings.NewReader(strings.Repeat("x\n", totalLines)))
-	if err := reader._Wait(); err != nil {
+	if err := reader._wait(); err != nil {
 		panic(err)
 	}
 
@@ -258,7 +269,7 @@ func TestStatusText(t *testing.T) {
 	if err != nil {
 		panic(err)
 	}
-	if err := testMe._Wait(); err != nil {
+	if err := testMe._wait(); err != nil {
 		panic(err)
 	}
 
@@ -273,7 +284,7 @@ func testCompressedFile(t *testing.T, filename string) {
 		t.Errorf("Error opening file <%s>: %s", filenameWithPath, e.Error())
 		panic(e)
 	}
-	if err := reader._Wait(); err != nil {
+	if err := reader._wait(); err != nil {
 		panic(err)
 	}
 
@@ -314,7 +325,7 @@ func TestFilterFileNotFound(t *testing.T) {
 	// Feel free to re-evaluate in the future.
 	assert.Check(t, err == nil)
 
-	err = reader._Wait()
+	err = reader._wait()
 	assert.Check(t, err != nil)
 
 	assert.Check(t, strings.Contains(err.Error(), NonExistentPath), err.Error())

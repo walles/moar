@@ -52,7 +52,16 @@ if ! go vet . ./twin ./m ; then
 fi
 
 # Docs: https://staticcheck.io/docs/
-echo "Running staticcheck..."
+echo "Running staticcheck without tests..."
+if ! "$STATICCHECK" -tests=false -f stylish . ./... ; then
+  if [ -n "${CI}" ]; then
+    echo >&2 "==="
+    echo >&2 "=== Please run './test.sh' before pushing to see the above issues locally rather than in CI"
+    echo >&2 "==="
+  fi
+  exit 1
+fi
+echo "Running staticcheck with tests..."
 if ! "$STATICCHECK" -f stylish . ./... ; then
   if [ -n "${CI}" ]; then
     echo >&2 "==="
