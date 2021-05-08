@@ -49,90 +49,101 @@ type Lines struct {
 	statusText string
 }
 
+// Shut down the filter (if any) after we're done reading the file.
+func (reader *Reader) cleanupFilter(fromFilter *exec.Cmd) {
+	// FIXME: Close the stream now that we're done reading it?
+
+	if fromFilter == nil {
+		reader.done <- true
+		return
+	}
+
+	reader.lock.Lock()
+	defer reader.lock.Unlock()
+
+	// Give the filter a little time to go away
+	timer := time.AfterFunc(2*time.Second, func() {
+		// FIXME: Regarding error handling, maybe we should log all errors
+		// except for "process doesn't exist"? If the process is not there
+		// it likely means the process finished up by itself without our
+		// help.
+		_ = fromFilter.Process.Kill()
+	})
+
+	stderrText := ""
+	if reader._stderr != nil {
+		// Drain the reader's stderr into a string for possible inclusion in an error message
+		// From: https://stackoverflow.com/a/9650373/473672
+		if buffer, err := ioutil.ReadAll(reader._stderr); err == nil {
+			stderrText = strings.TrimSpace(string(buffer))
+		} else {
+			log.Warn("Draining filter stderr failed: ", err)
+		}
+	}
+
+	err := fromFilter.Wait()
+	timer.Stop()
+
+	// Don't overwrite any existing problem report
+	if reader.err == nil {
+		reader.err = err
+		if err != nil && stderrText != "" {
+			reader.err = fmt.Errorf("%s: %w", stderrText, err)
+		}
+	}
+
+	// FIXME: Report any filter printouts to stderr to the user
+
+	// Must send non-blocking since the channel has no buffer and sometimes no reader
+	select {
+	case reader.done <- true:
+	default:
+		// Empty default statement required for the write to be non-blocking,
+		// without this the write blocks and just hangs. Then we never get to
+		// the deferred reader.lock.Unlock() (see above), and the pager hangs
+		// when trying to take the lock for getting more lines.
+	}
+}
+
+// Count lines in the original file and preallocate space for them.  Good
+// performance improvement:
+//
+// go test -benchmem -benchtime=10s -run='^$' -bench 'ReadLargeFile'
+func (reader *Reader) preAllocLines(originalFileName string) {
+	lineCount, err := countLines(originalFileName)
+	if err != nil {
+		log.Warn("Line counting failed: ", err)
+		return
+	}
+
+	reader.lock.Lock()
+	defer reader.lock.Unlock()
+
+	if len(reader.lines) == 0 {
+		// We had no lines since before, this is the expected happy path.
+		reader.lines = make([]*Line, 0, lineCount)
+		return
+	}
+
+	// There are already lines in here, this is unexpected.
+	if reader.replaced {
+		// Highlighting already done (because that's how reader.replaced gets
+		// set to true)
+		log.Debug("Highlighting was faster than line counting for a ",
+			len(reader.lines), " lines file, this is unexpected")
+	} else {
+		// Highlighing not done, where the heck did those lines come from?
+		log.Warn("Already had ", len(reader.lines),
+			" lines by the time counting was done, and it's not highlighting")
+	}
+}
+
 // This function will be update the Reader struct in the background.
-func readStream(stream io.Reader, originalFileName *string, reader *Reader, fromFilter *exec.Cmd) {
-	// FIXME: Close the stream when done reading it?
-
-	defer func() {
-		if fromFilter == nil {
-			reader.done <- true
-			return
-		}
-
-		reader.lock.Lock()
-		defer reader.lock.Unlock()
-
-		// Give the filter a little time to go away
-		timer := time.AfterFunc(2*time.Second, func() {
-			// FIXME: Regarding error handling, maybe we should log all errors
-			// except for "process doesn't exist"? If the process is not there
-			// it likely means the process finished up by itself without our
-			// help.
-			_ = fromFilter.Process.Kill()
-		})
-
-		stderrText := ""
-		if reader._stderr != nil {
-			// Drain the reader's stderr into a string for possible inclusion in an error message
-			// From: https://stackoverflow.com/a/9650373/473672
-			if buffer, err := ioutil.ReadAll(reader._stderr); err == nil {
-				stderrText = strings.TrimSpace(string(buffer))
-			} else {
-				log.Warn("Draining filter stderr failed: ", err)
-			}
-		}
-
-		err := fromFilter.Wait()
-		timer.Stop()
-
-		// Don't overwrite any existing problem report
-		if reader.err == nil {
-			reader.err = err
-			if err != nil && stderrText != "" {
-				reader.err = fmt.Errorf("%s: %w", stderrText, err)
-			}
-		}
-
-		// FIXME: Report any filter printouts to stderr to the user
-
-		// Must send non-blocking since the channel has no buffer and sometimes no reader
-		select {
-		case reader.done <- true:
-		default:
-			// Empty default statement required for the write to be non-blocking,
-			// without this the write blocks and just hangs. Then we never get to
-			// the deferred reader.lock.Unlock() (see above), and the pager hangs
-			// when trying to take the lock for getting more lines.
-		}
-	}()
+func (reader *Reader) readStream(stream io.Reader, originalFileName *string, fromFilter *exec.Cmd) {
+	defer reader.cleanupFilter(fromFilter)
 
 	if originalFileName != nil {
-		lineCount, err := countLines(*originalFileName)
-		if err == nil {
-			reader.lock.Lock()
-			if len(reader.lines) == 0 {
-				// Pre-allocate space for the exact amount of lines that we
-				// need. Good performance improvement:
-				//
-				// go test -benchmem -benchtime=10s -run='^$' -bench 'ReadLargeFile' ./...
-				reader.lines = make([]*Line, 0, lineCount)
-			} else {
-				// There are already lines in here, this is unexpected.
-				if reader.replaced {
-					// Highlighting already done (because that's how
-					// reader.replaced gets set to true)
-					log.Debug("Highlighting was faster than line counting for a ",
-						len(reader.lines), " lines file, this is unexpected")
-				} else {
-					// Highlighing not done, where the heck did those lines come from?
-					log.Warn("Already had ", len(reader.lines),
-						" lines by the time counting was done, and it's not highlighting")
-				}
-			}
-			reader.lock.Unlock()
-		} else {
-			log.Warn("Line counting failed: ", err)
-		}
+		reader.preAllocLines(*originalFileName)
 	}
 
 	bufioReader := bufio.NewReader(stream)
@@ -248,7 +259,7 @@ func newReaderFromStream(reader io.Reader, originalFileName *string, fromFilter 
 
 	// FIXME: Make sure that if we panic somewhere inside of this goroutine,
 	// the main program terminates and prints our panic stack trace.
-	go readStream(reader, originalFileName, &returnMe, fromFilter)
+	go returnMe.readStream(reader, originalFileName, fromFilter)
 
 	return &returnMe
 }
