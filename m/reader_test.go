@@ -405,3 +405,39 @@ func BenchmarkReadLargeFile(b *testing.B) {
 		}
 	}
 }
+
+// Count lines in pager.go
+func BenchmarkCountLines(b *testing.B) {
+	// First, get some sample lines...
+	input_filename := getSamplesDir() + "/../m/pager.go"
+	contents, err := ioutil.ReadFile(input_filename)
+	if err != nil {
+		panic(err)
+	}
+
+	testdir := b.TempDir()
+	countFileName := testdir + "/count-file"
+	countFile, err := os.Create(countFileName)
+	if err != nil {
+		panic(err)
+	}
+
+	// 1000x makes this take about 12ms on my machine right now. Before 1000x
+	// the numbers fluctuated much more.
+	for n := 0; n < b.N*1000; n++ {
+		_, err := countFile.Write(contents)
+		if err != nil {
+			panic(err)
+		}
+	}
+	err = countFile.Close()
+	if err != nil {
+		panic(err)
+	}
+
+	b.ResetTimer()
+	_, err = countLines(countFileName)
+	if err != nil {
+		panic(err)
+	}
+}
