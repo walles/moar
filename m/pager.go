@@ -69,10 +69,6 @@ Quitting
 --------
 * Press 'q' or ESC to quit
 
-Miscellaneous
--------------
-* Press CTRL-l to refresh screen if it has become garbled
-
 Moving around
 -------------
 * Arrow keys
