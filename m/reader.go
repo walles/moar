@@ -146,45 +146,27 @@ func (reader *Reader) readStream(stream io.Reader, originalFileName *string, fro
 		reader.preAllocLines(*originalFileName)
 	}
 
-	bufioReader := bufio.NewReader(stream)
-	completeLine := make([]byte, 0)
+	lineReader := NewLineReader(stream)
 	t0 := time.Now().UnixNano()
 	for {
-		keepReadingLine := true
-		eof := false
+		nextLine, err := lineReader.GetLine()
 
-		var lineBytes []byte
-		var err error
-		for keepReadingLine {
-			lineBytes, keepReadingLine, err = bufioReader.ReadLine()
-			if err != nil {
-				if err == io.EOF {
-					eof = true
-					break
-				}
-
-				reader.lock.Lock()
-				if reader.err == nil {
-					// Store the error unless it overwrites one we already have
-					reader.err = fmt.Errorf("error reading line from input stream: %w", err)
-				}
-				reader.lock.Unlock()
-				break
+		if err != nil {
+			reader.lock.Lock()
+			if reader.err == nil {
+				// Store the error unless it overwrites one we already have
+				reader.err = fmt.Errorf("error reading line from input stream: %w", err)
 			}
-
-			completeLine = append(completeLine, lineBytes...)
-		}
-
-		if eof {
+			reader.lock.Unlock()
 			break
 		}
 
-		if reader.err != nil {
+		if nextLine == nil {
+			// Done!
 			break
 		}
 
-		newLineString := string(completeLine)
-		newLine := NewLine(newLineString)
+		newLine := NewLine(*nextLine)
 
 		reader.lock.Lock()
 		if reader.replaced {
@@ -194,7 +176,6 @@ func (reader *Reader) readStream(stream io.Reader, originalFileName *string, fro
 		}
 		reader.lines = append(reader.lines, newLine)
 		reader.lock.Unlock()
-		completeLine = completeLine[:0]
 
 		// This is how to do a non-blocking write to a channel:
 		// https://gobyexample.com/non-blocking-channel-operations
