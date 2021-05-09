@@ -61,6 +61,7 @@ func (lineReader *LineReader) GetLine() (*string, error) {
 		// INVARIANT: No more newlines found
 
 		lineReader.completeLine = append(lineReader.completeLine, activeBuffer...)
+		lineReader.bufferPosition = lineReader.bufferSize
 		if lineReader.eof {
 			lineReader.done = true
 
