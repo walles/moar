@@ -58,3 +58,5 @@ func TestOneLineWithoutTrailingNewline(t *testing.T) {
 		t.Errorf("Second line should have been nil: <%s>", *line)
 	}
 }
+
+// FIXME: Add test for Windows newlines

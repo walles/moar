@@ -67,7 +67,11 @@ func (lineReader *LineReader) GetLine() (*string, error) {
 
 			completeLineString := string(lineReader.completeLine)
 			lineReader.completeLine = lineReader.completeLine[:0]
-			return &completeLineString, lineReader.err
+			if len(completeLineString) > 0 {
+				return &completeLineString, lineReader.err
+			} else {
+				return nil, lineReader.err
+			}
 		}
 	}
 }
