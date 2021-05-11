@@ -239,22 +239,14 @@ func NewReaderFromStream(name string, reader io.Reader) *Reader {
 // If fromFilter is not nil this method will wait() for it, and effectively
 // takes over ownership for it.
 func newReaderFromStream(reader io.Reader, originalFileName *string, fromFilter *exec.Cmd) *Reader {
-	var lines []*Line
-	var lock = &sync.Mutex{}
-	done := make(chan bool, 1)
-	highlightingDone := make(chan bool, 1)
-
-	// This needs to be size 1. If it would be 0, and we add more lines while the
-	// pager is processing, the pager would miss the lines added while it was
-	// processing.
-	moreLinesAdded := make(chan bool, 1)
-
 	returnMe := Reader{
-		lines:            lines,
-		lock:             lock,
-		done:             done,
-		moreLinesAdded:   moreLinesAdded,
-		highlightingDone: highlightingDone,
+		lock: new(sync.Mutex),
+		done: make(chan bool, 1),
+		// This needs to be size 1. If it would be 0, and we add more
+		// lines while the pager is processing, the pager would miss
+		// the lines added while it was processing.
+		moreLinesAdded:   make(chan bool, 1),
+		highlightingDone: make(chan bool, 1),
 	}
 
 	// FIXME: Make sure that if we panic somewhere inside of this goroutine,
