@@ -2,7 +2,6 @@ package m
 
 import (
 	"bytes"
-	"io/ioutil"
 	"os"
 	"strings"
 
@@ -61,7 +60,7 @@ func highlight(filename string, force bool) (*string, error) {
 		formatter = formatters.Fallback
 	}
 
-	contents, err := ioutil.ReadFile(filename)
+	contents, err := os.ReadFile(filename)
 	if err != nil {
 		return nil, err
 	}
