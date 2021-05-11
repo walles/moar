@@ -1,3 +1,8 @@
+The intention was for the LineReader to do fewer allocs than
+the method used in the master branch. This has so far turned
+out not to be the case, but if you can fix it so it does,
+please do!
+
 package m
 
 import (
