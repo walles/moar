@@ -5,8 +5,6 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"io/ioutil"
-	"math"
 	"os"
 	"os/exec"
 	"path"
@@ -74,7 +72,7 @@ func (reader *Reader) cleanupFilter(fromFilter *exec.Cmd) {
 	if reader._stderr != nil {
 		// Drain the reader's stderr into a string for possible inclusion in an error message
 		// From: https://stackoverflow.com/a/9650373/473672
-		if buffer, err := ioutil.ReadAll(reader._stderr); err == nil {
+		if buffer, err := io.ReadAll(reader._stderr); err == nil {
 			stderrText = strings.TrimSpace(string(buffer))
 		} else {
 			log.Warn("Draining filter stderr failed: ", err)
@@ -455,7 +453,7 @@ func (r *Reader) _CreateStatusUnlocked(firstLineOneBased int, lastLineOneBased i
 		return prefix + "<empty>"
 	}
 
-	percent := int(math.Floor(100.0 * float64(lastLineOneBased) / float64(len(r.lines))))
+	percent := int(100 * float64(lastLineOneBased) / float64(len(r.lines)))
 
 	return fmt.Sprintf("%s%d-%d/%d %d%%",
 		prefix,
