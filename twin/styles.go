@@ -24,11 +24,7 @@ type Style struct {
 	attrs AttrMask
 }
 
-var StyleDefault = Style{
-	fg:    ColorDefault,
-	bg:    ColorDefault,
-	attrs: AttrNone,
-}
+var StyleDefault Style
 
 func (style Style) String() string {
 	if style.attrs == AttrNone {
