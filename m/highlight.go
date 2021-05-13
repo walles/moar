@@ -6,9 +6,7 @@ import (
 	"strings"
 
 	"github.com/alecthomas/chroma"
-	"github.com/alecthomas/chroma/formatters"
 	"github.com/alecthomas/chroma/lexers"
-	"github.com/alecthomas/chroma/styles"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -21,8 +19,8 @@ const MAX_HIGHLIGHT_SIZE int64 = 1024 * 1024
 // If force is true, file will always be highlighted. If force is false, files
 // larger than MAX_HIGHLIGHT_SIZE will not be highlighted.
 //
-// Returns nil if highlighting would be a no-op.
-func highlight(filename string, force bool) (*string, error) {
+// Returns nil with no error if highlighting would be a no-op.
+func highlight(filename string, force bool, style chroma.Style, formatter chroma.Formatter) (*string, error) {
 	// Highlight input file using Chroma:
 	// https://github.com/alecthomas/chroma
 	fileInfo, err := os.Stat(filename)
@@ -55,11 +53,6 @@ func highlight(filename string, force bool) (*string, error) {
 	// with and without.
 	lexer = chroma.Coalesce(lexer)
 
-	formatter := formatters.Get("terminal16m")
-	if formatter == nil {
-		formatter = formatters.Fallback
-	}
-
 	contents, err := os.ReadFile(filename)
 	if err != nil {
 		return nil, err
@@ -71,7 +64,7 @@ func highlight(filename string, force bool) (*string, error) {
 	}
 
 	var stringBuffer bytes.Buffer
-	err = formatter.Format(&stringBuffer, styles.Native, iterator)
+	err = formatter.Format(&stringBuffer, &style, iterator)
 	if err != nil {
 		return nil, err
 	}

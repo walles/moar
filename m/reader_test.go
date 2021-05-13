@@ -11,6 +11,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/alecthomas/chroma/formatters"
+	"github.com/alecthomas/chroma/styles"
 	"gotest.tools/assert"
 )
 
@@ -158,7 +160,7 @@ func TestGetLines(t *testing.T) {
 			}
 		}
 
-		reader, err := NewReaderFromFilename(file)
+		reader, err := NewReaderFromFilename(file, *styles.Native, formatters.TTY16m)
 		if err != nil {
 			t.Errorf("Error opening file <%s>: %s", file, err.Error())
 			continue
@@ -206,7 +208,7 @@ func testHighlightingLineCount(t *testing.T, filenameWithPath string) {
 	}
 
 	// Then load the same file using one of our Readers
-	reader, err := NewReaderFromFilename(filenameWithPath)
+	reader, err := NewReaderFromFilename(filenameWithPath, *styles.Native, formatters.TTY16m)
 	if err != nil {
 		panic(err)
 	}
@@ -221,7 +223,7 @@ func testHighlightingLineCount(t *testing.T, filenameWithPath string) {
 
 func TestGetLongLine(t *testing.T) {
 	file := "../sample-files/very-long-line.txt"
-	reader, err := NewReaderFromFilename(file)
+	reader, err := NewReaderFromFilename(file, *styles.Native, formatters.TTY16m)
 	if err != nil {
 		panic(err)
 	}
@@ -265,7 +267,7 @@ func TestStatusText(t *testing.T) {
 	testStatusText(t, 1, 1, 1, "1-1/1 100%")
 
 	// Test with filename
-	testMe, err := NewReaderFromFilename(getSamplesDir() + "/empty")
+	testMe, err := NewReaderFromFilename(getSamplesDir()+"/empty", *styles.Native, formatters.TTY16m)
 	if err != nil {
 		panic(err)
 	}
@@ -279,7 +281,7 @@ func TestStatusText(t *testing.T) {
 
 func testCompressedFile(t *testing.T, filename string) {
 	filenameWithPath := getSamplesDir() + "/" + filename
-	reader, e := NewReaderFromFilename(filenameWithPath)
+	reader, e := NewReaderFromFilename(filenameWithPath, *styles.Native, formatters.TTY16m)
 	if e != nil {
 		t.Errorf("Error opening file <%s>: %s", filenameWithPath, e.Error())
 		panic(e)
@@ -345,7 +347,7 @@ func BenchmarkReaderDone(b *testing.B) {
 	b.ResetTimer()
 	for n := 0; n < b.N; n++ {
 		// This is our longest .go file
-		readMe, err := NewReaderFromFilename(filename)
+		readMe, err := NewReaderFromFilename(filename, *styles.Native, formatters.TTY16m)
 		if err != nil {
 			panic(err)
 		}
@@ -393,7 +395,7 @@ func BenchmarkReadLargeFile(b *testing.B) {
 
 	b.ResetTimer()
 	for n := 0; n < b.N; n++ {
-		readMe, err := NewReaderFromFilename(largeFileName)
+		readMe, err := NewReaderFromFilename(largeFileName, *styles.Native, formatters.TTY16m)
 		if err != nil {
 			panic(err)
 		}

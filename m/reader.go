@@ -12,6 +12,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/alecthomas/chroma"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -394,7 +395,7 @@ func countLines(filename string) (uint64, error) {
 // The Reader will try to uncompress various compressed file format, and also
 // apply highlighting to the file using Chroma:
 // https://github.com/alecthomas/chroma
-func NewReaderFromFilename(filename string) (*Reader, error) {
+func NewReaderFromFilename(filename string, style chroma.Style, formatter chroma.Formatter) (*Reader, error) {
 	fileError := tryOpen(filename)
 	if fileError != nil {
 		return nil, fileError
@@ -425,7 +426,7 @@ func NewReaderFromFilename(filename string) (*Reader, error) {
 			returnMe.highlightingDone <- true
 		}()
 
-		highlighted, err := highlight(filename, false)
+		highlighted, err := highlight(filename, false, style, formatter)
 		if err != nil {
 			log.Warn("Highlighting failed: ", err)
 			return

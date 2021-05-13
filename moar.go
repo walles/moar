@@ -10,6 +10,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/alecthomas/chroma"
+	"github.com/alecthomas/chroma/formatters"
+	"github.com/alecthomas/chroma/styles"
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/term"
 
@@ -69,6 +72,41 @@ func printProblemsHeader() {
 	fmt.Fprintln(os.Stderr)
 }
 
+func parseStyleOption(styleOption string) chroma.Style {
+	style, ok := styles.Registry[styleOption]
+	if !ok {
+		fmt.Fprintf(os.Stderr,
+			"ERROR: Unrecognized style \"%s\", pick a style from here: https://xyproto.github.io/splash/docs/longer/all.html\n",
+			styleOption)
+		fmt.Fprintln(os.Stderr)
+		printUsage(os.Stderr)
+
+		os.Exit(1)
+	}
+
+	return *style
+}
+
+func parseColorsOption(colorsOption string) chroma.Formatter {
+	switch strings.ToUpper(colorsOption) {
+	case "8":
+		return formatters.TTY8
+	case "16":
+		return formatters.TTY16
+	case "256":
+		return formatters.TTY256
+	case "16M":
+		return formatters.TTY16m
+	}
+
+	fmt.Fprintf(os.Stderr, "ERROR: Invalid color count \"%s\", valid counts are 8, 16, 256 or 16M.\n", colorsOption)
+	fmt.Fprintln(os.Stderr)
+	printUsage(os.Stderr)
+
+	os.Exit(1)
+	panic("We just did os.Exit(), why are we still executing?")
+}
+
 func main() {
 	// FIXME: If we get a CTRL-C, get terminal back into a useful state before terminating
 
@@ -88,14 +126,17 @@ func main() {
 	printVersion := flag.Bool("version", false, "Prints the moar version number")
 	debug := flag.Bool("debug", false, "Print debug logs after exiting")
 	trace := flag.Bool("trace", false, "Print trace logs after exiting")
-
-	// FIXME: Support --no-highlight
+	styleOption := flag.String("style", "native", "Highlighting style from https://xyproto.github.io/splash/docs/longer/all.html")
+	colorsOption := flag.String("colors", "16M", "Highlighting palette size: 8, 16, 256, 16M")
 
 	flag.Parse()
 	if *printVersion {
 		fmt.Println(versionString)
 		os.Exit(0)
 	}
+
+	style := parseStyleOption(*styleOption)
+	formatter := parseColorsOption(*colorsOption)
 
 	log.SetLevel(log.InfoLevel)
 	if *trace {
@@ -170,7 +211,7 @@ func main() {
 	}
 
 	// Display the input file contents
-	reader, err := m.NewReaderFromFilename(*inputFilename)
+	reader, err := m.NewReaderFromFilename(*inputFilename, style, formatter)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "ERROR: %v\n", err)
 		os.Exit(1)

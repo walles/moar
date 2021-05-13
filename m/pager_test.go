@@ -8,6 +8,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/alecthomas/chroma/formatters"
+	"github.com/alecthomas/chroma/styles"
 	"github.com/walles/moar/twin"
 	"gotest.tools/assert"
 )
@@ -148,7 +150,7 @@ func TestCodeHighlighting(t *testing.T) {
 		panic("Getting current filename failed")
 	}
 
-	reader, err := NewReaderFromFilename(filename)
+	reader, err := NewReaderFromFilename(filename, *styles.Native, formatters.TTY16m)
 	if err != nil {
 		panic(err)
 	}
@@ -369,7 +371,7 @@ func benchmarkSearch(b *testing.B, highlighted bool) {
 	// Read one copy of the example input
 	var fileContents string
 	if highlighted {
-		highlightedSourceCode, err := highlight(sourceFilename, true)
+		highlightedSourceCode, err := highlight(sourceFilename, true, *styles.Native, formatters.TTY16m)
 		if err != nil {
 			panic(err)
 		}
