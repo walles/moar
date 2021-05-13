@@ -134,6 +134,7 @@ func main() {
 		printUsage(os.Stdout, flagSet, false)
 	}
 	printVersion := flagSet.Bool("version", false, "Prints the moar version number")
+	compat := flagSet.Bool("compat", false, "Compatibility mode, no mouse support and no alternate screen")
 	debug := flagSet.Bool("debug", false, "Print debug logs after exiting")
 	trace := flagSet.Bool("trace", false, "Print trace logs after exiting")
 	styleOption := flagSet.String("style", "native",
@@ -235,7 +236,7 @@ func main() {
 	if stdinIsRedirected {
 		// Display input pipe contents
 		reader := m.NewReaderFromStream("", os.Stdin)
-		startPaging(reader)
+		startPaging(reader, *compat)
 		return
 	}
 
@@ -245,13 +246,19 @@ func main() {
 		fmt.Fprintf(os.Stderr, "ERROR: %v\n", err)
 		os.Exit(1)
 	}
-	startPaging(reader)
+	startPaging(reader, *compat)
 }
 
-func startPaging(reader *m.Reader) {
-	screen, e := twin.NewScreen()
-	if e != nil {
-		panic(e)
+func startPaging(reader *m.Reader, compat bool) {
+	var screen twin.Screen
+	var err error
+	if compat {
+		screen, err = twin.NewScreenCompat()
+	} else {
+		screen, err = twin.NewScreen()
+	}
+	if err != nil {
+		panic(err)
 	}
 
 	var loglines strings.Builder

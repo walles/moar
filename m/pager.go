@@ -12,8 +12,6 @@ import (
 	"github.com/walles/moar/twin"
 )
 
-// FIXME: Profile the pager while searching through a large file
-
 type _PagerMode int
 
 const (

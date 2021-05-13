@@ -59,6 +59,9 @@ type UnixScreen struct {
 
 	ttyOut        *os.File
 	oldTtyOutMode uint32 //lint:ignore U1000 Windows only
+
+	// See docs for NewScreenCompat()
+	compat bool
 }
 
 // Cell is a rune with a style to be written to a cell on screen
@@ -89,11 +92,27 @@ var MOUSE_EVENT_REGEX = regexp.MustCompile("^\x1b\\[<([0-9]+);([0-9]+);([0-9]+)M
 // NewScreen() requires Close() to be called after you are done with your new
 // screen, most likely somewhere in your shutdown code.
 func NewScreen() (Screen, error) {
+	return newScreenInternal(false)
+}
+
+// A compat screen works like less traditionally has, not using an alternate
+// screen and not having any mouse support.
+//
+// Upside is that marking with your mouse and copying works without holding any
+// modifiers, more info at https://github.com/walles/moar/issues/53.
+//
+// Kindly Close() the returned screen when done with it.
+func NewScreenCompat() (Screen, error) {
+	return newScreenInternal(true)
+}
+
+func newScreenInternal(compat bool) (Screen, error) {
 	if !term.IsTerminal(int(os.Stdout.Fd())) {
 		return nil, fmt.Errorf("stdout (fd=%d) must be a terminal for paging to work", os.Stdout.Fd())
 	}
 
 	screen := UnixScreen{}
+	screen.compat = compat
 
 	// The number "80" here is from manual testing on my MacBook:
 	//
@@ -111,8 +130,10 @@ func NewScreen() (Screen, error) {
 	if err != nil {
 		return nil, err
 	}
-	screen.setAlternateScreenMode(true)
-	screen.enableMouseTracking(true)
+	if !screen.compat {
+		screen.setAlternateScreenMode(true)
+		screen.enableMouseTracking(true)
+	}
 	screen.hideCursor(true)
 
 	go screen.mainLoop()
@@ -124,8 +145,10 @@ func NewScreen() (Screen, error) {
 // with the screen returned by NewScreen()
 func (screen *UnixScreen) Close() {
 	screen.hideCursor(false)
-	screen.enableMouseTracking(false)
-	screen.setAlternateScreenMode(false)
+	if !screen.compat {
+		screen.enableMouseTracking(false)
+		screen.setAlternateScreenMode(false)
+	}
 
 	err := screen.restoreTtyInTtyOut()
 	if err != nil {
