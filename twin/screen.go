@@ -6,7 +6,6 @@ import (
 	"os"
 	"regexp"
 	"strings"
-	"time"
 	"unicode"
 	"unicode/utf8"
 
@@ -479,12 +478,7 @@ func (screen *UnixScreen) Show() {
 	}
 
 	// Write out what we have
-	t0 := time.Now()
-	byteCount := screen.write(builder.String())
-	t1 := time.Now()
-	dt := t1.Sub(t0)
-	megaBytesPerSecond := float64(byteCount) / (1024.0 * 1024.0) / dt.Seconds()
-	log.Trace("Wrote ", byteCount, " bytes to screen in ", dt, " at ", int(megaBytesPerSecond), "MB/s")
+	screen.write(builder.String())
 }
 
 func NewCell(rune rune, style Style) Cell {
