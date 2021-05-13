@@ -22,19 +22,28 @@ import (
 
 var versionString = "Should be set when building, please use build.sh to build"
 
-func printUsage(output io.Writer) {
+func printUsage(output io.Writer, flagSet *flag.FlagSet, printCommandline bool) {
 	// This controls where PrintDefaults() prints, see below
-	flag.CommandLine.SetOutput(output)
+	flagSet.SetOutput(output)
 
-	// FIXME: Log if any of these printouts fail?
+	// FIXME: Log if any printouts fail?
+	if printCommandline {
+		_, _ = fmt.Fprintln(output, "Commandline: moar", strings.Join(os.Args[1:], " "))
+		_, _ = fmt.Fprintf(output, "Environment: MOAR=\"%v\"\n", os.Getenv("MOAR"))
+		_, _ = fmt.Fprintln(output)
+	}
 
 	_, _ = fmt.Fprintln(output, "Usage:")
 	_, _ = fmt.Fprintln(output, "  moar [options] <file>")
 	_, _ = fmt.Fprintln(output, "  ... | moar")
 	_, _ = fmt.Fprintln(output, "  moar < file")
 	_, _ = fmt.Fprintln(output)
+	_, _ = fmt.Fprintln(output, "Environment:")
+	_, _ = fmt.Fprintln(output, "  Options will be read from the MOAR environment variable if set.")
+	_, _ = fmt.Fprintln(output)
+	_, _ = fmt.Fprintln(output, "Options:")
 
-	flag.PrintDefaults()
+	flagSet.PrintDefaults()
 
 	moarPath, err := filepath.Abs(os.Args[0])
 	if err == nil {
@@ -72,14 +81,14 @@ func printProblemsHeader() {
 	fmt.Fprintln(os.Stderr)
 }
 
-func parseStyleOption(styleOption string) chroma.Style {
+func parseStyleOption(styleOption string, flagSet *flag.FlagSet) chroma.Style {
 	style, ok := styles.Registry[styleOption]
 	if !ok {
 		fmt.Fprintf(os.Stderr,
 			"ERROR: Unrecognized style \"%s\", pick a style from here: https://xyproto.github.io/splash/docs/longer/all.html\n",
 			styleOption)
 		fmt.Fprintln(os.Stderr)
-		printUsage(os.Stderr)
+		printUsage(os.Stderr, flagSet, true)
 
 		os.Exit(1)
 	}
@@ -87,7 +96,7 @@ func parseStyleOption(styleOption string) chroma.Style {
 	return *style
 }
 
-func parseColorsOption(colorsOption string) chroma.Formatter {
+func parseColorsOption(colorsOption string, flagSet *flag.FlagSet) chroma.Formatter {
 	switch strings.ToUpper(colorsOption) {
 	case "8":
 		return formatters.TTY8
@@ -101,7 +110,7 @@ func parseColorsOption(colorsOption string) chroma.Formatter {
 
 	fmt.Fprintf(os.Stderr, "ERROR: Invalid color count \"%s\", valid counts are 8, 16, 256 or 16M.\n", colorsOption)
 	fmt.Fprintln(os.Stderr)
-	printUsage(os.Stderr)
+	printUsage(os.Stderr, flagSet, true)
 
 	os.Exit(1)
 	panic("We just did os.Exit(), why are we still executing?")
@@ -120,23 +129,43 @@ func main() {
 		panic(err)
 	}()
 
-	flag.Usage = func() {
-		printUsage(os.Stdout)
+	flagSet := flag.NewFlagSet("", flag.ExitOnError)
+	flagSet.Usage = func() {
+		printUsage(os.Stdout, flagSet, false)
 	}
-	printVersion := flag.Bool("version", false, "Prints the moar version number")
-	debug := flag.Bool("debug", false, "Print debug logs after exiting")
-	trace := flag.Bool("trace", false, "Print trace logs after exiting")
-	styleOption := flag.String("style", "native", "Highlighting style from https://xyproto.github.io/splash/docs/longer/all.html")
-	colorsOption := flag.String("colors", "16M", "Highlighting palette size: 8, 16, 256, 16M")
+	printVersion := flagSet.Bool("version", false, "Prints the moar version number")
+	debug := flagSet.Bool("debug", false, "Print debug logs after exiting")
+	trace := flagSet.Bool("trace", false, "Print trace logs after exiting")
+	styleOption := flagSet.String("style", "native",
+		"Highlighting style from https://xyproto.github.io/splash/docs/longer/all.html")
+	colorsOption := flagSet.String("colors", "16M", "Highlighting palette size: 8, 16, 256, 16M")
 
-	flag.Parse()
+	// Combine flags from environment and from command line
+	flags := os.Args[1:]
+	moarEnv := strings.Trim(os.Getenv("MOAR"), " ")
+	if len(moarEnv) > 0 {
+		// FIXME: It would be nice if we could debug log that we're doing this,
+		// but logging is not yet set up and depends on command line parameters.
+		flags = append(strings.Split(moarEnv, " "), flags...)
+	}
+
+	err := flagSet.Parse(flags)
+	if err != nil {
+		printProblemsHeader()
+		fmt.Fprintln(os.Stderr, "ERROR: Command line parsing failed:", err.Error())
+		fmt.Fprintln(os.Stderr)
+		printUsage(os.Stderr, flagSet, true)
+
+		os.Exit(1)
+	}
+
 	if *printVersion {
 		fmt.Println(versionString)
 		os.Exit(0)
 	}
 
-	style := parseStyleOption(*styleOption)
-	formatter := parseColorsOption(*colorsOption)
+	style := parseStyleOption(*styleOption, flagSet)
+	formatter := parseColorsOption(*colorsOption, flagSet)
 
 	log.SetLevel(log.InfoLevel)
 	if *trace {
@@ -149,10 +178,10 @@ func main() {
 		TimestampFormat: time.RFC3339Nano,
 	})
 
-	if len(flag.Args()) > 1 {
-		fmt.Fprintln(os.Stderr, "ERROR: Expected exactly one filename, or data piped from stdin, got: ", flag.Args())
+	if len(flagSet.Args()) > 1 {
+		fmt.Fprintln(os.Stderr, "ERROR: Expected exactly one filename, or data piped from stdin, got:", flagSet.Args())
 		fmt.Fprintln(os.Stderr)
-		printUsage(os.Stderr)
+		printUsage(os.Stderr, flagSet, true)
 
 		os.Exit(1)
 	}
@@ -160,15 +189,15 @@ func main() {
 	stdinIsRedirected := !term.IsTerminal(int(os.Stdin.Fd()))
 	stdoutIsRedirected := !term.IsTerminal(int(os.Stdout.Fd()))
 	var inputFilename *string
-	if len(flag.Args()) == 1 {
-		word := flag.Arg(0)
+	if len(flagSet.Args()) == 1 {
+		word := flagSet.Arg(0)
 		inputFilename = &word
 	}
 
 	if inputFilename == nil && !stdinIsRedirected {
 		fmt.Fprintln(os.Stderr, "ERROR: Filename or input pipe required")
 		fmt.Fprintln(os.Stderr, "")
-		printUsage(os.Stderr)
+		printUsage(os.Stderr, flagSet, true)
 		os.Exit(1)
 	}
 

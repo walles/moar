@@ -30,6 +30,9 @@ uses the formats declared in these environment variables when viewing man pages:
 * `LESS_TERMCAP_md`: Bold
 * `LESS_TERMCAP_us`: Underline
 
+For configurability reasons, `moar` reads extra command line options from the
+`MOAR` environment variable.
+
 Moar is used as the default pager by:
 * [`px` / `ptop`](https://github.com/walles/px)
 * [`riff`](https://github.com/walles/riff)
