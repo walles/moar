@@ -51,11 +51,14 @@ If a binary for your platform is not available, please
 [file a ticket](https://github.com/walles/moar/releases) or contact
 <johan.walles@gmail.com>.
 
-Debian / Ubuntu
----------------
+### Debian / Ubuntu
 
 [A Request for Packaging is open](https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=944035),
 please help!
+
+### Homebrew
+
+Can't be done by me (`moar`'s main author), [please help](https://github.com/walles/moar/issues/63)!
 
 Setting Moar as Your Default Pager
 ----------------------------------
