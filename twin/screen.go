@@ -131,9 +131,22 @@ func newScreenInternal(compat bool) (Screen, error) {
 		return nil, err
 	}
 	if !screen.compat {
-		screen.setAlternateScreenMode(true)
 		screen.enableMouseTracking(true)
 	}
+
+	// NOTE: When less initializes the terminal it sends a <ESC>[?1h sequence,
+	// or "smkx" / enable keypad application mode.
+	//
+	// We may want to do the same in compat mode, but right now I don't
+	// understand what that actually is, so let's skip it for now. It might
+	// relate to being able to tell apart keypresses on the number pad from
+	// ordinary numbers, but I'm unsure.
+	//
+	// Ref:
+	//   https://github.com/chjj/blessed/blob/master/usr/xterm.terminfo
+	//   https://ttssh2.osdn.jp/manual/4/en/usage/tips/appkeypad.html
+
+	screen.setAlternateScreenMode(true)
 	screen.hideCursor(true)
 
 	go screen.mainLoop()
@@ -145,9 +158,9 @@ func newScreenInternal(compat bool) (Screen, error) {
 // with the screen returned by NewScreen()
 func (screen *UnixScreen) Close() {
 	screen.hideCursor(false)
+	screen.setAlternateScreenMode(false)
 	if !screen.compat {
 		screen.enableMouseTracking(false)
-		screen.setAlternateScreenMode(false)
 	}
 
 	err := screen.restoreTtyInTtyOut()
