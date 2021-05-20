@@ -3,7 +3,6 @@ package m
 import (
 	"fmt"
 	"regexp"
-	"strconv"
 	"time"
 	"unicode"
 	"unicode/utf8"
@@ -11,8 +10,6 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/walles/moar/twin"
 )
-
-// FIXME: Profile the pager while searching through a large file
 
 type _PagerMode int
 
@@ -122,7 +119,7 @@ func (p *Pager) _AddLine(fileLineNumber *int, numberPrefixLength int, screenLine
 
 	lineNumberString := ""
 	if numberPrefixLength > 0 && fileLineNumber != nil {
-		lineNumberString = fmt.Sprintf("%*d ", numberPrefixLength-1, *fileLineNumber)
+		lineNumberString = lfmt.Sprintf("%*d ", numberPrefixLength-1, *fileLineNumber)
 	} else {
 		numberPrefixLength = 0
 	}
@@ -220,7 +217,7 @@ func (p *Pager) _AddLines(spinner string) {
 	//
 	// Offsets figured out through trial-and-error...
 	lastLineOneBased := lines.firstLineOneBased + len(lines.lines) - 1
-	numberPrefixLength := len(strconv.Itoa(lastLineOneBased)) + 1
+	numberPrefixLength := len(lfmt.Sprintf("%d", lastLineOneBased)) + 1
 	if numberPrefixLength < 4 {
 		// 4 = space for 3 digits followed by one whitespace
 		//
