@@ -421,7 +421,9 @@ func renderLine(row []Cell) (string, int) {
 
 		style := cell.Style
 		runeToWrite := cell.Rune
-		if !unicode.IsPrint(runeToWrite) {
+		if !unicode.IsGraphic(runeToWrite) {
+			log.Warn("Unprintable rune: ", runeToWrite)
+
 			// Highlight unprintable runes
 			style = Style{
 				fg:    NewColor16(7), // White

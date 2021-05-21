@@ -118,7 +118,7 @@ func withoutFormatting(s string) string {
 				runeCount++
 
 			default:
-				if !unicode.IsPrint(runeValue) {
+				if !unicode.IsGraphic(runeValue) {
 					stripped.WriteRune('?')
 					runeCount++
 					continue
@@ -169,7 +169,7 @@ func cellsFromString(s string) []twin.Cell {
 				})
 
 			default:
-				if !unicode.IsPrint(token.Rune) {
+				if !unicode.IsGraphic(token.Rune) {
 					cells = append(cells, twin.Cell{
 						Rune:  '?',
 						Style: styleBrokenUtf8,
