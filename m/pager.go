@@ -3,7 +3,6 @@ package m
 import (
 	"fmt"
 	"regexp"
-	"strconv"
 	"time"
 	"unicode"
 	"unicode/utf8"
@@ -29,7 +28,7 @@ type eventSpinnerUpdate struct {
 type eventMoreLinesAvailable struct{}
 
 // Styling of line numbers
-var _NumberStyle = twin.StyleDefault.WithAttr(twin.AttrDim)
+var _numberStyle = twin.StyleDefault.WithAttr(twin.AttrDim)
 
 // Pager is the main on-screen pager
 type Pager struct {
@@ -122,7 +121,12 @@ func (p *Pager) _AddLine(fileLineNumber *int, numberPrefixLength int, screenLine
 
 	lineNumberString := ""
 	if numberPrefixLength > 0 && fileLineNumber != nil {
-		lineNumberString = fmt.Sprintf("%*d ", numberPrefixLength-1, *fileLineNumber)
+		lineNumberString = formatNumber(uint(*fileLineNumber))
+		if len(lineNumberString) > numberPrefixLength {
+			panic(fmt.Errorf(
+				"lineNumberString <%s> longer than numberPrefixLength %d",
+				lineNumberString, numberPrefixLength))
+		}
 	} else {
 		numberPrefixLength = 0
 	}
@@ -132,7 +136,7 @@ func (p *Pager) _AddLine(fileLineNumber *int, numberPrefixLength int, screenLine
 			break
 		}
 
-		p.screen.SetCell(column, screenLineNumber, twin.NewCell(digit, _NumberStyle))
+		p.screen.SetCell(column, screenLineNumber, twin.NewCell(digit, _numberStyle))
 	}
 
 	tokens := createScreenLine(p.leftColumnZeroBased, screenWidth-numberPrefixLength, line, p.searchPattern)
@@ -220,7 +224,7 @@ func (p *Pager) _AddLines(spinner string) {
 	//
 	// Offsets figured out through trial-and-error...
 	lastLineOneBased := lines.firstLineOneBased + len(lines.lines) - 1
-	numberPrefixLength := len(strconv.Itoa(lastLineOneBased)) + 1
+	numberPrefixLength := len(formatNumber(uint(lastLineOneBased))) + 1
 	if numberPrefixLength < 4 {
 		// 4 = space for 3 digits followed by one whitespace
 		//
