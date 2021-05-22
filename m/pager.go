@@ -46,6 +46,8 @@ type Pager struct {
 	// NewPager shows lines by default, this field can hide them
 	ShowLineNumbers bool
 
+	WrapLongLines bool
+
 	// If true, pager will clear the screen on return. If false, pager will
 	// clear the last line, and show the cursor.
 	DeInit bool
@@ -62,9 +64,10 @@ const _EofMarkerFormat = "\x1b[7m" // Reverse video
 var _HelpReader = NewReaderFromText("Help", `
 Welcome to Moar, the nice pager!
 
-Quitting
---------
+Miscellaneous
+-------------
 * Press 'q' or ESC to quit
+* Press 'w' to toggle wrapping of long lines
 
 Moving around
 -------------
@@ -223,7 +226,17 @@ func (p *Pager) _AddLines(spinner string) {
 	screenFull := false
 	for lineIndex, line := range lines.lines {
 		lineNumber := p.firstLineOneBased + lineIndex
-		for wrapIndex, linePart := range wrapLine(width-numberPrefixLength, line.HighlightedTokens(p.searchPattern)) {
+
+		highlighted := line.HighlightedTokens(p.searchPattern)
+		var wrapped [][]twin.Cell
+		if p.WrapLongLines {
+			wrapped = wrapLine(width-numberPrefixLength, highlighted)
+		} else {
+			// All on one line
+			wrapped = [][]twin.Cell{highlighted}
+		}
+
+		for wrapIndex, linePart := range wrapped {
 			visibleLineNumber := &lineNumber
 			if wrapIndex > 0 {
 				visibleLineNumber = nil
@@ -673,6 +686,9 @@ func (p *Pager) _OnRune(char rune) {
 
 	case 'p', 'N':
 		p._ScrollToPreviousSearchHit()
+
+	case 'w':
+		p.WrapLongLines = !p.WrapLongLines
 
 	default:
 		log.Debugf("Unhandled rune keypress '%s'", string(char))
