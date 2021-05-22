@@ -116,7 +116,7 @@ func NewPager(r *Reader) *Pager {
 	}
 }
 
-func (p *Pager) _AddLine(fileLineNumber *int, numberPrefixLength int, screenLineNumber int, line *Line) {
+func (p *Pager) _AddLine(fileLineNumber *int, numberPrefixLength int, screenLineNumber int, cells []twin.Cell) {
 	screenWidth, _ := p.screen.Size()
 
 	lineNumberString := ""
@@ -139,8 +139,8 @@ func (p *Pager) _AddLine(fileLineNumber *int, numberPrefixLength int, screenLine
 		p.screen.SetCell(column, screenLineNumber, twin.NewCell(digit, _numberStyle))
 	}
 
-	tokens := createScreenLine(p.leftColumnZeroBased, screenWidth-numberPrefixLength, line, p.searchPattern)
-	for column, token := range tokens {
+	screenCells := createScreenLine(p.leftColumnZeroBased, screenWidth-numberPrefixLength, cells)
+	for column, token := range screenCells {
 		p.screen.SetCell(column+numberPrefixLength, screenLineNumber, token)
 	}
 }
@@ -148,28 +148,23 @@ func (p *Pager) _AddLine(fileLineNumber *int, numberPrefixLength int, screenLine
 func createScreenLine(
 	stringIndexAtColumnZero int,
 	screenColumnsCount int,
-	line *Line,
-	search *regexp.Regexp,
+	cells []twin.Cell,
 ) []twin.Cell {
 	var returnMe []twin.Cell
-	searchHitDelta := 0
 	if stringIndexAtColumnZero > 0 {
 		// Indicate that it's possible to scroll left
 		returnMe = append(returnMe, twin.Cell{
 			Rune:  '<',
 			Style: twin.StyleDefault.WithAttr(twin.AttrReverse),
 		})
-		searchHitDelta = -1
 	}
 
-	if stringIndexAtColumnZero >= len(line.Tokens()) {
+	if stringIndexAtColumnZero >= len(cells) {
 		// Nothing (more) to display, never mind
 		return returnMe
 	}
 
-	plain := line.Plain()
-	matchRanges := getMatchRanges(&plain, search)
-	for _, token := range line.Tokens()[stringIndexAtColumnZero:] {
+	for _, cell := range cells[stringIndexAtColumnZero:] {
 		if len(returnMe) >= screenColumnsCount {
 			// We are trying to add a character to the right of the screen.
 			// Indicate that this line continues to the right.
@@ -180,16 +175,7 @@ func createScreenLine(
 			break
 		}
 
-		style := token.Style
-		if matchRanges.InRange(len(returnMe) + stringIndexAtColumnZero + searchHitDelta) {
-			// Search hits in reverse video
-			style = style.WithAttr(twin.AttrReverse)
-		}
-
-		returnMe = append(returnMe, twin.Cell{
-			Rune:  token.Rune,
-			Style: style,
-		})
+		returnMe = append(returnMe, cell)
 	}
 
 	return returnMe
@@ -239,7 +225,7 @@ func (p *Pager) _AddLines(spinner string) {
 	screenLineNumber := 0
 	for i, line := range lines.lines {
 		lineNumber := p.firstLineOneBased + i
-		p._AddLine(&lineNumber, numberPrefixLength, screenLineNumber, line)
+		p._AddLine(&lineNumber, numberPrefixLength, screenLineNumber, line.HighlightedTokens(p.searchPattern))
 		screenLineNumber++
 	}
 
@@ -248,7 +234,7 @@ func (p *Pager) _AddLines(spinner string) {
 		// This happens when we're done
 		eofSpinner = "---"
 	}
-	spinnerLine := NewLine(_EofMarkerFormat + eofSpinner)
+	spinnerLine := cellsFromString(_EofMarkerFormat + eofSpinner)
 	p._AddLine(nil, 0, screenLineNumber, spinnerLine)
 
 	switch p.mode {
