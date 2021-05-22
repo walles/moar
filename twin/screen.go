@@ -471,8 +471,18 @@ func (screen *UnixScreen) Show() {
 		rendered, lineLength := renderLine(screen.cells[row])
 		builder.WriteString(rendered)
 
-		lastLine := row == (height - 1)
-		if lineLength < len(screen.cells[row]) && !lastLine {
+		wasLastLine := row == (height - 1)
+
+		// NOTE: This <= should *really* be <= and nothing else. Otherwise, if
+		// one line precisely as long as the terminal window goes before one
+		// empty line, the empty line will never be rendered.
+		//
+		// Can be demonstrated using "moar m/pager.go", scroll right once to
+		// make the line numbers go away, then make the window narrower until
+		// some line before an empty line is just as wide as the window.
+		//
+		// With the wrong comparison here, then the empty line just disappears.
+		if lineLength <= len(screen.cells[row]) && !wasLastLine {
 			builder.WriteString("\r\n")
 		}
 	}
