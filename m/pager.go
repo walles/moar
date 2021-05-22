@@ -11,8 +11,6 @@ import (
 	"github.com/walles/moar/twin"
 )
 
-// FIXME: Profile the pager while searching through a large file
-
 type _PagerMode int
 
 const (
@@ -48,6 +46,8 @@ type Pager struct {
 	// NewPager shows lines by default, this field can hide them
 	ShowLineNumbers bool
 
+	WrapLongLines bool
+
 	// If true, pager will clear the screen on return. If false, pager will
 	// clear the last line, and show the cursor.
 	DeInit bool
@@ -64,9 +64,10 @@ const _EofMarkerFormat = "\x1b[7m" // Reverse video
 var _HelpReader = NewReaderFromText("Help", `
 Welcome to Moar, the nice pager!
 
-Quitting
---------
+Miscellaneous
+-------------
 * Press 'q' or ESC to quit
+* Press 'w' to toggle wrapping of long lines
 
 Moving around
 -------------
@@ -116,7 +117,7 @@ func NewPager(r *Reader) *Pager {
 	}
 }
 
-func (p *Pager) _AddLine(fileLineNumber *int, numberPrefixLength int, screenLineNumber int, cells []twin.Cell) {
+func (p *Pager) addLine(fileLineNumber *int, numberPrefixLength int, screenLineNumber int, cells []twin.Cell) {
 	screenWidth, _ := p.screen.Size()
 
 	lineNumberString := ""
@@ -128,8 +129,6 @@ func (p *Pager) _AddLine(fileLineNumber *int, numberPrefixLength int, screenLine
 				"lineNumberString <%s> longer than numberPrefixLength %d",
 				lineNumberString, numberPrefixLength))
 		}
-	} else {
-		numberPrefixLength = 0
 	}
 
 	for column, digit := range lineNumberString {
@@ -196,7 +195,7 @@ func (p *Pager) _AddSearchFooter() {
 }
 
 func (p *Pager) _AddLines(spinner string) {
-	_, height := p.screen.Size()
+	width, height := p.screen.Size()
 	wantedLineCount := height - 1
 
 	lines := p.reader.GetLines(p.firstLineOneBased, wantedLineCount)
@@ -224,10 +223,37 @@ func (p *Pager) _AddLines(spinner string) {
 	}
 
 	screenLineNumber := 0
-	for i, line := range lines.lines {
-		lineNumber := p.firstLineOneBased + i
-		p._AddLine(&lineNumber, numberPrefixLength, screenLineNumber, line.HighlightedTokens(p.searchPattern))
-		screenLineNumber++
+	screenFull := false
+	for lineIndex, line := range lines.lines {
+		lineNumber := p.firstLineOneBased + lineIndex
+
+		highlighted := line.HighlightedTokens(p.searchPattern)
+		var wrapped [][]twin.Cell
+		if p.WrapLongLines {
+			wrapped = wrapLine(width-numberPrefixLength, highlighted)
+		} else {
+			// All on one line
+			wrapped = [][]twin.Cell{highlighted}
+		}
+
+		for wrapIndex, linePart := range wrapped {
+			visibleLineNumber := &lineNumber
+			if wrapIndex > 0 {
+				visibleLineNumber = nil
+			}
+			p.addLine(visibleLineNumber, numberPrefixLength, screenLineNumber, linePart)
+			screenLineNumber++
+
+			if screenLineNumber >= height-1 {
+				// We have shown all the lines that can fit on the screen
+				screenFull = true
+				break
+			}
+		}
+
+		if screenFull {
+			break
+		}
 	}
 
 	eofSpinner := spinner
@@ -236,7 +262,7 @@ func (p *Pager) _AddLines(spinner string) {
 		eofSpinner = "---"
 	}
 	spinnerLine := cellsFromString(_EofMarkerFormat + eofSpinner)
-	p._AddLine(nil, 0, screenLineNumber, spinnerLine)
+	p.addLine(nil, 0, screenLineNumber, spinnerLine)
 
 	switch p.mode {
 	case _Searching:
@@ -660,6 +686,9 @@ func (p *Pager) _OnRune(char rune) {
 
 	case 'p', 'N':
 		p._ScrollToPreviousSearchHit()
+
+	case 'w':
+		p.WrapLongLines = !p.WrapLongLines
 
 	default:
 		log.Debugf("Unhandled rune keypress '%s'", string(char))
