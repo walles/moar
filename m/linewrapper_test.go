@@ -10,7 +10,7 @@ import (
 
 func tokenize(input string) []twin.Cell {
 	line := NewLine(input)
-	return line.Tokens()
+	return line.HighlightedTokens(nil)
 }
 
 func TestEnoughRoomNoWrapping(t *testing.T) {
@@ -19,13 +19,10 @@ func TestEnoughRoomNoWrapping(t *testing.T) {
 	assert.Assert(t, reflect.DeepEqual(wrapped, [][]twin.Cell{toWrap}))
 }
 
-func TestSimpleWrap(t *testing.T) {
-	toWrap := tokenize("This is a test")
-	wrapped := wrapLine(12, toWrap)
-	assert.Assert(t, reflect.DeepEqual(wrapped, [][]twin.Cell{
-		tokenize("This is a"),
-		tokenize("test"),
-	}))
+func TestWrapEmpty(t *testing.T) {
+	empty := tokenize("")
+	wrapped := wrapLine(20, empty)
+	assert.Assert(t, reflect.DeepEqual(wrapped, [][]twin.Cell{empty}))
 }
 
 func TestWordLongerThanLine(t *testing.T) {
@@ -36,6 +33,8 @@ func TestWordLongerThanLine(t *testing.T) {
 		tokenize("ediary"),
 	}))
 }
+
+// FIXME: Test word wrapping
 
 // FIXME: Test wrapping with multiple consecutive spaces
 

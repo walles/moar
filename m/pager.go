@@ -11,8 +11,6 @@ import (
 	"github.com/walles/moar/twin"
 )
 
-// FIXME: Profile the pager while searching through a large file
-
 type _PagerMode int
 
 const (
@@ -116,7 +114,7 @@ func NewPager(r *Reader) *Pager {
 	}
 }
 
-func (p *Pager) _AddLine(fileLineNumber *int, numberPrefixLength int, screenLineNumber int, cells []twin.Cell) {
+func (p *Pager) addLine(fileLineNumber *int, numberPrefixLength int, screenLineNumber int, cells []twin.Cell) {
 	screenWidth, _ := p.screen.Size()
 
 	lineNumberString := ""
@@ -128,8 +126,6 @@ func (p *Pager) _AddLine(fileLineNumber *int, numberPrefixLength int, screenLine
 				"lineNumberString <%s> longer than numberPrefixLength %d",
 				lineNumberString, numberPrefixLength))
 		}
-	} else {
-		numberPrefixLength = 0
 	}
 
 	for column, digit := range lineNumberString {
@@ -196,7 +192,7 @@ func (p *Pager) _AddSearchFooter() {
 }
 
 func (p *Pager) _AddLines(spinner string) {
-	_, height := p.screen.Size()
+	width, height := p.screen.Size()
 	wantedLineCount := height - 1
 
 	lines := p.reader.GetLines(p.firstLineOneBased, wantedLineCount)
@@ -224,10 +220,27 @@ func (p *Pager) _AddLines(spinner string) {
 	}
 
 	screenLineNumber := 0
-	for i, line := range lines.lines {
-		lineNumber := p.firstLineOneBased + i
-		p._AddLine(&lineNumber, numberPrefixLength, screenLineNumber, line.HighlightedTokens(p.searchPattern))
-		screenLineNumber++
+	screenFull := false
+	for lineIndex, line := range lines.lines {
+		lineNumber := p.firstLineOneBased + lineIndex
+		for wrapIndex, linePart := range wrapLine(width-numberPrefixLength, line.HighlightedTokens(p.searchPattern)) {
+			visibleLineNumber := &lineNumber
+			if wrapIndex > 0 {
+				visibleLineNumber = nil
+			}
+			p.addLine(visibleLineNumber, numberPrefixLength, screenLineNumber, linePart)
+			screenLineNumber++
+
+			if screenLineNumber >= height-1 {
+				// We have shown all the lines that can fit on the screen
+				screenFull = true
+				break
+			}
+		}
+
+		if screenFull {
+			break
+		}
 	}
 
 	eofSpinner := spinner
@@ -236,7 +249,7 @@ func (p *Pager) _AddLines(spinner string) {
 		eofSpinner = "---"
 	}
 	spinnerLine := cellsFromString(_EofMarkerFormat + eofSpinner)
-	p._AddLine(nil, 0, screenLineNumber, spinnerLine)
+	p.addLine(nil, 0, screenLineNumber, spinnerLine)
 
 	switch p.mode {
 	case _Searching:
