@@ -34,8 +34,8 @@ For configurability reasons, `moar` reads extra command line options from the
 `MOAR` environment variable.
 
 Moar is used as the default pager by:
-* [`px` / `ptop`](https://github.com/walles/px)
-* [`riff`](https://github.com/walles/riff)
+* [`px` / `ptop`](https://github.com/walles/px), `ps` and `top` for human beings
+* [`riff`](https://github.com/walles/riff), a diff filter highlighting which line parts have changed
 
 Installing
 ----------
