@@ -252,14 +252,14 @@ func assertTokenRangesEqual(t *testing.T, actual []twin.Cell, expected []twin.Ce
 }
 
 func TestCreateScreenLineBase(t *testing.T) {
-	line := NewLine("")
-	screenLine := createScreenLine(0, 3, line, nil)
+	line := cellsFromString("")
+	screenLine := createScreenLine(0, 3, line)
 	assert.Assert(t, len(screenLine) == 0)
 }
 
 func TestCreateScreenLineOverflowRight(t *testing.T) {
-	line := NewLine("012345")
-	screenLine := createScreenLine(0, 3, line, nil)
+	line := cellsFromString("012345")
+	screenLine := createScreenLine(0, 3, line)
 	assertTokenRangesEqual(t, screenLine, []twin.Cell{
 		twin.NewCell('0', twin.StyleDefault),
 		twin.NewCell('1', twin.StyleDefault),
@@ -268,70 +268,12 @@ func TestCreateScreenLineOverflowRight(t *testing.T) {
 }
 
 func TestCreateScreenLineUnderflowLeft(t *testing.T) {
-	line := NewLine("012")
-	screenLine := createScreenLine(1, 3, line, nil)
+	line := cellsFromString("012")
+	screenLine := createScreenLine(1, 3, line)
 	assertTokenRangesEqual(t, screenLine, []twin.Cell{
 		twin.NewCell('<', twin.StyleDefault.WithAttr(twin.AttrReverse)),
 		twin.NewCell('1', twin.StyleDefault),
 		twin.NewCell('2', twin.StyleDefault),
-	})
-}
-
-func TestCreateScreenLineSearchHit(t *testing.T) {
-	pattern, err := regexp.Compile("b")
-	if err != nil {
-		panic(err)
-	}
-
-	line := NewLine("abc")
-	screenLine := createScreenLine(0, 3, line, pattern)
-	assertTokenRangesEqual(t, screenLine, []twin.Cell{
-		twin.NewCell('a', twin.StyleDefault),
-		twin.NewCell('b', twin.StyleDefault.WithAttr(twin.AttrReverse)),
-		twin.NewCell('c', twin.StyleDefault),
-	})
-}
-
-func TestCreateScreenLineUtf8SearchHit(t *testing.T) {
-	pattern, err := regexp.Compile("ä")
-	if err != nil {
-		panic(err)
-	}
-
-	line := NewLine("åäö")
-	screenLine := createScreenLine(0, 3, line, pattern)
-	assertTokenRangesEqual(t, screenLine, []twin.Cell{
-		twin.NewCell('å', twin.StyleDefault),
-		twin.NewCell('ä', twin.StyleDefault.WithAttr(twin.AttrReverse)),
-		twin.NewCell('ö', twin.StyleDefault),
-	})
-}
-
-func TestCreateScreenLineScrolledUtf8SearchHit(t *testing.T) {
-	pattern := regexp.MustCompile("ä")
-
-	line := NewLine("ååäö")
-	screenLine := createScreenLine(1, 4, line, pattern)
-
-	assertTokenRangesEqual(t, screenLine, []twin.Cell{
-		twin.NewCell('<', twin.StyleDefault.WithAttr(twin.AttrReverse)),
-		twin.NewCell('å', twin.StyleDefault),
-		twin.NewCell('ä', twin.StyleDefault.WithAttr(twin.AttrReverse)),
-		twin.NewCell('ö', twin.StyleDefault),
-	})
-}
-
-func TestCreateScreenLineScrolled2Utf8SearchHit(t *testing.T) {
-	pattern := regexp.MustCompile("ä")
-
-	line := NewLine("åååäö")
-	screenLine := createScreenLine(2, 4, line, pattern)
-
-	assertTokenRangesEqual(t, screenLine, []twin.Cell{
-		twin.NewCell('<', twin.StyleDefault.WithAttr(twin.AttrReverse)),
-		twin.NewCell('å', twin.StyleDefault),
-		twin.NewCell('ä', twin.StyleDefault.WithAttr(twin.AttrReverse)),
-		twin.NewCell('ö', twin.StyleDefault),
 	})
 }
 

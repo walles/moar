@@ -36,9 +36,30 @@ func NewLine(raw string) *Line {
 	}
 }
 
-// Tokens returns a representation of the string split into styled tokens
-func (line *Line) Tokens() []twin.Cell {
-	return cellsFromString(line.raw)
+// Returns a representation of the string split into styled tokens. Any regexp
+// matches are highlighted in inverse video. A nil regexp means no highlighting.
+func (line *Line) HighlightedTokens(search *regexp.Regexp) []twin.Cell {
+	searchHitDelta := 0
+
+	plain := line.Plain()
+	matchRanges := getMatchRanges(&plain, search)
+
+	cells := cellsFromString(line.raw)
+	returnMe := make([]twin.Cell, 0, len(cells))
+	for _, token := range cells {
+		style := token.Style
+		if matchRanges.InRange(len(returnMe) + searchHitDelta) {
+			// Search hits in reverse video
+			style = style.WithAttr(twin.AttrReverse)
+		}
+
+		returnMe = append(returnMe, twin.Cell{
+			Rune:  token.Rune,
+			Style: style,
+		})
+	}
+
+	return returnMe
 }
 
 // Plain returns a plain text representation of the initial string
