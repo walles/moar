@@ -456,10 +456,8 @@ func (r *Reader) _CreateStatusUnlocked(firstLineOneBased int, lastLineOneBased i
 
 	percent := int(100 * float64(lastLineOneBased) / float64(len(r.lines)))
 
-	return fmt.Sprintf("%s%s-%s/%s %d%%",
+	return fmt.Sprintf("%s%s lines  %d%%",
 		prefix,
-		formatNumber(uint(firstLineOneBased)),
-		formatNumber(uint(lastLineOneBased)),
 		formatNumber(uint(len(r.lines))),
 		percent)
 }
