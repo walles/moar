@@ -136,6 +136,7 @@ func main() {
 	printVersion := flagSet.Bool("version", false, "Prints the moar version number")
 	debug := flagSet.Bool("debug", false, "Print debug logs after exiting")
 	trace := flagSet.Bool("trace", false, "Print trace logs after exiting")
+	wrap := flagSet.Bool("wrap", false, "Wrap long lines")
 	styleOption := flagSet.String("style", "native",
 		"Highlighting style from https://xyproto.github.io/splash/docs/longer/all.html")
 	colorsOption := flagSet.String("colors", "16M", "Highlighting palette size: 8, 16, 256, 16M")
@@ -235,7 +236,7 @@ func main() {
 	if stdinIsRedirected {
 		// Display input pipe contents
 		reader := m.NewReaderFromStream("", os.Stdin)
-		startPaging(reader)
+		startPaging(reader, *wrap)
 		return
 	}
 
@@ -245,10 +246,10 @@ func main() {
 		fmt.Fprintf(os.Stderr, "ERROR: %v\n", err)
 		os.Exit(1)
 	}
-	startPaging(reader)
+	startPaging(reader, *wrap)
 }
 
-func startPaging(reader *m.Reader) {
+func startPaging(reader *m.Reader, wrapLongLines bool) {
 	screen, e := twin.NewScreen()
 	if e != nil {
 		panic(e)
@@ -276,5 +277,7 @@ func startPaging(reader *m.Reader) {
 	}()
 
 	log.SetOutput(&loglines)
-	m.NewPager(reader).StartPaging(screen)
+	pager := m.NewPager(reader)
+	pager.WrapLongLines = wrapLongLines
+	pager.StartPaging(screen)
 }

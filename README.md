@@ -47,6 +47,8 @@ Installing
 
 And now you can just invoke `moar` from the prompt!
 
+Try `moar --help` to see options.
+
 If a binary for your platform is not available, please
 [file a ticket](https://github.com/walles/moar/releases) or contact
 <johan.walles@gmail.com>.
@@ -155,9 +157,7 @@ TODO
 
 * Start at a certain line if run as "moar.rb file.txt:42"
 
-* Redefine 'g' without any prefix to prompt for which line to go
-  to. This definition makes more sense to me than having to prefix 'g'
-  to jump.
+* Define 'g' to prompt for a line number to go to.
 
 * Handle search hits to the right of the right screen edge. Searching
   forwards should move first right, then to the left edge and
@@ -170,6 +170,11 @@ TODO
 * Incremental search using ^s and ^r like in Emacs
 
 * Retain the search string when pressing / to search a second time.
+
+* [Word wrap text rather than character wrap it](m/linewrapper.go).
+
+* Arrow keys up / down while in wrapped mode should scroll by screen line, not
+  by input file line.
 
 Done
 ----
