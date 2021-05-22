@@ -122,6 +122,7 @@ func (p *Pager) _AddLine(fileLineNumber *int, numberPrefixLength int, screenLine
 	lineNumberString := ""
 	if numberPrefixLength > 0 && fileLineNumber != nil {
 		lineNumberString = formatNumber(uint(*fileLineNumber))
+		lineNumberString = fmt.Sprintf("%*s", numberPrefixLength-1, lineNumberString)
 		if len(lineNumberString) > numberPrefixLength {
 			panic(fmt.Errorf(
 				"lineNumberString <%s> longer than numberPrefixLength %d",
