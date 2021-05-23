@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/walles/moar/twin"
-	"gotest.tools/assert"
 )
 
 func tokenize(input string) []twin.Cell {
@@ -13,25 +12,49 @@ func tokenize(input string) []twin.Cell {
 	return line.HighlightedTokens(nil)
 }
 
+func toString(cellLines [][]twin.Cell) string {
+	returnMe := ""
+	for _, cellLine := range cellLines {
+		lineString := ""
+		for _, cell := range cellLine {
+			lineString += string(cell.Rune)
+		}
+
+		if len(returnMe) > 0 {
+			returnMe += "\n"
+		}
+		returnMe += "<" + lineString + ">"
+	}
+
+	return returnMe
+}
+
+func assertEqual(t *testing.T, a [][]twin.Cell, b [][]twin.Cell) {
+	if reflect.DeepEqual(a, b) {
+		return
+	}
+	t.Errorf("Expected equal:\n%s\n\n%s", toString(a), toString(b))
+}
+
 func TestEnoughRoomNoWrapping(t *testing.T) {
 	toWrap := tokenize("This is a test")
 	wrapped := wrapLine(20, toWrap)
-	assert.Assert(t, reflect.DeepEqual(wrapped, [][]twin.Cell{toWrap}))
+	assertEqual(t, wrapped, [][]twin.Cell{toWrap})
 }
 
 func TestWrapEmpty(t *testing.T) {
 	empty := tokenize("")
 	wrapped := wrapLine(20, empty)
-	assert.Assert(t, reflect.DeepEqual(wrapped, [][]twin.Cell{empty}))
+	assertEqual(t, wrapped, [][]twin.Cell{empty})
 }
 
 func TestWordLongerThanLine(t *testing.T) {
 	toWrap := tokenize("intermediary")
 	wrapped := wrapLine(6, toWrap)
-	assert.Assert(t, reflect.DeepEqual(wrapped, [][]twin.Cell{
+	assertEqual(t, wrapped, [][]twin.Cell{
 		tokenize("interm"),
 		tokenize("ediary"),
-	}))
+	})
 }
 
 // FIXME: Test word wrapping
