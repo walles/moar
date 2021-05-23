@@ -57,14 +57,32 @@ func TestWordLongerThanLine(t *testing.T) {
 	})
 }
 
+func TestLeadingSpaceNoWrap(t *testing.T) {
+	toWrap := tokenize(" abc")
+	wrapped := wrapLine(20, toWrap)
+	assertEqual(t, wrapped, [][]twin.Cell{
+		tokenize(" abc"),
+	})
+}
+
+func TestLeadingSpaceWithWrap(t *testing.T) {
+	toWrap := tokenize(" abc")
+	wrapped := wrapLine(2, toWrap)
+	assertEqual(t, wrapped, [][]twin.Cell{
+		tokenize(" a"),
+		tokenize("bc"),
+	})
+}
+
+func TestLeadingWrappedSpace(t *testing.T) {
+	toWrap := tokenize("ab cd")
+	wrapped := wrapLine(2, toWrap)
+	assertEqual(t, wrapped, [][]twin.Cell{
+		tokenize("ab"),
+		tokenize("cd"),
+	})
+}
+
 // FIXME: Test word wrapping
 
-// FIXME: Test wrapping with multiple consecutive spaces
-
 // FIXME: Test wrapping on single dashes
-
-// FIXME: Test wrapping with double dashes (not sure what we should do with those)
-
-// FIXME: Test wrapping formatted strings, is there formatting that should affect the wrapping
-
-// FIXME: Test wrapping with trailing whitespace

@@ -7,15 +7,28 @@ func wrapLine(width int, line []twin.Cell) [][]twin.Cell {
 		return [][]twin.Cell{{}}
 	}
 
-	// Unclear how to represent trailing whitespace while wrapping
+	// Trailing space risks showing up by itself on a line, which would just
+	// look weird.
 	line = twin.TrimSpaceRight(line)
 
 	wrapped := make([][]twin.Cell, 0, len(line)/width)
 	for len(line) > width {
 		firstPart := line[:width]
+		if len(wrapped) > 0 {
+			// Leading whitespace on wrapped lines would just look like
+			// indentation, which would be weird for wrapped text.
+			firstPart = twin.TrimSpaceLeft(firstPart)
+		}
+
 		wrapped = append(wrapped, firstPart)
 
-		line = line[width:]
+		line = twin.TrimSpaceLeft(line[width:])
+	}
+
+	if len(wrapped) > 0 {
+		// Leading whitespace on wrapped lines would just look like
+		// indentation, which would be weird for wrapped text.
+		line = twin.TrimSpaceLeft(line)
 	}
 
 	if len(line) > 0 {

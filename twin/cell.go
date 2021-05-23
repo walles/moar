@@ -36,3 +36,18 @@ func TrimSpaceRight(cells []Cell) []Cell {
 	// All whitespace, return empty
 	return []Cell{}
 }
+
+// Returns a slice of cells with leading whitespace cells removed
+func TrimSpaceLeft(cells []Cell) []Cell {
+	for i := 0; i < len(cells); i++ {
+		cell := cells[i]
+		if !unicode.IsSpace(cell.Rune) {
+			return cells[i:]
+		}
+
+		// That was a space, keep looking
+	}
+
+	// All whitespace, return empty
+	return []Cell{}
+}
