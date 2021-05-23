@@ -7,6 +7,9 @@ func wrapLine(width int, line []twin.Cell) [][]twin.Cell {
 		return [][]twin.Cell{{}}
 	}
 
+	// Unclear how to represent trailing whitespace while wrapping
+	line = twin.TrimSpaceRight(line)
+
 	wrapped := make([][]twin.Cell, 0, len(line)/width)
 	for len(line) > width {
 		firstPart := line[:width]

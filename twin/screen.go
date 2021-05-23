@@ -61,16 +61,6 @@ type UnixScreen struct {
 	oldTtyOutMode uint32 //lint:ignore U1000 Windows only
 }
 
-// Cell is a rune with a style to be written to a cell on screen
-type Cell struct {
-	Rune  rune
-	Style Style
-}
-
-func (cell Cell) String() string {
-	return fmt.Sprint("rune='", string(cell.Rune), "' ", cell.Style)
-}
-
 // Example event: "\x1b[<65;127;41M"
 //
 // Where:
@@ -489,11 +479,4 @@ func (screen *UnixScreen) Show() {
 
 	// Write out what we have
 	screen.write(builder.String())
-}
-
-func NewCell(rune rune, style Style) Cell {
-	return Cell{
-		Rune:  rune,
-		Style: style,
-	}
 }
