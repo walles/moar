@@ -23,6 +23,8 @@ Doing the right thing includes:
   `git diff` [| `riff`](https://github.com/walles/riff) for example)
 * Supports UTF-8 input and output
 * The position in the file is always shown
+* Supports **word wrapping** (on actual word boundaries) if requested using
+  `--wrap` or by pressing <kbd>w</kbd>
 
 [For compatibility reasons](https://github.com/walles/moar/issues/14), `moar`
 uses the formats declared in these environment variables when viewing man pages:
@@ -171,10 +173,8 @@ TODO
 
 * Retain the search string when pressing / to search a second time.
 
-* [Word wrap text rather than character wrap it](m/linewrapper.go).
-
-* Arrow keys up / down while in wrapped mode should scroll by screen line, not
-  by input file line.
+* Arrow keys up / down while in line wrapping mode should scroll by screen line,
+  not by input file line.
 
 Done
 ----
@@ -215,3 +215,5 @@ Done
   <https://github.com/walles/moar/issues/7>.
 
 * Showing unicode search hits should highlight the correct chars
+
+* [Word wrap text rather than character wrap it](m/linewrapper.go).
