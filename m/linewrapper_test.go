@@ -36,51 +36,40 @@ func assertEqual(t *testing.T, a [][]twin.Cell, b [][]twin.Cell) {
 	t.Errorf("Expected equal:\n%s\n\n%s", toString(a), toString(b))
 }
 
+func assertWrap(t *testing.T, input string, width int, wrappedLines ...string) {
+	toWrap := tokenize(input)
+	wrapped := wrapLine(width, toWrap)
+
+	expected := [][]twin.Cell{}
+	for _, wrappedLine := range wrappedLines {
+		expected = append(expected, tokenize(wrappedLine))
+	}
+
+	assertEqual(t, wrapped, expected)
+}
+
 func TestEnoughRoomNoWrapping(t *testing.T) {
-	toWrap := tokenize("This is a test")
-	wrapped := wrapLine(20, toWrap)
-	assertEqual(t, wrapped, [][]twin.Cell{toWrap})
+	assertWrap(t, "This is a test", 20, "This is a test")
 }
 
 func TestWrapEmpty(t *testing.T) {
-	empty := tokenize("")
-	wrapped := wrapLine(20, empty)
-	assertEqual(t, wrapped, [][]twin.Cell{empty})
+	assertWrap(t, "", 20, "")
 }
 
 func TestWordLongerThanLine(t *testing.T) {
-	toWrap := tokenize("intermediary")
-	wrapped := wrapLine(6, toWrap)
-	assertEqual(t, wrapped, [][]twin.Cell{
-		tokenize("interm"),
-		tokenize("ediary"),
-	})
+	assertWrap(t, "intermediary", 6, "interm", "ediary")
 }
 
 func TestLeadingSpaceNoWrap(t *testing.T) {
-	toWrap := tokenize(" abc")
-	wrapped := wrapLine(20, toWrap)
-	assertEqual(t, wrapped, [][]twin.Cell{
-		tokenize(" abc"),
-	})
+	assertWrap(t, " abc", 20, " abc")
 }
 
 func TestLeadingSpaceWithWrap(t *testing.T) {
-	toWrap := tokenize(" abc")
-	wrapped := wrapLine(2, toWrap)
-	assertEqual(t, wrapped, [][]twin.Cell{
-		tokenize(" a"),
-		tokenize("bc"),
-	})
+	assertWrap(t, " abc", 2, " a", "bc")
 }
 
 func TestLeadingWrappedSpace(t *testing.T) {
-	toWrap := tokenize("ab cd")
-	wrapped := wrapLine(2, toWrap)
-	assertEqual(t, wrapped, [][]twin.Cell{
-		tokenize("ab"),
-		tokenize("cd"),
-	})
+	assertWrap(t, "ab cd", 2, "ab", "cd")
 }
 
 // FIXME: Test word wrapping
