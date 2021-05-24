@@ -2,9 +2,13 @@ package m
 
 import (
 	"fmt"
+	"unicode"
 
 	"github.com/walles/moar/twin"
 )
+
+// From: https://www.compart.com/en/unicode/U+00A0
+const NO_BREAK_SPACE = '\xa0'
 
 func getWrapWidth(line []twin.Cell, maxWrapWidth int) int {
 	if len(line) <= maxWrapWidth {
@@ -12,6 +16,24 @@ func getWrapWidth(line []twin.Cell, maxWrapWidth int) int {
 			len(line), maxWrapWidth))
 	}
 
+	// Find the last whitespace in the input. Since we want to break *before*
+	// whitespace, we loop through characters to the right of the current one.
+	for nextIndex := maxWrapWidth; nextIndex > 0; nextIndex-- {
+		char := line[nextIndex].Rune
+		if !unicode.IsSpace(char) {
+			// Want to break before whitespace, this is not it, keep looking
+			continue
+		}
+
+		if char == NO_BREAK_SPACE {
+			// Don't break at non-break whitespace
+			continue
+		}
+
+		return nextIndex
+	}
+
+	// No breakpoint found, give up
 	return maxWrapWidth
 }
 
