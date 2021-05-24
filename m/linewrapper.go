@@ -1,6 +1,19 @@
 package m
 
-import "github.com/walles/moar/twin"
+import (
+	"fmt"
+
+	"github.com/walles/moar/twin"
+)
+
+func getWrapWidth(line []twin.Cell, maxWrapWidth int) int {
+	if len(line) <= maxWrapWidth {
+		panic(fmt.Errorf("cannot compute wrap width when input isn't longer than max (%d<=%d)",
+			len(line), maxWrapWidth))
+	}
+
+	return maxWrapWidth
+}
 
 func wrapLine(width int, line []twin.Cell) [][]twin.Cell {
 	if len(line) == 0 {
@@ -13,7 +26,8 @@ func wrapLine(width int, line []twin.Cell) [][]twin.Cell {
 
 	wrapped := make([][]twin.Cell, 0, len(line)/width)
 	for len(line) > width {
-		firstPart := line[:width]
+		wrapWidth := getWrapWidth(line, width)
+		firstPart := line[:wrapWidth]
 		if len(wrapped) > 0 {
 			// Leading whitespace on wrapped lines would just look like
 			// indentation, which would be weird for wrapped text.
@@ -22,7 +36,7 @@ func wrapLine(width int, line []twin.Cell) [][]twin.Cell {
 
 		wrapped = append(wrapped, twin.TrimSpaceRight(firstPart))
 
-		line = twin.TrimSpaceLeft(line[width:])
+		line = twin.TrimSpaceLeft(line[wrapWidth:])
 	}
 
 	if len(wrapped) > 0 {
