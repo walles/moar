@@ -29,23 +29,21 @@ func toString(cellLines [][]twin.Cell) string {
 	return returnMe
 }
 
-func assertEqual(t *testing.T, a [][]twin.Cell, b [][]twin.Cell) {
-	if reflect.DeepEqual(a, b) {
-		return
-	}
-	t.Errorf("Expected equal:\n%s\n\n%s", toString(a), toString(b))
-}
-
 func assertWrap(t *testing.T, input string, width int, wrappedLines ...string) {
 	toWrap := tokenize(input)
-	wrapped := wrapLine(width, toWrap)
+	actual := wrapLine(width, toWrap)
 
 	expected := [][]twin.Cell{}
 	for _, wrappedLine := range wrappedLines {
 		expected = append(expected, tokenize(wrappedLine))
 	}
 
-	assertEqual(t, wrapped, expected)
+	if reflect.DeepEqual(actual, expected) {
+		return
+	}
+
+	t.Errorf("When wrapping <%s> at width %d:\n--Expected--\n%s\n\n--Actual--\n%s",
+		input, width, toString(expected), toString(actual))
 }
 
 func TestEnoughRoomNoWrapping(t *testing.T) {
@@ -72,6 +70,14 @@ func TestLeadingWrappedSpace(t *testing.T) {
 	assertWrap(t, "ab cd", 2, "ab", "cd")
 }
 
-// FIXME: Test word wrapping
+func TestWordWrap(t *testing.T) {
+	assertWrap(t, "abc 123", 8, "abc 123")
+	assertWrap(t, "abc 123", 7, "abc 123")
+	assertWrap(t, "abc 123", 6, "abc", "123")
+	assertWrap(t, "abc 123", 5, "abc", "123")
+	assertWrap(t, "abc 123", 4, "abc", "123")
+	assertWrap(t, "abc 123", 3, "abc", "123")
+	assertWrap(t, "abc 123", 2, "ab", "c", "12", "3")
+}
 
 // FIXME: Test wrapping on single dashes

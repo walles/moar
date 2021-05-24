@@ -20,7 +20,7 @@ func wrapLine(width int, line []twin.Cell) [][]twin.Cell {
 			firstPart = twin.TrimSpaceLeft(firstPart)
 		}
 
-		wrapped = append(wrapped, firstPart)
+		wrapped = append(wrapped, twin.TrimSpaceRight(firstPart))
 
 		line = twin.TrimSpaceLeft(line[width:])
 	}
@@ -32,7 +32,7 @@ func wrapLine(width int, line []twin.Cell) [][]twin.Cell {
 	}
 
 	if len(line) > 0 {
-		wrapped = append(wrapped, line)
+		wrapped = append(wrapped, twin.TrimSpaceRight(line))
 	}
 
 	return wrapped
