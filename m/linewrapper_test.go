@@ -80,4 +80,20 @@ func TestWordWrap(t *testing.T) {
 	assertWrap(t, "abc 123", 2, "ab", "c", "12", "3")
 }
 
-// FIXME: Test wrapping on single dashes
+func TestWordWrapUrl(t *testing.T) {
+	assertWrap(t, "http://apa/bepa/", 17, "http://apa/bepa/")
+	assertWrap(t, "http://apa/bepa/", 16, "http://apa/bepa/")
+	assertWrap(t, "http://apa/bepa/", 15, "http://apa/", "bepa/")
+	assertWrap(t, "http://apa/bepa/", 14, "http://apa/", "bepa/")
+	assertWrap(t, "http://apa/bepa/", 13, "http://apa/", "bepa/")
+	assertWrap(t, "http://apa/bepa/", 12, "http://apa/", "bepa/")
+	assertWrap(t, "http://apa/bepa/", 11, "http://apa/", "bepa/")
+	assertWrap(t, "http://apa/bepa/", 10, "http://apa", "/bepa/")
+	assertWrap(t, "http://apa/bepa/", 9, "http://ap", "a/bepa/")
+	assertWrap(t, "http://apa/bepa/", 8, "http://a", "pa/bepa/")
+	assertWrap(t, "http://apa/bepa/", 7, "http://", "apa/", "bepa/")
+	assertWrap(t, "http://apa/bepa/", 6, "http:/", "/apa/", "bepa/")
+	assertWrap(t, "http://apa/bepa/", 5, "http:", "//apa", "/bepa", "/")
+	assertWrap(t, "http://apa/bepa/", 4, "http", "://a", "pa/", "bepa", "/")
+	assertWrap(t, "http://apa/bepa/", 3, "htt", "p:/", "/ap", "a/", "bep", "a/")
+}

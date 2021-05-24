@@ -19,18 +19,23 @@ func getWrapWidth(line []twin.Cell, maxWrapWidth int) int {
 	// Find the last whitespace in the input. Since we want to break *before*
 	// whitespace, we loop through characters to the right of the current one.
 	for nextIndex := maxWrapWidth; nextIndex > 0; nextIndex-- {
-		char := line[nextIndex].Rune
-		if !unicode.IsSpace(char) {
-			// Want to break before whitespace, this is not it, keep looking
+		next := line[nextIndex].Rune
+		if unicode.IsSpace(next) && next != NO_BREAK_SPACE {
+			// Break-OK whitespace, cut before this one!
+			return nextIndex
+		}
+
+		if nextIndex < 2 {
+			// Can't check for single slashes
 			continue
 		}
 
-		if char == NO_BREAK_SPACE {
-			// Don't break at non-break whitespace
-			continue
+		// Break after single slashes, this is to enable breaking inside URLs / paths
+		current := line[nextIndex-1].Rune
+		previous := line[nextIndex-2].Rune
+		if previous != '/' && current == '/' && next != '/' {
+			return nextIndex
 		}
-
-		return nextIndex
 	}
 
 	// No breakpoint found, give up
