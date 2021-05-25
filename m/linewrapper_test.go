@@ -97,3 +97,12 @@ func TestWordWrapUrl(t *testing.T) {
 	assertWrap(t, "http://apa/bepa/", 4, "http", "://a", "pa/", "bepa", "/")
 	assertWrap(t, "http://apa/bepa/", 3, "htt", "p:/", "/ap", "a/", "bep", "a/")
 }
+
+func TestWordWrapMarkdownLink(t *testing.T) {
+	assertWrap(t, "[something](http://apa/bepa)", 13, "[something]", "(http://apa/", "bepa)")
+	assertWrap(t, "[something](http://apa/bepa)", 12, "[something]", "(http://apa/", "bepa)")
+	assertWrap(t, "[something](http://apa/bepa)", 11, "[something]", "(http://apa", "/bepa)")
+
+	// This doesn't look great, room for tuning!
+	assertWrap(t, "[something](http://apa/bepa)", 10, "[something", "]", "(http://ap", "a/bepa)")
+}

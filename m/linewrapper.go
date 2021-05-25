@@ -25,13 +25,18 @@ func getWrapWidth(line []twin.Cell, maxWrapWidth int) int {
 			return nextIndex
 		}
 
+		current := line[nextIndex-1].Rune
+		if current == ']' && next == '(' {
+			// Looks like the split in a Markdown link: [text](http://127.0.0.1)
+			return nextIndex
+		}
+
 		if nextIndex < 2 {
 			// Can't check for single slashes
 			continue
 		}
 
 		// Break after single slashes, this is to enable breaking inside URLs / paths
-		current := line[nextIndex-1].Rune
 		previous := line[nextIndex-2].Rune
 		if previous != '/' && current == '/' && next != '/' {
 			return nextIndex
