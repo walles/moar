@@ -50,7 +50,10 @@ func TestEnoughRoomNoWrapping(t *testing.T) {
 	assertWrap(t, "This is a test", 20, "This is a test")
 }
 
-func TestWrapEmpty(t *testing.T) {
+func TestWrapBlank(t *testing.T) {
+	assertWrap(t, "    ", 4, "")
+	assertWrap(t, "    ", 2, "")
+
 	assertWrap(t, "", 20, "")
 }
 

@@ -48,13 +48,13 @@ func getWrapWidth(line []twin.Cell, maxWrapWidth int) int {
 }
 
 func wrapLine(width int, line []twin.Cell) [][]twin.Cell {
-	if len(line) == 0 {
-		return [][]twin.Cell{{}}
-	}
-
 	// Trailing space risks showing up by itself on a line, which would just
 	// look weird.
 	line = twin.TrimSpaceRight(line)
+
+	if len(line) == 0 {
+		return [][]twin.Cell{{}}
+	}
 
 	wrapped := make([][]twin.Cell, 0, len(line)/width)
 	for len(line) > width {
