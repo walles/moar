@@ -12,7 +12,7 @@ func tokenize(input string) []twin.Cell {
 	return line.HighlightedTokens(nil)
 }
 
-func toString(cellLines [][]twin.Cell) string {
+func rowsToString(cellLines [][]twin.Cell) string {
 	returnMe := ""
 	for _, cellLine := range cellLines {
 		lineString := ""
@@ -43,7 +43,7 @@ func assertWrap(t *testing.T, input string, width int, wrappedLines ...string) {
 	}
 
 	t.Errorf("When wrapping <%s> at width %d:\n--Expected--\n%s\n\n--Actual--\n%s",
-		input, width, toString(expected), toString(actual))
+		input, width, rowsToString(expected), rowsToString(actual))
 }
 
 func TestEnoughRoomNoWrapping(t *testing.T) {

@@ -303,6 +303,44 @@ func TestFindFirstLineOneBasedAnsi(t *testing.T) {
 	assert.Check(t, *hitLine == 1)
 }
 
+// Converts a cell row to a plain string and removes trailing whitespace.
+func rowToString(row []twin.Cell) string {
+	rowString := ""
+	for _, cell := range row {
+		rowString += string(cell.Rune)
+	}
+
+	return strings.TrimRight(rowString, " ")
+}
+
+func TestScrollToBottomWrapNextToLastLine(t *testing.T) {
+	reader := NewReaderFromStream("",
+		strings.NewReader("first line\nline two will be wrapped\nhere's the last line"))
+	pager := NewPager(reader)
+	pager.WrapLongLines = true
+	pager.ShowLineNumbers = false
+
+	// Wait for reader to finish reading
+	<-reader.done
+
+	// This is what we're testing really
+	pager._ScrollToEnd()
+
+	// Heigh 3 = two lines of contents + one footer
+	screen := twin.NewFakeScreen(10, 3)
+
+	// Exit immediately
+	pager.Quit()
+
+	// Get contents onto our fake screen
+	pager.StartPaging(screen)
+	pager._Redraw("")
+
+	lastVisibleRow := screen.GetRow(1)
+	lastVisibleRowString := rowToString(lastVisibleRow)
+	assert.Equal(t, lastVisibleRowString, "last line")
+}
+
 func benchmarkSearch(b *testing.B, highlighted bool) {
 	// Pick a go file so we get something with highlighting
 	_, sourceFilename, _, ok := runtime.Caller(0)

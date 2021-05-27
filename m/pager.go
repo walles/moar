@@ -501,6 +501,10 @@ func removeLastChar(s string) string {
 	return s[:len(s)-size]
 }
 
+func (p *Pager) _ScrollToEnd() {
+	p.firstLineOneBased = p.reader.GetLineCount()
+}
+
 func (p *Pager) _OnSearchKey(key twin.KeyCode) {
 	switch key {
 	case twin.KeyEscape, twin.KeyEnter:
@@ -658,7 +662,7 @@ func (p *Pager) _OnRune(char rune) {
 		p.firstLineOneBased = 1
 
 	case '>', 'G':
-		p.firstLineOneBased = p.reader.GetLineCount()
+		p._ScrollToEnd()
 
 	case 'f', ' ':
 		_, height := p.screen.Size()
