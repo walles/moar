@@ -58,9 +58,18 @@ func (sl *ScreenLines) getScreenLines(searchPattern *regexp.Regexp) [][]twin.Cel
 
 			newLine := make([]twin.Cell, 0, sl.width)
 			newLine = append(newLine, createLineNumberPrefix(visibleLineNumber, numberPrefixLength)...)
-			newLine = append(newLine, inputLinePart...)
+			if len(inputLinePart) > sl.leftColumnZeroBased {
+				newLine = append(newLine, inputLinePart[sl.leftColumnZeroBased:]...)
+			}
 
+			// Add scroll left indicator
 			if sl.leftColumnZeroBased > 0 && len(inputLinePart) > 0 {
+				if len(newLine) == 0 {
+					// Don't panic on short lines, this new Cell will be
+					// overwritten with '<' right after this if statement
+					newLine = append(newLine, twin.Cell{})
+				}
+
 				// Add can-scroll-left marker
 				newLine[0] = twin.Cell{
 					Rune:  '<',
@@ -68,6 +77,7 @@ func (sl *ScreenLines) getScreenLines(searchPattern *regexp.Regexp) [][]twin.Cel
 				}
 			}
 
+			// Add scroll right indicator
 			if len(inputLinePart)+numberPrefixLength > sl.width {
 				newLine[sl.width-1] = twin.Cell{
 					Rune:  '>',
