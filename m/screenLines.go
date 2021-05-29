@@ -56,36 +56,8 @@ func (sl *ScreenLines) getScreenLines(searchPattern *regexp.Regexp) [][]twin.Cel
 				visibleLineNumber = nil
 			}
 
-			newLine := make([]twin.Cell, 0, sl.width)
-			newLine = append(newLine, createLineNumberPrefix(visibleLineNumber, numberPrefixLength)...)
-			if len(inputLinePart) > sl.leftColumnZeroBased {
-				newLine = append(newLine, inputLinePart[sl.leftColumnZeroBased:]...)
-			}
-
-			// Add scroll left indicator
-			if sl.leftColumnZeroBased > 0 && len(inputLinePart) > 0 {
-				if len(newLine) == 0 {
-					// Don't panic on short lines, this new Cell will be
-					// overwritten with '<' right after this if statement
-					newLine = append(newLine, twin.Cell{})
-				}
-
-				// Add can-scroll-left marker
-				newLine[0] = twin.Cell{
-					Rune:  '<',
-					Style: twin.StyleDefault.WithAttr(twin.AttrReverse),
-				}
-			}
-
-			// Add scroll right indicator
-			if len(inputLinePart)+numberPrefixLength > sl.width {
-				newLine[sl.width-1] = twin.Cell{
-					Rune:  '>',
-					Style: twin.StyleDefault.WithAttr(twin.AttrReverse),
-				}
-			}
-
-			returnLines = append(returnLines, newLine)
+			returnLines = append(returnLines,
+				sl.createScreenLine(visibleLineNumber, numberPrefixLength, inputLinePart))
 
 			if len(returnLines) >= sl.height {
 				// We have shown all the lines that can fit on the screen
@@ -100,6 +72,39 @@ func (sl *ScreenLines) getScreenLines(searchPattern *regexp.Regexp) [][]twin.Cel
 	}
 
 	return returnLines
+}
+
+func (sl *ScreenLines) createScreenLine(lineNumberToShow *int, numberPrefixLength int, contents []twin.Cell) []twin.Cell {
+	newLine := make([]twin.Cell, 0, sl.width)
+	newLine = append(newLine, createLineNumberPrefix(lineNumberToShow, numberPrefixLength)...)
+	if len(contents) > sl.leftColumnZeroBased {
+		newLine = append(newLine, contents[sl.leftColumnZeroBased:]...)
+	}
+
+	// Add scroll left indicator
+	if sl.leftColumnZeroBased > 0 && len(contents) > 0 {
+		if len(newLine) == 0 {
+			// Don't panic on short lines, this new Cell will be
+			// overwritten with '<' right after this if statement
+			newLine = append(newLine, twin.Cell{})
+		}
+
+		// Add can-scroll-left marker
+		newLine[0] = twin.Cell{
+			Rune:  '<',
+			Style: twin.StyleDefault.WithAttr(twin.AttrReverse),
+		}
+	}
+
+	// Add scroll right indicator
+	if len(contents)+numberPrefixLength > sl.width {
+		newLine[sl.width-1] = twin.Cell{
+			Rune:  '>',
+			Style: twin.StyleDefault.WithAttr(twin.AttrReverse),
+		}
+	}
+
+	return newLine
 }
 
 // Generate a line number prefix. Can be empty or all-whitespace depending on parameters.
