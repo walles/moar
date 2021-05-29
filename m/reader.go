@@ -37,8 +37,8 @@ type Reader struct {
 	moreLinesAdded   chan bool
 }
 
-// Lines contains a number of lines from the reader, plus metadata
-type Lines struct {
+// InputLines contains a number of lines from the reader, plus metadata
+type InputLines struct {
 	lines []*Line
 
 	// One-based line number of the first line returned
@@ -489,19 +489,19 @@ func (r *Reader) GetLine(lineNumberOneBased int) *Line {
 }
 
 // GetLines gets the indicated lines from the input
-func (r *Reader) GetLines(firstLineOneBased int, wantedLineCount int) *Lines {
+func (r *Reader) GetLines(firstLineOneBased int, wantedLineCount int) *InputLines {
 	r.lock.Lock()
 	defer r.lock.Unlock()
 	return r._GetLinesUnlocked(firstLineOneBased, wantedLineCount)
 }
 
-func (r *Reader) _GetLinesUnlocked(firstLineOneBased int, wantedLineCount int) *Lines {
+func (r *Reader) _GetLinesUnlocked(firstLineOneBased int, wantedLineCount int) *InputLines {
 	if firstLineOneBased < 1 {
 		firstLineOneBased = 1
 	}
 
 	if len(r.lines) == 0 {
-		return &Lines{
+		return &InputLines{
 			lines: nil,
 
 			// The line number set here won't matter, we'll clip it anyway when we get it back
@@ -530,7 +530,7 @@ func (r *Reader) _GetLinesUnlocked(firstLineOneBased int, wantedLineCount int) *
 		return r._GetLinesUnlocked(firstLineOneBased, wantedLineCount)
 	}
 
-	return &Lines{
+	return &InputLines{
 		lines:             r.lines[firstLineZeroBased : lastLineZeroBased+1],
 		firstLineOneBased: firstLineOneBased,
 		statusText:        r._CreateStatusUnlocked(firstLineOneBased, lastLineZeroBased+1),

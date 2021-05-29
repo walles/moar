@@ -117,70 +117,6 @@ func NewPager(r *Reader) *Pager {
 	}
 }
 
-func (p *Pager) addLine(fileLineNumber *int, numberPrefixLength int, screenLineNumber int, cells []twin.Cell) {
-	screenWidth, _ := p.screen.Size()
-
-	lineNumberString := ""
-	if numberPrefixLength > 0 && fileLineNumber != nil {
-		lineNumberString = formatNumber(uint(*fileLineNumber))
-		lineNumberString = fmt.Sprintf("%*s", numberPrefixLength-1, lineNumberString)
-		if len(lineNumberString) > numberPrefixLength {
-			panic(fmt.Errorf(
-				"lineNumberString <%s> longer than numberPrefixLength %d",
-				lineNumberString, numberPrefixLength))
-		}
-	}
-
-	for column, digit := range lineNumberString {
-		if column >= numberPrefixLength {
-			break
-		}
-
-		p.screen.SetCell(column, screenLineNumber, twin.NewCell(digit, _numberStyle))
-	}
-
-	screenCells := createScreenLine(p.leftColumnZeroBased, screenWidth-numberPrefixLength, cells)
-	for column, token := range screenCells {
-		p.screen.SetCell(column+numberPrefixLength, screenLineNumber, token)
-	}
-}
-
-func createScreenLine(
-	stringIndexAtColumnZero int,
-	screenColumnsCount int,
-	cells []twin.Cell,
-) []twin.Cell {
-	var returnMe []twin.Cell
-	if stringIndexAtColumnZero > 0 {
-		// Indicate that it's possible to scroll left
-		returnMe = append(returnMe, twin.Cell{
-			Rune:  '<',
-			Style: twin.StyleDefault.WithAttr(twin.AttrReverse),
-		})
-	}
-
-	if stringIndexAtColumnZero >= len(cells) {
-		// Nothing (more) to display, never mind
-		return returnMe
-	}
-
-	for _, cell := range cells[stringIndexAtColumnZero:] {
-		if len(returnMe) >= screenColumnsCount {
-			// We are trying to add a character to the right of the screen.
-			// Indicate that this line continues to the right.
-			returnMe[len(returnMe)-1] = twin.Cell{
-				Rune:  '>',
-				Style: twin.StyleDefault.WithAttr(twin.AttrReverse),
-			}
-			break
-		}
-
-		returnMe = append(returnMe, cell)
-	}
-
-	return returnMe
-}
-
 func (p *Pager) _AddSearchFooter() {
 	_, height := p.screen.Size()
 
@@ -192,95 +128,6 @@ func (p *Pager) _AddSearchFooter() {
 
 	// Add a cursor
 	p.screen.SetCell(pos, height-1, twin.NewCell(' ', twin.StyleDefault.WithAttr(twin.AttrReverse)))
-}
-
-func (p *Pager) _AddLines(spinner string) {
-	width, height := p.screen.Size()
-	wantedLineCount := height - 1
-
-	lines := p.reader.GetLines(p.firstLineOneBased, wantedLineCount)
-
-	// If we're asking for past-the-end lines, the Reader will clip for us,
-	// and we should adapt to that. Otherwise if you scroll 100 lines past
-	// the end, you'll then have to scroll 100 lines up again before the
-	// display starts scrolling visibly.
-	p.firstLineOneBased = lines.firstLineOneBased
-
-	// Count the length of the last line number
-	//
-	// Offsets figured out through trial-and-error...
-	lastLineOneBased := lines.firstLineOneBased + len(lines.lines) - 1
-	numberPrefixLength := len(formatNumber(uint(lastLineOneBased))) + 1
-	if numberPrefixLength < 4 {
-		// 4 = space for 3 digits followed by one whitespace
-		//
-		// https://github.com/walles/moar/issues/38
-		numberPrefixLength = 4
-	}
-
-	if !p.ShowLineNumbers {
-		numberPrefixLength = 0
-	}
-
-	screenLineNumber := 0
-	screenFull := false
-	for lineIndex, line := range lines.lines {
-		lineNumber := p.firstLineOneBased + lineIndex
-
-		highlighted := line.HighlightedTokens(p.searchPattern)
-		var wrapped [][]twin.Cell
-		if p.WrapLongLines {
-			wrapped = wrapLine(width-numberPrefixLength, highlighted)
-		} else {
-			// All on one line
-			wrapped = [][]twin.Cell{highlighted}
-		}
-
-		for wrapIndex, linePart := range wrapped {
-			visibleLineNumber := &lineNumber
-			if wrapIndex > 0 {
-				visibleLineNumber = nil
-			}
-			p.addLine(visibleLineNumber, numberPrefixLength, screenLineNumber, linePart)
-			screenLineNumber++
-
-			if screenLineNumber >= height-1 {
-				// We have shown all the lines that can fit on the screen
-				screenFull = true
-				break
-			}
-		}
-
-		if screenFull {
-			break
-		}
-	}
-
-	eofSpinner := spinner
-	if eofSpinner == "" {
-		// This happens when we're done
-		eofSpinner = "---"
-	}
-	spinnerLine := cellsFromString(_EofMarkerFormat + eofSpinner)
-	p.addLine(nil, 0, screenLineNumber, spinnerLine)
-
-	switch p.mode {
-	case _Searching:
-		p._AddSearchFooter()
-
-	case _NotFound:
-		p._SetFooter("Not found: " + p.searchString)
-
-	case _Viewing:
-		helpText := "Press ESC / q to exit, '/' to search, '?' for help"
-		if p.isShowingHelp {
-			helpText = "Press ESC / q to exit help, '/' to search"
-		}
-		p._SetFooter(lines.statusText + spinner + "  " + helpText)
-
-	default:
-		panic(fmt.Sprint("Unsupported pager mode: ", p.mode))
-	}
 }
 
 func (p *Pager) _SetFooter(footer string) {
@@ -301,7 +148,63 @@ func (p *Pager) _SetFooter(footer string) {
 func (p *Pager) _Redraw(spinner string) {
 	p.screen.Clear()
 
-	p._AddLines(spinner)
+	width, height := p.screen.Size()
+	wantedLineCount := height - 1
+
+	inputLines := p.reader.GetLines(p.firstLineOneBased, wantedLineCount)
+	screenLines := ScreenLines{
+		inputLines:             inputLines,
+		firstInputLineOneBased: p.firstLineOneBased,
+		leftColumnZeroBased:    p.leftColumnZeroBased,
+
+		width:  width,
+		height: wantedLineCount,
+
+		showLineNumbers: p.ShowLineNumbers,
+		wrapLongLines:   p.WrapLongLines,
+	}
+
+	// If we're asking for past-the-end lines, the Reader will clip for us,
+	// and we should adapt to that. Otherwise if you scroll 100 lines past
+	// the end, you'll then have to scroll 100 lines up again before the
+	// display starts scrolling visibly.
+	p.firstLineOneBased = screenLines.firstLineOneBased()
+
+	var screenLineNumber int
+	for lineNumber, row := range screenLines.getScreenLines(p.searchPattern) {
+		screenLineNumber = lineNumber
+		for column, cell := range row {
+			p.screen.SetCell(column, screenLineNumber, cell)
+		}
+	}
+
+	eofSpinner := spinner
+	if eofSpinner == "" {
+		// This happens when we're done
+		eofSpinner = "---"
+	}
+	spinnerLine := cellsFromString(_EofMarkerFormat + eofSpinner)
+	for column, cell := range spinnerLine {
+		p.screen.SetCell(column, screenLineNumber+1, cell)
+	}
+
+	switch p.mode {
+	case _Searching:
+		p._AddSearchFooter()
+
+	case _NotFound:
+		p._SetFooter("Not found: " + p.searchString)
+
+	case _Viewing:
+		helpText := "Press ESC / q to exit, '/' to search, '?' for help"
+		if p.isShowingHelp {
+			helpText = "Press ESC / q to exit help, '/' to search"
+		}
+		p._SetFooter(inputLines.statusText + spinner + "  " + helpText)
+
+	default:
+		panic(fmt.Sprint("Unsupported pager mode: ", p.mode))
+	}
 
 	p.screen.Show()
 }
@@ -519,12 +422,12 @@ func (p *Pager) _OnSearchKey(key twin.KeyCode) {
 		p._UpdateSearchPattern()
 
 	case twin.KeyUp:
-		// Clipping is done in _AddLines()
+		// Clipping is done in _Redraw()
 		p.firstLineOneBased--
 		p.mode = _Viewing
 
 	case twin.KeyDown:
-		// Clipping is done in _AddLines()
+		// Clipping is done in _Redraw()
 		p.firstLineOneBased++
 		p.mode = _Viewing
 
@@ -579,11 +482,11 @@ func (p *Pager) _OnKey(keyCode twin.KeyCode) {
 		p.Quit()
 
 	case twin.KeyUp:
-		// Clipping is done in _AddLines()
+		// Clipping is done in _Redraw()
 		p.firstLineOneBased--
 
 	case twin.KeyDown, twin.KeyEnter:
-		// Clipping is done in _AddLines()
+		// Clipping is done in _Redraw()
 		p.firstLineOneBased++
 
 	case twin.KeyRight:
@@ -643,11 +546,11 @@ func (p *Pager) _OnRune(char rune) {
 		}
 
 	case 'k', 'y':
-		// Clipping is done in _AddLines()
+		// Clipping is done in _Redraw()
 		p.firstLineOneBased--
 
 	case 'j', 'e':
-		// Clipping is done in _AddLines()
+		// Clipping is done in _Redraw()
 		p.firstLineOneBased++
 
 	case 'l':
@@ -776,11 +679,11 @@ func (p *Pager) StartPaging(screen twin.Screen) {
 			log.Tracef("Handling mouse event %d...", event.Buttons())
 			switch event.Buttons() {
 			case twin.MouseWheelUp:
-				// Clipping is done in _AddLines()
+				// Clipping is done in _Redraw()
 				p.firstLineOneBased--
 
 			case twin.MouseWheelDown:
-				// Clipping is done in _AddLines()
+				// Clipping is done in _Redraw()
 				p.firstLineOneBased++
 
 			case twin.MouseWheelLeft:
