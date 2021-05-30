@@ -103,7 +103,7 @@ func (sl *ScreenLines) createScreenLine(lineNumberToShow *int, numberPrefixLengt
 	}
 
 	// Add scroll right indicator
-	if len(contents)+numberPrefixLength > sl.width {
+	if len(contents)+numberPrefixLength-sl.leftColumnZeroBased > sl.width {
 		newLine[sl.width-1] = twin.Cell{
 			Rune:  '>',
 			Style: twin.StyleDefault.WithAttr(twin.AttrReverse),
