@@ -164,14 +164,10 @@ func (p *Pager) _Redraw(spinner string) {
 		wrapLongLines:   p.WrapLongLines,
 	}
 
-	// If we're asking for past-the-end lines, the Reader will clip for us,
-	// and we should adapt to that. Otherwise if you scroll 100 lines past
-	// the end, you'll then have to scroll 100 lines up again before the
-	// display starts scrolling visibly.
-	p.firstLineOneBased = screenLines.firstLineOneBased()
-
 	var screenLineNumber int
-	for lineNumber, row := range screenLines.getScreenLines(p.searchPattern) {
+	var renderedScreenLines [][]twin.Cell
+	renderedScreenLines, p.firstLineOneBased = screenLines.renderScreenLines(p.searchPattern)
+	for lineNumber, row := range renderedScreenLines {
 		screenLineNumber = lineNumber
 		for column, cell := range row {
 			p.screen.SetCell(column, screenLineNumber, cell)

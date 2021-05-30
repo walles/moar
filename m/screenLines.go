@@ -19,7 +19,11 @@ type ScreenLines struct {
 	wrapLongLines   bool
 }
 
-func (sl *ScreenLines) getScreenLines(searchPattern *regexp.Regexp) [][]twin.Cell {
+// Render screen lines into an array of lines consisting of Cells.
+//
+// The second return value is the same as firstInputLineOneBased, but clipped if
+// needed so that the end of the input is visible.
+func (sl *ScreenLines) renderScreenLines(searchPattern *regexp.Regexp) ([][]twin.Cell, int) {
 	// Count the length of the last line number
 	//
 	// Offsets figured out through trial-and-error...
@@ -39,7 +43,7 @@ func (sl *ScreenLines) getScreenLines(searchPattern *regexp.Regexp) [][]twin.Cel
 	returnLines := make([][]twin.Cell, 0, sl.height)
 	screenFull := false
 	for lineIndex, line := range sl.inputLines.lines {
-		lineNumber := sl.firstLineOneBased() + lineIndex
+		lineNumber := sl.inputLines.firstLineOneBased + lineIndex
 
 		highlighted := line.HighlightedTokens(searchPattern)
 		var wrapped [][]twin.Cell
@@ -71,7 +75,9 @@ func (sl *ScreenLines) getScreenLines(searchPattern *regexp.Regexp) [][]twin.Cel
 		}
 	}
 
-	return returnLines
+	// FIXME: We can't just use firstInputLineOneBased, in the presence of
+	// wrapped lines that number can be too low.
+	return returnLines, sl.firstInputLineOneBased
 }
 
 func (sl *ScreenLines) createScreenLine(lineNumberToShow *int, numberPrefixLength int, contents []twin.Cell) []twin.Cell {
@@ -144,9 +150,4 @@ func createLineNumberPrefix(fileLineNumber *int, numberPrefixLength int) []twin.
 	}
 
 	return lineNumberPrefix
-}
-
-func (sl *ScreenLines) firstLineOneBased() int {
-	// FIXME: This is wrong when wrapping is enabled
-	return sl.inputLines.firstLineOneBased
 }
