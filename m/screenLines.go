@@ -23,9 +23,27 @@ type ScreenLines struct {
 
 // Render screen lines into an array of lines consisting of Cells.
 //
-// The second return value is the same as firstInputLineOneBased, but clipped if
-// needed so that the end of the input is visible.
+// The second return value is the same as firstInputLineOneBased, but decreased
+// if needed so that the end of the input is visible.
 func (sl *ScreenLines) renderScreenLines() ([][]twin.Cell, int) {
+	for firstInputLineOneBased := sl.firstInputLineOneBased; firstInputLineOneBased >= sl.inputLines.firstLineOneBased; firstInputLineOneBased-- {
+		rendered := sl.tryRenderScreenLines(firstInputLineOneBased)
+		if len(rendered) == sl.height {
+			// We managed to fill the whole screen
+			return rendered, firstInputLineOneBased
+		}
+	}
+
+	if sl.inputLines.firstLineOneBased == 1 {
+		// We're at the top of the input document, can't go up any more, this is fine
+		return sl.tryRenderScreenLines(1), 1
+	}
+
+	panic(fmt.Errorf("screen lines rendering failed, first 1-based input line available was %d", sl.inputLines.firstLineOneBased))
+}
+
+// Render screen lines into an array of lines consisting of Cells.
+func (sl *ScreenLines) tryRenderScreenLines(firstInputLineOneBased int) [][]twin.Cell {
 	// Count the length of the last line number
 	//
 	// Offsets figured out through trial-and-error...
@@ -44,8 +62,13 @@ func (sl *ScreenLines) renderScreenLines() ([][]twin.Cell, int) {
 
 	returnLines := make([][]twin.Cell, 0, sl.height)
 	screenFull := false
+
 	for lineIndex, line := range sl.inputLines.lines {
 		lineNumber := sl.inputLines.firstLineOneBased + lineIndex
+		if lineNumber < firstInputLineOneBased {
+			// Skip this one, too early
+			continue
+		}
 
 		highlighted := line.HighlightedTokens(sl.searchPattern)
 		var wrapped [][]twin.Cell
@@ -77,9 +100,7 @@ func (sl *ScreenLines) renderScreenLines() ([][]twin.Cell, int) {
 		}
 	}
 
-	// FIXME: We can't just use firstInputLineOneBased, in the presence of
-	// wrapped lines that number can be too low.
-	return returnLines, sl.firstInputLineOneBased
+	return returnLines
 }
 
 func (sl *ScreenLines) createScreenLine(lineNumberToShow *int, numberPrefixLength int, contents []twin.Cell) []twin.Cell {
