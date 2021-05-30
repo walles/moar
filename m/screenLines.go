@@ -77,8 +77,14 @@ func (sl *ScreenLines) getScreenLines(searchPattern *regexp.Regexp) [][]twin.Cel
 func (sl *ScreenLines) createScreenLine(lineNumberToShow *int, numberPrefixLength int, contents []twin.Cell) []twin.Cell {
 	newLine := make([]twin.Cell, 0, sl.width)
 	newLine = append(newLine, createLineNumberPrefix(lineNumberToShow, numberPrefixLength)...)
-	if len(contents) > sl.leftColumnZeroBased {
-		newLine = append(newLine, contents[sl.leftColumnZeroBased:]...)
+
+	startColumn := sl.leftColumnZeroBased
+	if startColumn < len(contents) {
+		endColumn := sl.leftColumnZeroBased + (sl.width - numberPrefixLength)
+		if endColumn > len(contents) {
+			endColumn = len(contents)
+		}
+		newLine = append(newLine, contents[startColumn:endColumn]...)
 	}
 
 	// Add scroll left indicator
