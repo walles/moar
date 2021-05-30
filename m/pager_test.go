@@ -230,53 +230,6 @@ func TestToPattern(t *testing.T) {
 	assert.Assert(t, toPattern(")g").MatchString(")g"))
 }
 
-func assertTokenRangesEqual(t *testing.T, actual []twin.Cell, expected []twin.Cell) {
-	if len(actual) != len(expected) {
-		t.Errorf("String lengths mismatch; expected %d but got %d",
-			len(expected), len(actual))
-	}
-
-	for pos, expectedToken := range expected {
-		if pos >= len(expected) || pos >= len(actual) {
-			break
-		}
-
-		actualToken := actual[pos]
-		if actualToken.Rune == expectedToken.Rune && actualToken.Style == expectedToken.Style {
-			// Actual == Expected, keep checking
-			continue
-		}
-
-		t.Errorf("At (0-based) position %d: Expected %v, got %v", pos, expectedToken, actualToken)
-	}
-}
-
-func TestCreateScreenLineBase(t *testing.T) {
-	line := cellsFromString("")
-	screenLine := createScreenLine(0, 3, line)
-	assert.Assert(t, len(screenLine) == 0)
-}
-
-func TestCreateScreenLineOverflowRight(t *testing.T) {
-	line := cellsFromString("012345")
-	screenLine := createScreenLine(0, 3, line)
-	assertTokenRangesEqual(t, screenLine, []twin.Cell{
-		twin.NewCell('0', twin.StyleDefault),
-		twin.NewCell('1', twin.StyleDefault),
-		twin.NewCell('>', twin.StyleDefault.WithAttr(twin.AttrReverse)),
-	})
-}
-
-func TestCreateScreenLineUnderflowLeft(t *testing.T) {
-	line := cellsFromString("012")
-	screenLine := createScreenLine(1, 3, line)
-	assertTokenRangesEqual(t, screenLine, []twin.Cell{
-		twin.NewCell('<', twin.StyleDefault.WithAttr(twin.AttrReverse)),
-		twin.NewCell('1', twin.StyleDefault),
-		twin.NewCell('2', twin.StyleDefault),
-	})
-}
-
 func TestFindFirstLineOneBasedSimple(t *testing.T) {
 	reader := NewReaderFromStream("", strings.NewReader("AB"))
 	pager := NewPager(reader)
@@ -301,6 +254,16 @@ func TestFindFirstLineOneBasedAnsi(t *testing.T) {
 
 	hitLine := pager._FindFirstHitLineOneBased(1, false)
 	assert.Check(t, *hitLine == 1)
+}
+
+// Converts a cell row to a plain string and removes trailing whitespace.
+func rowToString(row []twin.Cell) string {
+	rowString := ""
+	for _, cell := range row {
+		rowString += string(cell.Rune)
+	}
+
+	return strings.TrimRight(rowString, " ")
 }
 
 func benchmarkSearch(b *testing.B, highlighted bool) {

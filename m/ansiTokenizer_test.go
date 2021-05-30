@@ -3,7 +3,6 @@ package m
 import (
 	"fmt"
 	"os"
-	"regexp"
 	"strings"
 	"testing"
 	"unicode"
@@ -98,36 +97,6 @@ func TestTokenize(t *testing.T) {
 			}
 		}
 	}
-}
-
-func TestHighlightSearchHit(t *testing.T) {
-	pattern, err := regexp.Compile("b")
-	if err != nil {
-		panic(err)
-	}
-
-	line := NewLine("abc")
-	screenLine := createScreenLine(0, 3, line.HighlightedTokens(pattern))
-	assertTokenRangesEqual(t, screenLine, []twin.Cell{
-		twin.NewCell('a', twin.StyleDefault),
-		twin.NewCell('b', twin.StyleDefault.WithAttr(twin.AttrReverse)),
-		twin.NewCell('c', twin.StyleDefault),
-	})
-}
-
-func TestHighlightUtf8SearchHit(t *testing.T) {
-	pattern, err := regexp.Compile("ä")
-	if err != nil {
-		panic(err)
-	}
-
-	line := NewLine("åäö")
-	screenLine := createScreenLine(0, 3, line.HighlightedTokens(pattern))
-	assertTokenRangesEqual(t, screenLine, []twin.Cell{
-		twin.NewCell('å', twin.StyleDefault),
-		twin.NewCell('ä', twin.StyleDefault.WithAttr(twin.AttrReverse)),
-		twin.NewCell('ö', twin.StyleDefault),
-	})
 }
 
 func TestUnderline(t *testing.T) {
