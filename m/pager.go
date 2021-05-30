@@ -160,13 +160,15 @@ func (p *Pager) _Redraw(spinner string) {
 		width:  width,
 		height: wantedLineCount,
 
+		searchPattern: p.searchPattern,
+
 		showLineNumbers: p.ShowLineNumbers,
 		wrapLongLines:   p.WrapLongLines,
 	}
 
 	var screenLineNumber int
 	var renderedScreenLines [][]twin.Cell
-	renderedScreenLines, p.firstLineOneBased = screenLines.renderScreenLines(p.searchPattern)
+	renderedScreenLines, p.firstLineOneBased = screenLines.renderScreenLines()
 	for lineNumber, row := range renderedScreenLines {
 		screenLineNumber = lineNumber
 		for column, cell := range row {

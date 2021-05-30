@@ -12,8 +12,10 @@ type ScreenLines struct {
 	firstInputLineOneBased int
 	leftColumnZeroBased    int
 
-	width  int
-	height int
+	width  int // Display width
+	height int // Display height
+
+	searchPattern *regexp.Regexp
 
 	showLineNumbers bool
 	wrapLongLines   bool
@@ -23,7 +25,7 @@ type ScreenLines struct {
 //
 // The second return value is the same as firstInputLineOneBased, but clipped if
 // needed so that the end of the input is visible.
-func (sl *ScreenLines) renderScreenLines(searchPattern *regexp.Regexp) ([][]twin.Cell, int) {
+func (sl *ScreenLines) renderScreenLines() ([][]twin.Cell, int) {
 	// Count the length of the last line number
 	//
 	// Offsets figured out through trial-and-error...
@@ -45,7 +47,7 @@ func (sl *ScreenLines) renderScreenLines(searchPattern *regexp.Regexp) ([][]twin
 	for lineIndex, line := range sl.inputLines.lines {
 		lineNumber := sl.inputLines.firstLineOneBased + lineIndex
 
-		highlighted := line.HighlightedTokens(searchPattern)
+		highlighted := line.HighlightedTokens(sl.searchPattern)
 		var wrapped [][]twin.Cell
 		if sl.wrapLongLines {
 			wrapped = wrapLine(sl.width-numberPrefixLength, highlighted)
