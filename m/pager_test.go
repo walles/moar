@@ -294,6 +294,34 @@ func TestScrollToBottomWrapNextToLastLine(t *testing.T) {
 	assert.Equal(t, lastVisibleRowString, "last line")
 }
 
+func TestScrollToBottomWrapLastLine(t *testing.T) {
+	reader := NewReaderFromStream("",
+		strings.NewReader("this line will be wrapped into four"))
+	pager := NewPager(reader)
+	pager.WrapLongLines = true
+	pager.ShowLineNumbers = false
+
+	// Wait for reader to finish reading
+	<-reader.done
+
+	// This is what we're testing really
+	pager._ScrollToEnd()
+
+	// Heigh 3 = two lines of contents + one footer
+	screen := twin.NewFakeScreen(10, 3)
+
+	// Exit immediately
+	pager.Quit()
+
+	// Get contents onto our fake screen
+	pager.StartPaging(screen)
+	pager._Redraw("")
+
+	lastVisibleRow := screen.GetRow(1)
+	lastVisibleRowString := rowToString(lastVisibleRow)
+	assert.Equal(t, lastVisibleRowString, "into four")
+}
+
 func benchmarkSearch(b *testing.B, highlighted bool) {
 	// Pick a go file so we get something with highlighting
 	_, sourceFilename, _, ok := runtime.Caller(0)
