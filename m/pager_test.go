@@ -59,6 +59,15 @@ func TestFgColorRendering(t *testing.T) {
 	}
 }
 
+func TestPageEmpty(t *testing.T) {
+	reader := NewReaderFromStream("", strings.NewReader(""))
+
+	firstRowCells := startPaging(t, reader).GetRow(0)
+
+	// "---" is the eofSpinner of pager.go
+	assert.Equal(t, "---", rowToString(firstRowCells))
+}
+
 func TestBrokenUtf8(t *testing.T) {
 	// The broken UTF8 character in the middle is based on "©" = 0xc2a9
 	reader := NewReaderFromStream("", strings.NewReader("abc\xc2def"))

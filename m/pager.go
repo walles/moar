@@ -166,13 +166,13 @@ func (p *Pager) _Redraw(spinner string) {
 		wrapLongLines:   p.WrapLongLines,
 	}
 
-	var screenLineNumber int
+	lastUpdatedScreenLineNumber := -1
 	var renderedScreenLines [][]twin.Cell
 	renderedScreenLines, p.firstLineOneBased = screenLines.renderScreenLines()
 	for lineNumber, row := range renderedScreenLines {
-		screenLineNumber = lineNumber
+		lastUpdatedScreenLineNumber = lineNumber
 		for column, cell := range row {
-			p.screen.SetCell(column, screenLineNumber, cell)
+			p.screen.SetCell(column, lastUpdatedScreenLineNumber, cell)
 		}
 	}
 
@@ -183,7 +183,7 @@ func (p *Pager) _Redraw(spinner string) {
 	}
 	spinnerLine := cellsFromString(_EofMarkerFormat + eofSpinner)
 	for column, cell := range spinnerLine {
-		p.screen.SetCell(column, screenLineNumber+1, cell)
+		p.screen.SetCell(column, lastUpdatedScreenLineNumber+1, cell)
 	}
 
 	switch p.mode {
