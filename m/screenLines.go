@@ -26,6 +26,10 @@ type ScreenLines struct {
 // The second return value is the same as firstInputLineOneBased, but decreased
 // if needed so that the end of the input is visible.
 func (sl *ScreenLines) renderScreenLines() ([][]twin.Cell, int) {
+	if sl.inputLines.lines == nil {
+		return [][]twin.Cell{}, 0
+	}
+
 	for firstInputLineOneBased := sl.firstInputLineOneBased; firstInputLineOneBased >= sl.inputLines.firstLineOneBased; firstInputLineOneBased-- {
 		rendered := sl.tryRenderScreenLines(firstInputLineOneBased)
 		if len(rendered) == sl.height {
