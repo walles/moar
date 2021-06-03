@@ -21,33 +21,95 @@ type ScreenLines struct {
 	wrapLongLines   bool
 }
 
+type RenderedLine struct {
+	inputLineOneBased int
+
+	// If an input line has been wrapped into two, the part on the second line
+	// will have a wrapIndex of 1.
+	wrapIndex int
+
+	cells []twin.Cell
+}
+
 // Render screen lines into an array of lines consisting of Cells.
 //
 // The second return value is the same as firstInputLineOneBased, but decreased
 // if needed so that the end of the input is visible.
 func (sl *ScreenLines) renderScreenLines() ([][]twin.Cell, int) {
 	if sl.inputLines.lines == nil {
+		// Empty input, empty output
 		return [][]twin.Cell{}, 0
 	}
 
-	for firstInputLineOneBased := sl.firstInputLineOneBased; firstInputLineOneBased >= sl.inputLines.firstLineOneBased; firstInputLineOneBased-- {
-		rendered := sl.tryRenderScreenLines(firstInputLineOneBased)
-		if len(rendered) == sl.height {
-			// We managed to fill the whole screen
-			return rendered, firstInputLineOneBased
+	if sl.firstInputLineOneBased < 1 {
+		sl.firstInputLineOneBased = 1
+	}
+
+	allPossibleLines := sl.renderAllLines()
+
+	// Find which index in allPossibleLines the user wants to see at the top of
+	// the screen
+	firstVisibleIndex := -1 // Not found
+	for index, line := range allPossibleLines {
+		if line.inputLineOneBased == sl.firstInputLineOneBased {
+			firstVisibleIndex = index
+			break
 		}
 	}
-
-	if sl.inputLines.firstLineOneBased == 1 {
-		// We're at the top of the input document, can't go up any more, this is fine
-		return sl.tryRenderScreenLines(1), 1
+	if firstVisibleIndex == -1 {
+		panic(fmt.Errorf("firstInputLineOneBased %d not found in allPossibleLines size %d",
+			sl.firstInputLineOneBased, len(allPossibleLines)))
 	}
 
-	panic(fmt.Errorf("screen lines rendering failed, first 1-based input line available was %d", sl.inputLines.firstLineOneBased))
+	// Ensure the firstVisibleIndex is on an input line boundary, we don't
+	// support by-screen-line positioning yet!
+	for allPossibleLines[firstVisibleIndex].wrapIndex != 0 {
+		firstVisibleIndex--
+	}
+
+	lastVisibleIndex := firstVisibleIndex + sl.height - 1
+	if lastVisibleIndex < len(allPossibleLines) {
+		// Screen has enough room for everything, return everything
+		return sl.toScreenLinesArray(allPossibleLines, firstVisibleIndex)
+	}
+
+	// We seem to be too far down, clip!
+	overshoot := 1 + lastVisibleIndex - len(allPossibleLines)
+	firstVisibleIndex -= overshoot
+	if firstVisibleIndex < 0 {
+		firstVisibleIndex = 0
+	}
+
+	// Ensure the firstVisibleIndex is on an input line boundary, we don't
+	// support by-screen-line positioning yet!
+	for firstVisibleIndex > 0 && allPossibleLines[firstVisibleIndex].wrapIndex != 0 {
+		firstVisibleIndex--
+	}
+
+	// FIXME: Construct the screen lines to return
+	return sl.toScreenLinesArray(allPossibleLines, firstVisibleIndex)
 }
 
-// Render screen lines into an array of lines consisting of Cells.
-func (sl *ScreenLines) tryRenderScreenLines(firstInputLineOneBased int) [][]twin.Cell {
+func (sl *ScreenLines) toScreenLinesArray(allPossibleLines []RenderedLine, firstVisibleIndex int) ([][]twin.Cell, int) {
+	firstInputLineOneBased := allPossibleLines[firstVisibleIndex].inputLineOneBased
+
+	screenLines := make([][]twin.Cell, 0, sl.height)
+	for index := firstVisibleIndex; ; index++ {
+		if len(screenLines) >= sl.height {
+			// All lines rendered, done!
+			break
+		}
+		if index >= len(allPossibleLines) {
+			// No more lines available for rendering, done!
+			break
+		}
+		screenLines = append(screenLines, allPossibleLines[index].cells)
+	}
+
+	return screenLines, firstInputLineOneBased
+}
+
+func (sl *ScreenLines) renderAllLines() []RenderedLine {
 	// Count the length of the last line number
 	//
 	// Offsets figured out through trial-and-error...
@@ -64,15 +126,10 @@ func (sl *ScreenLines) tryRenderScreenLines(firstInputLineOneBased int) [][]twin
 		numberPrefixLength = 0
 	}
 
-	returnLines := make([][]twin.Cell, 0, sl.height)
-	screenFull := false
+	allLines := make([]RenderedLine, 0)
 
 	for lineIndex, line := range sl.inputLines.lines {
 		lineNumber := sl.inputLines.firstLineOneBased + lineIndex
-		if lineNumber < firstInputLineOneBased {
-			// Skip this one, too early
-			continue
-		}
 
 		highlighted := line.HighlightedTokens(sl.searchPattern)
 		var wrapped [][]twin.Cell
@@ -89,22 +146,15 @@ func (sl *ScreenLines) tryRenderScreenLines(firstInputLineOneBased int) [][]twin
 				visibleLineNumber = nil
 			}
 
-			returnLines = append(returnLines,
-				sl.createScreenLine(visibleLineNumber, numberPrefixLength, inputLinePart))
-
-			if len(returnLines) >= sl.height {
-				// We have shown all the lines that can fit on the screen
-				screenFull = true
-				break
-			}
-		}
-
-		if screenFull {
-			break
+			allLines = append(allLines, RenderedLine{
+				inputLineOneBased: lineNumber,
+				wrapIndex:         wrapIndex,
+				cells:             sl.createScreenLine(visibleLineNumber, numberPrefixLength, inputLinePart),
+			})
 		}
 	}
 
-	return returnLines
+	return allLines
 }
 
 func (sl *ScreenLines) createScreenLine(lineNumberToShow *int, numberPrefixLength int, contents []twin.Cell) []twin.Cell {
