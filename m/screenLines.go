@@ -31,6 +31,15 @@ type RenderedLine struct {
 	cells []twin.Cell
 }
 
+func (sl *ScreenLines) lastInputLineOneBased() int {
+	if sl.inputLines.lines == nil {
+		panic("nil input lines, cannot make up a last input line number")
+	}
+
+	// Offsets figured out through trial-and-error...
+	return sl.inputLines.firstLineOneBased + len(sl.inputLines.lines) - 1
+}
+
 // Render screen lines into an array of lines consisting of Cells.
 //
 // The second return value is the same as firstInputLineOneBased, but decreased
@@ -43,6 +52,10 @@ func (sl *ScreenLines) renderScreenLines() ([][]twin.Cell, int) {
 
 	if sl.firstInputLineOneBased < 1 {
 		sl.firstInputLineOneBased = 1
+	}
+
+	if sl.firstInputLineOneBased > sl.lastInputLineOneBased() {
+		sl.firstInputLineOneBased = sl.lastInputLineOneBased()
 	}
 
 	allPossibleLines := sl.renderAllLines()
@@ -111,10 +124,7 @@ func (sl *ScreenLines) toScreenLinesArray(allPossibleLines []RenderedLine, first
 
 func (sl *ScreenLines) renderAllLines() []RenderedLine {
 	// Count the length of the last line number
-	//
-	// Offsets figured out through trial-and-error...
-	lastLineOneBased := sl.inputLines.firstLineOneBased + len(sl.inputLines.lines) - 1
-	numberPrefixLength := len(formatNumber(uint(lastLineOneBased))) + 1
+	numberPrefixLength := len(formatNumber(uint(sl.lastInputLineOneBased()))) + 1
 	if numberPrefixLength < 4 {
 		// 4 = space for 3 digits followed by one whitespace
 		//
