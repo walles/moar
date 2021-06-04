@@ -27,9 +27,10 @@ func printUsage(output io.Writer, flagSet *flag.FlagSet, printCommandline bool) 
 	flagSet.SetOutput(output)
 
 	// FIXME: Log if any printouts fail?
+	moarEnv := os.Getenv("MOAR")
 	if printCommandline {
 		_, _ = fmt.Fprintln(output, "Commandline: moar", strings.Join(os.Args[1:], " "))
-		_, _ = fmt.Fprintf(output, "Environment: MOAR=\"%v\"\n", os.Getenv("MOAR"))
+		_, _ = fmt.Fprintf(output, "Environment: MOAR=\"%v\"\n", moarEnv)
 		_, _ = fmt.Fprintln(output)
 	}
 
@@ -39,7 +40,13 @@ func printUsage(output io.Writer, flagSet *flag.FlagSet, printCommandline bool) 
 	_, _ = fmt.Fprintln(output, "  moar < file")
 	_, _ = fmt.Fprintln(output)
 	_, _ = fmt.Fprintln(output, "Environment:")
-	_, _ = fmt.Fprintln(output, "  Options will be read from the MOAR environment variable if set.")
+	if len(moarEnv) == 0 {
+		_, _ = fmt.Fprintln(output, "  Additional options are read from the MOAR environment variable if set.")
+		_, _ = fmt.Fprintln(output, "  But currently, the MOAR environment variable is not set.")
+	} else {
+		_, _ = fmt.Fprintln(output, "  Additional options are read from the MOAR environment variable.")
+		_, _ = fmt.Fprintf(output, "  Current setting: MOAR=\"%s\"\n", moarEnv)
+	}
 	_, _ = fmt.Fprintln(output)
 	_, _ = fmt.Fprintln(output, "Options:")
 
