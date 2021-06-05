@@ -42,6 +42,19 @@ Moar is used as the default pager by:
 Installing
 ----------
 
+### Using [Homebrew](https://brew.sh/)
+
+```sh
+brew install walles/johan/moar
+```
+
+Then whenever you want to upgrade to the latest release:
+
+```sh
+brew upgrade
+```
+
+### Manual Install
 1. Download `moar` for your platform from
    <https://github.com/walles/moar/releases/latest>
 1. `chmod a+x moar-*-*-*`
@@ -59,10 +72,6 @@ If a binary for your platform is not available, please
 
 [A Request for Packaging is open](https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=944035),
 please help!
-
-### Homebrew
-
-Can't be done by me (`moar`'s main author), [please help](https://github.com/walles/moar/issues/63)!
 
 Setting Moar as Your Default Pager
 ----------------------------------

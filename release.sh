@@ -43,8 +43,8 @@ echo
 # Make an annotated tag for this release
 git tag --annotate "$VERSION"
 
-# NOTE: To get the version number right, these builds must
-# be done after the above tagging.
+# NOTE: To get the version number right, these builds must be done after the
+# above tagging.
 #
 # NOTE: Make sure this list matches the one in test.sh
 GOOS=linux GOARCH=386 ./build.sh
@@ -53,8 +53,12 @@ GOOS=darwin GOARCH=amd64 ./build.sh
 # Push the newly built release tag
 git push --tags
 
-# FIXME: Instead of asking the user to upload the binaries,
-# upload them for the user.
+# FIXME: Instead of asking the user to upload the binaries, upload them for
+# the user.
 echo
 echo "Please upload the following binaries to <https://github.com/walles/moar/releases/tag/$VERSION>:"
 file releases/moar-"$VERSION"-*-*
+
+echo
+echo "Also, update the brew packaging by making a PR to this file:"
+echo "https://github.com/walles/homebrew-johan/blob/main/Formula/moar.rb"
