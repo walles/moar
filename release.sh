@@ -61,4 +61,4 @@ file releases/moar-"$VERSION"-*-*
 
 echo
 echo "Also, update the brew packaging by making a PR to this file:"
-echo "https://github.com/walles/homebrew-johan/blob/main/Formula/moar.rb"
+echo "https://github.com/Homebrew/homebrew-core/blob/master/Formula/moar.rb"

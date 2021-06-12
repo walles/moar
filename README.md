@@ -45,7 +45,7 @@ Installing
 ### Using [Homebrew](https://brew.sh/)
 
 ```sh
-brew install walles/johan/moar
+brew install moar
 ```
 
 Then whenever you want to upgrade to the latest release:
