@@ -38,6 +38,8 @@ func printUsage(output io.Writer, flagSet *flag.FlagSet, printCommandline bool) 
 	_, _ = fmt.Fprintln(output, "  moar [options] <file>")
 	_, _ = fmt.Fprintln(output, "  ... | moar")
 	_, _ = fmt.Fprintln(output, "  moar < file")
+	_, _ = fmt.Fprintln(output, "")
+	_, _ = fmt.Fprintln(output, "Shows file contents. Compressed files will be transparently decompressed.")
 	_, _ = fmt.Fprintln(output)
 	_, _ = fmt.Fprintln(output, "Environment:")
 	if len(moarEnv) == 0 {
