@@ -9,7 +9,11 @@ VERSION="$(git describe --tags --dirty --always)"
 
 BINARY="moar"
 if [ -n "$GOOS$GOARCH" ]; then
-    BINARY="releases/$BINARY-$VERSION-$GOOS-$GOARCH"
+    EXE=""
+    if [ "$GOOS" = "windows" ]; then
+        EXE=".exe"
+    fi
+    BINARY="releases/$BINARY-$VERSION-$GOOS-$GOARCH$EXE"
 fi
 
 # Linker flags version number trick below from here:
