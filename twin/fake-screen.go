@@ -1,6 +1,8 @@
 // Package twin provides Terminal Window interaction
 package twin
 
+import "fmt"
+
 // Used for testing.
 //
 // Try GetRow() after some SetCell() calls to see what you got.
@@ -25,6 +27,11 @@ func NewFakeScreen(width int, height int) *FakeScreen {
 
 func (screen *FakeScreen) Close() {
 	// This method intentionally left blank
+}
+
+func (screen *FakeScreen) BackgroundColor() (*Color, error) {
+	// Update this implementation if it becomes a problem
+	return nil, fmt.Errorf("Background color not available for fake screens")
 }
 
 func (screen *FakeScreen) Clear() {

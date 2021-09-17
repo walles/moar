@@ -25,6 +25,9 @@ type Screen interface {
 	// Render our contents into the terminal window
 	Show()
 
+	// Return the terminal window background color or an error if unavailable
+	BackgroundColor() (*Color, error)
+
 	// Returns screen width and height.
 	//
 	// NOTE: Never cache this response! On window resizes you'll get an
@@ -108,6 +111,10 @@ func NewScreen() (Screen, error) {
 	go screen.mainLoop()
 
 	return &screen, nil
+}
+
+func (screen *UnixScreen) BackgroundColor() (*Color, error) {
+	return nil, fmt.Errorf("FIXME: Not supported")
 }
 
 // Close() restores terminal to normal state, must be called after you are done
