@@ -148,3 +148,25 @@ func (color Color) String() string {
 
 	panic(fmt.Errorf("unhandled color type %d", color.colorType()))
 }
+
+// Compute 0-255 luminance value.
+//
+// Works only on colorType24bit colors, check colorType() before calling this
+// method.
+//
+// Ref: https://www.scantips.com/lumin.html
+func (color Color) Luminance() (int, error) {
+	if color.colorType() != colorType24bit {
+		return -1, fmt.Errorf("Color type must be 24 bit, was %d", color.colorType())
+	}
+
+	value := color.colorValue()
+
+	red_0_to_255 := float64((value & 0xff0000) >> 16)
+	green_0_to_255 := float64((value & 0xff00) >> 8)
+	blue_0_to_255 := float64(value & 0xff)
+
+	luminance_0_to_255 := 0.3*red_0_to_255 + 0.59*green_0_to_255 + 0.11*blue_0_to_255
+
+	return int(luminance_0_to_255), nil
+}
