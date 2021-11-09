@@ -1,8 +1,6 @@
 package m
 
 import (
-	"fmt"
-
 	"github.com/walles/moar/twin"
 )
 
@@ -13,20 +11,12 @@ func (p *Pager) Page() error {
 		// Screen setup failed
 		return e
 	}
-	defer func() {
-		screen.Close()
-		if p.DeInit {
-			return
-		}
-
-		// FIXME: Consider moving this logic into the twin package, or into Pager.
-		_, height := p.screen.Size()
-		lines := p.reader.GetLines(p.firstLineOneBased, height-1).lines
-		for _, line := range lines {
-			fmt.Println(line.raw)
-		}
-	}()
 
 	p.StartPaging(screen)
-	return nil
+	screen.Close()
+	if p.DeInit {
+		return nil
+	}
+
+	return p.ReprintAfterExit()
 }

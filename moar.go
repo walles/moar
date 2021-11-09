@@ -150,6 +150,7 @@ func main() {
 		"Highlighting style from https://xyproto.github.io/splash/docs/longer/all.html")
 	colorsOption := flagSet.String("colors", "16M", "Highlighting palette size: 8, 16, 256, 16M")
 	noLineNumbers := flagSet.Bool("no-linenumbers", false, "Hide line numbers on startup, press left arrow key to show")
+	noClearOnExit := flagSet.Bool("no-clear-on-exit", false, "Retain screen contents when exiting moar")
 
 	// Combine flags from environment and from command line
 	flags := os.Args[1:]
@@ -246,7 +247,7 @@ func main() {
 	if stdinIsRedirected {
 		// Display input pipe contents
 		reader := m.NewReaderFromStream("", os.Stdin)
-		startPaging(reader, *wrap, *noLineNumbers)
+		startPaging(reader, *wrap, *noLineNumbers, *noClearOnExit)
 		return
 	}
 
@@ -256,16 +257,21 @@ func main() {
 		fmt.Fprintf(os.Stderr, "ERROR: %v\n", err)
 		os.Exit(1)
 	}
-	startPaging(reader, *wrap, *noLineNumbers)
+	startPaging(reader, *wrap, *noLineNumbers, *noClearOnExit)
 }
 
-func startPaging(reader *m.Reader, wrapLongLines bool, noLineNumbers bool) {
+func startPaging(reader *m.Reader, wrapLongLines bool, noLineNumbers bool, noClearOnExit bool) {
 	screen, e := twin.NewScreen()
 	if e != nil {
 		panic(e)
 	}
 
 	var loglines strings.Builder
+	log.SetOutput(&loglines)
+	pager := m.NewPager(reader)
+	pager.WrapLongLines = wrapLongLines
+	pager.ShowLineNumbers = !noLineNumbers
+
 	defer func() {
 		// Restore screen...
 		screen.Close()
@@ -274,6 +280,13 @@ func startPaging(reader *m.Reader, wrapLongLines bool, noLineNumbers bool) {
 		// broken linefeeds and be hard to follow.
 		if err := recover(); err != nil {
 			panic(err)
+		}
+
+		if noClearOnExit {
+			err := pager.ReprintAfterExit()
+			if err != nil {
+				log.Error("Failed reprinting pager view after exit", err)
+			}
 		}
 
 		if len(loglines.String()) > 0 {
@@ -286,9 +299,5 @@ func startPaging(reader *m.Reader, wrapLongLines bool, noLineNumbers bool) {
 		}
 	}()
 
-	log.SetOutput(&loglines)
-	pager := m.NewPager(reader)
-	pager.WrapLongLines = wrapLongLines
-	pager.ShowLineNumbers = !noLineNumbers
 	pager.StartPaging(screen)
 }

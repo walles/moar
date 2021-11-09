@@ -25,6 +25,10 @@ type Screen interface {
 	// Render our contents into the terminal window
 	Show()
 
+	// Can be called after Close()ing the screen to fake retaining its output.
+	// Plain Show() is what you'd call during normal operation.
+	ShowNLines(lineCountToShow int)
+
 	// Returns screen width and height.
 	//
 	// NOTE: Never cache this response! On window resizes you'll get an
@@ -444,19 +448,24 @@ func renderLine(row []Cell) (string, int) {
 	return builder.String(), headerLength
 }
 
-// Render our contents into the terminal window
-//
-// Note that we start by prepping everything we want to write, then write it all
-// in one go. This is to make the screen update experience as atomic and flicker
-// free as possible.
 func (screen *UnixScreen) Show() {
+	_, height := screen.Size()
+	screen.showNLines(height, true)
+}
+
+func (screen *UnixScreen) ShowNLines(height int) {
+	screen.showNLines(height, false)
+}
+
+func (screen *UnixScreen) showNLines(height int, clearFirst bool) {
 	var builder strings.Builder
 
-	// Start in the top left corner:
-	// https://en.wikipedia.org/wiki/ANSI_escape_code#CSI_(Control_Sequence_Introducer)_sequences
-	builder.WriteString("\x1b[1;1H")
+	if clearFirst {
+		// Start in the top left corner:
+		// https://en.wikipedia.org/wiki/ANSI_escape_code#CSI_(Control_Sequence_Introducer)_sequences
+		builder.WriteString("\x1b[1;1H")
+	}
 
-	_, height := screen.Size()
 	for row := 0; row < height; row++ {
 		rendered, lineLength := renderLine(screen.cells[row])
 		builder.WriteString(rendered)

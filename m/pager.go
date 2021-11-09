@@ -710,3 +710,18 @@ func (p *Pager) StartPaging(screen twin.Screen) {
 		log.Warnf("Reader reported an error: %s", p.reader.err.Error())
 	}
 }
+
+// After the pager has exited and the normal screen has been restored, you can
+// call this method to print the pager contents to screen again, faking
+// "leaving" pager contents on screen after exit.
+func (p *Pager) ReprintAfterExit() error {
+	// Figure out how many screen lines are used by pager contents
+	_, height := p.screen.Size()
+	heightWithoutFooter := height - 1
+	lineCount := len(p.reader.GetLines(p.firstLineOneBased, heightWithoutFooter).lines)
+
+	if lineCount > 0 {
+		p.screen.ShowNLines(lineCount)
+	}
+	return nil
+}
