@@ -30,11 +30,11 @@ var _numberStyle = twin.StyleDefault.WithAttr(twin.AttrDim)
 
 type screenLineNumber struct {
 	// Line number in the input stream
-	LineNumberOneBased int
+	lineNumberOneBased int
 
 	// If a file line has been broken into two screen lines by wrapping, the
-	// first screen line has SubLineNumberZeroBased 0, and the second one 1.
-	SubLineNumberZeroBased int
+	// first screen line has WrapIndex 0, and the second one 1.
+	wrapIndex int
 }
 
 // Pager is the main on-screen pager
@@ -64,7 +64,7 @@ type Pager struct {
 
 type _PreHelpState struct {
 	reader              *Reader
-	firstLineOneBased   int
+	lineNumber          screenLineNumber
 	leftColumnZeroBased int
 }
 
@@ -118,11 +118,11 @@ Available at https://github.com/walles/moar/.
 // NewPager creates a new Pager
 func NewPager(r *Reader) *Pager {
 	return &Pager{
-		reader:            r,
-		quit:              false,
-		firstLineOneBased: 1,
-		ShowLineNumbers:   true,
-		DeInit:            true,
+		reader:          r,
+		quit:            false,
+		lineNumber:      screenLineNumber{lineNumberOneBased: 1},
+		ShowLineNumbers: true,
+		DeInit:          true,
 	}
 }
 
@@ -160,11 +160,11 @@ func (p *Pager) _Redraw(spinner string) {
 	width, height := p.screen.Size()
 	wantedLineCount := height - 1
 
-	inputLines := p.reader.GetLines(p.firstLineOneBased, wantedLineCount)
+	inputLines := p.reader.GetLines(p.lineNumber.lineNumberOneBased, wantedLineCount)
 	screenLines := ScreenLines{
-		inputLines:             inputLines,
-		firstInputLineOneBased: p.firstLineOneBased,
-		leftColumnZeroBased:    p.leftColumnZeroBased,
+		inputLines:          inputLines,
+		lineNumber:          p.lineNumber,
+		leftColumnZeroBased: p.leftColumnZeroBased,
 
 		width:  width,
 		height: wantedLineCount,
@@ -177,7 +177,7 @@ func (p *Pager) _Redraw(spinner string) {
 
 	lastUpdatedScreenLineNumber := -1
 	var renderedScreenLines [][]twin.Cell
-	renderedScreenLines, p.firstLineOneBased = screenLines.renderScreenLines()
+	renderedScreenLines, p.lineNumber = screenLines.renderScreenLines()
 	for lineNumber, row := range renderedScreenLines {
 		lastUpdatedScreenLineNumber = lineNumber
 		for column, cell := range row {
@@ -226,7 +226,7 @@ func (p *Pager) Quit() {
 	// Reset help
 	p.isShowingHelp = false
 	p.reader = p.preHelpState.reader
-	p.firstLineOneBased = p.preHelpState.firstLineOneBased
+	p.lineNumber = p.preHelpState.lineNumber
 	p.leftColumnZeroBased = p.preHelpState.leftColumnZeroBased
 	p.preHelpState = nil
 }
@@ -237,7 +237,7 @@ func (p *Pager) _ScrollToSearchHits() {
 		return
 	}
 
-	firstHitLine := p._FindFirstHitLineOneBased(p.firstLineOneBased, false)
+	firstHitLine := p._FindFirstHitLine(p.lineNumber, false)
 	if firstHitLine == nil {
 		// No match, give up
 		return
@@ -251,17 +251,12 @@ func (p *Pager) _ScrollToSearchHits() {
 	p.firstLineOneBased = *firstHitLine
 }
 
-func (p *Pager) _GetLastVisibleLineOneBased() int {
-	firstVisibleLineOneBased := p.firstLineOneBased
-	_, windowHeight := p.screen.Size()
-
-	// If first line is 1 and window is 2 high, and one line is the status
-	// line, the last line will be 1 + 2 - 2 = 1
-	return firstVisibleLineOneBased + windowHeight - 2
+func (p *Pager) _GetLastVisibleLine() screenLineNumber {
+	// FIXME: This whole method needs rewriting so that it takes wrapped lines into account
 }
 
-func (p *Pager) _FindFirstHitLineOneBased(firstLineOneBased int, backwards bool) *int {
-	lineNumber := firstLineOneBased
+func (p *Pager) _FindFirstHitLine(firstLine screenLineNumber, backwards bool) *screenLineNumber {
+	lineNumber := firstLine
 	for {
 		line := p.reader.GetLine(lineNumber)
 		if line == nil {
@@ -309,7 +304,7 @@ func (p *Pager) _ScrollToNextSearchHit() {
 		panic(fmt.Sprint("Unknown search mode when finding next: ", p.mode))
 	}
 
-	firstHitLine := p._FindFirstHitLineOneBased(firstSearchLineOneBased, false)
+	firstHitLine := p._FindFirstHitLine(firstSearchLineOneBased, false)
 	if firstHitLine == nil {
 		p.mode = _NotFound
 		return
@@ -344,7 +339,7 @@ func (p *Pager) _ScrollToPreviousSearchHit() {
 		panic(fmt.Sprint("Unknown search mode when finding previous: ", p.mode))
 	}
 
-	firstHitLine := p._FindFirstHitLineOneBased(firstSearchLineOneBased, true)
+	firstHitLine := p._FindFirstHitLine(firstSearchLineOneBased, true)
 	if firstHitLine == nil {
 		p.mode = _NotFound
 		return

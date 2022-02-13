@@ -8,9 +8,9 @@ import (
 )
 
 type ScreenLines struct {
-	inputLines             *InputLines
-	firstInputLineOneBased int
-	leftColumnZeroBased    int
+	inputLines          *InputLines
+	lineNumber          screenLineNumber
+	leftColumnZeroBased int
 
 	width  int // Display width
 	height int // Display height
@@ -44,10 +44,10 @@ func (sl *ScreenLines) lastInputLineOneBased() int {
 //
 // The second return value is the same as firstInputLineOneBased, but decreased
 // if needed so that the end of the input is visible.
-func (sl *ScreenLines) renderScreenLines() ([][]twin.Cell, int) {
+func (sl *ScreenLines) renderScreenLines() ([][]twin.Cell, screenLineNumber) {
 	if sl.inputLines.lines == nil {
 		// Empty input, empty output
-		return [][]twin.Cell{}, 0
+		return [][]twin.Cell{}, screenLineNumber{}
 	}
 
 	if sl.firstInputLineOneBased < 1 {
