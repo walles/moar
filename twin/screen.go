@@ -58,11 +58,11 @@ type UnixScreen struct {
 	events chan Event
 
 	ttyIn            *os.File
-	oldTerminalState *term.State //lint:ignore U1000 Not used on Windows
-	oldTtyInMode     uint32      //lint:ignore U1000 Windows only
+	oldTerminalState *term.State //nolint Not used on Windows
+	oldTtyInMode     uint32      //nolint Windows only
 
 	ttyOut        *os.File
-	oldTtyOutMode uint32 //lint:ignore U1000 Windows only
+	oldTtyOutMode uint32 //nolint Windows only
 }
 
 // Example event: "\x1b[<65;127;41M"

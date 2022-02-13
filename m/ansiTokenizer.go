@@ -479,7 +479,7 @@ func updateStyle(style twin.Style, escapeSequence string) twin.Style {
 		case "37":
 			style = style.Foreground(twin.NewColor16(7))
 		case "38":
-			var err error = nil
+			var err error
 			var color *twin.Color
 			index, color, err = consumeCompositeColor(numbers, index-1)
 			if err != nil {
@@ -508,7 +508,7 @@ func updateStyle(style twin.Style, escapeSequence string) twin.Style {
 		case "47":
 			style = style.Background(twin.NewColor16(7))
 		case "48":
-			var err error = nil
+			var err error
 			var color *twin.Color
 			index, color, err = consumeCompositeColor(numbers, index-1)
 			if err != nil {
