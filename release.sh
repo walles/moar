@@ -63,3 +63,5 @@ file releases/moar-"$VERSION"-*-*
 echo
 echo "Also, update the brew packaging by making a PR to this file:"
 echo "https://github.com/Homebrew/homebrew-core/blob/master/Formula/moar.rb"
+echo
+echo "brew bump-formula-pr --url=https://github.com/walles/moar/archive/refs/tags/$VERSION.tar.gz"
