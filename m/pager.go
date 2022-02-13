@@ -28,21 +28,12 @@ type eventMoreLinesAvailable struct{}
 // Styling of line numbers
 var _numberStyle = twin.StyleDefault.WithAttr(twin.AttrDim)
 
-type screenLineNumber struct {
-	// Line number in the input stream
-	lineNumberOneBased int
-
-	// If a file line has been broken into two screen lines by wrapping, the
-	// first screen line has WrapIndex 0, and the second one 1.
-	wrapIndex int
-}
-
 // Pager is the main on-screen pager
 type Pager struct {
 	reader              *Reader
 	screen              twin.Screen
 	quit                bool
-	lineNumber          screenLineNumber
+	scrollPosition      scrollPosition
 	leftColumnZeroBased int
 
 	mode          _PagerMode
@@ -63,9 +54,8 @@ type Pager struct {
 }
 
 type _PreHelpState struct {
-	reader              *Reader
-	lineNumber          screenLineNumber
-	leftColumnZeroBased int
+	reader         *Reader
+	scrollPosition scrollPosition
 }
 
 const _EofMarkerFormat = "\x1b[7m" // Reverse video
@@ -120,7 +110,6 @@ func NewPager(r *Reader) *Pager {
 	return &Pager{
 		reader:          r,
 		quit:            false,
-		lineNumber:      screenLineNumber{lineNumberOneBased: 1},
 		ShowLineNumbers: true,
 		DeInit:          true,
 	}
@@ -160,11 +149,10 @@ func (p *Pager) _Redraw(spinner string) {
 	width, height := p.screen.Size()
 	wantedLineCount := height - 1
 
-	inputLines := p.reader.GetLines(p.lineNumber.lineNumberOneBased, wantedLineCount)
+	inputLines := p.reader.GetLines(p.scrollPosition.lineNumber+1, wantedLineCount)
 	screenLines := ScreenLines{
-		inputLines:          inputLines,
-		lineNumber:          p.lineNumber,
-		leftColumnZeroBased: p.leftColumnZeroBased,
+		inputLines:     inputLines,
+		scrollPosition: p.scrollPosition,
 
 		width:  width,
 		height: wantedLineCount,
@@ -177,7 +165,7 @@ func (p *Pager) _Redraw(spinner string) {
 
 	lastUpdatedScreenLineNumber := -1
 	var renderedScreenLines [][]twin.Cell
-	renderedScreenLines, p.lineNumber = screenLines.renderScreenLines()
+	renderedScreenLines, p.scrollPosition = screenLines.renderScreenLines()
 	for lineNumber, row := range renderedScreenLines {
 		lastUpdatedScreenLineNumber = lineNumber
 		for column, cell := range row {
@@ -226,8 +214,7 @@ func (p *Pager) Quit() {
 	// Reset help
 	p.isShowingHelp = false
 	p.reader = p.preHelpState.reader
-	p.lineNumber = p.preHelpState.lineNumber
-	p.leftColumnZeroBased = p.preHelpState.leftColumnZeroBased
+	p.scrollPosition = p.preHelpState.scrollPosition
 	p.preHelpState = nil
 }
 
@@ -251,11 +238,11 @@ func (p *Pager) _ScrollToSearchHits() {
 	p.firstLineOneBased = *firstHitLine
 }
 
-func (p *Pager) _GetLastVisibleLine() screenLineNumber {
+func (p *Pager) _GetLastVisibleLine() scrollPosition {
 	// FIXME: This whole method needs rewriting so that it takes wrapped lines into account
 }
 
-func (p *Pager) _FindFirstHitLine(firstLine screenLineNumber, backwards bool) *screenLineNumber {
+func (p *Pager) _FindFirstHitLine(firstLine scrollPosition, backwards bool) *scrollPosition {
 	lineNumber := firstLine
 	for {
 		line := p.reader.GetLine(lineNumber)
