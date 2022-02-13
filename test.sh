@@ -11,11 +11,11 @@ echo Building sources...
 ./build.sh
 
 # Linting
-echo 'Linting, repro any errors locally using "golangci-lint run --enable gofmt"...'
+echo 'Linting, repro any errors locally using "golangci-lint run"...'
 echo '  Linting without tests...'
-golangci-lint run --tests=false --enable gofmt
+golangci-lint run --tests=false
 echo '  Linting with tests...'
-golangci-lint run --tests=true --enable gofmt
+golangci-lint run --tests=true
 
 # Unit tests
 echo "Running unit tests..."
