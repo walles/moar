@@ -2,6 +2,12 @@ language: go
 go:
   - 1.16.x
 
+before_script:
+  # Install golangci-lint. Latest version here if you want to bump it, version
+  # number is at the end of the "curl | sh" commandline below:
+  # https://github.com/golangci/golangci-lint/releases/latest
+  - curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.44.0
+
 jobs:
   include:
   - os: linux
