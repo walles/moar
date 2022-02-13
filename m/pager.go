@@ -28,12 +28,21 @@ type eventMoreLinesAvailable struct{}
 // Styling of line numbers
 var _numberStyle = twin.StyleDefault.WithAttr(twin.AttrDim)
 
+type screenLineNumber struct {
+	// Line number in the input stream
+	LineNumberOneBased int
+
+	// If a file line has been broken into two screen lines by wrapping, the
+	// first screen line has SubLineNumberZeroBased 0, and the second one 1.
+	SubLineNumberZeroBased int
+}
+
 // Pager is the main on-screen pager
 type Pager struct {
 	reader              *Reader
 	screen              twin.Screen
 	quit                bool
-	firstLineOneBased   int
+	lineNumber          screenLineNumber
 	leftColumnZeroBased int
 
 	mode          _PagerMode
