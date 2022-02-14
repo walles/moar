@@ -248,7 +248,7 @@ func TestFindFirstLineOneBasedSimple(t *testing.T) {
 
 	pager.searchPattern = toPattern("AB")
 
-	hitLine := pager._FindFirstHitLine(1, false)
+	hitLine := pager._FindFirstHit(1, false)
 	assert.Check(t, *hitLine == 1)
 }
 
@@ -261,7 +261,7 @@ func TestFindFirstLineOneBasedAnsi(t *testing.T) {
 
 	pager.searchPattern = toPattern("AB")
 
-	hitLine := pager._FindFirstHitLine(1, false)
+	hitLine := pager._FindFirstHit(1, false)
 	assert.Check(t, *hitLine == 1)
 }
 
@@ -354,7 +354,7 @@ func benchmarkSearch(b *testing.B, highlighted bool) {
 	b.ResetTimer()
 
 	// This test will search through all the N copies we made of our file
-	hitLine := pager._FindFirstHitLine(1, false)
+	hitLine := pager._FindFirstHit(1, false)
 
 	if hitLine != nil {
 		panic(fmt.Errorf("This test is meant to scan the whole file without finding anything"))

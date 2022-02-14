@@ -224,25 +224,28 @@ func (p *Pager) _ScrollToSearchHits() {
 		return
 	}
 
-	firstHitLine := p._FindFirstHitLine(p.lineNumber, false)
-	if firstHitLine == nil {
+	firstHit := p._FindFirstHit(p.scrollPosition, false)
+	if firstHit == nil {
 		// No match, give up
 		return
 	}
 
-	if *firstHitLine <= p._GetLastVisibleLineOneBased() {
+	if (*firstHit).sameOrBefore(p._GetLastVisiblePosition()) {
 		// Already on-screen, never mind
+
+		// FIXME: What if the hit is off-screen sideways?
+
 		return
 	}
 
-	p.firstLineOneBased = *firstHitLine
+	p.scrollPosition = *firstHit
 }
 
-func (p *Pager) _GetLastVisibleLine() scrollPosition {
+func (p *Pager) _GetLastVisiblePosition() scrollPosition {
 	// FIXME: This whole method needs rewriting so that it takes wrapped lines into account
 }
 
-func (p *Pager) _FindFirstHitLine(firstLine scrollPosition, backwards bool) *scrollPosition {
+func (p *Pager) _FindFirstHit(start scrollPosition, backwards bool) *scrollPosition {
 	lineNumber := firstLine
 	for {
 		line := p.reader.GetLine(lineNumber)
@@ -280,7 +283,7 @@ func (p *Pager) _ScrollToNextSearchHit() {
 	switch p.mode {
 	case _Viewing:
 		// Start searching on the first line below the bottom of the screen
-		firstSearchLineOneBased = p._GetLastVisibleLineOneBased() + 1
+		firstSearchLineOneBased = p._GetLastVisiblePosition() + 1
 
 	case _NotFound:
 		// Restart searching from the top
@@ -291,7 +294,7 @@ func (p *Pager) _ScrollToNextSearchHit() {
 		panic(fmt.Sprint("Unknown search mode when finding next: ", p.mode))
 	}
 
-	firstHitLine := p._FindFirstHitLine(firstSearchLineOneBased, false)
+	firstHitLine := p._FindFirstHit(firstSearchLineOneBased, false)
 	if firstHitLine == nil {
 		p.mode = _NotFound
 		return
@@ -326,7 +329,7 @@ func (p *Pager) _ScrollToPreviousSearchHit() {
 		panic(fmt.Sprint("Unknown search mode when finding previous: ", p.mode))
 	}
 
-	firstHitLine := p._FindFirstHitLine(firstSearchLineOneBased, true)
+	firstHitLine := p._FindFirstHit(firstSearchLineOneBased, true)
 	if firstHitLine == nil {
 		p.mode = _NotFound
 		return
