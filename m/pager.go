@@ -33,7 +33,7 @@ type Pager struct {
 	reader              *Reader
 	screen              twin.Screen
 	quit                bool
-	scrollPosition      scrollPosition
+	scrollPosition      scrollPosition // Position of the first screen line
 	leftColumnZeroBased int
 
 	mode          _PagerMode
@@ -286,7 +286,7 @@ func (p *Pager) _ScrollToNextSearchHit() {
 	switch p.mode {
 	case _Viewing:
 		// Start searching on the first line below the bottom of the screen
-		searchStartPosition = p._GetLastVisiblePosition().nextLine()
+		searchStartPosition = p._GetLastVisiblePosition().nextLine(1)
 
 	case _NotFound:
 		// Restart searching from the top
@@ -305,6 +305,10 @@ func (p *Pager) _ScrollToNextSearchHit() {
 	p.scrollPosition = *firstHitPosition
 }
 
+func (p *Pager) getLastPossibleRow() scrollPosition {
+	// FIXME: Return the last wrapIndex of the last line. But keep the column at 0.
+}
+
 func (p *Pager) _ScrollToPreviousSearchHit() {
 	if p.searchPattern == nil {
 		// Nothing to search for, never mind
@@ -316,28 +320,28 @@ func (p *Pager) _ScrollToPreviousSearchHit() {
 		return
 	}
 
-	var firstSearchPosition int
+	var firstSearchPosition scrollPosition
 
 	switch p.mode {
 	case _Viewing:
 		// Start searching on the first line above the top of the screen
-		firstSearchPosition = p.scrollPosition.previousLine()
+		firstSearchPosition = p.scrollPosition.previousLine(1)
 
 	case _NotFound:
 		// Restart searching from the bottom
 		p.mode = _Viewing
-		firstSearchLineOneBased = p.reader.GetLineCount()
+		firstSearchPosition = p.getLastPossibleRow()
 
 	default:
 		panic(fmt.Sprint("Unknown search mode when finding previous: ", p.mode))
 	}
 
-	firstHitLine := p._FindFirstHit(firstSearchLineOneBased, true)
-	if firstHitLine == nil {
+	firstHit := p._FindFirstHit(firstSearchPosition, true)
+	if firstHit == nil {
 		p.mode = _NotFound
 		return
 	}
-	p.firstLineOneBased = *firstHitLine
+	p.scrollPosition = *firstHit
 }
 
 func (p *Pager) _UpdateSearchPattern() {
@@ -400,7 +404,7 @@ func removeLastChar(s string) string {
 }
 
 func (p *Pager) _ScrollToEnd() {
-	p.firstLineOneBased = p.reader.GetLineCount()
+	p.scrollPosition = p.getLastPossibleRow()
 }
 
 func (p *Pager) _OnSearchKey(key twin.KeyCode) {
@@ -418,22 +422,22 @@ func (p *Pager) _OnSearchKey(key twin.KeyCode) {
 
 	case twin.KeyUp:
 		// Clipping is done in _Redraw()
-		p.firstLineOneBased--
+		p.scrollPosition = p.scrollPosition.previousLine(1)
 		p.mode = _Viewing
 
 	case twin.KeyDown:
 		// Clipping is done in _Redraw()
-		p.firstLineOneBased++
+		p.scrollPosition = p.scrollPosition.nextLine(1)
 		p.mode = _Viewing
 
 	case twin.KeyPgUp:
 		_, height := p.screen.Size()
-		p.firstLineOneBased -= (height - 1)
+		p.scrollPosition = p.scrollPosition.previousLine(height - 1)
 		p.mode = _Viewing
 
 	case twin.KeyPgDown:
 		_, height := p.screen.Size()
-		p.firstLineOneBased += (height - 1)
+		p.scrollPosition = p.scrollPosition.nextLine(height - 1)
 		p.mode = _Viewing
 
 	default:
@@ -478,11 +482,11 @@ func (p *Pager) _OnKey(keyCode twin.KeyCode) {
 
 	case twin.KeyUp:
 		// Clipping is done in _Redraw()
-		p.firstLineOneBased--
+		p.scrollPosition = p.scrollPosition.previousLine(1)
 
 	case twin.KeyDown, twin.KeyEnter:
 		// Clipping is done in _Redraw()
-		p.firstLineOneBased++
+		p.scrollPosition = p.scrollPosition.nextLine(1)
 
 	case twin.KeyRight:
 		p._MoveRight(16)
@@ -491,18 +495,18 @@ func (p *Pager) _OnKey(keyCode twin.KeyCode) {
 		p._MoveRight(-16)
 
 	case twin.KeyHome:
-		p.firstLineOneBased = 1
+		p.scrollPosition = scrollPosition{}
 
 	case twin.KeyEnd:
-		p.firstLineOneBased = p.reader.GetLineCount()
+		p.scrollPosition = p.getLastPossibleRow()
 
 	case twin.KeyPgDown:
 		_, height := p.screen.Size()
-		p.firstLineOneBased += (height - 1)
+		p.scrollPosition = p.scrollPosition.nextLine(height - 1)
 
 	case twin.KeyPgUp:
 		_, height := p.screen.Size()
-		p.firstLineOneBased -= (height - 1)
+		p.scrollPosition = p.scrollPosition.previousLine(height - 1)
 
 	default:
 		log.Debugf("Unhandled key event %v", keyCode)
@@ -530,23 +534,21 @@ func (p *Pager) _OnRune(char rune) {
 	case '?':
 		if !p.isShowingHelp {
 			p.preHelpState = &_PreHelpState{
-				reader:              p.reader,
-				firstLineOneBased:   p.firstLineOneBased,
-				leftColumnZeroBased: p.leftColumnZeroBased,
+				reader:         p.reader,
+				scrollPosition: p.scrollPosition,
 			}
 			p.reader = _HelpReader
-			p.firstLineOneBased = 1
-			p.leftColumnZeroBased = 0
+			p.scrollPosition = scrollPosition{}
 			p.isShowingHelp = true
 		}
 
 	case 'k', 'y':
 		// Clipping is done in _Redraw()
-		p.firstLineOneBased--
+		p.scrollPosition = p.scrollPosition.previousLine(1)
 
 	case 'j', 'e':
 		// Clipping is done in _Redraw()
-		p.firstLineOneBased++
+		p.scrollPosition = p.scrollPosition.nextLine(1)
 
 	case 'l':
 		// vim right
@@ -557,18 +559,18 @@ func (p *Pager) _OnRune(char rune) {
 		p._MoveRight(-16)
 
 	case '<', 'g':
-		p.firstLineOneBased = 1
+		p.scrollPosition = scrollPosition{}
 
 	case '>', 'G':
-		p._ScrollToEnd()
+		p.scrollPosition = p.getLastPossibleRow()
 
 	case 'f', ' ':
 		_, height := p.screen.Size()
-		p.firstLineOneBased += (height - 1)
+		p.scrollPosition = p.scrollPosition.nextLine(height - 1)
 
 	case 'b':
 		_, height := p.screen.Size()
-		p.firstLineOneBased -= (height - 1)
+		p.scrollPosition = p.scrollPosition.previousLine(height - 1)
 
 	case 'u':
 		_, height := p.screen.Size()

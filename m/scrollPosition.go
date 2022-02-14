@@ -31,11 +31,11 @@ func (s scrollPosition) sameOrBefore(otherPosition scrollPosition) bool {
 }
 
 // Create a new position, scrolled one line towards the end of the file
-func (s scrollPosition) nextLine() scrollPosition {
-	FIXME: Scroll down one line, taking line wrapping into account
+func (s scrollPosition) previousLine(scrollDistance int) scrollPosition {
+	// FIXME: Scroll up one line, taking line wrapping into account
 }
 
 // Create a new position, scrolled one line towards the end of the file
-func (s scrollPosition) previousLine() scrollPosition {
-	FIXME: Scroll up one line, taking line wrapping into account
+func (s scrollPosition) nextLine(scrollDistance int) scrollPosition {
+	// FIXME: Scroll down one line, taking line wrapping into account
 }
