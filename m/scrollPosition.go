@@ -29,3 +29,13 @@ func (s scrollPosition) sameOrBefore(otherPosition scrollPosition) bool {
 
 	return s.wrapIndex <= otherPosition.wrapIndex
 }
+
+// Create a new position, scrolled one line towards the end of the file
+func (s scrollPosition) nextLine() scrollPosition {
+	FIXME: Scroll down one line, taking line wrapping into account
+}
+
+// Create a new position, scrolled one line towards the end of the file
+func (s scrollPosition) previousLine() scrollPosition {
+	FIXME: Scroll up one line, taking line wrapping into account
+}

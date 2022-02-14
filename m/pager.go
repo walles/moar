@@ -246,9 +246,9 @@ func (p *Pager) _GetLastVisiblePosition() scrollPosition {
 }
 
 func (p *Pager) _FindFirstHit(start scrollPosition, backwards bool) *scrollPosition {
-	lineNumber := firstLine
+	lineNumberOneBased := start.lineNumber + 1
 	for {
-		line := p.reader.GetLine(lineNumber)
+		line := p.reader.GetLine(lineNumberOneBased)
 		if line == nil {
 			// No match, give up
 			return nil
@@ -256,13 +256,16 @@ func (p *Pager) _FindFirstHit(start scrollPosition, backwards bool) *scrollPosit
 
 		lineText := line.Plain()
 		if p.searchPattern.MatchString(lineText) {
-			return &lineNumber
+			// FIXME: Fill in the other fields as well.
+			return &scrollPosition{
+				lineNumber: lineNumberOneBased - 1,
+			}
 		}
 
 		if backwards {
-			lineNumber--
+			lineNumberOneBased--
 		} else {
-			lineNumber++
+			lineNumberOneBased++
 		}
 	}
 }
@@ -278,28 +281,28 @@ func (p *Pager) _ScrollToNextSearchHit() {
 		return
 	}
 
-	var firstSearchLineOneBased int
+	var searchStartPosition scrollPosition
 
 	switch p.mode {
 	case _Viewing:
 		// Start searching on the first line below the bottom of the screen
-		firstSearchLineOneBased = p._GetLastVisiblePosition() + 1
+		searchStartPosition = p._GetLastVisiblePosition().nextLine()
 
 	case _NotFound:
 		// Restart searching from the top
 		p.mode = _Viewing
-		firstSearchLineOneBased = 1
+		searchStartPosition = scrollPosition{}
 
 	default:
 		panic(fmt.Sprint("Unknown search mode when finding next: ", p.mode))
 	}
 
-	firstHitLine := p._FindFirstHit(firstSearchLineOneBased, false)
-	if firstHitLine == nil {
+	firstHitPosition := p._FindFirstHit(searchStartPosition, false)
+	if firstHitPosition == nil {
 		p.mode = _NotFound
 		return
 	}
-	p.firstLineOneBased = *firstHitLine
+	p.scrollPosition = *firstHitPosition
 }
 
 func (p *Pager) _ScrollToPreviousSearchHit() {
@@ -313,12 +316,12 @@ func (p *Pager) _ScrollToPreviousSearchHit() {
 		return
 	}
 
-	var firstSearchLineOneBased int
+	var firstSearchPosition int
 
 	switch p.mode {
 	case _Viewing:
 		// Start searching on the first line above the top of the screen
-		firstSearchLineOneBased = p.firstLineOneBased - 1
+		firstSearchPosition = p.scrollPosition.previousLine()
 
 	case _NotFound:
 		// Restart searching from the bottom
