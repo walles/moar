@@ -574,11 +574,11 @@ func (p *Pager) _OnRune(char rune) {
 
 	case 'u':
 		_, height := p.screen.Size()
-		p.firstLineOneBased -= (height / 2)
+		p.scrollPosition = p.scrollPosition.previousLine(height / 2)
 
 	case 'd':
 		_, height := p.screen.Size()
-		p.firstLineOneBased += (height / 2)
+		p.scrollPosition = p.scrollPosition.nextLine(height / 2)
 
 	case '/':
 		p.mode = _Searching
@@ -677,11 +677,11 @@ func (p *Pager) StartPaging(screen twin.Screen) {
 			switch event.Buttons() {
 			case twin.MouseWheelUp:
 				// Clipping is done in _Redraw()
-				p.firstLineOneBased--
+				p.scrollPosition = p.scrollPosition.previousLine(1)
 
 			case twin.MouseWheelDown:
 				// Clipping is done in _Redraw()
-				p.firstLineOneBased++
+				p.scrollPosition = p.scrollPosition.nextLine(1)
 
 			case twin.MouseWheelLeft:
 				p._MoveRight(-16)
