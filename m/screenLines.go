@@ -170,9 +170,9 @@ func (sl *ScreenLines) createScreenLine(lineNumberToShow *int, numberPrefixLengt
 	newLine := make([]twin.Cell, 0, sl.width)
 	newLine = append(newLine, createLineNumberPrefix(lineNumberToShow, numberPrefixLength)...)
 
-	startColumn := sl.leftColumnZeroBased
+	startColumn := sl.scrollPosition.leftColumn
 	if startColumn < len(contents) {
-		endColumn := sl.leftColumnZeroBased + (sl.width - numberPrefixLength)
+		endColumn := startColumn + (sl.width - numberPrefixLength)
 		if endColumn > len(contents) {
 			endColumn = len(contents)
 		}
@@ -180,7 +180,7 @@ func (sl *ScreenLines) createScreenLine(lineNumberToShow *int, numberPrefixLengt
 	}
 
 	// Add scroll left indicator
-	if sl.leftColumnZeroBased > 0 && len(contents) > 0 {
+	if sl.scrollPosition.leftColumn > 0 && len(contents) > 0 {
 		if len(newLine) == 0 {
 			// Don't panic on short lines, this new Cell will be
 			// overwritten with '<' right after this if statement
@@ -195,7 +195,7 @@ func (sl *ScreenLines) createScreenLine(lineNumberToShow *int, numberPrefixLengt
 	}
 
 	// Add scroll right indicator
-	if len(contents)+numberPrefixLength-sl.leftColumnZeroBased > sl.width {
+	if len(contents)+numberPrefixLength-sl.scrollPosition.leftColumn > sl.width {
 		newLine[sl.width-1] = twin.Cell{
 			Rune:  '>',
 			Style: twin.StyleDefault.WithAttr(twin.AttrReverse),
