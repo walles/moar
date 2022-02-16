@@ -3,13 +3,17 @@ package m
 import (
 	"testing"
 
+	"github.com/walles/moar/twin"
 	"gotest.tools/assert"
 )
 
 func testHorizontalCropping(t *testing.T, contents string, firstIndex int, lastIndex int, expected string) {
-	screenLines := ScreenLines{width: 1 + lastIndex - firstIndex, leftColumnZeroBased: firstIndex}
+	pager := Pager{
+		screen:              twin.NewFakeScreen(1+lastIndex-firstIndex, 99),
+		leftColumnZeroBased: firstIndex,
+	}
 	lineContents := NewLine(contents).HighlightedTokens(nil)
-	screenLine := screenLines.createScreenLine(nil, 0, lineContents)
+	screenLine := pager.createScreenLine(nil, 0, lineContents)
 	assert.Equal(t, rowToString(screenLine), expected)
 }
 
@@ -38,70 +42,56 @@ func TestCreateScreenLineCanAlmostScrollBoth(t *testing.T) {
 }
 
 func TestEmpty(t *testing.T) {
-	// This is what _GetLinesUnlocked() returns on no-lines-available
-	inputLines := InputLines{
-		lines:             nil,
-		firstLineOneBased: 0,
+	pager := Pager{
+		screen: twin.NewFakeScreen(99, 10),
+
+		// No lines available
+		reader: NewReaderFromText("test", ""),
 	}
 
-	screenLines := ScreenLines{
-		inputLines: &inputLines,
-		height:     10,
-	}
-
-	rendered, firstScreenLine := screenLines.renderScreenLines()
+	rendered, statusText, firstScreenLine := pager.renderScreenLines()
 	assert.Equal(t, len(rendered), 0)
+	assert.Equal(t, "johan", statusText)
 	assert.Equal(t, firstScreenLine, 0)
 }
 
 func TestOverflowDown(t *testing.T) {
-	// Set up a single line input
-	line := Line{
-		raw: "hej",
-	}
-	inputLines := InputLines{
-		lines:             []*Line{&line},
-		firstLineOneBased: 1,
-	}
+	pager := Pager{
+		screen: twin.NewFakeScreen(
+			10, // Longer than the raw line, we're testing vertical overflow, not horizontal
+			1,  // Single line screen
+		),
 
-	// Set up a single line screen
-	screenLines := ScreenLines{
-		inputLines: &inputLines,
-		height:     1,
-		width:      10, // Longer than the raw line, we're testing vertical overflow, not horizontal
+		// Single line of input
+		reader: NewReaderFromText("test", "hej"),
 
 		// This value can be anything and should be clipped, that's what we're testing
-		firstInputLineOneBased: 42,
+		firstLineOneBased: 42,
 	}
 
-	rendered, firstScreenLine := screenLines.renderScreenLines()
+	rendered, statusText, firstScreenLine := pager.renderScreenLines()
 	assert.Equal(t, len(rendered), 1)
 	assert.Equal(t, "hej", rowToString(rendered[0]))
+	assert.Equal(t, "johan", statusText)
 	assert.Equal(t, firstScreenLine, 1)
 }
 
 func TestOverflowUp(t *testing.T) {
-	// Set up a single line input
-	line := Line{
-		raw: "hej",
-	}
-	inputLines := InputLines{
-		lines:             []*Line{&line},
+	pager := Pager{
+		screen: twin.NewFakeScreen(
+			10, // Longer than the raw line, we're testing vertical overflow, not horizontal
+			1,  // Single line screen
+		),
+
+		// Single line of input
+		reader: NewReaderFromText("test", "hej"),
+
 		firstLineOneBased: 1,
 	}
 
-	// Set up a single line screen
-	screenLines := ScreenLines{
-		inputLines: &inputLines,
-		height:     1,
-		width:      10, // Longer than the raw line, we're testing vertical overflow, not horizontal
-
-		// This value can be anything and should be clipped, that's what we're testing
-		firstInputLineOneBased: 0,
-	}
-
-	rendered, firstScreenLine := screenLines.renderScreenLines()
+	rendered, statusText, firstScreenLine := pager.renderScreenLines()
 	assert.Equal(t, len(rendered), 1)
 	assert.Equal(t, "hej", rowToString(rendered[0]))
+	assert.Equal(t, "johan", statusText)
 	assert.Equal(t, firstScreenLine, 1)
 }
