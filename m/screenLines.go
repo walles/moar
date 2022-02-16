@@ -2,24 +2,9 @@ package m
 
 import (
 	"fmt"
-	"regexp"
 
 	"github.com/walles/moar/twin"
 )
-
-type ScreenLines struct {
-	inputLines             *InputLines
-	firstInputLineOneBased int
-	leftColumnZeroBased    int
-
-	width  int // Display width
-	height int // Display height
-
-	searchPattern *regexp.Regexp
-
-	showLineNumbers bool
-	wrapLongLines   bool
-}
 
 type RenderedLine struct {
 	inputLineOneBased int
@@ -31,47 +16,33 @@ type RenderedLine struct {
 	cells []twin.Cell
 }
 
-func (sl *ScreenLines) lastInputLineOneBased() int {
-	if sl.inputLines.lines == nil {
-		panic("nil input lines, cannot make up a last input line number")
-	}
-
-	// Offsets figured out through trial-and-error...
-	return sl.inputLines.firstLineOneBased + len(sl.inputLines.lines) - 1
-}
-
 // Render screen lines into an array of lines consisting of Cells.
 //
 // The second return value is the same as firstInputLineOneBased, but decreased
 // if needed so that the end of the input is visible.
-func (sl *ScreenLines) renderScreenLines() ([][]twin.Cell, int) {
-	if sl.inputLines.lines == nil {
-		// Empty input, empty output
-		return [][]twin.Cell{}, 0
+func (p *Pager) renderScreenLines() (lines [][]twin.Cell, statusText string, newFirstInputLineOneBased int) {
+	if p.firstLineOneBased < 1 {
+		p.firstLineOneBased = 1
 	}
 
-	if sl.firstInputLineOneBased < 1 {
-		sl.firstInputLineOneBased = 1
+	if p.firstLineOneBased > p._GetLastVisibleLineOneBased() {
+		p.firstLineOneBased = p._GetLastVisibleLineOneBased()
 	}
 
-	if sl.firstInputLineOneBased > sl.lastInputLineOneBased() {
-		sl.firstInputLineOneBased = sl.lastInputLineOneBased()
-	}
-
-	allPossibleLines := sl.renderAllLines()
+	allPossibleLines, statusText := p.renderAllLines()
 
 	// Find which index in allPossibleLines the user wants to see at the top of
 	// the screen
 	firstVisibleIndex := -1 // Not found
 	for index, line := range allPossibleLines {
-		if line.inputLineOneBased == sl.firstInputLineOneBased {
+		if line.inputLineOneBased == p.firstLineOneBased {
 			firstVisibleIndex = index
 			break
 		}
 	}
 	if firstVisibleIndex == -1 {
 		panic(fmt.Errorf("firstInputLineOneBased %d not found in allPossibleLines size %d",
-			sl.firstInputLineOneBased, len(allPossibleLines)))
+			p.firstLineOneBased, len(allPossibleLines)))
 	}
 
 	// Ensure the firstVisibleIndex is on an input line boundary, we don't
@@ -80,10 +51,12 @@ func (sl *ScreenLines) renderScreenLines() ([][]twin.Cell, int) {
 		firstVisibleIndex--
 	}
 
-	lastVisibleIndex := firstVisibleIndex + sl.height - 1
+	_, height := p.screen.Size()
+	lastVisibleIndex := firstVisibleIndex + height - 1
 	if lastVisibleIndex < len(allPossibleLines) {
 		// Screen has enough room for everything, return everything
-		return sl.toScreenLinesArray(allPossibleLines, firstVisibleIndex)
+		lines, newFirstInputLineOneBased = p.toScreenLinesArray(allPossibleLines, firstVisibleIndex)
+		return
 	}
 
 	// We seem to be too far down, clip!
@@ -99,16 +72,18 @@ func (sl *ScreenLines) renderScreenLines() ([][]twin.Cell, int) {
 		firstVisibleIndex--
 	}
 
-	// FIXME: Construct the screen lines to return
-	return sl.toScreenLinesArray(allPossibleLines, firstVisibleIndex)
+	// Construct the screen lines to return
+	lines, newFirstInputLineOneBased = p.toScreenLinesArray(allPossibleLines, firstVisibleIndex)
+	return
 }
 
-func (sl *ScreenLines) toScreenLinesArray(allPossibleLines []RenderedLine, firstVisibleIndex int) ([][]twin.Cell, int) {
+func (p *Pager) toScreenLinesArray(allPossibleLines []RenderedLine, firstVisibleIndex int) ([][]twin.Cell, int) {
 	firstInputLineOneBased := allPossibleLines[firstVisibleIndex].inputLineOneBased
 
-	screenLines := make([][]twin.Cell, 0, sl.height)
+	_, height := p.screen.Size()
+	screenLines := make([][]twin.Cell, 0, height)
 	for index := firstVisibleIndex; ; index++ {
-		if len(screenLines) >= sl.height {
+		if len(screenLines) >= height {
 			// All lines rendered, done!
 			break
 		}
@@ -122,9 +97,9 @@ func (sl *ScreenLines) toScreenLinesArray(allPossibleLines []RenderedLine, first
 	return screenLines, firstInputLineOneBased
 }
 
-func (sl *ScreenLines) renderAllLines() []RenderedLine {
+func (p *Pager) renderAllLines() ([]RenderedLine, string) {
 	// Count the length of the last line number
-	numberPrefixLength := len(formatNumber(uint(sl.lastInputLineOneBased()))) + 1
+	numberPrefixLength := len(formatNumber(uint(p._GetLastVisibleLineOneBased()))) + 1
 	if numberPrefixLength < 4 {
 		// 4 = space for 3 digits followed by one whitespace
 		//
@@ -132,27 +107,36 @@ func (sl *ScreenLines) renderAllLines() []RenderedLine {
 		numberPrefixLength = 4
 	}
 
-	if !sl.showLineNumbers {
+	if !p.ShowLineNumbers {
 		numberPrefixLength = 0
 	}
 
-	allLines := make([]RenderedLine, 0)
-	for lineIndex, line := range sl.inputLines.lines {
-		lineNumber := sl.inputLines.firstLineOneBased + lineIndex
-
-		allLines = append(allLines, sl.renderLine(line, lineNumber, numberPrefixLength)...)
+	_, height := p.screen.Size()
+	wantedLineCount := height - 1
+	inputLines := p.reader.GetLines(p.firstLineOneBased, wantedLineCount)
+	if inputLines.lines == nil {
+		// Empty input, empty output
+		return []RenderedLine{}, inputLines.statusText
 	}
 
-	return allLines
+	allLines := make([]RenderedLine, 0)
+	for lineIndex, line := range inputLines.lines {
+		lineNumber := inputLines.firstLineOneBased + lineIndex
+
+		allLines = append(allLines, p.renderLine(line, lineNumber, numberPrefixLength)...)
+	}
+
+	return allLines, inputLines.statusText
 }
 
 // lineNumber and numberPrefixLength are required for knowing how much to
 // indent, and to (optionally) render the line number.
-func (sl *ScreenLines) renderLine(line *Line, lineNumber, numberPrefixLength int) []RenderedLine {
-	highlighted := line.HighlightedTokens(sl.searchPattern)
+func (p *Pager) renderLine(line *Line, lineNumber, numberPrefixLength int) []RenderedLine {
+	highlighted := line.HighlightedTokens(p.searchPattern)
 	var wrapped [][]twin.Cell
-	if sl.wrapLongLines {
-		wrapped = wrapLine(sl.width-numberPrefixLength, highlighted)
+	if p.WrapLongLines {
+		width, _ := p.screen.Size()
+		wrapped = wrapLine(width-numberPrefixLength, highlighted)
 	} else {
 		// All on one line
 		wrapped = [][]twin.Cell{highlighted}
@@ -168,20 +152,21 @@ func (sl *ScreenLines) renderLine(line *Line, lineNumber, numberPrefixLength int
 		rendered = append(rendered, RenderedLine{
 			inputLineOneBased: lineNumber,
 			wrapIndex:         wrapIndex,
-			cells:             sl.createScreenLine(visibleLineNumber, numberPrefixLength, inputLinePart),
+			cells:             p.createScreenLine(visibleLineNumber, numberPrefixLength, inputLinePart),
 		})
 	}
 
 	return rendered
 }
 
-func (sl *ScreenLines) createScreenLine(lineNumberToShow *int, numberPrefixLength int, contents []twin.Cell) []twin.Cell {
-	newLine := make([]twin.Cell, 0, sl.width)
+func (p *Pager) createScreenLine(lineNumberToShow *int, numberPrefixLength int, contents []twin.Cell) []twin.Cell {
+	width, _ := p.screen.Size()
+	newLine := make([]twin.Cell, 0, width)
 	newLine = append(newLine, createLineNumberPrefix(lineNumberToShow, numberPrefixLength)...)
 
-	startColumn := sl.leftColumnZeroBased
+	startColumn := p.leftColumnZeroBased
 	if startColumn < len(contents) {
-		endColumn := sl.leftColumnZeroBased + (sl.width - numberPrefixLength)
+		endColumn := p.leftColumnZeroBased + (width - numberPrefixLength)
 		if endColumn > len(contents) {
 			endColumn = len(contents)
 		}
@@ -189,7 +174,7 @@ func (sl *ScreenLines) createScreenLine(lineNumberToShow *int, numberPrefixLengt
 	}
 
 	// Add scroll left indicator
-	if sl.leftColumnZeroBased > 0 && len(contents) > 0 {
+	if p.leftColumnZeroBased > 0 && len(contents) > 0 {
 		if len(newLine) == 0 {
 			// Don't panic on short lines, this new Cell will be
 			// overwritten with '<' right after this if statement
@@ -204,8 +189,8 @@ func (sl *ScreenLines) createScreenLine(lineNumberToShow *int, numberPrefixLengt
 	}
 
 	// Add scroll right indicator
-	if len(contents)+numberPrefixLength-sl.leftColumnZeroBased > sl.width {
-		newLine[sl.width-1] = twin.Cell{
+	if len(contents)+numberPrefixLength-p.leftColumnZeroBased > width {
+		newLine[width-1] = twin.Cell{
 			Rune:  '>',
 			Style: twin.StyleDefault.WithAttr(twin.AttrReverse),
 		}
