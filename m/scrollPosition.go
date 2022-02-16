@@ -1,9 +1,6 @@
 package m
 
 type scrollPosition struct {
-	// FIXME: Need Reader access to be able to scroll through the complete input
-	// FIXME: Needs to be able to render a single line
-
 	// Line number in the input stream, zero based
 	lineNumber int
 
@@ -27,12 +24,12 @@ func (s scrollPosition) sameOrBefore(otherPosition scrollPosition) bool {
 }
 
 // Create a new position, scrolled towards the end of the file
-func (s scrollPosition) previousLine(scrollDistance int) scrollPosition {
+func (s scrollPosition) previousLine(pager *Pager, scrollDistance int) scrollPosition {
 	// FIXME: Scroll up, taking line wrapping into account
 }
 
 // Create a new position, scrolled towards the end of the file
-func (s scrollPosition) nextLine(scrollDistance int) scrollPosition {
+func (s scrollPosition) nextLine(pager *Pager, scrollDistance int) scrollPosition {
 	// FIXME: Scroll down, taking line wrapping into account
 
 	returnMe := s
@@ -47,7 +44,7 @@ func (s scrollPosition) nextLine(scrollDistance int) scrollPosition {
 		// If our wrapIndex > the maximum RenderedLine wrapIndex, move to the next
 		// input line
 		if returnMe.wrapIndex > len(rendered) {
-			if returnMe.lineNumber == totalLineCount-1 {
+			if returnMe.lineNumber == pager.reader.GetLineCount()-1 {
 				// We're already at the last line, can't scroll any further
 				return returnMe
 			}
