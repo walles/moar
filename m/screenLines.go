@@ -137,34 +137,42 @@ func (sl *ScreenLines) renderAllLines() []RenderedLine {
 	}
 
 	allLines := make([]RenderedLine, 0)
-
 	for lineIndex, line := range sl.inputLines.lines {
 		lineNumber := sl.inputLines.firstLineOneBased + lineIndex
 
-		highlighted := line.HighlightedTokens(sl.searchPattern)
-		var wrapped [][]twin.Cell
-		if sl.wrapLongLines {
-			wrapped = wrapLine(sl.width-numberPrefixLength, highlighted)
-		} else {
-			// All on one line
-			wrapped = [][]twin.Cell{highlighted}
-		}
-
-		for wrapIndex, inputLinePart := range wrapped {
-			visibleLineNumber := &lineNumber
-			if wrapIndex > 0 {
-				visibleLineNumber = nil
-			}
-
-			allLines = append(allLines, RenderedLine{
-				inputLineOneBased: lineNumber,
-				wrapIndex:         wrapIndex,
-				cells:             sl.createScreenLine(visibleLineNumber, numberPrefixLength, inputLinePart),
-			})
-		}
+		allLines = append(allLines, sl.renderLine(line, lineNumber, numberPrefixLength)...)
 	}
 
 	return allLines
+}
+
+// lineNumber and numberPrefixLength are required for knowing how much to
+// indent, and to (optionally) render the line number.
+func (sl *ScreenLines) renderLine(line *Line, lineNumber, numberPrefixLength int) []RenderedLine {
+	highlighted := line.HighlightedTokens(sl.searchPattern)
+	var wrapped [][]twin.Cell
+	if sl.wrapLongLines {
+		wrapped = wrapLine(sl.width-numberPrefixLength, highlighted)
+	} else {
+		// All on one line
+		wrapped = [][]twin.Cell{highlighted}
+	}
+
+	rendered := make([]RenderedLine, 0)
+	for wrapIndex, inputLinePart := range wrapped {
+		visibleLineNumber := &lineNumber
+		if wrapIndex > 0 {
+			visibleLineNumber = nil
+		}
+
+		rendered = append(rendered, RenderedLine{
+			inputLineOneBased: lineNumber,
+			wrapIndex:         wrapIndex,
+			cells:             sl.createScreenLine(visibleLineNumber, numberPrefixLength, inputLinePart),
+		})
+	}
+
+	return rendered
 }
 
 func (sl *ScreenLines) createScreenLine(lineNumberToShow *int, numberPrefixLength int, contents []twin.Cell) []twin.Cell {
