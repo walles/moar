@@ -30,6 +30,9 @@ func (p *Pager) renderScreenLines() (lines [][]twin.Cell, statusText string, new
 	}
 
 	allPossibleLines, statusText := p.renderAllLines()
+	if len(allPossibleLines) == 0 {
+		return
+	}
 
 	// Find which index in allPossibleLines the user wants to see at the top of
 	// the screen

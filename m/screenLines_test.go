@@ -51,7 +51,7 @@ func TestEmpty(t *testing.T) {
 
 	rendered, statusText, firstScreenLine := pager.renderScreenLines()
 	assert.Equal(t, len(rendered), 0)
-	assert.Equal(t, "johan", statusText)
+	assert.Equal(t, "test: <empty>", statusText)
 	assert.Equal(t, firstScreenLine, 0)
 }
 
@@ -59,7 +59,7 @@ func TestOverflowDown(t *testing.T) {
 	pager := Pager{
 		screen: twin.NewFakeScreen(
 			10, // Longer than the raw line, we're testing vertical overflow, not horizontal
-			1,  // Single line screen
+			2,  // Single line of contents + one status line
 		),
 
 		// Single line of input
@@ -80,7 +80,7 @@ func TestOverflowUp(t *testing.T) {
 	pager := Pager{
 		screen: twin.NewFakeScreen(
 			10, // Longer than the raw line, we're testing vertical overflow, not horizontal
-			1,  // Single line screen
+			2,  // Single line of contents + one status line
 		),
 
 		// Single line of input
