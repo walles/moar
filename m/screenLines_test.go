@@ -72,7 +72,7 @@ func TestOverflowDown(t *testing.T) {
 	rendered, statusText, firstScreenLine := pager.renderScreenLines()
 	assert.Equal(t, len(rendered), 1)
 	assert.Equal(t, "hej", rowToString(rendered[0]))
-	assert.Equal(t, "johan", statusText)
+	assert.Equal(t, "test: 1 line  100%", statusText)
 	assert.Equal(t, firstScreenLine, 1)
 }
 
@@ -92,6 +92,6 @@ func TestOverflowUp(t *testing.T) {
 	rendered, statusText, firstScreenLine := pager.renderScreenLines()
 	assert.Equal(t, len(rendered), 1)
 	assert.Equal(t, "hej", rowToString(rendered[0]))
-	assert.Equal(t, "johan", statusText)
+	assert.Equal(t, "test: 1 line  100%", statusText)
 	assert.Equal(t, firstScreenLine, 1)
 }
