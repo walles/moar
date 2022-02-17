@@ -21,14 +21,6 @@ type RenderedLine struct {
 // The second return value is the same as firstInputLineOneBased, but decreased
 // if needed so that the end of the input is visible.
 func (p *Pager) renderScreenLines() (lines [][]twin.Cell, statusText string, newFirstInputLineOneBased int) {
-	if p.firstLineOneBased < 1 {
-		p.firstLineOneBased = 1
-	}
-
-	if p.firstLineOneBased > p._GetLastVisibleLineOneBased() {
-		p.firstLineOneBased = p._GetLastVisibleLineOneBased()
-	}
-
 	allPossibleLines, statusText := p.renderAllLines()
 	if len(allPossibleLines) == 0 {
 		return
@@ -116,10 +108,20 @@ func (p *Pager) renderAllLines() ([]RenderedLine, string) {
 
 	_, height := p.screen.Size()
 	wantedLineCount := height - 1
+
+	if p.firstLineOneBased < 1 {
+		p.firstLineOneBased = 1
+	}
 	inputLines := p.reader.GetLines(p.firstLineOneBased, wantedLineCount)
 	if inputLines.lines == nil {
 		// Empty input, empty output
 		return []RenderedLine{}, inputLines.statusText
+	}
+
+	// Offsets figured out through trial-and-error...
+	lastInputLineOneBased := inputLines.firstLineOneBased + len(inputLines.lines) - 1
+	if p.firstLineOneBased > lastInputLineOneBased {
+		p.firstLineOneBased = lastInputLineOneBased
 	}
 
 	allLines := make([]RenderedLine, 0)
