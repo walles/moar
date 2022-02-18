@@ -1,6 +1,7 @@
 package m
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/walles/moar/twin"
@@ -94,4 +95,50 @@ func TestOverflowUp(t *testing.T) {
 	assert.Equal(t, "hej", rowToString(rendered[0]))
 	assert.Equal(t, "test: 1 line  100%", statusText)
 	assert.Equal(t, firstScreenLine, 1)
+}
+
+func TestWrapping(t *testing.T) {
+	reader := NewReaderFromStream("",
+		strings.NewReader("first line\nline two will be wrapped\nhere's the last line"))
+	pager := NewPager(reader)
+	pager.WrapLongLines = true
+	pager.ShowLineNumbers = false
+
+	// Wait for reader to finish reading
+	<-reader.done
+
+	// This is what we're testing really
+	pager._ScrollToEnd()
+
+	// Higher than needed, we'll just be validating the necessary lines at the
+	// top.
+	screen := twin.NewFakeScreen(10, 99)
+
+	// Exit immediately
+	pager.Quit()
+
+	// Get contents onto our fake screen
+	pager.StartPaging(screen)
+	pager._Redraw("")
+
+	actual := strings.Join([]string{
+		rowToString(screen.GetRow(0)),
+		rowToString(screen.GetRow(1)),
+		rowToString(screen.GetRow(2)),
+		rowToString(screen.GetRow(3)),
+		rowToString(screen.GetRow(4)),
+		rowToString(screen.GetRow(5)),
+		rowToString(screen.GetRow(6)),
+		rowToString(screen.GetRow(7)),
+	}, "\n")
+	assert.Equal(t, actual, strings.Join([]string{
+		"first line",
+		"line two",
+		"will be",
+		"wrapped",
+		"here's the",
+		"last line",
+		"---",
+		"",
+	}, "\n"))
 }
