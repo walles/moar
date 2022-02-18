@@ -125,6 +125,27 @@ func parseColorsOption(colorsOption string, flagSet *flag.FlagSet) chroma.Format
 	panic("We just did os.Exit(), why are we still executing?")
 }
 
+func parseStatusBarStyle(styleOption string, flagSet *flag.FlagSet) m.StatusBarStyle {
+	if styleOption == "inverse" {
+		return m.STATUSBAR_STYLE_INVERSE
+	}
+	if styleOption == "plain" {
+		return m.STATUSBAR_STYLE_PLAIN
+	}
+	if styleOption == "bold" {
+		return m.STATUSBAR_STYLE_BOLD
+	}
+
+	fmt.Fprintf(os.Stderr,
+		"ERROR: Unrecognized status bar style \"%s\", good ones are inverse, plain and bold.\n",
+		styleOption)
+	fmt.Fprintln(os.Stderr)
+	printUsage(os.Stderr, flagSet, true)
+
+	os.Exit(1)
+	panic("os.Exit(1) just failed")
+}
+
 func main() {
 	// FIXME: If we get a CTRL-C, get terminal back into a useful state before terminating
 
@@ -151,6 +172,7 @@ func main() {
 	colorsOption := flagSet.String("colors", "16M", "Highlighting palette size: 8, 16, 256, 16M")
 	noLineNumbers := flagSet.Bool("no-linenumbers", false, "Hide line numbers on startup, press left arrow key to show")
 	noClearOnExit := flagSet.Bool("no-clear-on-exit", false, "Retain screen contents when exiting moar")
+	statusBarStyleOption := flagSet.String("statusbar", "inverse", "Status bar style: inverse, plain or bold")
 
 	// Combine flags from environment and from command line
 	flags := os.Args[1:]
@@ -178,6 +200,7 @@ func main() {
 
 	style := parseStyleOption(*styleOption, flagSet)
 	formatter := parseColorsOption(*colorsOption, flagSet)
+	statusBarStyle := parseStatusBarStyle(*statusBarStyleOption, flagSet)
 
 	log.SetLevel(log.InfoLevel)
 	if *trace {
@@ -247,7 +270,7 @@ func main() {
 	if stdinIsRedirected {
 		// Display input pipe contents
 		reader := m.NewReaderFromStream("", os.Stdin)
-		startPaging(reader, *wrap, *noLineNumbers, *noClearOnExit)
+		startPaging(reader, *wrap, *noLineNumbers, *noClearOnExit, statusBarStyle)
 		return
 	}
 
@@ -257,10 +280,13 @@ func main() {
 		fmt.Fprintf(os.Stderr, "ERROR: %v\n", err)
 		os.Exit(1)
 	}
-	startPaging(reader, *wrap, *noLineNumbers, *noClearOnExit)
+	startPaging(reader, *wrap, *noLineNumbers, *noClearOnExit, statusBarStyle)
 }
 
-func startPaging(reader *m.Reader, wrapLongLines bool, noLineNumbers bool, noClearOnExit bool) {
+func startPaging(reader *m.Reader,
+	wrapLongLines, noLineNumbers, noClearOnExit bool,
+	statusBarStyle m.StatusBarStyle,
+) {
 	screen, e := twin.NewScreen()
 	if e != nil {
 		panic(e)
@@ -271,6 +297,7 @@ func startPaging(reader *m.Reader, wrapLongLines bool, noLineNumbers bool, noCle
 	pager := m.NewPager(reader)
 	pager.WrapLongLines = wrapLongLines
 	pager.ShowLineNumbers = !noLineNumbers
+	pager.StatusBarStyle = statusBarStyle
 
 	defer func() {
 		// Restore screen...
