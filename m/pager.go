@@ -19,6 +19,14 @@ const (
 	_NotFound  _PagerMode = 2
 )
 
+type StatusBarStyle int
+
+const (
+	STATUSBAR_STYLE_INVERSE StatusBarStyle = iota
+	STATUSBAR_STYLE_PLAIN
+	STATUSBAR_STYLE_BOLD
+)
+
 type eventSpinnerUpdate struct {
 	spinner string
 }
@@ -45,6 +53,8 @@ type Pager struct {
 
 	// NewPager shows lines by default, this field can hide them
 	ShowLineNumbers bool
+
+	StatusBarStyle StatusBarStyle
 
 	WrapLongLines bool
 
@@ -134,7 +144,16 @@ func (p *Pager) _SetFooter(footer string) {
 	width, height := p.screen.Size()
 
 	pos := 0
-	footerStyle := twin.StyleDefault.WithAttr(twin.AttrReverse)
+	var footerStyle twin.Style
+	if p.StatusBarStyle == STATUSBAR_STYLE_INVERSE {
+		footerStyle = twin.StyleDefault.WithAttr(twin.AttrReverse)
+	} else if p.StatusBarStyle == STATUSBAR_STYLE_PLAIN {
+		footerStyle = twin.StyleDefault
+	} else if p.StatusBarStyle == STATUSBAR_STYLE_BOLD {
+		footerStyle = twin.StyleDefault.WithAttr(twin.AttrBold)
+	} else {
+		panic(fmt.Sprint("Unrecognized footer style: ", footerStyle))
+	}
 	for _, token := range footer {
 		p.screen.SetCell(pos, height-1, twin.NewCell(token, footerStyle))
 		pos++
