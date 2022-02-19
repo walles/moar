@@ -94,7 +94,7 @@ func (p *Pager) toScreenLinesArray(allPossibleLines []RenderedLine, firstVisible
 
 func (p *Pager) renderAllLines() ([]RenderedLine, string) {
 	// Count the length of the last line number
-	numberPrefixLength := len(formatNumber(uint(p._GetLastVisibleLineOneBased()))) + 1
+	numberPrefixLength := len(formatNumber(uint(p.getLastVisibleLineOneBased()))) + 1
 	if numberPrefixLength < 4 {
 		// 4 = space for 3 digits followed by one whitespace
 		//

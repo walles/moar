@@ -105,7 +105,7 @@ func startPaging(t *testing.T, reader *Reader) *twin.FakeScreen {
 	pager.StartPaging(screen)
 
 	// This makes sure at least one frame gets rendered
-	pager._Redraw("")
+	pager.redraw("")
 
 	return screen
 }
@@ -248,7 +248,7 @@ func TestFindFirstLineOneBasedSimple(t *testing.T) {
 
 	pager.searchPattern = toPattern("AB")
 
-	hitLine := pager._FindFirstHitLineOneBased(1, false)
+	hitLine := pager.findFirstHitLineOneBased(1, false)
 	assert.Check(t, *hitLine == 1)
 }
 
@@ -261,7 +261,7 @@ func TestFindFirstLineOneBasedAnsi(t *testing.T) {
 
 	pager.searchPattern = toPattern("AB")
 
-	hitLine := pager._FindFirstHitLineOneBased(1, false)
+	hitLine := pager.findFirstHitLineOneBased(1, false)
 	assert.Check(t, *hitLine == 1)
 }
 
@@ -286,7 +286,7 @@ func TestScrollToBottomWrapNextToLastLine(t *testing.T) {
 	<-reader.done
 
 	// This is what we're testing really
-	pager._ScrollToEnd()
+	pager.scrollToEnd()
 
 	// Heigh 3 = two lines of contents + one footer
 	screen := twin.NewFakeScreen(10, 3)
@@ -296,7 +296,7 @@ func TestScrollToBottomWrapNextToLastLine(t *testing.T) {
 
 	// Get contents onto our fake screen
 	pager.StartPaging(screen)
-	pager._Redraw("")
+	pager.redraw("")
 
 	actual := strings.Join([]string{
 		rowToString(screen.GetRow(0)),
@@ -362,7 +362,7 @@ func benchmarkSearch(b *testing.B, highlighted bool) {
 	b.ResetTimer()
 
 	// This test will search through all the N copies we made of our file
-	hitLine := pager._FindFirstHitLineOneBased(1, false)
+	hitLine := pager.findFirstHitLineOneBased(1, false)
 
 	if hitLine != nil {
 		panic(fmt.Errorf("This test is meant to scan the whole file without finding anything"))

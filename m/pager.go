@@ -127,7 +127,7 @@ func NewPager(r *Reader) *Pager {
 	}
 }
 
-func (p *Pager) _AddSearchFooter() {
+func (p *Pager) addSearchFooter() {
 	_, height := p.screen.Size()
 
 	pos := 0
@@ -140,7 +140,7 @@ func (p *Pager) _AddSearchFooter() {
 	p.screen.SetCell(pos, height-1, twin.NewCell(' ', twin.StyleDefault.WithAttr(twin.AttrReverse)))
 }
 
-func (p *Pager) _SetFooter(footer string) {
+func (p *Pager) setFooter(footer string) {
 	width, height := p.screen.Size()
 
 	pos := 0
@@ -164,7 +164,7 @@ func (p *Pager) _SetFooter(footer string) {
 	}
 }
 
-func (p *Pager) _Redraw(spinner string) {
+func (p *Pager) redraw(spinner string) {
 	p.screen.Clear()
 
 	lastUpdatedScreenLineNumber := -1
@@ -190,17 +190,17 @@ func (p *Pager) _Redraw(spinner string) {
 
 	switch p.mode {
 	case _Searching:
-		p._AddSearchFooter()
+		p.addSearchFooter()
 
 	case _NotFound:
-		p._SetFooter("Not found: " + p.searchString)
+		p.setFooter("Not found: " + p.searchString)
 
 	case _Viewing:
 		helpText := "Press ESC / q to exit, '/' to search, '?' for help"
 		if p.isShowingHelp {
 			helpText = "Press ESC / q to exit help, '/' to search"
 		}
-		p._SetFooter(statusText + spinner + "  " + helpText)
+		p.setFooter(statusText + spinner + "  " + helpText)
 
 	default:
 		panic(fmt.Sprint("Unsupported pager mode: ", p.mode))
@@ -224,19 +224,19 @@ func (p *Pager) Quit() {
 	p.preHelpState = nil
 }
 
-func (p *Pager) _ScrollToSearchHits() {
+func (p *Pager) scrollToSearchHits() {
 	if p.searchPattern == nil {
 		// This is not a search
 		return
 	}
 
-	firstHitLine := p._FindFirstHitLineOneBased(p.firstLineOneBased, false)
+	firstHitLine := p.findFirstHitLineOneBased(p.firstLineOneBased, false)
 	if firstHitLine == nil {
 		// No match, give up
 		return
 	}
 
-	if *firstHitLine <= p._GetLastVisibleLineOneBased() {
+	if *firstHitLine <= p.getLastVisibleLineOneBased() {
 		// Already on-screen, never mind
 		return
 	}
@@ -244,7 +244,7 @@ func (p *Pager) _ScrollToSearchHits() {
 	p.firstLineOneBased = *firstHitLine
 }
 
-func (p *Pager) _GetLastVisibleLineOneBased() int {
+func (p *Pager) getLastVisibleLineOneBased() int {
 	firstVisibleLineOneBased := p.firstLineOneBased
 	_, windowHeight := p.screen.Size()
 
@@ -253,7 +253,7 @@ func (p *Pager) _GetLastVisibleLineOneBased() int {
 	return firstVisibleLineOneBased + windowHeight - 2
 }
 
-func (p *Pager) _FindFirstHitLineOneBased(firstLineOneBased int, backwards bool) *int {
+func (p *Pager) findFirstHitLineOneBased(firstLineOneBased int, backwards bool) *int {
 	lineNumber := firstLineOneBased
 	for {
 		line := p.reader.GetLine(lineNumber)
@@ -275,7 +275,7 @@ func (p *Pager) _FindFirstHitLineOneBased(firstLineOneBased int, backwards bool)
 	}
 }
 
-func (p *Pager) _ScrollToNextSearchHit() {
+func (p *Pager) scrollToNextSearchHit() {
 	if p.searchPattern == nil {
 		// Nothing to search for, never mind
 		return
@@ -291,7 +291,7 @@ func (p *Pager) _ScrollToNextSearchHit() {
 	switch p.mode {
 	case _Viewing:
 		// Start searching on the first line below the bottom of the screen
-		firstSearchLineOneBased = p._GetLastVisibleLineOneBased() + 1
+		firstSearchLineOneBased = p.getLastVisibleLineOneBased() + 1
 
 	case _NotFound:
 		// Restart searching from the top
@@ -302,7 +302,7 @@ func (p *Pager) _ScrollToNextSearchHit() {
 		panic(fmt.Sprint("Unknown search mode when finding next: ", p.mode))
 	}
 
-	firstHitLine := p._FindFirstHitLineOneBased(firstSearchLineOneBased, false)
+	firstHitLine := p.findFirstHitLineOneBased(firstSearchLineOneBased, false)
 	if firstHitLine == nil {
 		p.mode = _NotFound
 		return
@@ -310,7 +310,7 @@ func (p *Pager) _ScrollToNextSearchHit() {
 	p.firstLineOneBased = *firstHitLine
 }
 
-func (p *Pager) _ScrollToPreviousSearchHit() {
+func (p *Pager) scrollToPreviousSearchHit() {
 	if p.searchPattern == nil {
 		// Nothing to search for, never mind
 		return
@@ -337,7 +337,7 @@ func (p *Pager) _ScrollToPreviousSearchHit() {
 		panic(fmt.Sprint("Unknown search mode when finding previous: ", p.mode))
 	}
 
-	firstHitLine := p._FindFirstHitLineOneBased(firstSearchLineOneBased, true)
+	firstHitLine := p.findFirstHitLineOneBased(firstSearchLineOneBased, true)
 	if firstHitLine == nil {
 		p.mode = _NotFound
 		return
@@ -345,10 +345,10 @@ func (p *Pager) _ScrollToPreviousSearchHit() {
 	p.firstLineOneBased = *firstHitLine
 }
 
-func (p *Pager) _UpdateSearchPattern() {
+func (p *Pager) updateSearchPattern() {
 	p.searchPattern = toPattern(p.searchString)
 
-	p._ScrollToSearchHits()
+	p.scrollToSearchHits()
 
 	// FIXME: If the user is typing, indicate to user if we didn't find anything
 }
@@ -404,11 +404,11 @@ func removeLastChar(s string) string {
 	return s[:len(s)-size]
 }
 
-func (p *Pager) _ScrollToEnd() {
+func (p *Pager) scrollToEnd() {
 	p.firstLineOneBased = p.reader.GetLineCount()
 }
 
-func (p *Pager) _OnSearchKey(key twin.KeyCode) {
+func (p *Pager) onSearchKey(key twin.KeyCode) {
 	switch key {
 	case twin.KeyEscape, twin.KeyEnter:
 		p.mode = _Viewing
@@ -419,7 +419,7 @@ func (p *Pager) _OnSearchKey(key twin.KeyCode) {
 		}
 
 		p.searchString = removeLastChar(p.searchString)
-		p._UpdateSearchPattern()
+		p.updateSearchPattern()
 
 	case twin.KeyUp:
 		// Clipping is done in _Redraw()
@@ -446,7 +446,7 @@ func (p *Pager) _OnSearchKey(key twin.KeyCode) {
 	}
 }
 
-func (p *Pager) _MoveRight(delta int) {
+func (p *Pager) moveRight(delta int) {
 	if p.ShowLineNumbers && delta > 0 {
 		p.ShowLineNumbers = false
 		return
@@ -465,9 +465,9 @@ func (p *Pager) _MoveRight(delta int) {
 	}
 }
 
-func (p *Pager) _OnKey(keyCode twin.KeyCode) {
+func (p *Pager) onKey(keyCode twin.KeyCode) {
 	if p.mode == _Searching {
-		p._OnSearchKey(keyCode)
+		p.onSearchKey(keyCode)
 		return
 	}
 	if p.mode != _Viewing && p.mode != _NotFound {
@@ -490,10 +490,10 @@ func (p *Pager) _OnKey(keyCode twin.KeyCode) {
 		p.firstLineOneBased++
 
 	case twin.KeyRight:
-		p._MoveRight(16)
+		p.moveRight(16)
 
 	case twin.KeyLeft:
-		p._MoveRight(-16)
+		p.moveRight(-16)
 
 	case twin.KeyHome:
 		p.firstLineOneBased = 1
@@ -514,14 +514,14 @@ func (p *Pager) _OnKey(keyCode twin.KeyCode) {
 	}
 }
 
-func (p *Pager) _OnSearchRune(char rune) {
+func (p *Pager) onSearchRune(char rune) {
 	p.searchString = p.searchString + string(char)
-	p._UpdateSearchPattern()
+	p.updateSearchPattern()
 }
 
-func (p *Pager) _OnRune(char rune) {
+func (p *Pager) onRune(char rune) {
 	if p.mode == _Searching {
-		p._OnSearchRune(char)
+		p.onSearchRune(char)
 		return
 	}
 	if p.mode != _Viewing && p.mode != _NotFound {
@@ -555,17 +555,17 @@ func (p *Pager) _OnRune(char rune) {
 
 	case 'l':
 		// vim right
-		p._MoveRight(16)
+		p.moveRight(16)
 
 	case 'h':
 		// vim left
-		p._MoveRight(-16)
+		p.moveRight(-16)
 
 	case '<', 'g':
 		p.firstLineOneBased = 1
 
 	case '>', 'G':
-		p._ScrollToEnd()
+		p.scrollToEnd()
 
 	case 'f', ' ':
 		_, height := p.screen.Size()
@@ -589,10 +589,10 @@ func (p *Pager) _OnRune(char rune) {
 		p.searchPattern = nil
 
 	case 'n':
-		p._ScrollToNextSearchHit()
+		p.scrollToNextSearchHit()
 
 	case 'p', 'N':
-		p._ScrollToPreviousSearchHit()
+		p.scrollToPreviousSearchHit()
 
 	case 'w':
 		p.WrapLongLines = !p.WrapLongLines
@@ -662,18 +662,18 @@ func (p *Pager) StartPaging(screen twin.Screen) {
 	for !p.quit {
 		if len(screen.Events()) == 0 {
 			// Nothing more to process for now, redraw the screen!
-			p._Redraw(spinner)
+			p.redraw(spinner)
 		}
 
 		event := <-screen.Events()
 		switch event := event.(type) {
 		case twin.EventKeyCode:
 			log.Tracef("Handling key event %d...", event.KeyCode())
-			p._OnKey(event.KeyCode())
+			p.onKey(event.KeyCode())
 
 		case twin.EventRune:
 			log.Tracef("Handling rune event '%c'/0x%04x...", event.Rune(), event.Rune())
-			p._OnRune(event.Rune())
+			p.onRune(event.Rune())
 
 		case twin.EventMouse:
 			log.Tracef("Handling mouse event %d...", event.Buttons())
@@ -687,10 +687,10 @@ func (p *Pager) StartPaging(screen twin.Screen) {
 				p.firstLineOneBased++
 
 			case twin.MouseWheelLeft:
-				p._MoveRight(-16)
+				p.moveRight(-16)
 
 			case twin.MouseWheelRight:
-				p._MoveRight(16)
+				p.moveRight(16)
 			}
 
 		case twin.EventResize:

@@ -443,8 +443,8 @@ func NewReaderFromFilename(filename string, style chroma.Style, formatter chroma
 	return returnMe, nil
 }
 
-// _CreateStatusUnlocked() assumes that its caller is holding the lock
-func (r *Reader) _CreateStatusUnlocked(firstLineOneBased int, lastLineOneBased int) string {
+// createStatusUnlocked() assumes that its caller is holding the lock
+func (r *Reader) createStatusUnlocked(firstLineOneBased int, lastLineOneBased int) string {
 	prefix := ""
 	if r.name != nil {
 		prefix = path.Base(*r.name) + ": "
@@ -492,10 +492,10 @@ func (r *Reader) GetLine(lineNumberOneBased int) *Line {
 func (r *Reader) GetLines(firstLineOneBased int, wantedLineCount int) *InputLines {
 	r.lock.Lock()
 	defer r.lock.Unlock()
-	return r._GetLinesUnlocked(firstLineOneBased, wantedLineCount)
+	return r.getLinesUnlocked(firstLineOneBased, wantedLineCount)
 }
 
-func (r *Reader) _GetLinesUnlocked(firstLineOneBased int, wantedLineCount int) *InputLines {
+func (r *Reader) getLinesUnlocked(firstLineOneBased int, wantedLineCount int) *InputLines {
 	if firstLineOneBased < 1 {
 		firstLineOneBased = 1
 	}
@@ -507,7 +507,7 @@ func (r *Reader) _GetLinesUnlocked(firstLineOneBased int, wantedLineCount int) *
 			// The line number set here won't matter, we'll clip it anyway when we get it back
 			firstLineOneBased: 0,
 
-			statusText: r._CreateStatusUnlocked(0, 0),
+			statusText: r.createStatusUnlocked(0, 0),
 		}
 	}
 
@@ -527,13 +527,13 @@ func (r *Reader) _GetLinesUnlocked(firstLineOneBased int, wantedLineCount int) *
 			firstLineOneBased = 1
 		}
 
-		return r._GetLinesUnlocked(firstLineOneBased, wantedLineCount)
+		return r.getLinesUnlocked(firstLineOneBased, wantedLineCount)
 	}
 
 	return &InputLines{
 		lines:             r.lines[firstLineZeroBased : lastLineZeroBased+1],
 		firstLineOneBased: firstLineOneBased,
-		statusText:        r._CreateStatusUnlocked(firstLineOneBased, lastLineZeroBased+1),
+		statusText:        r.createStatusUnlocked(firstLineOneBased, lastLineZeroBased+1),
 	}
 }
 

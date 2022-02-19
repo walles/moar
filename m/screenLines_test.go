@@ -108,7 +108,7 @@ func TestWrapping(t *testing.T) {
 	<-reader.done
 
 	// This is what we're testing really
-	pager._ScrollToEnd()
+	pager.scrollToEnd()
 
 	// Higher than needed, we'll just be validating the necessary lines at the
 	// top.
@@ -119,7 +119,7 @@ func TestWrapping(t *testing.T) {
 
 	// Get contents onto our fake screen
 	pager.StartPaging(screen)
-	pager._Redraw("")
+	pager.redraw("")
 
 	actual := strings.Join([]string{
 		rowToString(screen.GetRow(0)),
