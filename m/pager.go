@@ -167,27 +167,10 @@ func (p *Pager) _SetFooter(footer string) {
 func (p *Pager) _Redraw(spinner string) {
 	p.screen.Clear()
 
-	width, height := p.screen.Size()
-	wantedLineCount := height - 1
-
-	inputLines := p.reader.GetLines(p.firstLineOneBased, wantedLineCount)
-	screenLines := ScreenLines{
-		inputLines:             inputLines,
-		firstInputLineOneBased: p.firstLineOneBased,
-		leftColumnZeroBased:    p.leftColumnZeroBased,
-
-		width:  width,
-		height: wantedLineCount,
-
-		searchPattern: p.searchPattern,
-
-		showLineNumbers: p.ShowLineNumbers,
-		wrapLongLines:   p.WrapLongLines,
-	}
-
 	lastUpdatedScreenLineNumber := -1
 	var renderedScreenLines [][]twin.Cell
-	renderedScreenLines, p.firstLineOneBased = screenLines.renderScreenLines()
+	renderedScreenLines, statusText, firstLineOneBased := p.renderScreenLines()
+	p.firstLineOneBased = firstLineOneBased
 	for lineNumber, row := range renderedScreenLines {
 		lastUpdatedScreenLineNumber = lineNumber
 		for column, cell := range row {
@@ -217,7 +200,7 @@ func (p *Pager) _Redraw(spinner string) {
 		if p.isShowingHelp {
 			helpText = "Press ESC / q to exit help, '/' to search"
 		}
-		p._SetFooter(inputLines.statusText + spinner + "  " + helpText)
+		p._SetFooter(statusText + spinner + "  " + helpText)
 
 	default:
 		panic(fmt.Sprint("Unsupported pager mode: ", p.mode))

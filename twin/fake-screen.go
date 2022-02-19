@@ -68,7 +68,7 @@ func (screen *FakeScreen) ShowNLines(int) {
 	// This method intentionally left blank
 }
 
-func (screen *FakeScreen) Size() (int, int) {
+func (screen *FakeScreen) Size() (width int, height int) {
 	return screen.width, screen.height
 }
 

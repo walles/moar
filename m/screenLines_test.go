@@ -1,15 +1,20 @@
 package m
 
 import (
+	"strings"
 	"testing"
 
+	"github.com/walles/moar/twin"
 	"gotest.tools/assert"
 )
 
 func testHorizontalCropping(t *testing.T, contents string, firstIndex int, lastIndex int, expected string) {
-	screenLines := ScreenLines{width: 1 + lastIndex - firstIndex, leftColumnZeroBased: firstIndex}
+	pager := Pager{
+		screen:              twin.NewFakeScreen(1+lastIndex-firstIndex, 99),
+		leftColumnZeroBased: firstIndex,
+	}
 	lineContents := NewLine(contents).HighlightedTokens(nil)
-	screenLine := screenLines.createScreenLine(nil, 0, lineContents)
+	screenLine := pager.createScreenLine(nil, 0, lineContents)
 	assert.Equal(t, rowToString(screenLine), expected)
 }
 
@@ -38,70 +43,102 @@ func TestCreateScreenLineCanAlmostScrollBoth(t *testing.T) {
 }
 
 func TestEmpty(t *testing.T) {
-	// This is what _GetLinesUnlocked() returns on no-lines-available
-	inputLines := InputLines{
-		lines:             nil,
-		firstLineOneBased: 0,
+	pager := Pager{
+		screen: twin.NewFakeScreen(99, 10),
+
+		// No lines available
+		reader: NewReaderFromText("test", ""),
 	}
 
-	screenLines := ScreenLines{
-		inputLines: &inputLines,
-		height:     10,
-	}
-
-	rendered, firstScreenLine := screenLines.renderScreenLines()
+	rendered, statusText, firstScreenLine := pager.renderScreenLines()
 	assert.Equal(t, len(rendered), 0)
+	assert.Equal(t, "test: <empty>", statusText)
 	assert.Equal(t, firstScreenLine, 0)
 }
 
 func TestOverflowDown(t *testing.T) {
-	// Set up a single line input
-	line := Line{
-		raw: "hej",
-	}
-	inputLines := InputLines{
-		lines:             []*Line{&line},
-		firstLineOneBased: 1,
-	}
+	pager := Pager{
+		screen: twin.NewFakeScreen(
+			10, // Longer than the raw line, we're testing vertical overflow, not horizontal
+			2,  // Single line of contents + one status line
+		),
 
-	// Set up a single line screen
-	screenLines := ScreenLines{
-		inputLines: &inputLines,
-		height:     1,
-		width:      10, // Longer than the raw line, we're testing vertical overflow, not horizontal
+		// Single line of input
+		reader: NewReaderFromText("test", "hej"),
 
 		// This value can be anything and should be clipped, that's what we're testing
-		firstInputLineOneBased: 42,
+		firstLineOneBased: 42,
 	}
 
-	rendered, firstScreenLine := screenLines.renderScreenLines()
+	rendered, statusText, firstScreenLine := pager.renderScreenLines()
 	assert.Equal(t, len(rendered), 1)
 	assert.Equal(t, "hej", rowToString(rendered[0]))
+	assert.Equal(t, "test: 1 line  100%", statusText)
 	assert.Equal(t, firstScreenLine, 1)
 }
 
 func TestOverflowUp(t *testing.T) {
-	// Set up a single line input
-	line := Line{
-		raw: "hej",
-	}
-	inputLines := InputLines{
-		lines:             []*Line{&line},
+	pager := Pager{
+		screen: twin.NewFakeScreen(
+			10, // Longer than the raw line, we're testing vertical overflow, not horizontal
+			2,  // Single line of contents + one status line
+		),
+
+		// Single line of input
+		reader: NewReaderFromText("test", "hej"),
+
 		firstLineOneBased: 1,
 	}
 
-	// Set up a single line screen
-	screenLines := ScreenLines{
-		inputLines: &inputLines,
-		height:     1,
-		width:      10, // Longer than the raw line, we're testing vertical overflow, not horizontal
-
-		// This value can be anything and should be clipped, that's what we're testing
-		firstInputLineOneBased: 0,
-	}
-
-	rendered, firstScreenLine := screenLines.renderScreenLines()
+	rendered, statusText, firstScreenLine := pager.renderScreenLines()
 	assert.Equal(t, len(rendered), 1)
 	assert.Equal(t, "hej", rowToString(rendered[0]))
+	assert.Equal(t, "test: 1 line  100%", statusText)
 	assert.Equal(t, firstScreenLine, 1)
+}
+
+func TestWrapping(t *testing.T) {
+	reader := NewReaderFromStream("",
+		strings.NewReader("first line\nline two will be wrapped\nhere's the last line"))
+	pager := NewPager(reader)
+	pager.WrapLongLines = true
+	pager.ShowLineNumbers = false
+
+	// Wait for reader to finish reading
+	<-reader.done
+
+	// This is what we're testing really
+	pager._ScrollToEnd()
+
+	// Higher than needed, we'll just be validating the necessary lines at the
+	// top.
+	screen := twin.NewFakeScreen(10, 99)
+
+	// Exit immediately
+	pager.Quit()
+
+	// Get contents onto our fake screen
+	pager.StartPaging(screen)
+	pager._Redraw("")
+
+	actual := strings.Join([]string{
+		rowToString(screen.GetRow(0)),
+		rowToString(screen.GetRow(1)),
+		rowToString(screen.GetRow(2)),
+		rowToString(screen.GetRow(3)),
+		rowToString(screen.GetRow(4)),
+		rowToString(screen.GetRow(5)),
+		rowToString(screen.GetRow(6)),
+		rowToString(screen.GetRow(7)),
+	}, "\n")
+	assert.Equal(t, actual, strings.Join([]string{
+		"first line",
+		"line two",
+		"will be",
+		"wrapped",
+		"here's the",
+		"last line",
+		"---",
+		"",
+	}, "\n"))
 }

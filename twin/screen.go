@@ -34,7 +34,7 @@ type Screen interface {
 	// NOTE: Never cache this response! On window resizes you'll get an
 	// EventResize on the Screen.Events channel, and this method will start
 	// returning the new size instead.
-	Size() (int, int)
+	Size() (width int, height int)
 
 	// ShowCursorAt() moves the cursor to the given screen position and makes
 	// sure it is visible.
@@ -302,7 +302,7 @@ func consumeEncodedEvent(encodedEventSequences string) (*Event, string) {
 // NOTE: Never cache this response! On window resizes you'll get an EventResize
 // on the Screen.Events channel, and this method will start returning the new
 // size instead.
-func (screen *UnixScreen) Size() (int, int) {
+func (screen *UnixScreen) Size() (width int, height int) {
 	select {
 	case <-screen.sigwinch:
 		// Resize logic needed, see below
