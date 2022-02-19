@@ -6,7 +6,7 @@ import (
 	"github.com/walles/moar/twin"
 )
 
-type RenderedLine struct {
+type renderedLine struct {
 	inputLineOneBased int
 
 	// If an input line has been wrapped into two, the part on the second line
@@ -16,11 +16,55 @@ type RenderedLine struct {
 	cells []twin.Cell
 }
 
+func (p *Pager) redraw(spinner string) {
+	p.screen.Clear()
+
+	lastUpdatedScreenLineNumber := -1
+	var renderedScreenLines [][]twin.Cell
+	renderedScreenLines, statusText := p.renderScreenLines()
+	for lineNumber, row := range renderedScreenLines {
+		lastUpdatedScreenLineNumber = lineNumber
+		for column, cell := range row {
+			p.screen.SetCell(column, lastUpdatedScreenLineNumber, cell)
+		}
+	}
+
+	eofSpinner := spinner
+	if eofSpinner == "" {
+		// This happens when we're done
+		eofSpinner = "---"
+	}
+	spinnerLine := cellsFromString(_EofMarkerFormat + eofSpinner)
+	for column, cell := range spinnerLine {
+		p.screen.SetCell(column, lastUpdatedScreenLineNumber+1, cell)
+	}
+
+	switch p.mode {
+	case _Searching:
+		p.addSearchFooter()
+
+	case _NotFound:
+		p.setFooter("Not found: " + p.searchString)
+
+	case _Viewing:
+		helpText := "Press ESC / q to exit, '/' to search, '?' for help"
+		if p.isShowingHelp {
+			helpText = "Press ESC / q to exit help, '/' to search"
+		}
+		p.setFooter(statusText + spinner + "  " + helpText)
+
+	default:
+		panic(fmt.Sprint("Unsupported pager mode: ", p.mode))
+	}
+
+	p.screen.Show()
+}
+
 // Render screen lines into an array of lines consisting of Cells.
 //
 // The second return value is the same as firstInputLineOneBased, but decreased
 // if needed so that the end of the input is visible.
-func (p *Pager) renderScreenLines() (lines [][]twin.Cell, statusText string, newFirstInputLineOneBased int) {
+func (p *Pager) renderScreenLines() (lines [][]twin.Cell, statusText string) {
 	allPossibleLines, statusText := p.renderAllLines()
 	if len(allPossibleLines) == 0 {
 		return
@@ -50,7 +94,7 @@ func (p *Pager) renderScreenLines() (lines [][]twin.Cell, statusText string, new
 	lastVisibleIndex := firstVisibleIndex + height - 2 // "-2" figured out through trial-and-error
 	if lastVisibleIndex < len(allPossibleLines) {
 		// Screen has enough room for everything, return everything
-		lines, newFirstInputLineOneBased = p.toScreenLinesArray(allPossibleLines, firstVisibleIndex)
+		lines, p.firstLineOneBased = p.toScreenLinesArray(allPossibleLines, firstVisibleIndex)
 		return
 	}
 
@@ -68,11 +112,11 @@ func (p *Pager) renderScreenLines() (lines [][]twin.Cell, statusText string, new
 	}
 
 	// Construct the screen lines to return
-	lines, newFirstInputLineOneBased = p.toScreenLinesArray(allPossibleLines, firstVisibleIndex)
+	lines, p.firstLineOneBased = p.toScreenLinesArray(allPossibleLines, firstVisibleIndex)
 	return
 }
 
-func (p *Pager) toScreenLinesArray(allPossibleLines []RenderedLine, firstVisibleIndex int) ([][]twin.Cell, int) {
+func (p *Pager) toScreenLinesArray(allPossibleLines []renderedLine, firstVisibleIndex int) ([][]twin.Cell, int) {
 	firstInputLineOneBased := allPossibleLines[firstVisibleIndex].inputLineOneBased
 
 	_, height := p.screen.Size()
@@ -109,7 +153,7 @@ func (p *Pager) numberPrefixLength() int {
 	return numberPrefixLength
 }
 
-func (p *Pager) renderAllLines() ([]RenderedLine, string) {
+func (p *Pager) renderAllLines() ([]renderedLine, string) {
 	_, height := p.screen.Size()
 	wantedLineCount := height - 1
 
@@ -119,7 +163,7 @@ func (p *Pager) renderAllLines() ([]RenderedLine, string) {
 	inputLines := p.reader.GetLines(p.firstLineOneBased, wantedLineCount)
 	if inputLines.lines == nil {
 		// Empty input, empty output
-		return []RenderedLine{}, inputLines.statusText
+		return []renderedLine{}, inputLines.statusText
 	}
 
 	// Offsets figured out through trial-and-error...
@@ -128,7 +172,7 @@ func (p *Pager) renderAllLines() ([]RenderedLine, string) {
 		p.firstLineOneBased = lastInputLineOneBased
 	}
 
-	allLines := make([]RenderedLine, 0)
+	allLines := make([]renderedLine, 0)
 	for lineIndex, line := range inputLines.lines {
 		lineNumber := inputLines.firstLineOneBased + lineIndex
 
@@ -140,7 +184,7 @@ func (p *Pager) renderAllLines() ([]RenderedLine, string) {
 
 // lineNumber and numberPrefixLength are required for knowing how much to
 // indent, and to (optionally) render the line number.
-func (p *Pager) renderLine(line *Line, lineNumber int) []RenderedLine {
+func (p *Pager) renderLine(line *Line, lineNumber int) []renderedLine {
 	highlighted := line.HighlightedTokens(p.searchPattern)
 	var wrapped [][]twin.Cell
 	if p.WrapLongLines {
@@ -151,14 +195,14 @@ func (p *Pager) renderLine(line *Line, lineNumber int) []RenderedLine {
 		wrapped = [][]twin.Cell{highlighted}
 	}
 
-	rendered := make([]RenderedLine, 0)
+	rendered := make([]renderedLine, 0)
 	for wrapIndex, inputLinePart := range wrapped {
 		visibleLineNumber := &lineNumber
 		if wrapIndex > 0 {
 			visibleLineNumber = nil
 		}
 
-		rendered = append(rendered, RenderedLine{
+		rendered = append(rendered, renderedLine{
 			inputLineOneBased: lineNumber,
 			wrapIndex:         wrapIndex,
 			cells:             p.createScreenLine(visibleLineNumber, inputLinePart),

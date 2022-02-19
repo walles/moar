@@ -173,51 +173,6 @@ func (p *Pager) setFooter(footer string) {
 	}
 }
 
-func (p *Pager) redraw(spinner string) {
-	p.screen.Clear()
-
-	lastUpdatedScreenLineNumber := -1
-	var renderedScreenLines [][]twin.Cell
-	renderedScreenLines, statusText, firstLineOneBased := p.renderScreenLines()
-	p.firstLineOneBased = firstLineOneBased
-	for lineNumber, row := range renderedScreenLines {
-		lastUpdatedScreenLineNumber = lineNumber
-		for column, cell := range row {
-			p.screen.SetCell(column, lastUpdatedScreenLineNumber, cell)
-		}
-	}
-
-	eofSpinner := spinner
-	if eofSpinner == "" {
-		// This happens when we're done
-		eofSpinner = "---"
-	}
-	spinnerLine := cellsFromString(_EofMarkerFormat + eofSpinner)
-	for column, cell := range spinnerLine {
-		p.screen.SetCell(column, lastUpdatedScreenLineNumber+1, cell)
-	}
-
-	switch p.mode {
-	case _Searching:
-		p.addSearchFooter()
-
-	case _NotFound:
-		p.setFooter("Not found: " + p.searchString)
-
-	case _Viewing:
-		helpText := "Press ESC / q to exit, '/' to search, '?' for help"
-		if p.isShowingHelp {
-			helpText = "Press ESC / q to exit help, '/' to search"
-		}
-		p.setFooter(statusText + spinner + "  " + helpText)
-
-	default:
-		panic(fmt.Sprint("Unsupported pager mode: ", p.mode))
-	}
-
-	p.screen.Show()
-}
-
 // Quit leaves the help screen or quits the pager
 func (p *Pager) Quit() {
 	if !p.isShowingHelp {
