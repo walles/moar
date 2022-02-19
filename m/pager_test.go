@@ -298,9 +298,17 @@ func TestScrollToBottomWrapNextToLastLine(t *testing.T) {
 	pager.StartPaging(screen)
 	pager._Redraw("")
 
-	lastVisibleRow := screen.GetRow(1)
-	lastVisibleRowString := rowToString(lastVisibleRow)
-	assert.Equal(t, lastVisibleRowString, "last line")
+	actual := strings.Join([]string{
+		rowToString(screen.GetRow(0)),
+		rowToString(screen.GetRow(1)),
+		rowToString(screen.GetRow(2)),
+	}, "\n")
+	expected := strings.Join([]string{
+		"here's the",
+		"last line",
+		"3 lines  1", // "3 lines 100%" clipped after 10 characters (screen width)
+	}, "\n")
+	assert.Equal(t, actual, expected)
 }
 
 func benchmarkSearch(b *testing.B, highlighted bool) {

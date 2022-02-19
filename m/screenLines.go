@@ -47,7 +47,7 @@ func (p *Pager) renderScreenLines() (lines [][]twin.Cell, statusText string, new
 	}
 
 	_, height := p.screen.Size()
-	lastVisibleIndex := firstVisibleIndex + height - 1
+	lastVisibleIndex := firstVisibleIndex + height - 2 // "-2" figured out through trial-and-error
 	if lastVisibleIndex < len(allPossibleLines) {
 		// Screen has enough room for everything, return everything
 		lines, newFirstInputLineOneBased = p.toScreenLinesArray(allPossibleLines, firstVisibleIndex)
