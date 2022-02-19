@@ -14,7 +14,7 @@ func testHorizontalCropping(t *testing.T, contents string, firstIndex int, lastI
 		leftColumnZeroBased: firstIndex,
 	}
 	lineContents := NewLine(contents).HighlightedTokens(nil)
-	screenLine := pager.createScreenLine(nil, 0, lineContents)
+	screenLine := pager.createScreenLine(nil, lineContents)
 	assert.Equal(t, rowToString(screenLine), expected)
 }
 

@@ -92,7 +92,11 @@ func (p *Pager) toScreenLinesArray(allPossibleLines []RenderedLine, firstVisible
 	return screenLines, firstInputLineOneBased
 }
 
-func (p *Pager) renderAllLines() ([]RenderedLine, string) {
+func (p *Pager) numberPrefixLength() int {
+	if !p.ShowLineNumbers {
+		return 0
+	}
+
 	// Count the length of the last line number
 	numberPrefixLength := len(formatNumber(uint(p.getLastVisibleLineOneBased()))) + 1
 	if numberPrefixLength < 4 {
@@ -102,10 +106,10 @@ func (p *Pager) renderAllLines() ([]RenderedLine, string) {
 		numberPrefixLength = 4
 	}
 
-	if !p.ShowLineNumbers {
-		numberPrefixLength = 0
-	}
+	return numberPrefixLength
+}
 
+func (p *Pager) renderAllLines() ([]RenderedLine, string) {
 	_, height := p.screen.Size()
 	wantedLineCount := height - 1
 
@@ -128,7 +132,7 @@ func (p *Pager) renderAllLines() ([]RenderedLine, string) {
 	for lineIndex, line := range inputLines.lines {
 		lineNumber := inputLines.firstLineOneBased + lineIndex
 
-		allLines = append(allLines, p.renderLine(line, lineNumber, numberPrefixLength)...)
+		allLines = append(allLines, p.renderLine(line, lineNumber)...)
 	}
 
 	return allLines, inputLines.statusText
@@ -136,12 +140,12 @@ func (p *Pager) renderAllLines() ([]RenderedLine, string) {
 
 // lineNumber and numberPrefixLength are required for knowing how much to
 // indent, and to (optionally) render the line number.
-func (p *Pager) renderLine(line *Line, lineNumber, numberPrefixLength int) []RenderedLine {
+func (p *Pager) renderLine(line *Line, lineNumber int) []RenderedLine {
 	highlighted := line.HighlightedTokens(p.searchPattern)
 	var wrapped [][]twin.Cell
 	if p.WrapLongLines {
 		width, _ := p.screen.Size()
-		wrapped = wrapLine(width-numberPrefixLength, highlighted)
+		wrapped = wrapLine(width-p.numberPrefixLength(), highlighted)
 	} else {
 		// All on one line
 		wrapped = [][]twin.Cell{highlighted}
@@ -157,16 +161,17 @@ func (p *Pager) renderLine(line *Line, lineNumber, numberPrefixLength int) []Ren
 		rendered = append(rendered, RenderedLine{
 			inputLineOneBased: lineNumber,
 			wrapIndex:         wrapIndex,
-			cells:             p.createScreenLine(visibleLineNumber, numberPrefixLength, inputLinePart),
+			cells:             p.createScreenLine(visibleLineNumber, inputLinePart),
 		})
 	}
 
 	return rendered
 }
 
-func (p *Pager) createScreenLine(lineNumberToShow *int, numberPrefixLength int, contents []twin.Cell) []twin.Cell {
+func (p *Pager) createScreenLine(lineNumberToShow *int, contents []twin.Cell) []twin.Cell {
 	width, _ := p.screen.Size()
 	newLine := make([]twin.Cell, 0, width)
+	numberPrefixLength := p.numberPrefixLength()
 	newLine = append(newLine, createLineNumberPrefix(lineNumberToShow, numberPrefixLength)...)
 
 	startColumn := p.leftColumnZeroBased
