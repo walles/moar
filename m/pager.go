@@ -208,6 +208,7 @@ func (p *Pager) scrollToSearchHits() {
 }
 
 func (p *Pager) findFirstHit(startPosition scrollPosition, backwards bool) *scrollPosition {
+	// FIXME: We should take startPosition.deltaScreenLines into account as well!
 	searchPosition := startPosition
 	for {
 		line := p.reader.GetLine(searchPosition.lineNumberOneBased)

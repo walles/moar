@@ -63,6 +63,9 @@ func (p *Pager) redraw(spinner string) {
 
 // Render screen lines into an array of lines consisting of Cells.
 //
+// The lines returned by this method are decorated with horizontal scroll
+// markers and line numbers and are ready to be output to the screen.
+//
 // Calling this method will adjust the scrollPosition if necessary.
 func (p *Pager) renderScreenLines() (lines [][]twin.Cell, statusText string) {
 	allPossibleLines, statusText := p.renderAllLines()
@@ -144,7 +147,7 @@ func (p *Pager) numberPrefixLength() int {
 	}
 
 	// Count the length of the last line number
-	numberPrefixLength := len(formatNumber(uint(p.getLastVisibleLineOneBased()))) + 1
+	numberPrefixLength := len(formatNumber(uint(p.getLastVisiblePosition().lineNumberOneBased))) + 1
 	if numberPrefixLength < 4 {
 		// 4 = space for 3 digits followed by one whitespace
 		//
@@ -156,6 +159,9 @@ func (p *Pager) numberPrefixLength() int {
 }
 
 // Render all lines that could potentially go on screen.
+//
+// The returned lines are display ready, meaning that they come with horizontal
+// scroll markers and line numbers as necessary.
 //
 // When line wrapping is enabled, this might give you more screen lines than
 // file lines, and thus more screen lines than will fit on screen.
@@ -189,6 +195,9 @@ func (p *Pager) renderAllLines() ([]renderedLine, string) {
 }
 
 // Render one input line into one or more screen lines.
+//
+// The returned line is display ready, meaning that it comes with horizontal
+// scroll markers and line number as necessary.
 //
 // lineNumber and numberPrefixLength are required for knowing how much to
 // indent, and to (optionally) render the line number.
