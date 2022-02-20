@@ -16,6 +16,7 @@ type renderedLine struct {
 	cells []twin.Cell
 }
 
+// Refresh the whole pager display
 func (p *Pager) redraw(spinner string) {
 	p.screen.Clear()
 
@@ -62,8 +63,7 @@ func (p *Pager) redraw(spinner string) {
 
 // Render screen lines into an array of lines consisting of Cells.
 //
-// The second return value is the same as firstInputLineOneBased, but decreased
-// if needed so that the end of the input is visible.
+// Calling this method will adjust the scrollPosition if necessary.
 func (p *Pager) renderScreenLines() (lines [][]twin.Cell, statusText string) {
 	allPossibleLines, statusText := p.renderAllLines()
 	if len(allPossibleLines) == 0 {
@@ -94,7 +94,7 @@ func (p *Pager) renderScreenLines() (lines [][]twin.Cell, statusText string) {
 	lastVisibleIndex := firstVisibleIndex + height - 2 // "-2" figured out through trial-and-error
 	if lastVisibleIndex < len(allPossibleLines) {
 		// Screen has enough room for everything, return everything
-		lines, p.firstLineOneBased = p.toScreenLinesArray(allPossibleLines, firstVisibleIndex)
+		lines, p.firstLineOneBased = p.pickVisibleLines(allPossibleLines, firstVisibleIndex)
 		return
 	}
 
@@ -112,11 +112,13 @@ func (p *Pager) renderScreenLines() (lines [][]twin.Cell, statusText string) {
 	}
 
 	// Construct the screen lines to return
-	lines, p.firstLineOneBased = p.toScreenLinesArray(allPossibleLines, firstVisibleIndex)
+	lines, p.firstLineOneBased = p.pickVisibleLines(allPossibleLines, firstVisibleIndex)
 	return
 }
 
-func (p *Pager) toScreenLinesArray(allPossibleLines []renderedLine, firstVisibleIndex int) ([][]twin.Cell, int) {
+// Given a list of candidate lines, and an index into that list, return only the
+// lines that will be visible on the screen.
+func (p *Pager) pickVisibleLines(allPossibleLines []renderedLine, firstVisibleIndex int) ([][]twin.Cell, int) {
 	firstInputLineOneBased := allPossibleLines[firstVisibleIndex].inputLineOneBased
 
 	_, height := p.screen.Size()
@@ -153,6 +155,10 @@ func (p *Pager) numberPrefixLength() int {
 	return numberPrefixLength
 }
 
+// Render all lines that could potentially go on screen.
+//
+// When line wrapping is enabled, this might give you more screen lines than
+// file lines, and thus more screen lines than will fit on screen.
 func (p *Pager) renderAllLines() ([]renderedLine, string) {
 	_, height := p.screen.Size()
 	wantedLineCount := height - 1
@@ -182,6 +188,8 @@ func (p *Pager) renderAllLines() ([]renderedLine, string) {
 	return allLines, inputLines.statusText
 }
 
+// Render one input line into one or more screen lines.
+//
 // lineNumber and numberPrefixLength are required for knowing how much to
 // indent, and to (optionally) render the line number.
 func (p *Pager) renderLine(line *Line, lineNumber int) []renderedLine {
@@ -205,18 +213,22 @@ func (p *Pager) renderLine(line *Line, lineNumber int) []renderedLine {
 		rendered = append(rendered, renderedLine{
 			inputLineOneBased: lineNumber,
 			wrapIndex:         wrapIndex,
-			cells:             p.createScreenLine(visibleLineNumber, inputLinePart),
+			cells:             p.decorateLine(visibleLineNumber, inputLinePart),
 		})
 	}
 
 	return rendered
 }
 
-func (p *Pager) createScreenLine(lineNumberToShow *int, contents []twin.Cell) []twin.Cell {
+// Take a rendered line and decorate as needed:
+// * Line number, or leading whitespace for wrapped lines
+// * Scroll left indicator
+// * Scroll right indicator
+func (p *Pager) decorateLine(lineNumberToShow *int, contents []twin.Cell) []twin.Cell {
 	width, _ := p.screen.Size()
 	newLine := make([]twin.Cell, 0, width)
 	numberPrefixLength := p.numberPrefixLength()
-	newLine = append(newLine, createLineNumberPrefix(lineNumberToShow, numberPrefixLength)...)
+	newLine = append(newLine, createLinePrefix(lineNumberToShow, numberPrefixLength)...)
 
 	startColumn := p.leftColumnZeroBased
 	if startColumn < len(contents) {
@@ -253,8 +265,10 @@ func (p *Pager) createScreenLine(lineNumberToShow *int, contents []twin.Cell) []
 	return newLine
 }
 
-// Generate a line number prefix. Can be empty or all-whitespace depending on parameters.
-func createLineNumberPrefix(fileLineNumber *int, numberPrefixLength int) []twin.Cell {
+// Generate a line number prefix of the given length.
+//
+// Can be empty or all-whitespace depending on parameters.
+func createLinePrefix(fileLineNumber *int, numberPrefixLength int) []twin.Cell {
 	if numberPrefixLength == 0 {
 		return []twin.Cell{}
 	}
