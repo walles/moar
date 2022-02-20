@@ -285,3 +285,12 @@ func createLineNumberPrefix(fileLineNumber *int, numberPrefixLength int) []twin.
 
 	return lineNumberPrefix
 }
+
+func (p *Pager) getLastVisiblePosition() scrollPosition {
+	// FIXME: Compute this!
+}
+
+// Is the given position visible on screen?
+func (p *Pager) isVisible(scrollPosition scrollPosition) bool {
+	// FIXME: Compute this!
+}
