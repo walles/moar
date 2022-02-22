@@ -34,12 +34,20 @@ func (s scrollPosition) nextLine(scrollDistance int) scrollPosition {
 
 // Move towards the top until deltaScreenLines is not negative any more
 func (si *scrollPositionInternal) handleNegativeDeltaScreenLines(pager *Pager) {
-	for si.deltaScreenLines < 0 {
-		// FIXME: Render the previous line
-		CODE MISSING HERE
+	for si.lineNumberOneBased > 1 && si.deltaScreenLines < 0 {
+		// Render the previous line
+		previousLine := pager.reader.GetLine(si.lineNumberOneBased - 1)
+		previousSubLines := pager.renderLine(previousLine, 0)
 
-		// FIXME: Adjust lineNumberOneBased and deltaScreenLines to move up into
-		// the previous screen line
+		// Adjust lineNumberOneBased and deltaScreenLines to move up into the
+		// previous screen line
+		si.lineNumberOneBased--
+		si.deltaScreenLines += len(previousSubLines)
+	}
+
+	if si.lineNumberOneBased == 1 && si.deltaScreenLines < 0 {
+		// Don't go above the top line
+		si.deltaScreenLines = 0
 	}
 }
 
