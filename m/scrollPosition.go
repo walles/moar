@@ -1,5 +1,7 @@
 package m
 
+import "fmt"
+
 type scrollPositionInternal struct {
 	// Line number in the input stream
 	lineNumberOneBased int
@@ -54,12 +56,31 @@ func (si *scrollPositionInternal) handleNegativeDeltaScreenLines(pager *Pager) {
 // Move towards the bottom until deltaScreenLines is within range of the
 // rendering of the current line
 func (si *scrollPositionInternal) handlePositiveDeltaScreenLines(pager *Pager) {
-	// FIXME: Render the current line
-	CODE MISSING HERE
+	for {
+		line := pager.reader.GetLine(si.lineNumberOneBased)
+		if line == nil {
+			// Out of bounds downwards, get the last line...
+			si.lineNumberOneBased = pager.reader.GetLineCount()
+			line = pager.reader.GetLine(si.lineNumberOneBased)
+			if line == nil {
+				panic(fmt.Errorf("Last line is nil"))
+			}
+			subLines := len(pager.renderLine(line, 0))
 
-	// FIXME: If deltaScreenLines is outside of the number of screen lines used
-	// up by the current input line, adjust lineNumberOneBased and
-	// deltaScreenLines to move down and try again
+			// ... and go to the bottom of that.
+			si.deltaScreenLines = subLines - 1
+			return
+		}
+
+		subLines := len(pager.renderLine(line, 0))
+		if si.deltaScreenLines < subLines {
+			// Sublines are within bounds!
+			return
+		}
+
+		si.lineNumberOneBased++
+		si.deltaScreenLines -= subLines
+	}
 }
 
 // Only to be called from the scrollPosition getters!!
@@ -73,8 +94,12 @@ func (si *scrollPositionInternal) canonicalize(pager *Pager) {
 
 	si.handleNegativeDeltaScreenLines(pager)
 	si.handlePositiveDeltaScreenLines(pager)
-	if (there are empty lines at the bottom of the screen) {
-		// FIXME: Adjust deltaScreenLines to get us to the top
+	emptyBottomLinesCount := si.emptyBottomLinesCount(pager)
+	if emptyBottomLinesCount > 0 {
+		// First, adjust deltaScreenLines to get us to the top
+		si.deltaScreenLines -= emptyBottomLinesCount
+
+		// Then, actually go up that many lines
 		si.handleNegativeDeltaScreenLines(pager)
 	}
 }
