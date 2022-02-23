@@ -83,6 +83,32 @@ func (si *scrollPositionInternal) handlePositiveDeltaScreenLines(pager *Pager) {
 	}
 }
 
+// This method assumes si contains a canonical position
+func (si *scrollPositionInternal) emptyBottomLinesCount(pager *Pager) int {
+	_, height := pager.screen.Size()
+	unclaimedViewportLines := height - 1 // Status line takes up one row
+
+	// Start counting where the current input line begins
+	unclaimedViewportLines += si.deltaScreenLines
+
+	for {
+		lineNumberOneBased := si.lineNumberOneBased
+		line := pager.reader.GetLine(lineNumberOneBased)
+		if line == nil {
+			// No more lines!
+			break
+		}
+
+		subLines := len(pager.renderLine(line, 0))
+		unclaimedViewportLines -= subLines
+		if unclaimedViewportLines <= 0 {
+			return 0
+		}
+	}
+
+	return unclaimedViewportLines
+}
+
 // Only to be called from the scrollPosition getters!!
 //
 // Canonicalize the scroll position vs the given pager.
