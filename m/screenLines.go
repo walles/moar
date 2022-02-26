@@ -16,7 +16,8 @@ type renderedLine struct {
 	cells []twin.Cell
 }
 
-// Refresh the whole pager display
+// Refresh the whole pager display, both contents lines and the status line at
+// the bottom
 func (p *Pager) redraw(spinner string) {
 	p.screen.Clear()
 
@@ -29,6 +30,8 @@ func (p *Pager) redraw(spinner string) {
 			p.screen.SetCell(column, lastUpdatedScreenLineNumber, cell)
 		}
 	}
+
+	// Status line code follows
 
 	eofSpinner := spinner
 	if eofSpinner == "" {
@@ -62,6 +65,8 @@ func (p *Pager) redraw(spinner string) {
 }
 
 // Render screen lines into an array of lines consisting of Cells.
+//
+// At most height - 1 lines will be returned, leaving room for one status line.
 //
 // The lines returned by this method are decorated with horizontal scroll
 // markers and line numbers and are ready to be output to the screen.

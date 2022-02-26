@@ -146,6 +146,12 @@ func (si *scrollPositionInternal) canonicalize(pager *Pager) {
 		si.canonical = canonicalFromPager(pager)
 	}()
 
+	if pager.reader.GetLineCount() == 0 {
+		si.lineNumberOneBased = 0
+		si.deltaScreenLines = 0
+		return
+	}
+
 	si.handleNegativeDeltaScreenLines(pager)
 	si.handlePositiveDeltaScreenLines(pager)
 	emptyBottomLinesCount := si.emptyBottomLinesCount(pager)
@@ -166,13 +172,13 @@ func scrollPositionFromLineNumber(lineNumberOneBased int) *scrollPosition {
 	}
 }
 
-// Line number in the input stream
+// Line number in the input stream, or 0 if nothing has been read
 func (p *Pager) lineNumberOneBased() int {
 	p.scrollPosition.internalDontTouch.canonicalize(p)
 	return p.scrollPosition.internalDontTouch.lineNumberOneBased
 }
 
-// Line number in the input stream
+// Line number in the input stream, or 0 if nothing has been read
 func (sp *scrollPosition) lineNumberOneBased(pager *Pager) int {
 	sp.internalDontTouch.canonicalize(pager)
 	return sp.internalDontTouch.lineNumberOneBased
