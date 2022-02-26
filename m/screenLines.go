@@ -97,7 +97,7 @@ func (p *Pager) renderScreenLines() (lines [][]twin.Cell, statusText string) {
 	lastVisibleIndex := firstVisibleIndex + height - 2 // "-2" figured out through trial-and-error
 	if lastVisibleIndex < len(allPossibleLines) {
 		// Screen has enough room for everything, return everything
-		lines, p.firstLineOneBased = p.pickVisibleLines(allPossibleLines, firstVisibleIndex)
+		lines = p.pickVisibleLines(allPossibleLines, firstVisibleIndex)
 		return
 	}
 
@@ -115,15 +115,13 @@ func (p *Pager) renderScreenLines() (lines [][]twin.Cell, statusText string) {
 	}
 
 	// Construct the screen lines to return
-	lines, p.firstLineOneBased = p.pickVisibleLines(allPossibleLines, firstVisibleIndex)
+	lines = p.pickVisibleLines(allPossibleLines, firstVisibleIndex)
 	return
 }
 
 // Given a list of candidate lines, and an index into that list, return only the
 // lines that will be visible on the screen.
-func (p *Pager) pickVisibleLines(allPossibleLines []renderedLine, firstVisibleIndex int) ([][]twin.Cell, int) {
-	firstInputLineOneBased := allPossibleLines[firstVisibleIndex].inputLineOneBased
-
+func (p *Pager) pickVisibleLines(allPossibleLines []renderedLine, firstVisibleIndex int) [][]twin.Cell {
 	_, height := p.screen.Size()
 	screenLines := make([][]twin.Cell, 0, height)
 	for index := firstVisibleIndex; ; index++ {
@@ -138,7 +136,7 @@ func (p *Pager) pickVisibleLines(allPossibleLines []renderedLine, firstVisibleIn
 		screenLines = append(screenLines, allPossibleLines[index].cells)
 	}
 
-	return screenLines, firstInputLineOneBased
+	return screenLines
 }
 
 func (p *Pager) numberPrefixLength() int {
