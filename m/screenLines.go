@@ -147,7 +147,7 @@ func (p *Pager) numberPrefixLength() int {
 	}
 
 	// Count the length of the last line number
-	numberPrefixLength := len(formatNumber(uint(p.getLastVisiblePosition().lineNumberOneBased))) + 1
+	numberPrefixLength := len(formatNumber(uint(p.getLastVisibleLineNumberOneBased()))) + 1
 	if numberPrefixLength < 4 {
 		// 4 = space for 3 digits followed by one whitespace
 		//
@@ -300,7 +300,7 @@ func createLinePrefix(fileLineNumber *int, numberPrefixLength int) []twin.Cell {
 	return lineNumberPrefix
 }
 
-func (p *Pager) getLastVisiblePosition() scrollPosition {
+func (p *Pager) getLastVisibleLineNumberOneBased() int {
 	// FIXME: Compute this!
 }
 
