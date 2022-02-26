@@ -248,8 +248,9 @@ func TestFindFirstLineOneBasedSimple(t *testing.T) {
 
 	pager.searchPattern = toPattern("AB")
 
-	hitLine := pager.findFirstHitLineOneBased(1, false)
-	assert.Check(t, *hitLine == 1)
+	hit := pager.findFirstHit(scrollPosition{}, false)
+	assert.Equal(t, hit.internalDontTouch.lineNumberOneBased, 1)
+	assert.Equal(t, hit.internalDontTouch.deltaScreenLines, 0)
 }
 
 func TestFindFirstLineOneBasedAnsi(t *testing.T) {
@@ -261,8 +262,9 @@ func TestFindFirstLineOneBasedAnsi(t *testing.T) {
 
 	pager.searchPattern = toPattern("AB")
 
-	hitLine := pager.findFirstHitLineOneBased(1, false)
-	assert.Check(t, *hitLine == 1)
+	hit := pager.findFirstHit(scrollPosition{}, false)
+	assert.Equal(t, hit.internalDontTouch.lineNumberOneBased, 1)
+	assert.Equal(t, hit.internalDontTouch.deltaScreenLines, 0)
 }
 
 // Converts a cell row to a plain string and removes trailing whitespace.
@@ -402,9 +404,9 @@ func benchmarkSearch(b *testing.B, highlighted bool) {
 	b.ResetTimer()
 
 	// This test will search through all the N copies we made of our file
-	hitLine := pager.findFirstHitLineOneBased(1, false)
+	hit := pager.findFirstHit(scrollPosition{}, false)
 
-	if hitLine != nil {
+	if hit != nil {
 		panic(fmt.Errorf("This test is meant to scan the whole file without finding anything"))
 	}
 }
