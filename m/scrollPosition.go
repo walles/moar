@@ -158,10 +158,24 @@ func (si *scrollPositionInternal) canonicalize(pager *Pager) {
 	}
 }
 
+func scrollPositionFromLineNumber(lineNumberOneBased int) *scrollPosition {
+	return &scrollPosition{
+		internalDontTouch: scrollPositionInternal{
+			lineNumberOneBased: lineNumberOneBased,
+		},
+	}
+}
+
 // Line number in the input stream
 func (p *Pager) lineNumberOneBased() int {
 	p.scrollPosition.internalDontTouch.canonicalize(p)
 	return p.scrollPosition.internalDontTouch.lineNumberOneBased
+}
+
+// Line number in the input stream
+func (sp *scrollPosition) lineNumberOneBased(pager *Pager) int {
+	sp.internalDontTouch.canonicalize(pager)
+	return sp.internalDontTouch.lineNumberOneBased
 }
 
 // Scroll this many screen lines before rendering
