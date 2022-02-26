@@ -8,6 +8,32 @@ type scrollPositionInternal struct {
 
 	// Scroll this many screen lines before rendering. Can be negative.
 	deltaScreenLines int
+
+	canonical scrollPositionCanonical
+}
+
+// If any of these change, we have to recompute the scrollPositionInternal values
+type scrollPositionCanonical struct {
+	width           int  // From pager
+	height          int  // From pager
+	showLineNumbers bool // From pager
+	wrapLongLines   bool // From pager
+
+	lineNumberOneBased int // From scrollPositionInternal
+	deltaScreenLines   int // From scrollPositionInternal
+}
+
+func canonicalFromPager(pager *Pager) scrollPositionCanonical {
+	width, height := pager.screen.Size()
+	return scrollPositionCanonical{
+		width:           width,
+		height:          height,
+		showLineNumbers: pager.ShowLineNumbers,
+		wrapLongLines:   pager.WrapLongLines,
+
+		lineNumberOneBased: pager.scrollPosition.internalDontTouch.lineNumberOneBased,
+		deltaScreenLines:   pager.scrollPosition.internalDontTouch.deltaScreenLines,
+	}
 }
 
 type scrollPosition struct {
@@ -113,10 +139,12 @@ func (si *scrollPositionInternal) emptyBottomLinesCount(pager *Pager) int {
 //
 // Canonicalize the scroll position vs the given pager.
 func (si *scrollPositionInternal) canonicalize(pager *Pager) {
-	if si.isCanonical(pager) {
+	if si.canonical == canonicalFromPager(pager) {
 		return
 	}
-	defer si.setCanonical(pager)
+	defer func() {
+		si.canonical = canonicalFromPager(pager)
+	}()
 
 	si.handleNegativeDeltaScreenLines(pager)
 	si.handlePositiveDeltaScreenLines(pager)
