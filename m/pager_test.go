@@ -242,6 +242,7 @@ func TestToPattern(t *testing.T) {
 func TestFindFirstLineOneBasedSimple(t *testing.T) {
 	reader := NewReaderFromStream("", strings.NewReader("AB"))
 	pager := NewPager(reader)
+	pager.screen = twin.NewFakeScreen(40, 10)
 
 	// Wait for reader to finish reading
 	<-reader.done
