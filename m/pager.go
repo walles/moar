@@ -671,14 +671,17 @@ func (p *Pager) StartPaging(screen twin.Screen) {
 func (p *Pager) ReprintAfterExit() error {
 	// Figure out how many screen lines are used by pager contents
 
-	// FIXME: Make sure this method works with non-0 scrollPosition deltaScreenLines
+	renderedScreenLines, _ := p.renderScreenLines()
+	screenLinesCount := len(renderedScreenLines)
 
-	_, height := p.screen.Size()
-	heightWithoutFooter := height - 1
-	lineCount := len(p.reader.GetLines(p.scrollPosition.lineNumberOneBased, heightWithoutFooter).lines)
+	_, screenHeight := p.screen.Size()
+	screenHeightWithoutFooter := screenHeight - 1
+	if screenLinesCount > screenHeightWithoutFooter {
+		screenLinesCount = screenHeightWithoutFooter
+	}
 
-	if lineCount > 0 {
-		p.screen.ShowNLines(lineCount)
+	if screenLinesCount > 0 {
+		p.screen.ShowNLines(screenLinesCount)
 	}
 	return nil
 }
