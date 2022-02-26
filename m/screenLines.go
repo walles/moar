@@ -303,10 +303,27 @@ func (p *Pager) getLastVisiblePosition() scrollPosition {
 }
 
 func (p *Pager) getLastVisibleLineNumberOneBased() int {
-	// FIXME: Compute this!
+	lastVisiblePosition := p.getLastVisiblePosition()
+	return lastVisiblePosition.lineNumberOneBased(p)
 }
 
 // Is the given position visible on screen?
 func (p *Pager) isVisible(scrollPosition scrollPosition) bool {
-	// FIXME: Compute this!
+	if scrollPosition.lineNumberOneBased(p) < p.lineNumberOneBased() {
+		// It's above the screen, not visible
+		return false
+	}
+
+	lastVisiblePosition := p.getLastVisiblePosition()
+	if scrollPosition.lineNumberOneBased(p) > lastVisiblePosition.lineNumberOneBased(p) {
+		// Line number too high, not visible
+		return false
+	}
+
+	if scrollPosition.deltaScreenLines(p) > lastVisiblePosition.deltaScreenLines(p) {
+		// Sub-line-number too high, not visible
+		return false
+	}
+
+	return true
 }

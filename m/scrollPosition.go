@@ -186,6 +186,14 @@ func (p *Pager) deltaScreenLines() int {
 	return p.scrollPosition.internalDontTouch.deltaScreenLines
 }
 
+// Scroll this many screen lines before rendering
+//
+// Always >= 0.
+func (sp *scrollPosition) deltaScreenLines(pager *Pager) int {
+	sp.internalDontTouch.canonicalize(pager)
+	return sp.internalDontTouch.deltaScreenLines
+}
+
 func (p *Pager) scrollToEnd() {
 	lastInputLine := p.reader.GetLineCount()
 	inputLine := p.reader.GetLine(lastInputLine)
