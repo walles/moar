@@ -13,9 +13,9 @@ func testHorizontalCropping(t *testing.T, contents string, firstIndex int, lastI
 		screen:              twin.NewFakeScreen(1+lastIndex-firstIndex, 99),
 		leftColumnZeroBased: firstIndex,
 	}
-	lineContents := NewLine(contents).HighlightedTokens(nil)
-	screenLine := pager.createScreenLine(nil, lineContents)
-	assert.Equal(t, rowToString(screenLine), expected)
+	lineContents := NewLine(contents)
+	screenLine := pager.renderLine(lineContents, 0)
+	assert.Equal(t, rowToString(screenLine[0].cells), expected)
 }
 
 func TestCreateScreenLine(t *testing.T) {
