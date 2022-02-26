@@ -65,78 +65,19 @@ func (p *Pager) redraw(spinner string) {
 //
 // The lines returned by this method are decorated with horizontal scroll
 // markers and line numbers and are ready to be output to the screen.
-//
-// Calling this method will adjust the scrollPosition if necessary.
 func (p *Pager) renderScreenLines() (lines [][]twin.Cell, statusText string) {
-	allPossibleLines, statusText := p.renderAllLines()
-	if len(allPossibleLines) == 0 {
+	renderedLines, statusText := p.renderLines()
+	if len(renderedLines) == 0 {
 		return
-	}
-
-	// Find which index in allPossibleLines the user wants to see at the top of
-	// the screen
-	firstVisibleIndex := -1 // Not found
-	for index, line := range allPossibleLines {
-		if line.inputLineOneBased == p.lineNumberOneBased() && line.wrapIndex == p.deltaScreenLines() {
-			firstVisibleIndex = index
-			break
-		}
-	}
-	if firstVisibleIndex == -1 {
-		panic(fmt.Errorf("scrollPosition %#v not found in allPossibleLines size %d",
-			p.scrollPosition, len(allPossibleLines)))
-	}
-
-	// Ensure the firstVisibleIndex is on an input line boundary, we don't
-	// support by-screen-line positioning yet!
-	for allPossibleLines[firstVisibleIndex].wrapIndex != 0 {
-		firstVisibleIndex--
-	}
-
-	_, height := p.screen.Size()
-	lastVisibleIndex := firstVisibleIndex + height - 2 // "-2" figured out through trial-and-error
-	if lastVisibleIndex < len(allPossibleLines) {
-		// Screen has enough room for everything, return everything
-		lines = p.pickVisibleLines(allPossibleLines, firstVisibleIndex)
-		return
-	}
-
-	// We seem to be too far down, clip!
-	overshoot := 1 + lastVisibleIndex - len(allPossibleLines)
-	firstVisibleIndex -= overshoot
-	if firstVisibleIndex < 0 {
-		firstVisibleIndex = 0
-	}
-
-	// Ensure the firstVisibleIndex is on an input line boundary, we don't
-	// support by-screen-line positioning yet!
-	for firstVisibleIndex > 0 && allPossibleLines[firstVisibleIndex].wrapIndex != 0 {
-		firstVisibleIndex--
 	}
 
 	// Construct the screen lines to return
-	lines = p.pickVisibleLines(allPossibleLines, firstVisibleIndex)
-	return
-}
-
-// Given a list of candidate lines, and an index into that list, return only the
-// lines that will be visible on the screen.
-func (p *Pager) pickVisibleLines(allPossibleLines []renderedLine, firstVisibleIndex int) [][]twin.Cell {
-	_, height := p.screen.Size()
-	screenLines := make([][]twin.Cell, 0, height)
-	for index := firstVisibleIndex; ; index++ {
-		if len(screenLines) >= height {
-			// All lines rendered, done!
-			break
-		}
-		if index >= len(allPossibleLines) {
-			// No more lines available for rendering, done!
-			break
-		}
-		screenLines = append(screenLines, allPossibleLines[index].cells)
+	screenLines := make([][]twin.Cell, 0, len(renderedLines))
+	for _, renderedLine := range renderedLines {
+		screenLines = append(screenLines, renderedLine.cells)
 	}
 
-	return screenLines
+	return screenLines, statusText
 }
 
 func (p *Pager) numberPrefixLength() int {
@@ -156,14 +97,14 @@ func (p *Pager) numberPrefixLength() int {
 	return numberPrefixLength
 }
 
-// Render all lines that could potentially go on screen.
+// Render all lines that should go on the screen.
 //
 // The returned lines are display ready, meaning that they come with horizontal
 // scroll markers and line numbers as necessary.
 //
-// When line wrapping is enabled, this might give you more screen lines than
-// file lines, and thus more screen lines than will fit on screen.
-func (p *Pager) renderAllLines() ([]renderedLine, string) {
+// The maximum number of lines returned by this method will be one less than the
+// screen height, leaving space for the status line.
+func (p *Pager) renderLines() ([]renderedLine, string) {
 	_, height := p.screen.Size()
 	wantedLineCount := height - 1
 
@@ -180,7 +121,26 @@ func (p *Pager) renderAllLines() ([]renderedLine, string) {
 		allLines = append(allLines, p.renderLine(line, lineNumber)...)
 	}
 
-	return allLines, inputLines.statusText
+	// Find which index in allLines the user wants to see at the top of the
+	// screen
+	firstVisibleIndex := -1 // Not found
+	for index, line := range allLines {
+		if line.inputLineOneBased == p.lineNumberOneBased() && line.wrapIndex == p.deltaScreenLines() {
+			firstVisibleIndex = index
+			break
+		}
+	}
+	if firstVisibleIndex == -1 {
+		panic(fmt.Errorf("scrollPosition %#v not found in allLines size %d",
+			p.scrollPosition, len(allLines)))
+	}
+
+	if len(allLines) < wantedLineCount {
+		// Screen has enough room for everything, return everything
+		return allLines, inputLines.statusText
+	}
+
+	return allLines[0:wantedLineCount], inputLines.statusText
 }
 
 // Render one input line into one or more screen lines.
