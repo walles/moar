@@ -359,13 +359,6 @@ func removeLastChar(s string) string {
 	return s[:len(s)-size]
 }
 
-func (p *Pager) scrollToEnd() {
-	p.scrollPosition = scrollPosition{
-		lineNumberOneBased: p.reader.GetLineCount(),
-		// FIXME: Set deltaScreenLines as well so we're *really* at the end
-	}
-}
-
 func (p *Pager) onSearchKey(key twin.KeyCode) {
 	switch key {
 	case twin.KeyEscape, twin.KeyEnter:

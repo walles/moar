@@ -185,3 +185,7 @@ func (p *Pager) deltaScreenLines() int {
 	p.scrollPosition.internalDontTouch.canonicalize(p)
 	return p.scrollPosition.internalDontTouch.deltaScreenLines
 }
+
+func (p *Pager) scrollToEnd() {
+	FIXME: Implement me!
+}

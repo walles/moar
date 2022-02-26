@@ -298,6 +298,10 @@ func createLinePrefix(fileLineNumber *int, numberPrefixLength int) []twin.Cell {
 	return lineNumberPrefix
 }
 
+func (p *Pager) getLastVisiblePosition() scrollPosition {
+	// FIXME: Compute this!
+}
+
 func (p *Pager) getLastVisibleLineNumberOneBased() int {
 	// FIXME: Compute this!
 }
