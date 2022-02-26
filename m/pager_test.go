@@ -239,7 +239,7 @@ func TestToPattern(t *testing.T) {
 	assert.Assert(t, toPattern(")g").MatchString(")g"))
 }
 
-func TestFindFirstLineOneBasedSimple(t *testing.T) {
+func TestFindFirstHitSimple(t *testing.T) {
 	reader := NewReaderFromStream("", strings.NewReader("AB"))
 	pager := NewPager(reader)
 	pager.screen = twin.NewFakeScreen(40, 10)
@@ -254,7 +254,7 @@ func TestFindFirstLineOneBasedSimple(t *testing.T) {
 	assert.Equal(t, hit.internalDontTouch.deltaScreenLines, 0)
 }
 
-func TestFindFirstLineOneBasedAnsi(t *testing.T) {
+func TestFindFirstHitAnsi(t *testing.T) {
 	reader := NewReaderFromStream("", strings.NewReader("A\x1b[30mB"))
 	pager := NewPager(reader)
 
