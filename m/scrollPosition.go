@@ -2,6 +2,10 @@ package m
 
 import "fmt"
 
+type scrollPosition struct {
+	internalDontTouch scrollPositionInternal
+}
+
 type scrollPositionInternal struct {
 	// Line number in the input stream
 	lineNumberOneBased int
@@ -34,10 +38,6 @@ func canonicalFromPager(pager *Pager) scrollPositionCanonical {
 		lineNumberOneBased: pager.scrollPosition.internalDontTouch.lineNumberOneBased,
 		deltaScreenLines:   pager.scrollPosition.internalDontTouch.deltaScreenLines,
 	}
-}
-
-type scrollPosition struct {
-	internalDontTouch scrollPositionInternal
 }
 
 // Create a new position, scrolled towards the end of the file
@@ -159,15 +159,15 @@ func (si *scrollPositionInternal) canonicalize(pager *Pager) {
 }
 
 // Line number in the input stream
-func (s *scrollPosition) lineNumberOneBased(pager *Pager) int {
-	s.internalDontTouch.canonicalize(pager)
-	return s.internalDontTouch.lineNumberOneBased
+func (p *Pager) lineNumberOneBased() int {
+	p.scrollPosition.internalDontTouch.canonicalize(p)
+	return p.scrollPosition.internalDontTouch.lineNumberOneBased
 }
 
 // Scroll this many screen lines before rendering
 //
 // Always >= 0.
-func (s *scrollPosition) deltaScreenLines(pager *Pager) int {
-	s.internalDontTouch.canonicalize(pager)
-	return s.internalDontTouch.deltaScreenLines
+func (p *Pager) deltaScreenLines() int {
+	p.scrollPosition.internalDontTouch.canonicalize(p)
+	return p.scrollPosition.internalDontTouch.deltaScreenLines
 }

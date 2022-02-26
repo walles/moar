@@ -77,14 +77,14 @@ func (p *Pager) renderScreenLines() (lines [][]twin.Cell, statusText string) {
 	// the screen
 	firstVisibleIndex := -1 // Not found
 	for index, line := range allPossibleLines {
-		if line.inputLineOneBased == p.firstLineOneBased {
+		if line.inputLineOneBased == p.lineNumberOneBased() && line.wrapIndex == p.deltaScreenLines() {
 			firstVisibleIndex = index
 			break
 		}
 	}
 	if firstVisibleIndex == -1 {
-		panic(fmt.Errorf("firstInputLineOneBased %d not found in allPossibleLines size %d",
-			p.firstLineOneBased, len(allPossibleLines)))
+		panic(fmt.Errorf("scrollPosition %#v not found in allPossibleLines size %d",
+			p.scrollPosition, len(allPossibleLines)))
 	}
 
 	// Ensure the firstVisibleIndex is on an input line boundary, we don't
