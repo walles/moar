@@ -50,10 +50,10 @@ func TestEmpty(t *testing.T) {
 		reader: NewReaderFromText("test", ""),
 	}
 
-	rendered, statusText, firstScreenLine := pager.renderScreenLines()
+	rendered, statusText := pager.renderScreenLines()
 	assert.Equal(t, len(rendered), 0)
 	assert.Equal(t, "test: <empty>", statusText)
-	assert.Equal(t, firstScreenLine, 0)
+	assert.Equal(t, pager.lineNumberOneBased(), 0)
 }
 
 func TestOverflowDown(t *testing.T) {
@@ -67,14 +67,15 @@ func TestOverflowDown(t *testing.T) {
 		reader: NewReaderFromText("test", "hej"),
 
 		// This value can be anything and should be clipped, that's what we're testing
-		firstLineOneBased: 42,
+		scrollPosition: *scrollPositionFromLineNumber(42),
 	}
 
-	rendered, statusText, firstScreenLine := pager.renderScreenLines()
+	rendered, statusText := pager.renderScreenLines()
 	assert.Equal(t, len(rendered), 1)
 	assert.Equal(t, "hej", rowToString(rendered[0]))
 	assert.Equal(t, "test: 1 line  100%", statusText)
-	assert.Equal(t, firstScreenLine, 1)
+	assert.Equal(t, pager.lineNumberOneBased(), 1)
+	assert.Equal(t, pager.deltaScreenLines(), 0)
 }
 
 func TestOverflowUp(t *testing.T) {
@@ -87,14 +88,15 @@ func TestOverflowUp(t *testing.T) {
 		// Single line of input
 		reader: NewReaderFromText("test", "hej"),
 
-		firstLineOneBased: 1,
+		// NOTE: scrollPosition intentionally not initialized
 	}
 
-	rendered, statusText, firstScreenLine := pager.renderScreenLines()
+	rendered, statusText := pager.renderScreenLines()
 	assert.Equal(t, len(rendered), 1)
 	assert.Equal(t, "hej", rowToString(rendered[0]))
 	assert.Equal(t, "test: 1 line  100%", statusText)
-	assert.Equal(t, firstScreenLine, 1)
+	assert.Equal(t, pager.lineNumberOneBased(), 1)
+	assert.Equal(t, pager.deltaScreenLines(), 0)
 }
 
 func TestWrapping(t *testing.T) {
