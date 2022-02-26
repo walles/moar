@@ -187,5 +187,10 @@ func (p *Pager) deltaScreenLines() int {
 }
 
 func (p *Pager) scrollToEnd() {
-	FIXME: Implement me!
+	lastInputLine := p.reader.GetLineCount()
+	inputLine := p.reader.GetLine(lastInputLine)
+	screenLines := p.renderLine(inputLine, 0)
+
+	p.scrollPosition.internalDontTouch.lineNumberOneBased = lastInputLine
+	p.scrollPosition.internalDontTouch.deltaScreenLines = len(screenLines) - 1
 }
