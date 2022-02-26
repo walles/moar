@@ -41,7 +41,7 @@ type scrollPosition struct {
 }
 
 // Create a new position, scrolled towards the end of the file
-func (s scrollPosition) previousLine(scrollDistance int) scrollPosition {
+func (s scrollPosition) PreviousLine(scrollDistance int) scrollPosition {
 	return scrollPosition{
 		internalDontTouch: scrollPositionInternal{
 			lineNumberOneBased: s.internalDontTouch.lineNumberOneBased,
@@ -51,7 +51,7 @@ func (s scrollPosition) previousLine(scrollDistance int) scrollPosition {
 }
 
 // Create a new position, scrolled towards the end of the file
-func (s scrollPosition) nextLine(scrollDistance int) scrollPosition {
+func (s scrollPosition) NextLine(scrollDistance int) scrollPosition {
 	return scrollPosition{
 		internalDontTouch: scrollPositionInternal{
 			lineNumberOneBased: s.internalDontTouch.lineNumberOneBased,

@@ -225,9 +225,9 @@ func (p *Pager) findFirstHit(startPosition scrollPosition, backwards bool) *scro
 		}
 
 		if backwards {
-			searchPosition.previousLine(1)
+			searchPosition.PreviousLine(1)
 		} else {
-			searchPosition.nextLine(1)
+			searchPosition.NextLine(1)
 		}
 	}
 }
@@ -248,7 +248,7 @@ func (p *Pager) scrollToNextSearchHit() {
 	switch p.mode {
 	case _Viewing:
 		// Start searching on the first line below the bottom of the screen
-		firstSearchPosition = p.getLastVisiblePosition().nextLine(1)
+		firstSearchPosition = p.getLastVisiblePosition().NextLine(1)
 
 	case _NotFound:
 		// Restart searching from the top
@@ -285,7 +285,7 @@ func (p *Pager) scrollToPreviousSearchHit() {
 	switch p.mode {
 	case _Viewing:
 		// Start searching on the first line above the top of the screen
-		firstSearchPosition = p.scrollPosition.previousLine(1)
+		firstSearchPosition = p.scrollPosition.PreviousLine(1)
 
 	case _NotFound:
 		// Restart searching from the bottom
@@ -385,22 +385,22 @@ func (p *Pager) onSearchKey(key twin.KeyCode) {
 
 	case twin.KeyUp:
 		// Clipping is done in _Redraw()
-		p.scrollPosition = p.scrollPosition.previousLine(1)
+		p.scrollPosition = p.scrollPosition.PreviousLine(1)
 		p.mode = _Viewing
 
 	case twin.KeyDown:
 		// Clipping is done in _Redraw()
-		p.scrollPosition = p.scrollPosition.nextLine(1)
+		p.scrollPosition = p.scrollPosition.NextLine(1)
 		p.mode = _Viewing
 
 	case twin.KeyPgUp:
 		_, height := p.screen.Size()
-		p.scrollPosition = p.scrollPosition.previousLine(height - 1)
+		p.scrollPosition = p.scrollPosition.PreviousLine(height - 1)
 		p.mode = _Viewing
 
 	case twin.KeyPgDown:
 		_, height := p.screen.Size()
-		p.scrollPosition = p.scrollPosition.nextLine(height - 1)
+		p.scrollPosition = p.scrollPosition.NextLine(height - 1)
 		p.mode = _Viewing
 
 	default:
@@ -445,11 +445,11 @@ func (p *Pager) onKey(keyCode twin.KeyCode) {
 
 	case twin.KeyUp:
 		// Clipping is done in _Redraw()
-		p.scrollPosition = p.scrollPosition.previousLine(1)
+		p.scrollPosition = p.scrollPosition.PreviousLine(1)
 
 	case twin.KeyDown, twin.KeyEnter:
 		// Clipping is done in _Redraw()
-		p.scrollPosition = p.scrollPosition.nextLine(1)
+		p.scrollPosition = p.scrollPosition.NextLine(1)
 
 	case twin.KeyRight:
 		p.moveRight(16)
@@ -465,11 +465,11 @@ func (p *Pager) onKey(keyCode twin.KeyCode) {
 
 	case twin.KeyPgDown:
 		_, height := p.screen.Size()
-		p.scrollPosition = p.scrollPosition.nextLine(height - 1)
+		p.scrollPosition = p.scrollPosition.NextLine(height - 1)
 
 	case twin.KeyPgUp:
 		_, height := p.screen.Size()
-		p.scrollPosition = p.scrollPosition.previousLine(height - 1)
+		p.scrollPosition = p.scrollPosition.PreviousLine(height - 1)
 
 	default:
 		log.Debugf("Unhandled key event %v", keyCode)
@@ -509,11 +509,11 @@ func (p *Pager) onRune(char rune) {
 
 	case 'k', 'y':
 		// Clipping is done in _Redraw()
-		p.scrollPosition = p.scrollPosition.previousLine(1)
+		p.scrollPosition = p.scrollPosition.PreviousLine(1)
 
 	case 'j', 'e':
 		// Clipping is done in _Redraw()
-		p.scrollPosition = p.scrollPosition.nextLine(1)
+		p.scrollPosition = p.scrollPosition.NextLine(1)
 
 	case 'l':
 		// vim right
@@ -531,19 +531,19 @@ func (p *Pager) onRune(char rune) {
 
 	case 'f', ' ':
 		_, height := p.screen.Size()
-		p.scrollPosition = p.scrollPosition.nextLine(height - 1)
+		p.scrollPosition = p.scrollPosition.NextLine(height - 1)
 
 	case 'b':
 		_, height := p.screen.Size()
-		p.scrollPosition = p.scrollPosition.previousLine(height - 1)
+		p.scrollPosition = p.scrollPosition.PreviousLine(height - 1)
 
 	case 'u':
 		_, height := p.screen.Size()
-		p.scrollPosition = p.scrollPosition.previousLine(height / 2)
+		p.scrollPosition = p.scrollPosition.PreviousLine(height / 2)
 
 	case 'd':
 		_, height := p.screen.Size()
-		p.scrollPosition = p.scrollPosition.nextLine(height / 2)
+		p.scrollPosition = p.scrollPosition.NextLine(height / 2)
 
 	case '/':
 		p.mode = _Searching
@@ -643,11 +643,11 @@ func (p *Pager) StartPaging(screen twin.Screen) {
 			switch event.Buttons() {
 			case twin.MouseWheelUp:
 				// Clipping is done in _Redraw()
-				p.scrollPosition = p.scrollPosition.previousLine(1)
+				p.scrollPosition = p.scrollPosition.PreviousLine(1)
 
 			case twin.MouseWheelDown:
 				// Clipping is done in _Redraw()
-				p.scrollPosition = p.scrollPosition.nextLine(1)
+				p.scrollPosition = p.scrollPosition.NextLine(1)
 
 			case twin.MouseWheelLeft:
 				p.moveRight(-16)
