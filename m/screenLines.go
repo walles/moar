@@ -169,19 +169,10 @@ func (p *Pager) renderAllLines() ([]renderedLine, string) {
 	_, height := p.screen.Size()
 	wantedLineCount := height - 1
 
-	if p.firstLineOneBased < 1 {
-		p.firstLineOneBased = 1
-	}
-	inputLines := p.reader.GetLines(p.firstLineOneBased, wantedLineCount)
+	inputLines := p.reader.GetLines(p.lineNumberOneBased(), wantedLineCount)
 	if inputLines.lines == nil {
 		// Empty input, empty output
 		return []renderedLine{}, inputLines.statusText
-	}
-
-	// Offsets figured out through trial-and-error...
-	lastInputLineOneBased := inputLines.firstLineOneBased + len(inputLines.lines) - 1
-	if p.firstLineOneBased > lastInputLineOneBased {
-		p.firstLineOneBased = lastInputLineOneBased
 	}
 
 	allLines := make([]renderedLine, 0)
