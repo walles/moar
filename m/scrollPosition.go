@@ -202,3 +202,18 @@ func (p *Pager) scrollToEnd() {
 	p.scrollPosition.internalDontTouch.lineNumberOneBased = lastInputLine
 	p.scrollPosition.internalDontTouch.deltaScreenLines = len(screenLines) - 1
 }
+
+func (p *Pager) getLastVisiblePosition() *scrollPosition {
+	renderedLines, _ := p.renderLines()
+	if len(renderedLines) == 0 {
+		return nil
+	}
+
+	lastRenderedLine := renderedLines[len(renderedLines)-1]
+	return &scrollPosition{
+		internalDontTouch: scrollPositionInternal{
+			lineNumberOneBased: lastRenderedLine.inputLineOneBased,
+			deltaScreenLines:   lastRenderedLine.wrapIndex,
+		},
+	}
+}
