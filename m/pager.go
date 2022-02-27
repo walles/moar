@@ -127,11 +127,18 @@ Available at https://github.com/walles/moar/.
 
 // NewPager creates a new Pager
 func NewPager(r *Reader) *Pager {
+	var name string
+	if r == nil || r.name == nil || len(*r.name) == 0 {
+		name = "Pager"
+	} else {
+		name = "Pager " + *r.name
+	}
 	return &Pager{
 		reader:          r,
 		quit:            false,
 		ShowLineNumbers: true,
 		DeInit:          true,
+		scrollPosition:  newScrollPosition(name),
 	}
 }
 
@@ -219,7 +226,7 @@ func (p *Pager) findFirstHit(startPosition scrollPosition, backwards bool) *scro
 
 		lineText := line.Plain()
 		if p.searchPattern.MatchString(lineText) {
-			return scrollPositionFromLineNumber(searchPosition.lineNumberOneBased(p))
+			return scrollPositionFromLineNumber("findFirstHit", searchPosition.lineNumberOneBased(p))
 		}
 
 		if backwards {
@@ -251,7 +258,7 @@ func (p *Pager) scrollToNextSearchHit() {
 	case _NotFound:
 		// Restart searching from the top
 		p.mode = _Viewing
-		firstSearchPosition = scrollPosition{}
+		firstSearchPosition = newScrollPosition("firstSearchPosition")
 
 	default:
 		panic(fmt.Sprint("Unknown search mode when finding next: ", p.mode))
@@ -447,7 +454,7 @@ func (p *Pager) onKey(keyCode twin.KeyCode) {
 		p.moveRight(-16)
 
 	case twin.KeyHome:
-		p.scrollPosition = scrollPosition{}
+		p.scrollPosition = newScrollPosition("Pager scroll position")
 
 	case twin.KeyEnd:
 		p.scrollToEnd()
@@ -491,7 +498,7 @@ func (p *Pager) onRune(char rune) {
 				leftColumnZeroBased: p.leftColumnZeroBased,
 			}
 			p.reader = _HelpReader
-			p.scrollPosition = scrollPosition{}
+			p.scrollPosition = newScrollPosition("Pager scroll position")
 			p.leftColumnZeroBased = 0
 			p.isShowingHelp = true
 		}
@@ -513,7 +520,7 @@ func (p *Pager) onRune(char rune) {
 		p.moveRight(-16)
 
 	case '<', 'g':
-		p.scrollPosition = scrollPosition{}
+		p.scrollPosition = newScrollPosition("Pager scroll position")
 
 	case '>', 'G':
 		p.scrollToEnd()

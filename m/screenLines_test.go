@@ -12,6 +12,7 @@ func testHorizontalCropping(t *testing.T, contents string, firstIndex int, lastI
 	pager := Pager{
 		screen:              twin.NewFakeScreen(1+lastIndex-firstIndex, 99),
 		leftColumnZeroBased: firstIndex,
+		scrollPosition:      newScrollPosition("testHorizontalCropping"),
 	}
 	lineContents := NewLine(contents)
 	screenLine := pager.renderLine(lineContents, 0)
@@ -48,6 +49,8 @@ func TestEmpty(t *testing.T) {
 
 		// No lines available
 		reader: NewReaderFromText("test", ""),
+
+		scrollPosition: newScrollPosition("TestEmpty"),
 	}
 
 	rendered, statusText := pager.renderScreenLines()
@@ -67,7 +70,7 @@ func TestOverflowDown(t *testing.T) {
 		reader: NewReaderFromText("test", "hej"),
 
 		// This value can be anything and should be clipped, that's what we're testing
-		scrollPosition: *scrollPositionFromLineNumber(42),
+		scrollPosition: *scrollPositionFromLineNumber("TestOverflowDown", 42),
 	}
 
 	rendered, statusText := pager.renderScreenLines()

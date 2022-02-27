@@ -2,8 +2,20 @@ package m
 
 import "fmt"
 
+// Please create using newScrollPosition(name)
 type scrollPosition struct {
 	internalDontTouch scrollPositionInternal
+}
+
+func newScrollPosition(name string) scrollPosition {
+	if len(name) == 0 {
+		panic("Non-empty name required")
+	}
+	return scrollPosition{
+		internalDontTouch: scrollPositionInternal{
+			name: name,
+		},
+	}
 }
 
 type scrollPositionInternal struct {
@@ -13,7 +25,9 @@ type scrollPositionInternal struct {
 	// Scroll this many screen lines before rendering. Can be negative.
 	deltaScreenLines int
 
-	canonical scrollPositionCanonical
+	name           string
+	canonicalizing bool
+	canonical      scrollPositionCanonical
 }
 
 // If any of these change, we have to recompute the scrollPositionInternal values
@@ -44,6 +58,7 @@ func canonicalFromPager(pager *Pager) scrollPositionCanonical {
 func (s scrollPosition) PreviousLine(scrollDistance int) scrollPosition {
 	return scrollPosition{
 		internalDontTouch: scrollPositionInternal{
+			name:               s.internalDontTouch.name,
 			lineNumberOneBased: s.internalDontTouch.lineNumberOneBased,
 			deltaScreenLines:   s.internalDontTouch.deltaScreenLines - scrollDistance,
 		},
@@ -54,6 +69,7 @@ func (s scrollPosition) PreviousLine(scrollDistance int) scrollPosition {
 func (s scrollPosition) NextLine(scrollDistance int) scrollPosition {
 	return scrollPosition{
 		internalDontTouch: scrollPositionInternal{
+			name:               s.internalDontTouch.name,
 			lineNumberOneBased: s.internalDontTouch.lineNumberOneBased,
 			deltaScreenLines:   s.internalDontTouch.deltaScreenLines + scrollDistance,
 		},
@@ -142,8 +158,15 @@ func (si *scrollPositionInternal) canonicalize(pager *Pager) {
 	if si.canonical == canonicalFromPager(pager) {
 		return
 	}
+
+	if si.canonicalizing {
+		panic(fmt.Errorf("Scroll position canonicalize() called recursively for %s", si.name))
+	}
+	si.canonicalizing = true
+
 	defer func() {
 		si.canonical = canonicalFromPager(pager)
+		si.canonicalizing = false
 	}()
 
 	if pager.reader.GetLineCount() == 0 {
@@ -164,9 +187,10 @@ func (si *scrollPositionInternal) canonicalize(pager *Pager) {
 	}
 }
 
-func scrollPositionFromLineNumber(lineNumberOneBased int) *scrollPosition {
+func scrollPositionFromLineNumber(name string, lineNumberOneBased int) *scrollPosition {
 	return &scrollPosition{
 		internalDontTouch: scrollPositionInternal{
+			name:               name,
 			lineNumberOneBased: lineNumberOneBased,
 		},
 	}
@@ -218,6 +242,7 @@ func (p *Pager) getLastVisiblePosition() *scrollPosition {
 	lastRenderedLine := renderedLines[len(renderedLines)-1]
 	return &scrollPosition{
 		internalDontTouch: scrollPositionInternal{
+			name:               "Last Visible Position",
 			lineNumberOneBased: lastRenderedLine.inputLineOneBased,
 			deltaScreenLines:   lastRenderedLine.wrapIndex,
 		},
