@@ -18,6 +18,7 @@ const BACKSPACE = '\b'
 
 var manPageBold = twin.StyleDefault.WithAttr(twin.AttrBold)
 var manPageUnderline = twin.StyleDefault.WithAttr(twin.AttrUnderline)
+var unprintableStyle UnprintableStyle = UNPRINTABLE_STYLE_HIGHLIGHT
 
 // ESC[...m: https://en.wikipedia.org/wiki/ANSI_escape_code#SGR
 var sgrSequencePattern = regexp.MustCompile("\x1b\\[([0-9;]*m)")
@@ -131,7 +132,13 @@ func withoutFormatting(s string) string {
 				}
 
 			case '�': // Go's broken-UTF8 marker
-				stripped.WriteRune('?')
+				if unprintableStyle == UNPRINTABLE_STYLE_HIGHLIGHT {
+					stripped.WriteRune('?')
+				} else if unprintableStyle == UNPRINTABLE_STYLE_WHITESPACE {
+					stripped.WriteRune(' ')
+				} else {
+					panic(fmt.Errorf("Unsupported unprintable-style: %#v", unprintableStyle))
+				}
 				runeCount++
 
 			case BACKSPACE:
@@ -158,7 +165,7 @@ func cellsFromString(s string) []twin.Cell {
 	var cells []twin.Cell
 
 	// Specs: https://en.wikipedia.org/wiki/ANSI_escape_code#3-bit_and_4-bit
-	styleBrokenUtf8 := twin.StyleDefault.Background(twin.NewColor16(1)).Foreground(twin.NewColor16(7))
+	styleUnprintable := twin.StyleDefault.Background(twin.NewColor16(1)).Foreground(twin.NewColor16(7))
 
 	for _, styledString := range styledStringsFromString(s) {
 		for _, token := range tokensFromStyledString(styledString) {
@@ -178,23 +185,41 @@ func cellsFromString(s string) []twin.Cell {
 				}
 
 			case '�': // Go's broken-UTF8 marker
-				cells = append(cells, twin.Cell{
-					Rune:  '?',
-					Style: styleBrokenUtf8,
-				})
+				if unprintableStyle == UNPRINTABLE_STYLE_HIGHLIGHT {
+					cells = append(cells, twin.Cell{
+						Rune:  '?',
+						Style: styleUnprintable,
+					})
+				} else if unprintableStyle == UNPRINTABLE_STYLE_WHITESPACE {
+					cells = append(cells, twin.Cell{
+						Rune:  '?',
+						Style: twin.StyleDefault,
+					})
+				} else {
+					panic(fmt.Errorf("Unsupported unprintable-style: %#v", unprintableStyle))
+				}
 
 			case BACKSPACE:
 				cells = append(cells, twin.Cell{
 					Rune:  '<',
-					Style: styleBrokenUtf8,
+					Style: styleUnprintable,
 				})
 
 			default:
 				if !unicode.IsPrint(token.Rune) {
-					cells = append(cells, twin.Cell{
-						Rune:  '?',
-						Style: styleBrokenUtf8,
-					})
+					if unprintableStyle == UNPRINTABLE_STYLE_HIGHLIGHT {
+						cells = append(cells, twin.Cell{
+							Rune:  '?',
+							Style: styleUnprintable,
+						})
+					} else if unprintableStyle == UNPRINTABLE_STYLE_WHITESPACE {
+						cells = append(cells, twin.Cell{
+							Rune:  ' ',
+							Style: twin.StyleDefault,
+						})
+					} else {
+						panic(fmt.Errorf("Unsupported unprintable-style: %#v", unprintableStyle))
+					}
 					continue
 				}
 				cells = append(cells, token)

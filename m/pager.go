@@ -27,6 +27,14 @@ const (
 	STATUSBAR_STYLE_BOLD
 )
 
+// How do we render unprintable characters?
+type UnprintableStyle int
+
+const (
+	UNPRINTABLE_STYLE_HIGHLIGHT UnprintableStyle = iota
+	UNPRINTABLE_STYLE_WHITESPACE
+)
+
 type eventSpinnerUpdate struct {
 	spinner string
 }
@@ -54,7 +62,8 @@ type Pager struct {
 	// NewPager shows lines by default, this field can hide them
 	ShowLineNumbers bool
 
-	StatusBarStyle StatusBarStyle
+	StatusBarStyle   StatusBarStyle
+	UnprintableStyle UnprintableStyle
 
 	WrapLongLines bool
 
@@ -604,6 +613,7 @@ func (p *Pager) onRune(char rune) {
 
 // StartPaging brings up the pager on screen
 func (p *Pager) StartPaging(screen twin.Screen) {
+	unprintableStyle = p.UnprintableStyle
 	SetManPageFormatFromEnv()
 
 	p.screen = screen

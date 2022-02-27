@@ -146,6 +146,24 @@ func parseStatusBarStyle(styleOption string, flagSet *flag.FlagSet) m.StatusBarS
 	panic("os.Exit(1) just failed")
 }
 
+func parseUnprintableStyle(styleOption string, flagSet *flag.FlagSet) m.UnprintableStyle {
+	if styleOption == "highlight" {
+		return m.UNPRINTABLE_STYLE_HIGHLIGHT
+	}
+	if styleOption == "whitespace" {
+		return m.UNPRINTABLE_STYLE_WHITESPACE
+	}
+
+	fmt.Fprintf(os.Stderr,
+		"ERROR: Unrecognized invalid UTF8 rendering style \"%s\", good ones are highlight or whitespace.\n",
+		styleOption)
+	fmt.Fprintln(os.Stderr)
+	printUsage(os.Stderr, flagSet, true)
+
+	os.Exit(1)
+	panic("os.Exit(1) just failed")
+}
+
 func main() {
 	// FIXME: If we get a CTRL-C, get terminal back into a useful state before terminating
 
@@ -173,6 +191,7 @@ func main() {
 	noLineNumbers := flagSet.Bool("no-linenumbers", false, "Hide line numbers on startup, press left arrow key to show")
 	noClearOnExit := flagSet.Bool("no-clear-on-exit", false, "Retain screen contents when exiting moar")
 	statusBarStyleOption := flagSet.String("statusbar", "inverse", "Status bar style: inverse, plain or bold")
+	UnprintableStyleOption := flagSet.String("render-unprintable", "highlight", "How unprintable characters are rendered: highlight or whitespace")
 
 	// Combine flags from environment and from command line
 	flags := os.Args[1:]
@@ -201,6 +220,7 @@ func main() {
 	style := parseStyleOption(*styleOption, flagSet)
 	formatter := parseColorsOption(*colorsOption, flagSet)
 	statusBarStyle := parseStatusBarStyle(*statusBarStyleOption, flagSet)
+	unprintableStyle := parseUnprintableStyle(*UnprintableStyleOption, flagSet)
 
 	log.SetLevel(log.InfoLevel)
 	if *trace {
@@ -270,7 +290,7 @@ func main() {
 	if stdinIsRedirected {
 		// Display input pipe contents
 		reader := m.NewReaderFromStream("", os.Stdin)
-		startPaging(reader, *wrap, *noLineNumbers, *noClearOnExit, statusBarStyle)
+		startPaging(reader, *wrap, *noLineNumbers, *noClearOnExit, statusBarStyle, unprintableStyle)
 		return
 	}
 
@@ -280,12 +300,13 @@ func main() {
 		fmt.Fprintf(os.Stderr, "ERROR: %v\n", err)
 		os.Exit(1)
 	}
-	startPaging(reader, *wrap, *noLineNumbers, *noClearOnExit, statusBarStyle)
+	startPaging(reader, *wrap, *noLineNumbers, *noClearOnExit, statusBarStyle, unprintableStyle)
 }
 
 func startPaging(reader *m.Reader,
 	wrapLongLines, noLineNumbers, noClearOnExit bool,
 	statusBarStyle m.StatusBarStyle,
+	unprintableStyle m.UnprintableStyle,
 ) {
 	screen, e := twin.NewScreen()
 	if e != nil {
@@ -298,6 +319,7 @@ func startPaging(reader *m.Reader,
 	pager.WrapLongLines = wrapLongLines
 	pager.ShowLineNumbers = !noLineNumbers
 	pager.StatusBarStyle = statusBarStyle
+	pager.UnprintableStyle = unprintableStyle
 
 	defer func() {
 		// Restore screen...
