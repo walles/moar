@@ -240,7 +240,7 @@ func TestToPattern(t *testing.T) {
 }
 
 func TestFindFirstHitSimple(t *testing.T) {
-	reader := NewReaderFromStream("", strings.NewReader("AB"))
+	reader := NewReaderFromStream("TestFindFirstHitSimple", strings.NewReader("AB"))
 	pager := NewPager(reader)
 	pager.screen = twin.NewFakeScreen(40, 10)
 

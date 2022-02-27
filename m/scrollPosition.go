@@ -248,3 +248,38 @@ func (p *Pager) getLastVisiblePosition() *scrollPosition {
 		},
 	}
 }
+
+func (p *Pager) numberPrefixLength() int {
+	// This method used to live in screenLines.go, but I moved it here because
+	// it touches scroll position internals.
+	if !p.ShowLineNumbers {
+		return 0
+	}
+
+	_, height := p.screen.Size()
+	contentHeight := height - 1 // Full screen height minus the status bar
+	maxPossibleLineNumber := p.reader.GetLineCount()
+
+	// This is an approximation assuming we don't do any wrapping. Finding the
+	// real answer while wrapping requires rendering, which requires the real
+	// answer and so on, so we do an approximation here to save us from
+	// recursion.
+	//
+	// Let's improve on demand.
+	maxVisibleLineNumber := (p.scrollPosition.internalDontTouch.lineNumberOneBased +
+		p.scrollPosition.internalDontTouch.deltaScreenLines + contentHeight - 1)
+	if maxVisibleLineNumber > maxPossibleLineNumber {
+		maxVisibleLineNumber = maxPossibleLineNumber
+	}
+
+	// Count the length of the last line number
+	numberPrefixLength := len(formatNumber(uint(maxVisibleLineNumber))) + 1
+	if numberPrefixLength < 4 {
+		// 4 = space for 3 digits followed by one whitespace
+		//
+		// https://github.com/walles/moar/issues/38
+		numberPrefixLength = 4
+	}
+
+	return numberPrefixLength
+}

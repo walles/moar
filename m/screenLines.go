@@ -85,23 +85,6 @@ func (p *Pager) renderScreenLines() (lines [][]twin.Cell, statusText string) {
 	return screenLines, statusText
 }
 
-func (p *Pager) numberPrefixLength() int {
-	if !p.ShowLineNumbers {
-		return 0
-	}
-
-	// Count the length of the last line number
-	numberPrefixLength := len(formatNumber(uint(p.getLastVisibleLineNumberOneBased()))) + 1
-	if numberPrefixLength < 4 {
-		// 4 = space for 3 digits followed by one whitespace
-		//
-		// https://github.com/walles/moar/issues/38
-		numberPrefixLength = 4
-	}
-
-	return numberPrefixLength
-}
-
 // Render all lines that should go on the screen.
 //
 // The returned lines are display ready, meaning that they come with horizontal
@@ -261,11 +244,6 @@ func createLinePrefix(fileLineNumber *int, numberPrefixLength int) []twin.Cell {
 	}
 
 	return lineNumberPrefix
-}
-
-func (p *Pager) getLastVisibleLineNumberOneBased() int {
-	lastVisiblePosition := p.getLastVisiblePosition()
-	return lastVisiblePosition.lineNumberOneBased(p)
 }
 
 // Is the given position visible on screen?
