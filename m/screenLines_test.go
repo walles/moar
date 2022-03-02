@@ -106,6 +106,8 @@ func TestWrapping(t *testing.T) {
 	reader := NewReaderFromStream("",
 		strings.NewReader("first line\nline two will be wrapped\nhere's the last line"))
 	pager := NewPager(reader)
+	pager.screen = twin.NewFakeScreen(40, 40)
+
 	pager.WrapLongLines = true
 	pager.ShowLineNumbers = false
 

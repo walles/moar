@@ -96,6 +96,7 @@ func startPaging(t *testing.T, reader *Reader) *twin.FakeScreen {
 
 	screen := twin.NewFakeScreen(20, 10)
 	pager := NewPager(reader)
+	pager.screen = screen
 	pager.ShowLineNumbers = false
 
 	// Tell our Pager to quit immediately
@@ -257,6 +258,7 @@ func TestFindFirstHitSimple(t *testing.T) {
 func TestFindFirstHitAnsi(t *testing.T) {
 	reader := NewReaderFromStream("", strings.NewReader("A\x1b[30mB"))
 	pager := NewPager(reader)
+	pager.screen = twin.NewFakeScreen(40, 10)
 
 	// Wait for reader to finish reading
 	<-reader.done
@@ -282,6 +284,8 @@ func TestScrollToBottomWrapNextToLastLine(t *testing.T) {
 	reader := NewReaderFromStream("",
 		strings.NewReader("first line\nline two will be wrapped\nhere's the last line"))
 	pager := NewPager(reader)
+	pager.screen = twin.NewFakeScreen(40, 10)
+
 	pager.WrapLongLines = true
 	pager.ShowLineNumbers = false
 
@@ -388,6 +392,7 @@ func benchmarkSearch(b *testing.B, highlighted bool) {
 
 	reader := NewReaderFromText("hello", testString)
 	pager := NewPager(reader)
+	pager.screen = twin.NewFakeScreen(40, 10)
 
 	// The [] around the 't' is there to make sure it doesn't match, remember
 	// we're searching through this very file.
