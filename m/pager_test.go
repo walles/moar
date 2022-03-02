@@ -96,7 +96,6 @@ func startPaging(t *testing.T, reader *Reader) *twin.FakeScreen {
 
 	screen := twin.NewFakeScreen(20, 10)
 	pager := NewPager(reader)
-	pager.screen = screen
 	pager.ShowLineNumbers = false
 
 	// Tell our Pager to quit immediately

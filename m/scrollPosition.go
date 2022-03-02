@@ -89,8 +89,9 @@ func (si *scrollPositionInternal) handleNegativeDeltaScreenLines(pager *Pager) {
 		si.deltaScreenLines += len(previousSubLines)
 	}
 
-	if si.lineNumberOneBased == 1 && si.deltaScreenLines < 0 {
+	if si.lineNumberOneBased <= 1 && si.deltaScreenLines <= 0 {
 		// Don't go above the top line
+		si.lineNumberOneBased = 1
 		si.deltaScreenLines = 0
 	}
 }
