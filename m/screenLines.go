@@ -123,6 +123,9 @@ func (p *Pager) renderLines() ([]renderedLine, string) {
 			p.scrollPosition, len(allLines)))
 	}
 
+	// Drop the lines that should go above the screen
+	allLines = allLines[firstVisibleIndex:]
+
 	if len(allLines) < wantedLineCount {
 		// Screen has enough room for everything, return everything
 		return allLines, inputLines.statusText
