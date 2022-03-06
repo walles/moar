@@ -6,7 +6,7 @@ import (
 	"github.com/walles/moar/twin"
 )
 
-type RenderedLine struct {
+type renderedLine struct {
 	inputLineOneBased int
 
 	// If an input line has been wrapped into two, the part on the second line
@@ -16,131 +16,137 @@ type RenderedLine struct {
 	cells []twin.Cell
 }
 
-// Render screen lines into an array of lines consisting of Cells.
-//
-// The second return value is the same as firstInputLineOneBased, but decreased
-// if needed so that the end of the input is visible.
-func (p *Pager) renderScreenLines() (lines [][]twin.Cell, statusText string, newFirstInputLineOneBased int) {
-	allPossibleLines, statusText := p.renderAllLines()
-	if len(allPossibleLines) == 0 {
-		return
-	}
+// Refresh the whole pager display, both contents lines and the status line at
+// the bottom
+func (p *Pager) redraw(spinner string) {
+	p.screen.Clear()
 
-	// Find which index in allPossibleLines the user wants to see at the top of
-	// the screen
-	firstVisibleIndex := -1 // Not found
-	for index, line := range allPossibleLines {
-		if line.inputLineOneBased == p.firstLineOneBased {
-			firstVisibleIndex = index
-			break
+	lastUpdatedScreenLineNumber := -1
+	var renderedScreenLines [][]twin.Cell
+	renderedScreenLines, statusText := p.renderScreenLines()
+	for lineNumber, row := range renderedScreenLines {
+		lastUpdatedScreenLineNumber = lineNumber
+		for column, cell := range row {
+			p.screen.SetCell(column, lastUpdatedScreenLineNumber, cell)
 		}
 	}
-	if firstVisibleIndex == -1 {
-		panic(fmt.Errorf("firstInputLineOneBased %d not found in allPossibleLines size %d",
-			p.firstLineOneBased, len(allPossibleLines)))
+
+	// Status line code follows
+
+	eofSpinner := spinner
+	if eofSpinner == "" {
+		// This happens when we're done
+		eofSpinner = "---"
+	}
+	spinnerLine := cellsFromString(_EofMarkerFormat + eofSpinner)
+	for column, cell := range spinnerLine {
+		p.screen.SetCell(column, lastUpdatedScreenLineNumber+1, cell)
 	}
 
-	// Ensure the firstVisibleIndex is on an input line boundary, we don't
-	// support by-screen-line positioning yet!
-	for allPossibleLines[firstVisibleIndex].wrapIndex != 0 {
-		firstVisibleIndex--
+	switch p.mode {
+	case _Searching:
+		p.addSearchFooter()
+
+	case _NotFound:
+		p.setFooter("Not found: " + p.searchString)
+
+	case _Viewing:
+		helpText := "Press ESC / q to exit, '/' to search, '?' for help"
+		if p.isShowingHelp {
+			helpText = "Press ESC / q to exit help, '/' to search"
+		}
+		p.setFooter(statusText + spinner + "  " + helpText)
+
+	default:
+		panic(fmt.Sprint("Unsupported pager mode: ", p.mode))
 	}
 
-	_, height := p.screen.Size()
-	lastVisibleIndex := firstVisibleIndex + height - 2 // "-2" figured out through trial-and-error
-	if lastVisibleIndex < len(allPossibleLines) {
-		// Screen has enough room for everything, return everything
-		lines, newFirstInputLineOneBased = p.toScreenLinesArray(allPossibleLines, firstVisibleIndex)
+	p.screen.Show()
+}
+
+// Render screen lines into an array of lines consisting of Cells.
+//
+// At most height - 1 lines will be returned, leaving room for one status line.
+//
+// The lines returned by this method are decorated with horizontal scroll
+// markers and line numbers and are ready to be output to the screen.
+func (p *Pager) renderScreenLines() (lines [][]twin.Cell, statusText string) {
+	renderedLines, statusText := p.renderLines()
+	if len(renderedLines) == 0 {
 		return
-	}
-
-	// We seem to be too far down, clip!
-	overshoot := 1 + lastVisibleIndex - len(allPossibleLines)
-	firstVisibleIndex -= overshoot
-	if firstVisibleIndex < 0 {
-		firstVisibleIndex = 0
-	}
-
-	// Ensure the firstVisibleIndex is on an input line boundary, we don't
-	// support by-screen-line positioning yet!
-	for firstVisibleIndex > 0 && allPossibleLines[firstVisibleIndex].wrapIndex != 0 {
-		firstVisibleIndex--
 	}
 
 	// Construct the screen lines to return
-	lines, newFirstInputLineOneBased = p.toScreenLinesArray(allPossibleLines, firstVisibleIndex)
-	return
-}
-
-func (p *Pager) toScreenLinesArray(allPossibleLines []RenderedLine, firstVisibleIndex int) ([][]twin.Cell, int) {
-	firstInputLineOneBased := allPossibleLines[firstVisibleIndex].inputLineOneBased
-
-	_, height := p.screen.Size()
-	screenLines := make([][]twin.Cell, 0, height)
-	for index := firstVisibleIndex; ; index++ {
-		if len(screenLines) >= height {
-			// All lines rendered, done!
-			break
-		}
-		if index >= len(allPossibleLines) {
-			// No more lines available for rendering, done!
-			break
-		}
-		screenLines = append(screenLines, allPossibleLines[index].cells)
+	screenLines := make([][]twin.Cell, 0, len(renderedLines))
+	for _, renderedLine := range renderedLines {
+		screenLines = append(screenLines, renderedLine.cells)
 	}
 
-	return screenLines, firstInputLineOneBased
+	return screenLines, statusText
 }
 
-func (p *Pager) numberPrefixLength() int {
-	if !p.ShowLineNumbers {
-		return 0
-	}
-
-	// Count the length of the last line number
-	numberPrefixLength := len(formatNumber(uint(p.getLastVisibleLineOneBased()))) + 1
-	if numberPrefixLength < 4 {
-		// 4 = space for 3 digits followed by one whitespace
-		//
-		// https://github.com/walles/moar/issues/38
-		numberPrefixLength = 4
-	}
-
-	return numberPrefixLength
-}
-
-func (p *Pager) renderAllLines() ([]RenderedLine, string) {
+// Render all lines that should go on the screen.
+//
+// The returned lines are display ready, meaning that they come with horizontal
+// scroll markers and line numbers as necessary.
+//
+// The maximum number of lines returned by this method will be one less than the
+// screen height, leaving space for the status line.
+func (p *Pager) renderLines() ([]renderedLine, string) {
 	_, height := p.screen.Size()
 	wantedLineCount := height - 1
 
-	if p.firstLineOneBased < 1 {
-		p.firstLineOneBased = 1
-	}
-	inputLines := p.reader.GetLines(p.firstLineOneBased, wantedLineCount)
+	inputLines := p.reader.GetLines(p.lineNumberOneBased(), wantedLineCount)
 	if inputLines.lines == nil {
 		// Empty input, empty output
-		return []RenderedLine{}, inputLines.statusText
+		return []renderedLine{}, inputLines.statusText
 	}
 
-	// Offsets figured out through trial-and-error...
-	lastInputLineOneBased := inputLines.firstLineOneBased + len(inputLines.lines) - 1
-	if p.firstLineOneBased > lastInputLineOneBased {
-		p.firstLineOneBased = lastInputLineOneBased
-	}
-
-	allLines := make([]RenderedLine, 0)
+	allLines := make([]renderedLine, 0)
 	for lineIndex, line := range inputLines.lines {
 		lineNumber := inputLines.firstLineOneBased + lineIndex
 
 		allLines = append(allLines, p.renderLine(line, lineNumber)...)
 	}
 
-	return allLines, inputLines.statusText
+	// Find which index in allLines the user wants to see at the top of the
+	// screen
+	firstVisibleIndex := -1 // Not found
+	for index, line := range allLines {
+		if p.lineNumberOneBased() == 0 {
+			// Expected zero lines but got some anyway, grab the first one!
+			firstVisibleIndex = index
+			break
+		}
+		if line.inputLineOneBased == p.lineNumberOneBased() && line.wrapIndex == p.deltaScreenLines() {
+			firstVisibleIndex = index
+			break
+		}
+	}
+	if firstVisibleIndex == -1 {
+		panic(fmt.Errorf("scrollPosition %#v not found in allLines size %d",
+			p.scrollPosition, len(allLines)))
+	}
+
+	// Drop the lines that should go above the screen
+	allLines = allLines[firstVisibleIndex:]
+
+	if len(allLines) < wantedLineCount {
+		// Screen has enough room for everything, return everything
+		return allLines, inputLines.statusText
+	}
+
+	return allLines[0:wantedLineCount], inputLines.statusText
 }
 
+// Render one input line into one or more screen lines.
+//
+// The returned line is display ready, meaning that it comes with horizontal
+// scroll markers and line number as necessary.
+//
 // lineNumber and numberPrefixLength are required for knowing how much to
 // indent, and to (optionally) render the line number.
-func (p *Pager) renderLine(line *Line, lineNumber int) []RenderedLine {
+func (p *Pager) renderLine(line *Line, lineNumber int) []renderedLine {
 	highlighted := line.HighlightedTokens(p.searchPattern)
 	var wrapped [][]twin.Cell
 	if p.WrapLongLines {
@@ -151,28 +157,32 @@ func (p *Pager) renderLine(line *Line, lineNumber int) []RenderedLine {
 		wrapped = [][]twin.Cell{highlighted}
 	}
 
-	rendered := make([]RenderedLine, 0)
+	rendered := make([]renderedLine, 0)
 	for wrapIndex, inputLinePart := range wrapped {
 		visibleLineNumber := &lineNumber
 		if wrapIndex > 0 {
 			visibleLineNumber = nil
 		}
 
-		rendered = append(rendered, RenderedLine{
+		rendered = append(rendered, renderedLine{
 			inputLineOneBased: lineNumber,
 			wrapIndex:         wrapIndex,
-			cells:             p.createScreenLine(visibleLineNumber, inputLinePart),
+			cells:             p.decorateLine(visibleLineNumber, inputLinePart),
 		})
 	}
 
 	return rendered
 }
 
-func (p *Pager) createScreenLine(lineNumberToShow *int, contents []twin.Cell) []twin.Cell {
+// Take a rendered line and decorate as needed:
+// * Line number, or leading whitespace for wrapped lines
+// * Scroll left indicator
+// * Scroll right indicator
+func (p *Pager) decorateLine(lineNumberToShow *int, contents []twin.Cell) []twin.Cell {
 	width, _ := p.screen.Size()
 	newLine := make([]twin.Cell, 0, width)
 	numberPrefixLength := p.numberPrefixLength()
-	newLine = append(newLine, createLineNumberPrefix(lineNumberToShow, numberPrefixLength)...)
+	newLine = append(newLine, createLinePrefix(lineNumberToShow, numberPrefixLength)...)
 
 	startColumn := p.leftColumnZeroBased
 	if startColumn < len(contents) {
@@ -209,8 +219,10 @@ func (p *Pager) createScreenLine(lineNumberToShow *int, contents []twin.Cell) []
 	return newLine
 }
 
-// Generate a line number prefix. Can be empty or all-whitespace depending on parameters.
-func createLineNumberPrefix(fileLineNumber *int, numberPrefixLength int) []twin.Cell {
+// Generate a line number prefix of the given length.
+//
+// Can be empty or all-whitespace depending on parameters.
+func createLinePrefix(fileLineNumber *int, numberPrefixLength int) []twin.Cell {
 	if numberPrefixLength == 0 {
 		return []twin.Cell{}
 	}
@@ -240,4 +252,25 @@ func createLineNumberPrefix(fileLineNumber *int, numberPrefixLength int) []twin.
 	}
 
 	return lineNumberPrefix
+}
+
+// Is the given position visible on screen?
+func (p *Pager) isVisible(scrollPosition scrollPosition) bool {
+	if scrollPosition.lineNumberOneBased(p) < p.lineNumberOneBased() {
+		// It's above the screen, not visible
+		return false
+	}
+
+	lastVisiblePosition := p.getLastVisiblePosition()
+	if scrollPosition.lineNumberOneBased(p) > lastVisiblePosition.lineNumberOneBased(p) {
+		// Line number too high, not visible
+		return false
+	}
+
+	if scrollPosition.deltaScreenLines(p) > lastVisiblePosition.deltaScreenLines(p) {
+		// Sub-line-number too high, not visible
+		return false
+	}
+
+	return true
 }

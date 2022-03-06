@@ -12,10 +12,11 @@ func testHorizontalCropping(t *testing.T, contents string, firstIndex int, lastI
 	pager := Pager{
 		screen:              twin.NewFakeScreen(1+lastIndex-firstIndex, 99),
 		leftColumnZeroBased: firstIndex,
+		scrollPosition:      newScrollPosition("testHorizontalCropping"),
 	}
-	lineContents := NewLine(contents).HighlightedTokens(nil)
-	screenLine := pager.createScreenLine(nil, lineContents)
-	assert.Equal(t, rowToString(screenLine), expected)
+	lineContents := NewLine(contents)
+	screenLine := pager.renderLine(lineContents, 0)
+	assert.Equal(t, rowToString(screenLine[0].cells), expected)
 }
 
 func TestCreateScreenLine(t *testing.T) {
@@ -48,12 +49,14 @@ func TestEmpty(t *testing.T) {
 
 		// No lines available
 		reader: NewReaderFromText("test", ""),
+
+		scrollPosition: newScrollPosition("TestEmpty"),
 	}
 
-	rendered, statusText, firstScreenLine := pager.renderScreenLines()
+	rendered, statusText := pager.renderScreenLines()
 	assert.Equal(t, len(rendered), 0)
 	assert.Equal(t, "test: <empty>", statusText)
-	assert.Equal(t, firstScreenLine, 0)
+	assert.Equal(t, pager.lineNumberOneBased(), 0)
 }
 
 func TestOverflowDown(t *testing.T) {
@@ -67,14 +70,15 @@ func TestOverflowDown(t *testing.T) {
 		reader: NewReaderFromText("test", "hej"),
 
 		// This value can be anything and should be clipped, that's what we're testing
-		firstLineOneBased: 42,
+		scrollPosition: *scrollPositionFromLineNumber("TestOverflowDown", 42),
 	}
 
-	rendered, statusText, firstScreenLine := pager.renderScreenLines()
+	rendered, statusText := pager.renderScreenLines()
 	assert.Equal(t, len(rendered), 1)
 	assert.Equal(t, "hej", rowToString(rendered[0]))
 	assert.Equal(t, "test: 1 line  100%", statusText)
-	assert.Equal(t, firstScreenLine, 1)
+	assert.Equal(t, pager.lineNumberOneBased(), 1)
+	assert.Equal(t, pager.deltaScreenLines(), 0)
 }
 
 func TestOverflowUp(t *testing.T) {
@@ -87,20 +91,23 @@ func TestOverflowUp(t *testing.T) {
 		// Single line of input
 		reader: NewReaderFromText("test", "hej"),
 
-		firstLineOneBased: 1,
+		// NOTE: scrollPosition intentionally not initialized
 	}
 
-	rendered, statusText, firstScreenLine := pager.renderScreenLines()
+	rendered, statusText := pager.renderScreenLines()
 	assert.Equal(t, len(rendered), 1)
 	assert.Equal(t, "hej", rowToString(rendered[0]))
 	assert.Equal(t, "test: 1 line  100%", statusText)
-	assert.Equal(t, firstScreenLine, 1)
+	assert.Equal(t, pager.lineNumberOneBased(), 1)
+	assert.Equal(t, pager.deltaScreenLines(), 0)
 }
 
 func TestWrapping(t *testing.T) {
 	reader := NewReaderFromStream("",
 		strings.NewReader("first line\nline two will be wrapped\nhere's the last line"))
 	pager := NewPager(reader)
+	pager.screen = twin.NewFakeScreen(40, 40)
+
 	pager.WrapLongLines = true
 	pager.ShowLineNumbers = false
 

@@ -239,30 +239,34 @@ func TestToPattern(t *testing.T) {
 	assert.Assert(t, toPattern(")g").MatchString(")g"))
 }
 
-func TestFindFirstLineOneBasedSimple(t *testing.T) {
-	reader := NewReaderFromStream("", strings.NewReader("AB"))
+func TestFindFirstHitSimple(t *testing.T) {
+	reader := NewReaderFromStream("TestFindFirstHitSimple", strings.NewReader("AB"))
 	pager := NewPager(reader)
+	pager.screen = twin.NewFakeScreen(40, 10)
 
 	// Wait for reader to finish reading
 	<-reader.done
 
 	pager.searchPattern = toPattern("AB")
 
-	hitLine := pager.findFirstHitLineOneBased(1, false)
-	assert.Check(t, *hitLine == 1)
+	hit := pager.findFirstHit(newScrollPosition("TestFindFirstHitSimple"), false)
+	assert.Equal(t, hit.internalDontTouch.lineNumberOneBased, 1)
+	assert.Equal(t, hit.internalDontTouch.deltaScreenLines, 0)
 }
 
-func TestFindFirstLineOneBasedAnsi(t *testing.T) {
+func TestFindFirstHitAnsi(t *testing.T) {
 	reader := NewReaderFromStream("", strings.NewReader("A\x1b[30mB"))
 	pager := NewPager(reader)
+	pager.screen = twin.NewFakeScreen(40, 10)
 
 	// Wait for reader to finish reading
 	<-reader.done
 
 	pager.searchPattern = toPattern("AB")
 
-	hitLine := pager.findFirstHitLineOneBased(1, false)
-	assert.Check(t, *hitLine == 1)
+	hit := pager.findFirstHit(newScrollPosition("TestFindFirstHitSimple"), false)
+	assert.Equal(t, hit.internalDontTouch.lineNumberOneBased, 1)
+	assert.Equal(t, hit.internalDontTouch.deltaScreenLines, 0)
 }
 
 // Converts a cell row to a plain string and removes trailing whitespace.
@@ -278,18 +282,20 @@ func rowToString(row []twin.Cell) string {
 func TestScrollToBottomWrapNextToLastLine(t *testing.T) {
 	reader := NewReaderFromStream("",
 		strings.NewReader("first line\nline two will be wrapped\nhere's the last line"))
+
+	// Heigh 3 = two lines of contents + one footer
+	screen := twin.NewFakeScreen(10, 3)
+
 	pager := NewPager(reader)
 	pager.WrapLongLines = true
 	pager.ShowLineNumbers = false
+	pager.screen = screen
 
 	// Wait for reader to finish reading
 	<-reader.done
 
 	// This is what we're testing really
 	pager.scrollToEnd()
-
-	// Heigh 3 = two lines of contents + one footer
-	screen := twin.NewFakeScreen(10, 3)
 
 	// Exit immediately
 	pager.Quit()
@@ -385,6 +391,7 @@ func benchmarkSearch(b *testing.B, highlighted bool) {
 
 	reader := NewReaderFromText("hello", testString)
 	pager := NewPager(reader)
+	pager.screen = twin.NewFakeScreen(40, 10)
 
 	// The [] around the 't' is there to make sure it doesn't match, remember
 	// we're searching through this very file.
@@ -402,9 +409,9 @@ func benchmarkSearch(b *testing.B, highlighted bool) {
 	b.ResetTimer()
 
 	// This test will search through all the N copies we made of our file
-	hitLine := pager.findFirstHitLineOneBased(1, false)
+	hit := pager.findFirstHit(newScrollPosition("benchmarkSearch"), false)
 
-	if hitLine != nil {
+	if hit != nil {
 		panic(fmt.Errorf("This test is meant to scan the whole file without finding anything"))
 	}
 }
