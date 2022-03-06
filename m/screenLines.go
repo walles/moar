@@ -113,6 +113,11 @@ func (p *Pager) renderLines() ([]renderedLine, string) {
 	// screen
 	firstVisibleIndex := -1 // Not found
 	for index, line := range allLines {
+		if p.lineNumberOneBased() == 0 {
+			// Expected zero lines but got some anyway, grab the first one!
+			firstVisibleIndex = index
+			break
+		}
 		if line.inputLineOneBased == p.lineNumberOneBased() && line.wrapIndex == p.deltaScreenLines() {
 			firstVisibleIndex = index
 			break
