@@ -311,6 +311,46 @@ func TestScrollToBottomWrapNextToLastLine(t *testing.T) {
 	assert.Equal(t, actual, expected)
 }
 
+// Verify that we can page all files in ../sample-files/* without crashing
+func TestPageSamples(t *testing.T) {
+	for _, fileName := range getTestFiles() {
+		file, err := os.Open(fileName)
+		if err != nil {
+			t.Errorf("Error opening file <%s>: %s", fileName, err.Error())
+			continue
+		}
+		defer func() {
+			if err := file.Close(); err != nil {
+				panic(err)
+			}
+		}()
+
+		myReader := NewReaderFromStream(fileName, file)
+		<-myReader.done
+
+		pager := NewPager(myReader)
+		pager.WrapLongLines = false
+		pager.ShowLineNumbers = false
+
+		// Heigh 3 = two lines of contents + one footer
+		screen := twin.NewFakeScreen(10, 3)
+
+		// Exit immediately
+		pager.Quit()
+
+		// Get contents onto our fake screen
+		pager.StartPaging(screen)
+		pager.redraw("")
+
+		firstReaderLine := myReader.GetLine(0)
+		if firstReaderLine == nil {
+			continue
+		}
+		firstPagerLine := rowToString(screen.GetRow(0))
+		assert.Assert(t, strings.HasPrefix(firstReaderLine.Plain(), firstPagerLine))
+	}
+}
+
 func benchmarkSearch(b *testing.B, highlighted bool) {
 	// Pick a go file so we get something with highlighting
 	_, sourceFilename, _, ok := runtime.Caller(0)
