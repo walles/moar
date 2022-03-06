@@ -282,20 +282,20 @@ func rowToString(row []twin.Cell) string {
 func TestScrollToBottomWrapNextToLastLine(t *testing.T) {
 	reader := NewReaderFromStream("",
 		strings.NewReader("first line\nline two will be wrapped\nhere's the last line"))
-	pager := NewPager(reader)
-	pager.screen = twin.NewFakeScreen(40, 10)
 
+	// Heigh 3 = two lines of contents + one footer
+	screen := twin.NewFakeScreen(10, 3)
+
+	pager := NewPager(reader)
 	pager.WrapLongLines = true
 	pager.ShowLineNumbers = false
+	pager.screen = screen
 
 	// Wait for reader to finish reading
 	<-reader.done
 
 	// This is what we're testing really
 	pager.scrollToEnd()
-
-	// Heigh 3 = two lines of contents + one footer
-	screen := twin.NewFakeScreen(10, 3)
 
 	// Exit immediately
 	pager.Quit()

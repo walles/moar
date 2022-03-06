@@ -97,7 +97,10 @@ func (si *scrollPositionInternal) handleNegativeDeltaScreenLines(pager *Pager) {
 }
 
 // Move towards the bottom until deltaScreenLines is within range of the
-// rendering of the current line
+// rendering of the current line.
+//
+// This method will not do any screen-height based clipping, so it could be that
+// the position is too far down to display after this returns.
 func (si *scrollPositionInternal) handlePositiveDeltaScreenLines(pager *Pager) {
 	for {
 		line := pager.reader.GetLine(si.lineNumberOneBased)
@@ -134,8 +137,9 @@ func (si *scrollPositionInternal) emptyBottomLinesCount(pager *Pager) int {
 	// Start counting where the current input line begins
 	unclaimedViewportLines += si.deltaScreenLines
 
+	lineNumberOneBased := si.lineNumberOneBased
+
 	for {
-		lineNumberOneBased := si.lineNumberOneBased
 		line := pager.reader.GetLine(lineNumberOneBased)
 		if line == nil {
 			// No more lines!
@@ -147,6 +151,9 @@ func (si *scrollPositionInternal) emptyBottomLinesCount(pager *Pager) int {
 		if unclaimedViewportLines <= 0 {
 			return 0
 		}
+
+		// Move to the next line
+		lineNumberOneBased += 1
 	}
 
 	return unclaimedViewportLines
@@ -154,7 +161,9 @@ func (si *scrollPositionInternal) emptyBottomLinesCount(pager *Pager) int {
 
 // Only to be called from the scrollPosition getters!!
 //
-// Canonicalize the scroll position vs the given pager.
+// Canonicalize the scroll position vs the given pager. A canonical position can
+// just be displayed on screen, it has been clipped both towards the top and
+// bottom of the screen, taking into account the screen height.
 func (si *scrollPositionInternal) canonicalize(pager *Pager) {
 	if si.canonical == canonicalFromPager(pager) {
 		return
