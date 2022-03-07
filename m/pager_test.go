@@ -269,6 +269,20 @@ func TestFindFirstHitAnsi(t *testing.T) {
 	assert.Equal(t, hit.internalDontTouch.deltaScreenLines, 0)
 }
 
+func TestFindFirstHitNoMatch(t *testing.T) {
+	reader := NewReaderFromStream("TestFindFirstHitSimple", strings.NewReader("AB"))
+	pager := NewPager(reader)
+	pager.screen = twin.NewFakeScreen(40, 10)
+
+	// Wait for reader to finish reading
+	<-reader.done
+
+	pager.searchPattern = toPattern("this pattern should not be found")
+
+	hit := pager.findFirstHit(newScrollPosition("TestFindFirstHitSimple"), false)
+	assert.Assert(t, hit == nil)
+}
+
 // Converts a cell row to a plain string and removes trailing whitespace.
 func rowToString(row []twin.Cell) string {
 	rowString := ""
