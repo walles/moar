@@ -3,10 +3,10 @@ configuration:
 
 ![Moar displaying its own source code](screenshot.png)
 
-The intention is that Moar should work as a drop-in replacement for
-[Less](http://www.greenwoodsoftware.com/less/). If you find that Moar
-doesn't work that way,
-[please report it](https://github.com/walles/moar/issues)!
+The intention is that Moar should be trivial to get into if you have previously
+been using [Less](http://www.greenwoodsoftware.com/less/). If you come from Less
+and find Moar confusing or hard to migrate to, [please report
+it](https://github.com/walles/moar/issues)!
 
 Doing the right thing includes:
 
