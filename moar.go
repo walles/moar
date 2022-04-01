@@ -106,6 +106,14 @@ func parseStyleOption(styleOption string, flagSet *flag.FlagSet) chroma.Style {
 }
 
 func parseColorsOption(colorsOption string, flagSet *flag.FlagSet) chroma.Formatter {
+	if strings.ToLower(colorsOption) == "auto" {
+		colorsOption = "16M"
+		if strings.Contains(os.Getenv("TERM"), "256") {
+			// Covers "xterm-256color" as used by the macOS Terminal
+			colorsOption = "256"
+		}
+	}
+
 	switch strings.ToUpper(colorsOption) {
 	case "8":
 		return formatters.TTY8
@@ -187,7 +195,7 @@ func main() {
 	wrap := flagSet.Bool("wrap", false, "Wrap long lines")
 	styleOption := flagSet.String("style", "native",
 		"Highlighting style from https://xyproto.github.io/splash/docs/longer/all.html")
-	colorsOption := flagSet.String("colors", "16M", "Highlighting palette size: 8, 16, 256, 16M")
+	colorsOption := flagSet.String("colors", "auto", "Highlighting palette size: 8, 16, 256, 16M, auto")
 	noLineNumbers := flagSet.Bool("no-linenumbers", false, "Hide line numbers on startup, press left arrow key to show")
 	noClearOnExit := flagSet.Bool("no-clear-on-exit", false, "Retain screen contents when exiting moar")
 	statusBarStyleOption := flagSet.String("statusbar", "inverse", "Status bar style: inverse, plain or bold")
