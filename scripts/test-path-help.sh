@@ -18,10 +18,10 @@ WORKDIR="$(mktemp -d -t moar-path-help-test)"
 
 # Put a symlink to $MOAR first in the $PATH
 ln -s "$MOAR" "$WORKDIR/moar"
+echo "moar" >"$WORKDIR/expected"
 
 # Extract suggested PAGER value from moar --help
 PATH="$WORKDIR" PAGER="" moar --help | grep PAGER | sed -E 's/.*=//' >"$WORKDIR/actual"
-echo "$WORKDIR/moar" >"$WORKDIR/expected"
 
 # Ensure it matches the symlink we have in $PATH
 cd "$WORKDIR"
