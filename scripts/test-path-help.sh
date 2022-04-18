@@ -14,7 +14,7 @@ fi
 
 echo Testing PAGER= suggestion in moar --help output...
 
-WORKDIR="$(mktemp -d -t moar-path-help-test)"
+WORKDIR="$(mktemp -d -t moar-path-help-test.XXXXXXXX)"
 
 # Put a symlink to $MOAR first in the $PATH
 ln -s "$MOAR" "$WORKDIR/moar"
