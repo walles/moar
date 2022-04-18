@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"runtime"
 	"strings"
@@ -54,23 +55,61 @@ func printUsage(output io.Writer, flagSet *flag.FlagSet, printCommandline bool) 
 
 	flagSet.PrintDefaults()
 
-	moarPath, err := filepath.Abs(os.Args[0])
+	absMoarPath, err := absLookPath(os.Args[0])
 	if err == nil {
-		pagerValue, err := filepath.Abs(os.Getenv("PAGER"))
+		absPagerValue, err := absLookPath(os.Getenv("PAGER"))
 		if err != nil {
-			pagerValue = ""
+			absPagerValue = ""
 		}
-		if pagerValue != moarPath {
+		if absPagerValue != absMoarPath {
 			// We're not the default pager
 			_, _ = fmt.Fprintln(output)
 			_, _ = fmt.Fprintln(output, "To make Moar your default pager, put the following line in")
 			_, _ = fmt.Fprintln(output, "your .bashrc or .bash_profile and it will be default in all")
 			_, _ = fmt.Fprintln(output, "new terminal windows:")
-			_, _ = fmt.Fprintf(output, "   export PAGER=%s\n", moarPath)
+			_, _ = fmt.Fprintf(output, "   export PAGER=%s\n", getMoarPath())
 		}
 	} else {
 		log.Warn("Unable to find moar binary ", err)
 	}
+}
+
+// "moar" if we're in the $PATH, otherwise an absolute path
+func getMoarPath() string {
+	moarPath := os.Args[0]
+	if filepath.IsAbs(moarPath) {
+		return moarPath
+	}
+
+	if strings.Contains(moarPath, string(os.PathSeparator)) {
+		// Relative path
+		moarPath, err := filepath.Abs(moarPath)
+		if err != nil {
+			panic(err)
+		}
+		return moarPath
+	}
+
+	// Neither absolute nor relative, try PATH
+	_, err := exec.LookPath(moarPath)
+	if err != nil {
+		panic("Unable to find in $PATH: " + moarPath)
+	}
+	return moarPath
+}
+
+func absLookPath(path string) (string, error) {
+	lookedPath, err := exec.LookPath(path)
+	if err != nil {
+		return "", err
+	}
+
+	absLookedPath, err := filepath.Abs(lookedPath)
+	if err != nil {
+		return "", err
+	}
+
+	return absLookedPath, err
 }
 
 // printProblemsHeader prints bug reporting information to stderr

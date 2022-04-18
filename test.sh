@@ -35,24 +35,26 @@ function cleanup {
 trap cleanup EXIT
 
 echo Test reading from redirected stdin, writing to redirected stdout...
-./moar < moar.go > "$RESULT"
+./moar <moar.go >"$RESULT"
 diff -u moar.go "$RESULT"
 
 echo Test redirecting a file by name into file by redirecting stdout...
-./moar moar.go > "$RESULT"
+./moar moar.go >"$RESULT"
 diff -u moar.go "$RESULT"
 
 echo Test redirecting non-existing file by name into redirected stdout...
-if ./moar does-not-exist >& /dev/null ; then
-    echo ERROR: Should have failed on non-existing input file name
-    exit 1
+if ./moar does-not-exist >&/dev/null; then
+  echo ERROR: Should have failed on non-existing input file name
+  exit 1
 fi
 
 echo Test --version...
-./moar --version > /dev/null  # Should exit with code 0
+./moar --version >/dev/null # Should exit with code 0
 diff -u <(./moar --version) <(git describe --tags --dirty --always)
 
 # FIXME: On unknown command line options, test that help text goes to stderr
+
+./scripts/test-path-help.sh "$(realpath ./moar)"
 
 echo
 echo "All tests passed!"
