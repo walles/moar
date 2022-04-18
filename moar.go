@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"runtime"
 	"strings"
 	"time"
@@ -54,9 +55,9 @@ func printUsage(output io.Writer, flagSet *flag.FlagSet, printCommandline bool) 
 
 	flagSet.PrintDefaults()
 
-	absMoarPath, err := exec.LookPath(os.Args[0])
+	absMoarPath, err := absLookPath(os.Args[0])
 	if err == nil {
-		absPagerValue, err := exec.LookPath(os.Getenv("PAGER"))
+		absPagerValue, err := absLookPath(os.Getenv("PAGER"))
 		if err != nil {
 			absPagerValue = ""
 		}
@@ -71,6 +72,20 @@ func printUsage(output io.Writer, flagSet *flag.FlagSet, printCommandline bool) 
 	} else {
 		log.Warn("Unable to find moar binary ", err)
 	}
+}
+
+func absLookPath(path string) (string, error) {
+	lookedPath, err := exec.LookPath(path)
+	if err != nil {
+		return "", err
+	}
+
+	absLookedPath, err := filepath.Abs(lookedPath)
+	if err != nil {
+		return "", err
+	}
+
+	return absLookedPath, err
 }
 
 // printProblemsHeader prints bug reporting information to stderr
