@@ -50,10 +50,6 @@ func printUsage(output io.Writer, flagSet *flag.FlagSet, printCommandline bool) 
 		_, _ = fmt.Fprintln(output, "  Additional options are read from the MOAR environment variable.")
 		_, _ = fmt.Fprintf(output, "  Current setting: MOAR=\"%s\"\n", moarEnv)
 	}
-	_, _ = fmt.Fprintln(output)
-	_, _ = fmt.Fprintln(output, "Options:")
-
-	flagSet.PrintDefaults()
 
 	absMoarPath, err := absLookPath(os.Args[0])
 	if err == nil {
@@ -64,14 +60,20 @@ func printUsage(output io.Writer, flagSet *flag.FlagSet, printCommandline bool) 
 		if absPagerValue != absMoarPath {
 			// We're not the default pager
 			_, _ = fmt.Fprintln(output)
-			_, _ = fmt.Fprintln(output, "To make Moar your default pager, put the following line in")
-			_, _ = fmt.Fprintln(output, "your .bashrc or .bash_profile and it will be default in all")
-			_, _ = fmt.Fprintln(output, "new terminal windows:")
-			_, _ = fmt.Fprintf(output, "   export PAGER=%s\n", getMoarPath())
+			_, _ = fmt.Fprintln(output, "Making moar your default pager:")
+			_, _ = fmt.Fprintln(output, "  Put the following line in your ~/.bashrc, ~/.bash_profile or ~/.zshrc")
+			_, _ = fmt.Fprintln(output, "  and moar will be used as the default pager in all new terminal windows:")
+			_, _ = fmt.Fprintln(output)
+			_, _ = fmt.Fprintf(output, "     export PAGER=%s\n", getMoarPath())
 		}
 	} else {
 		log.Warn("Unable to find moar binary ", err)
 	}
+
+	_, _ = fmt.Fprintln(output)
+	_, _ = fmt.Fprintln(output, "Options:")
+
+	flagSet.PrintDefaults()
 }
 
 // "moar" if we're in the $PATH, otherwise an absolute path
