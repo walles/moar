@@ -115,8 +115,8 @@ questions to johan.walles@gmail.com.
 
 Installing Moar as your default pager
 -------------------------------------
-Put the following line in your .bashrc or .bash_profile:
-  export PAGER=/usr/local/bin/moar.rb
+Put the following line in your ~/.bashrc, ~/.bash_profile or ~/.zshrc:
+  export PAGER=moar
 
 Source Code
 -----------

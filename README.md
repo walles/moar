@@ -174,7 +174,7 @@ Execute `release.sh` and follow instructions.
 
 - Enable exiting using ^c (without restoring the screen).
 
-- Start at a certain line if run as `moar.rb file.txt:42`
+- Start at a certain line if run as `moar file.txt:42`
 
 - Define 'g' to prompt for a line number to go to.
 
