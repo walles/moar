@@ -100,7 +100,7 @@ Moving around
 * > to go to the end of the document
 * RETURN moves down one line
 * SPACE moves down a page
-* 'g' for going to a specific line by number
+* 'g' for going to a specific line number
 
 Searching
 ---------
