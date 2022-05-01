@@ -76,6 +76,17 @@ func (s scrollPosition) NextLine(scrollDistance int) scrollPosition {
 	}
 }
 
+// Create a new position, scrolled to the given line number
+func NewScrollPositionFromLineNumberOneBased(lineNumberOneBased int, source string) scrollPosition {
+	return scrollPosition{
+		internalDontTouch: scrollPositionInternal{
+			name:               source,
+			lineNumberOneBased: lineNumberOneBased,
+			deltaScreenLines:   0,
+		},
+	}
+}
+
 // Move towards the top until deltaScreenLines is not negative any more
 func (si *scrollPositionInternal) handleNegativeDeltaScreenLines(pager *Pager) {
 	for si.lineNumberOneBased > 1 && si.deltaScreenLines < 0 {

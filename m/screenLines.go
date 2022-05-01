@@ -50,6 +50,9 @@ func (p *Pager) redraw(spinner string) {
 	case _NotFound:
 		p.setFooter("Not found: " + p.searchString)
 
+	case _GotoLine:
+		p.addGotoLineFooter()
+
 	case _Viewing:
 		helpText := "Press ESC / q to exit, '/' to search, '?' for help"
 		if p.isShowingHelp {

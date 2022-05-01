@@ -12,9 +12,10 @@ import (
 type _PagerMode int
 
 const (
-	_Viewing   _PagerMode = 0
-	_Searching _PagerMode = 1
-	_NotFound  _PagerMode = 2
+	_Viewing _PagerMode = iota
+	_Searching
+	_NotFound
+	_GotoLine
 )
 
 type StatusBarStyle int
@@ -50,9 +51,10 @@ type Pager struct {
 	scrollPosition      scrollPosition
 	leftColumnZeroBased int
 
-	mode          _PagerMode
-	searchString  string
-	searchPattern *regexp.Regexp
+	mode           _PagerMode
+	searchString   string
+	searchPattern  *regexp.Regexp
+	gotoLineString string
 
 	isShowingHelp bool
 	preHelpState  *_PreHelpState
@@ -98,6 +100,7 @@ Moving around
 * > to go to the end of the document
 * RETURN moves down one line
 * SPACE moves down a page
+* 'g' for going to a specific line number
 
 Searching
 ---------
@@ -203,6 +206,10 @@ func (p *Pager) onKey(keyCode twin.KeyCode) {
 		p.onSearchKey(keyCode)
 		return
 	}
+	if p.mode == _GotoLine {
+		p.onGotoLineKey(keyCode)
+		return
+	}
 	if p.mode != _Viewing && p.mode != _NotFound {
 		panic(fmt.Sprint("Unhandled mode: ", p.mode))
 	}
@@ -252,6 +259,10 @@ func (p *Pager) onRune(char rune) {
 		p.onSearchRune(char)
 		return
 	}
+	if p.mode == _GotoLine {
+		p.onGotoLineRune(char)
+		return
+	}
 	if p.mode != _Viewing && p.mode != _NotFound {
 		panic(fmt.Sprint("Unhandled mode: ", p.mode))
 	}
@@ -289,10 +300,10 @@ func (p *Pager) onRune(char rune) {
 		// vim left
 		p.moveRight(-16)
 
-	case '<', 'g':
+	case '<':
 		p.scrollPosition = newScrollPosition("Pager scroll position")
 
-	case '>', 'G':
+	case '>':
 		p.scrollToEnd()
 
 	case 'f', ' ':
@@ -315,6 +326,10 @@ func (p *Pager) onRune(char rune) {
 		p.mode = _Searching
 		p.searchString = ""
 		p.searchPattern = nil
+
+	case 'g':
+		p.mode = _GotoLine
+		p.gotoLineString = ""
 
 	case 'n':
 		p.scrollToNextSearchHit()
