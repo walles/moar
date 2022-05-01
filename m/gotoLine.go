@@ -25,7 +25,7 @@ func (p *Pager) onGotoLineKey(key twin.KeyCode) {
 	case twin.KeyEnter:
 		newLineNumber, err := strconv.Atoi(p.gotoLineString)
 		if err == nil {
-			p.scrollPosition.SetLineOneBased(newLineNumber)
+			p.scrollPosition = NewScrollPositionFromLineNumberOneBased(newLineNumber, "onGotoLineKey")
 		}
 		p.mode = _Viewing
 
@@ -47,10 +47,10 @@ func (p *Pager) onGotoLineKey(key twin.KeyCode) {
 }
 
 func (p *Pager) onGotoLineRune(char rune) {
-	newGotoLineString := p.gotoLineString
+	newGotoLineString := p.gotoLineString + string(char)
 	_, err := strconv.Atoi(newGotoLineString)
 	if err != nil {
-		log.Debugf("Got a non-number goto rune '%s'", string(char))
+		log.Debugf("Got non-number goto rune '%s': %s", string(char), err)
 		return
 	}
 
