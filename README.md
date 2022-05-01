@@ -176,8 +176,6 @@ Execute `release.sh` and follow instructions.
 
 - Start at a certain line if run as `moar file.txt:42`
 
-- Define 'g' to prompt for a line number to go to.
-
 - Handle search hits to the right of the right screen edge. Searching forwards
   should move first right, then to the left edge and down. Searching backwards
   should move first left, then up and to the right edge (if needed for showing
@@ -189,9 +187,6 @@ Execute `release.sh` and follow instructions.
 - Incremental search using ^s and ^r like in Emacs
 
 - Retain the search string when pressing / to search a second time.
-
-- Arrow keys up / down while in line wrapping mode should scroll by screen line,
-  not by input file line.
 
 ## Done
 
@@ -233,3 +228,8 @@ Execute `release.sh` and follow instructions.
 - Showing unicode search hits should highlight the correct chars
 
 - [Word wrap text rather than character wrap it](m/linewrapper.go).
+
+- Arrow keys up / down while in line wrapping mode should scroll by screen line,
+  not by input file line.
+
+- Define 'g' to prompt for a line number to go to.
