@@ -12,10 +12,10 @@ import (
 type _PagerMode int
 
 const (
-	_Viewing   _PagerMode = 0
-	_Searching _PagerMode = 1
-	_NotFound  _PagerMode = 2
-	_GotoLine  _PagerMode = 3
+	_Viewing _PagerMode = iota
+	_Searching
+	_NotFound
+	_GotoLine
 )
 
 type StatusBarStyle int
