@@ -21,14 +21,36 @@ func (p *Pager) addGotoLineFooter() {
 }
 
 func (p *Pager) onGotoLineKey(key twin.KeyCode) {
-	FIXME() // Implement based on onSearchKey
+	switch key {
+	case twin.KeyEnter:
+		newLineNumber, err := strconv.Atoi(p.gotoLineString)
+		if err == nil {
+			p.scrollPosition.SetLineOneBased(newLineNumber)
+		}
+		p.mode = _Viewing
+
+	case twin.KeyEscape:
+		p.mode = _Viewing
+
+	case twin.KeyBackspace, twin.KeyDelete:
+		if len(p.gotoLineString) == 0 {
+			return
+		}
+
+		p.gotoLineString = removeLastChar(p.gotoLineString)
+
+	default:
+		log.Tracef("Unhandled goto key event %v, treating as a viewing key event", key)
+		p.mode = _Viewing
+		p.onKey(key)
+	}
 }
 
 func (p *Pager) onGotoLineRune(char rune) {
 	newGotoLineString := p.gotoLineString
 	_, err := strconv.Atoi(newGotoLineString)
 	if err != nil {
-		log.Debugf("Got a non-number rune '%s'", string(char))
+		log.Debugf("Got a non-number goto rune '%s'", string(char))
 		return
 	}
 
