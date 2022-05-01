@@ -5,7 +5,16 @@ import (
 )
 
 func (p *Pager) addGotoLineFooter() {
-	FIXME() // Implement based on addSearchFooter
+	_, height := p.screen.Size()
+
+	pos := 0
+	for _, token := range "Go to line number: " + p.gotoLineString {
+		p.screen.SetCell(pos, height-1, twin.NewCell(token, twin.StyleDefault))
+		pos++
+	}
+
+	// Add a cursor
+	p.screen.SetCell(pos, height-1, twin.NewCell(' ', twin.StyleDefault.WithAttr(twin.AttrReverse)))
 }
 
 func (p *Pager) onGotoLineKey(key twin.KeyCode) {
