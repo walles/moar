@@ -1,6 +1,9 @@
 package m
 
 import (
+	"strconv"
+
+	log "github.com/sirupsen/logrus"
 	"github.com/walles/moar/twin"
 )
 
@@ -22,5 +25,12 @@ func (p *Pager) onGotoLineKey(key twin.KeyCode) {
 }
 
 func (p *Pager) onGotoLineRune(char rune) {
-	FIXME() // Implement based on onSearchRune
+	newGotoLineString := p.gotoLineString
+	_, err := strconv.Atoi(newGotoLineString)
+	if err != nil {
+		log.Debugf("Got a non-number rune '%s'", string(char))
+		return
+	}
+
+	p.gotoLineString = newGotoLineString
 }
