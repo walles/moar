@@ -341,7 +341,7 @@ func (p *Pager) onRune(char rune) {
 		p.WrapLongLines = !p.WrapLongLines
 
 	default:
-		log.Debugf("Unhandled rune keypress '%s'", string(char))
+		log.Debugf("Unhandled rune keypress '%s'/0x%08x", string(char), int32(char))
 	}
 }
 

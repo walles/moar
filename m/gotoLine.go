@@ -50,7 +50,7 @@ func (p *Pager) onGotoLineRune(char rune) {
 	newGotoLineString := p.gotoLineString + string(char)
 	_, err := strconv.Atoi(newGotoLineString)
 	if err != nil {
-		log.Debugf("Got non-number goto rune '%s': %s", string(char), err)
+		log.Debugf("Got non-number goto rune '%s'/0x%08x: %s", string(char), int32(char), err)
 		return
 	}
 
