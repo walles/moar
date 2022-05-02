@@ -91,16 +91,16 @@ Miscellaneous
 Moving around
 -------------
 * Arrow keys
-* 'h', 'l' for left and right (as in vim)
+* SPACE moves down a page
+* 'g' for going to a specific line number
 * Left / right can be used to hide / show line numbers
 * PageUp / 'b' and PageDown / 'f'
-* Half page 'u'p / 'd'own
 * Home and End for start / end of the document
 * < to go to the start of the document
 * > to go to the end of the document
+* 'h', 'l' for left and right (as in vim)
+* Half page 'u'p / 'd'own, or CTRL-u / CTRL-d
 * RETURN moves down one line
-* SPACE moves down a page
-* 'g' for going to a specific line number
 
 Searching
 ---------
@@ -314,11 +314,15 @@ func (p *Pager) onRune(char rune) {
 		_, height := p.screen.Size()
 		p.scrollPosition = p.scrollPosition.PreviousLine(height - 1)
 
-	case 'u':
+	// '\x15' = CTRL-u, should work like just 'u'.
+	// Ref: https://github.com/walles/moar/issues/90
+	case 'u', '\x15':
 		_, height := p.screen.Size()
 		p.scrollPosition = p.scrollPosition.PreviousLine(height / 2)
 
-	case 'd':
+	// '\x04' = CTRL-d, should work like just 'd'.
+	// Ref: https://github.com/walles/moar/issues/90
+	case 'd', '\x04':
 		_, height := p.screen.Size()
 		p.scrollPosition = p.scrollPosition.NextLine(height / 2)
 
