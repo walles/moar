@@ -170,13 +170,26 @@ func (si *scrollPositionInternal) emptyBottomLinesCount(pager *Pager) int {
 	return unclaimedViewportLines
 }
 
+func (si *scrollPositionInternal) isCanonical(pager *Pager) bool {
+	if si.canonical.lineNumberOneBased == 0 {
+		// Awaiting initial lines from the reader
+		return false
+	}
+
+	if si.canonical == canonicalFromPager(pager) {
+		return true
+	}
+
+	return false
+}
+
 // Only to be called from the scrollPosition getters!!
 //
 // Canonicalize the scroll position vs the given pager. A canonical position can
 // just be displayed on screen, it has been clipped both towards the top and
 // bottom of the screen, taking into account the screen height.
 func (si *scrollPositionInternal) canonicalize(pager *Pager) {
-	if si.canonical == canonicalFromPager(pager) {
+	if si.isCanonical(pager) {
 		return
 	}
 
