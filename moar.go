@@ -39,8 +39,11 @@ func printUsage(output io.Writer, flagSet *flag.FlagSet, printCommandline bool) 
 	_, _ = fmt.Fprintln(output, "  moar [options] <file>")
 	_, _ = fmt.Fprintln(output, "  ... | moar")
 	_, _ = fmt.Fprintln(output, "  moar < file")
-	_, _ = fmt.Fprintln(output, "")
+	_, _ = fmt.Fprintln(output)
 	_, _ = fmt.Fprintln(output, "Shows file contents. Compressed files will be transparently decompressed.")
+	_, _ = fmt.Fprintln(output)
+	_, _ = fmt.Fprintln(output, "More information + source code:")
+	_, _ = fmt.Fprintln(output, "  <https://github.com/walles/moar#readme>")
 	_, _ = fmt.Fprintln(output)
 	_, _ = fmt.Fprintln(output, "Environment:")
 	if len(moarEnv) == 0 {
@@ -300,7 +303,7 @@ func main() {
 
 	if inputFilename == nil && !stdinIsRedirected {
 		fmt.Fprintln(os.Stderr, "ERROR: Filename or input pipe required")
-		fmt.Fprintln(os.Stderr, "")
+		fmt.Fprintln(os.Stderr)
 		printUsage(os.Stderr, flagSet, true)
 		os.Exit(1)
 	}
