@@ -567,6 +567,23 @@ func updateStyle(style twin.Style, escapeSequence string) twin.Style {
 		case "97":
 			style = style.Foreground(twin.NewColor16(15))
 
+		case "100":
+			style = style.Background(twin.NewColor16(8))
+		case "101":
+			style = style.Background(twin.NewColor16(9))
+		case "102":
+			style = style.Background(twin.NewColor16(10))
+		case "103":
+			style = style.Background(twin.NewColor16(11))
+		case "104":
+			style = style.Background(twin.NewColor16(12))
+		case "105":
+			style = style.Background(twin.NewColor16(13))
+		case "106":
+			style = style.Background(twin.NewColor16(14))
+		case "107":
+			style = style.Background(twin.NewColor16(15))
+
 		default:
 			log.Warnf("Unrecognized ANSI SGR code <%s>", number)
 		}
