@@ -62,7 +62,9 @@ type Pager struct {
 	// NewPager shows lines by default, this field can hide them
 	ShowLineNumbers bool
 
-	StatusBarStyle   StatusBarStyle
+	StatusBarStyle StatusBarStyle
+	ShowStatusBar  bool
+
 	UnprintableStyle UnprintableStyle
 
 	WrapLongLines bool
@@ -87,6 +89,7 @@ Miscellaneous
 -------------
 * Press 'q' or ESC to quit
 * Press 'w' to toggle wrapping of long lines
+* Press '=' to toggle showing the status bar at the bottom
 
 Moving around
 -------------
@@ -138,6 +141,7 @@ func NewPager(r *Reader) *Pager {
 		reader:          r,
 		quit:            false,
 		ShowLineNumbers: true,
+		ShowStatusBar:   true,
 		DeInit:          true,
 		scrollPosition:  newScrollPosition(name),
 	}
@@ -283,6 +287,9 @@ func (p *Pager) onRune(char rune) {
 			p.leftColumnZeroBased = 0
 			p.isShowingHelp = true
 		}
+
+	case '=':
+		p.ShowStatusBar = !p.ShowStatusBar
 
 	case 'k', 'y':
 		// Clipping is done in _Redraw()

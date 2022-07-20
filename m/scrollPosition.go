@@ -35,6 +35,7 @@ type scrollPositionCanonical struct {
 	width           int  // From pager
 	height          int  // From pager
 	showLineNumbers bool // From pager
+	showStatusBar   bool // From pager
 	wrapLongLines   bool // From pager
 
 	lineNumberOneBased int // From scrollPositionInternal
@@ -47,6 +48,7 @@ func canonicalFromPager(pager *Pager) scrollPositionCanonical {
 		width:           width,
 		height:          height,
 		showLineNumbers: pager.ShowLineNumbers,
+		showStatusBar:   pager.ShowStatusBar,
 		wrapLongLines:   pager.WrapLongLines,
 
 		lineNumberOneBased: pager.scrollPosition.internalDontTouch.lineNumberOneBased,
@@ -143,7 +145,10 @@ func (si *scrollPositionInternal) handlePositiveDeltaScreenLines(pager *Pager) {
 // This method assumes si contains a canonical position
 func (si *scrollPositionInternal) emptyBottomLinesCount(pager *Pager) int {
 	_, height := pager.screen.Size()
-	unclaimedViewportLines := height - 1 // Status line takes up one row
+	unclaimedViewportLines := height - 1
+	if !pager.ShowStatusBar {
+		unclaimedViewportLines = height
+	}
 
 	// Start counting where the current input line begins
 	unclaimedViewportLines += si.deltaScreenLines

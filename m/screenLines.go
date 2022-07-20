@@ -58,7 +58,10 @@ func (p *Pager) redraw(spinner string) {
 		if p.isShowingHelp {
 			helpText = "Press ESC / q to exit help, '/' to search"
 		}
-		p.setFooter(statusText + spinner + "  " + helpText)
+
+		if p.ShowStatusBar {
+			p.setFooter(statusText + spinner + "  " + helpText)
+		}
 
 	default:
 		panic(fmt.Sprint("Unsupported pager mode: ", p.mode))
@@ -98,6 +101,9 @@ func (p *Pager) renderScreenLines() (lines [][]twin.Cell, statusText string) {
 func (p *Pager) renderLines() ([]renderedLine, string) {
 	_, height := p.screen.Size()
 	wantedLineCount := height - 1
+	if !p.ShowStatusBar {
+		wantedLineCount = height
+	}
 
 	inputLines := p.reader.GetLines(p.lineNumberOneBased(), wantedLineCount)
 	if inputLines.lines == nil {
