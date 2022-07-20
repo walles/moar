@@ -11,7 +11,7 @@ import (
 )
 
 func (p *Pager) addSearchFooter() {
-	_, height := p.screen.Size()
+	width, height := p.screen.Size()
 
 	pos := 0
 	for _, token := range "Search: " + p.searchString {
@@ -21,6 +21,13 @@ func (p *Pager) addSearchFooter() {
 
 	// Add a cursor
 	p.screen.SetCell(pos, height-1, twin.NewCell(' ', twin.StyleDefault.WithAttr(twin.AttrReverse)))
+	pos++
+
+	// Clear the rest of the line
+	for pos < width {
+		p.screen.SetCell(pos, height-1, twin.NewCell(' ', twin.StyleDefault))
+		pos++
+	}
 }
 
 func (p *Pager) scrollToSearchHits() {
