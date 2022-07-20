@@ -241,6 +241,7 @@ func main() {
 		"Highlighting style from https://xyproto.github.io/splash/docs/longer/all.html")
 	colorsOption := flagSet.String("colors", "auto", "Highlighting palette size: 8, 16, 256, 16M, auto")
 	noLineNumbers := flagSet.Bool("no-linenumbers", false, "Hide line numbers on startup, press left arrow key to show")
+	noStatusBar := flagSet.Bool("no-statusbar", false, "Hide the status bar, toggle with '='")
 	noClearOnExit := flagSet.Bool("no-clear-on-exit", false, "Retain screen contents when exiting moar")
 	statusBarStyleOption := flagSet.String("statusbar", "inverse", "Status bar style: inverse, plain or bold")
 	UnprintableStyleOption := flagSet.String("render-unprintable", "highlight", "How unprintable characters are rendered: highlight or whitespace")
@@ -342,7 +343,7 @@ func main() {
 	if stdinIsRedirected {
 		// Display input pipe contents
 		reader := m.NewReaderFromStream("", os.Stdin)
-		startPaging(reader, *wrap, *noLineNumbers, *noClearOnExit, statusBarStyle, unprintableStyle)
+		startPaging(reader, *wrap, *noLineNumbers, *noStatusBar, *noClearOnExit, statusBarStyle, unprintableStyle)
 		return
 	}
 
@@ -352,11 +353,11 @@ func main() {
 		fmt.Fprintf(os.Stderr, "ERROR: %v\n", err)
 		os.Exit(1)
 	}
-	startPaging(reader, *wrap, *noLineNumbers, *noClearOnExit, statusBarStyle, unprintableStyle)
+	startPaging(reader, *wrap, *noLineNumbers, *noStatusBar, *noClearOnExit, statusBarStyle, unprintableStyle)
 }
 
 func startPaging(reader *m.Reader,
-	wrapLongLines, noLineNumbers, noClearOnExit bool,
+	wrapLongLines, noLineNumbers, noStatusBar, noClearOnExit bool,
 	statusBarStyle m.StatusBarStyle,
 	unprintableStyle m.UnprintableStyle,
 ) {
@@ -370,6 +371,7 @@ func startPaging(reader *m.Reader,
 	pager := m.NewPager(reader)
 	pager.WrapLongLines = wrapLongLines
 	pager.ShowLineNumbers = !noLineNumbers
+	pager.ShowStatusBar = !noStatusBar
 	pager.StatusBarStyle = statusBarStyle
 	pager.UnprintableStyle = unprintableStyle
 
