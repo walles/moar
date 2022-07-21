@@ -22,7 +22,9 @@ Doing the right thing includes:
 - Supports displaying ANSI color coded texts (like the output from
   `git diff` [| `riff`](https://github.com/walles/riff) for example)
 - Supports UTF-8 input and output
-- **Automatic decompression** of compressed files (`.gz`, `.bz2`, `.xz`)
+- **Automatic decompression** when viewing [compressed text
+  files](https://github.com/walles/moar/issues/97#issuecomment-1191415680)
+  (`.gz`, `.bz2`, `.xz`)
 - The position in the file is always shown
 - Supports **word wrapping** (on actual word boundaries) if requested using
   `--wrap` or by pressing <kbd>w</kbd>
