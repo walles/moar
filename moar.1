@@ -1,0 +1,40 @@
+.TH MOAR 1 2022-07-21
+.SH NAME
+moar \- the nice pager
+.SH SYNOPSIS
+.B moar
+[options]
+.IR file
+.br
+.B "moar \-\-help"
+.SH DESCRIPTION
+.B moar
+is a pager much like
+.I less
+(1), but with generally nicer out-of-the-box behavior.
+.PP
+More information and screenshots: https://github.com/walles/moar#readme
+.PP
+Inside of
+.B moar
+, press
+.B ?
+to access the built-in help.
+.SH OPTIONS
+Do
+.B moar \-\-help
+to get a current list of command line options.
+.SH ENVIRONMENT
+Additional options are read from the
+.B MOAR
+environment variable if set, just as if those same options had been manually added to each
+.B moar
+invocation.
+.PP
+Having
+.B PAGER=moar
+in your environment will make lots of different programs use
+.B moar
+as their pager.
+.SH BUGS
+Kindly report any bugs here: https://github.com/walles/moar/issues

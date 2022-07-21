@@ -102,6 +102,10 @@ export PAGER=/usr/local/bin/moar
 Issues are tracked [here](https://github.com/walles/moar/issues), or
 you can send questions to <johan.walles@gmail.com>.
 
+# Packaging
+
+If you package `moar`, do include [the man page](moar.1) in your package.
+
 # Embedding
 
 Here's one way to embed `moar` in your app:
