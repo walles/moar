@@ -7,6 +7,8 @@ moar \- the nice pager
 .IR file
 .br
 .B "moar \-\-help"
+.br
+.B "moar \-\-version"
 .SH DESCRIPTION
 .B moar
 is a pager much like
@@ -15,26 +17,64 @@ is a pager much like
 .PP
 More information and screenshots: https://github.com/walles/moar#readme
 .PP
-Inside of
-.B moar
-, press
+Inside of \fBmoar\fR, press
 .B ?
 to access the built-in help.
 .SH OPTIONS
-Do
-.B moar \-\-help
-to get a current list of command line options.
-.SH ENVIRONMENT
-Additional options are read from the
-.B MOAR
-environment variable if set, just as if those same options had been manually added to each
-.B moar
-invocation.
+Multiple-choice options all have the default value listed first.
 .PP
+All of these options can be appended to the
+.B MOAR
+environment variable for persistent configuration.
+.PP
+Doing
+.B moar --help
+will also list these options.
+.TP
+\fB\-\-colors\fR={\fBauto\fR | \fB8\fR | \fB16\fR | \fB256\fR | \fB16M\fR}
+Size of color palette we output to the terminal
+.TP
+\fB\-\-debug\fR
+Print debug logs after exiting, less verbose than
+.B \-\-trace
+.TP
+\fB\-\-no\-clear\-on\-exit\fR
+Retain screen contents when exiting moar
+.TP
+\fB\-\-no\-linenumbers\fR
+Hide line numbers on startup, press left arrow key to show
+.TP
+\fB\-\-no\-statusbar\fR
+Hide the status bar, toggle with
+.B =
+.TP
+\fB\-\-render\-unprintable\fR={\fBhighlight\fR | \fBwhitespace\fR}
+How unprintable characters are rendered
+.TP
+\fB\-\-statusbar\fR={\fBinverse\fR | \fBplain\fR | \fBbold\fR}
+Status bar style
+.TP
+\fB\-\-style\fR={\fBnative\fR | \fIstyle\fR}
+Highlighting style from https://xyproto.github.io/splash/docs/longer/all.html
+.TP
+\fB\-\-trace\fR
+Print trace logs after exiting, more verbose than
+.B \-\-debug
+.TP
+\fB\-\-wrap\fR
+Wrap long lines, toggle with
+.B w
+.SH ENVIRONMENT
 Having
 .B PAGER=moar
 in your environment will make lots of different programs use
 .B moar
 as their pager.
+.PP
+Additional options are read from the
+.B MOAR
+environment variable if set, just as if those same options had been manually added to each
+.B moar
+invocation.
 .SH BUGS
 Kindly report any bugs here: https://github.com/walles/moar/issues
