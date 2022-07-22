@@ -24,9 +24,12 @@ to access the built-in help.
 Multiple-choice options all have the default value listed first.
 .PP
 All of these options can be appended to the
-.B
-MOAR
+.B MOAR
 environment variable for persistent configuration.
+.PP
+Doing
+.B moar --help
+will also list these options.
 .TP
 \fB\-\-colors\fR={\fBauto\fR | \fB8\fR | \fB16\fR | \fB256\fR | \fB16M\fR}
 Size of color palette we output to the terminal
@@ -62,16 +65,16 @@ Print trace logs after exiting, more verbose than
 Wrap long lines, toggle with
 .B w
 .SH ENVIRONMENT
-Additional options are read from the
-.B MOAR
-environment variable if set, just as if those same options had been manually added to each
-.B moar
-invocation.
-.PP
 Having
 .B PAGER=moar
 in your environment will make lots of different programs use
 .B moar
 as their pager.
+.PP
+Additional options are read from the
+.B MOAR
+environment variable if set, just as if those same options had been manually added to each
+.B moar
+invocation.
 .SH BUGS
 Kindly report any bugs here: https://github.com/walles/moar/issues
