@@ -53,7 +53,7 @@ echo Test --version...
 diff -u <(./moar --version) <(git describe --tags --dirty --always)
 
 echo Verify man page and --help document the same set of options...
-MAN_OPTIONS="$(grep -E '^\\fB' moar.1 | cut -d\\ -f4)"
+MAN_OPTIONS="$(grep -E '^\\fB' moar.1 | cut -d\\ -f4- | sed 's/fR.*//' | sed 's/\\//g')"
 MOAR_OPTIONS="$(./moar --help | grep -E '^  -' | cut -d' ' -f3)"
 diff -u <(echo "$MAN_OPTIONS") <(echo "$MOAR_OPTIONS")
 
