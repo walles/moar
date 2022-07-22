@@ -17,19 +17,23 @@ is a pager much like
 .PP
 More information and screenshots: https://github.com/walles/moar#readme
 .PP
-Inside of
-.B moar
-, press
+Inside of \fBmoar\fR, press
 .B ?
 to access the built-in help.
 .SH OPTIONS
 Multiple-choice options all have the default value listed first.
+.PP
+All of these options can be appended to the
+.B
+MOAR
+environment variable for persistent configuration.
 .TP
 \fB\-\-colors\fR={\fBauto\fR | \fB8\fR | \fB16\fR | \fB256\fR | \fB16M\fR}
 Size of color palette we output to the terminal
 .TP
 \fB\-\-debug\fR
-Print debug logs after exiting
+Print debug logs after exiting, less verbose than
+.B \-\-trace
 .TP
 \fB\-\-no\-clear\-on\-exit\fR
 Retain screen contents when exiting moar
@@ -49,6 +53,14 @@ Status bar style
 .TP
 \fB\-\-style\fR={\fBnative\fR | \fIstyle\fR}
 Highlighting style from https://xyproto.github.io/splash/docs/longer/all.html
+.TP
+\fB\-\-trace\fR
+Print trace logs after exiting, more verbose than
+.B \-\-debug
+.TP
+\fB\-\-wrap\fR
+Wrap long lines, toggle with
+.B w
 .SH ENVIRONMENT
 Additional options are read from the
 .B MOAR
