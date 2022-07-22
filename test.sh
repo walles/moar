@@ -52,6 +52,11 @@ echo Test --version...
 ./moar --version >/dev/null # Should exit with code 0
 diff -u <(./moar --version) <(git describe --tags --dirty --always)
 
+echo Verify man page and --help document the same set of options...
+MAN_OPTIONS="$(grep -E '^\\fB' moar.1 | cut -d\\ -f4)"
+MOAR_OPTIONS="$(./moar --help | grep -E '^  -' | cut -d' ' -f3)"
+diff -u <(echo "$MAN_OPTIONS") <(echo "$MOAR_OPTIONS")
+
 # FIXME: On unknown command line options, test that help text goes to stderr
 
 ./scripts/test-path-help.sh "$(realpath ./moar)"
