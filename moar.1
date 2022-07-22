@@ -22,8 +22,24 @@ Inside of
 to access the built-in help.
 .SH OPTIONS
 .TP
+\fB\-\-colors\fR={\fB8\fR | \fB16\fR | \fB256\fR | \fB16M\fR | \fBauto\fR}
+Size of color palette we output to the terminal
+.TP
 \fB\-\-debug\fR
 Print debug logs after exiting
+.TP
+\fB\-\-no\-clear\-on\-exit\fR
+Retain screen contents when exiting moar
+.TP
+\fB\-\-no\-linenumbers\fR
+Hide line numbers on startup, press left arrow key to show
+.TP
+\fB\-\-no\-statusbar\fR
+Hide the status bar, toggle with
+.B =
+.TP
+\fB\-\-render\-unprintable\fR={\fBhighlight\fR | \fBwhitespace\fR}
+How unprintable characters are rendered
 .SH ENVIRONMENT
 Additional options are read from the
 .B MOAR
