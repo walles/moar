@@ -57,6 +57,14 @@ Then whenever you want to upgrade to the latest release:
 brew upgrade
 ```
 
+## Using [MacPorts](https://www.macports.org/)
+
+```sh
+sudo port install moar
+```
+
+More info [here](https://ports.macports.org/port/moar/).
+
 ## Manual Install
 
 1. Download `moar` for your platform from
