@@ -1,7 +1,6 @@
 package m
 
 import (
-	"io/ioutil"
 	"math"
 	"os"
 	"os/exec"
@@ -126,7 +125,7 @@ func getSamplesDir() string {
 }
 
 func getTestFiles() []string {
-	files, err := ioutil.ReadDir(getSamplesDir())
+	files, err := os.ReadDir(getSamplesDir())
 	if err != nil {
 		panic(err)
 	}
@@ -189,7 +188,7 @@ func testHighlightingLineCount(t *testing.T, filenameWithPath string) {
 	}
 
 	// Load the unformatted file
-	rawBytes, err := ioutil.ReadFile(filenameWithPath)
+	rawBytes, err := os.ReadFile(filenameWithPath)
 	if err != nil {
 		panic(err)
 	}
@@ -367,7 +366,7 @@ func BenchmarkReadLargeFile(b *testing.B) {
 
 	// First, create it from something...
 	input_filename := getSamplesDir() + "/../m/pager.go"
-	contents, err := ioutil.ReadFile(input_filename)
+	contents, err := os.ReadFile(input_filename)
 	if err != nil {
 		panic(err)
 	}
@@ -412,7 +411,7 @@ func BenchmarkReadLargeFile(b *testing.B) {
 func BenchmarkCountLines(b *testing.B) {
 	// First, get some sample lines...
 	input_filename := getSamplesDir() + "/../m/pager.go"
-	contents, err := ioutil.ReadFile(input_filename)
+	contents, err := os.ReadFile(input_filename)
 	if err != nil {
 		panic(err)
 	}
