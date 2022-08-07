@@ -211,18 +211,12 @@ func (p *Pager) decorateLine(lineNumberToShow *int, contents []twin.Cell) []twin
 		}
 
 		// Add can-scroll-left marker
-		newLine[0] = twin.Cell{
-			Rune:  '<',
-			Style: twin.StyleDefault.WithAttr(twin.AttrReverse),
-		}
+		newLine[0] = p.ScrollLeftHint
 	}
 
 	// Add scroll right indicator
 	if len(contents)+numberPrefixLength-p.leftColumnZeroBased > width {
-		newLine[width-1] = twin.Cell{
-			Rune:  '>',
-			Style: twin.StyleDefault.WithAttr(twin.AttrReverse),
-		}
+		newLine[width-1] = p.ScrollRightHint
 	}
 
 	return newLine
