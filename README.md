@@ -1,5 +1,7 @@
-Moar is a pager. It's designed to just do the right thing without any
-configuration:
+Moar is a pager. It reads and displays UTF-8 encoded text from files or
+pipelines.
+
+`moar` is designed to just do the right thing without any configuration:
 
 ![Moar displaying its own source code](screenshot.png)
 
