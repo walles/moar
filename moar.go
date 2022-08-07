@@ -225,7 +225,7 @@ func parseScrollHint(scrollHint string, flagSet *flag.FlagSet) twin.Cell {
 	}
 
 	fmt.Fprintln(os.Stderr,
-		"ERROR: Scroll hint must be exactly one (highlighted) character, try for example 'ESC[2m…'")
+		"ERROR: Scroll hint must be exactly one (optionally highlighted) character. For example: 'ESC[2m…'")
 	fmt.Fprintln(os.Stderr)
 	printUsage(os.Stderr, flagSet, true)
 
@@ -263,9 +263,9 @@ func main() {
 	statusBarStyleOption := flagSet.String("statusbar", "inverse", "Status bar style: inverse, plain or bold")
 	UnprintableStyleOption := flagSet.String("render-unprintable", "highlight",
 		"How unprintable characters are rendered: highlight or whitespace")
-	scrollLeftHintOption := flagSet.String("scroll-left-hint", "ESC[7m;<",
+	scrollLeftHintOption := flagSet.String("scroll-left-hint", "ESC[7m<",
 		"Shown when view can scroll left. One character with optional ANSI highlighting.")
-	scrollRightHintOption := flagSet.String("scroll-right-hint", "ESC[7m;>",
+	scrollRightHintOption := flagSet.String("scroll-right-hint", "ESC[7m>",
 		"Shown when view can scroll right. One character with optional ANSI highlighting.")
 
 	// Combine flags from environment and from command line
