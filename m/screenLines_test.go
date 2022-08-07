@@ -17,7 +17,7 @@ func testHorizontalCropping(t *testing.T, contents string, firstIndex int, lastI
 	pager.scrollPosition = newScrollPosition("testHorizontalCropping")
 
 	lineContents := NewLine(contents)
-	screenLine := pager.renderLine(lineContents, 0)
+	screenLine := pager.renderLine(&lineContents, 0)
 	assert.Equal(t, rowToString(screenLine[0].cells), expected)
 }
 
