@@ -69,6 +69,10 @@ type Pager struct {
 
 	WrapLongLines bool
 
+	// Ref: https://github.com/walles/moar/issues/94
+	ScrollLeftHint  twin.Cell
+	ScrollRightHint twin.Cell
+
 	// If true, pager will clear the screen on return. If false, pager will
 	// clear the last line, and show the cursor.
 	DeInit bool
@@ -143,6 +147,8 @@ func NewPager(r *Reader) *Pager {
 		ShowLineNumbers: true,
 		ShowStatusBar:   true,
 		DeInit:          true,
+		ScrollLeftHint:  twin.NewCell('<', twin.StyleDefault.WithAttr(twin.AttrReverse)),
+		ScrollRightHint: twin.NewCell('>', twin.StyleDefault.WithAttr(twin.AttrReverse)),
 		scrollPosition:  newScrollPosition(name),
 	}
 }

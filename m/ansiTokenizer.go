@@ -30,8 +30,8 @@ type Line struct {
 }
 
 // NewLine creates a new Line from a (potentially ANSI / man page formatted) string
-func NewLine(raw string) *Line {
-	return &Line{
+func NewLine(raw string) Line {
+	return Line{
 		raw:   raw,
 		plain: nil,
 	}

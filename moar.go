@@ -216,6 +216,23 @@ func parseUnprintableStyle(styleOption string, flagSet *flag.FlagSet) m.Unprinta
 	panic("os.Exit(1) just failed")
 }
 
+func parseScrollHint(scrollHint string, flagSet *flag.FlagSet) twin.Cell {
+	scrollHint = strings.ReplaceAll(scrollHint, "ESC", "\x1b")
+	hintParser := m.NewLine(scrollHint)
+	parsedTokens := hintParser.HighlightedTokens(nil)
+	if len(parsedTokens) == 1 {
+		return parsedTokens[0]
+	}
+
+	fmt.Fprintln(os.Stderr,
+		"ERROR: Scroll hint must be exactly one (optionally highlighted) character. For example: 'ESC[2m…'")
+	fmt.Fprintln(os.Stderr)
+	printUsage(os.Stderr, flagSet, true)
+
+	os.Exit(1)
+	panic("os.Exit(1) just failed")
+}
+
 func main() {
 	// FIXME: If we get a CTRL-C, get terminal back into a useful state before terminating
 
@@ -244,7 +261,12 @@ func main() {
 	noStatusBar := flagSet.Bool("no-statusbar", false, "Hide the status bar, toggle with '='")
 	noClearOnExit := flagSet.Bool("no-clear-on-exit", false, "Retain screen contents when exiting moar")
 	statusBarStyleOption := flagSet.String("statusbar", "inverse", "Status bar style: inverse, plain or bold")
-	UnprintableStyleOption := flagSet.String("render-unprintable", "highlight", "How unprintable characters are rendered: highlight or whitespace")
+	UnprintableStyleOption := flagSet.String("render-unprintable", "highlight",
+		"How unprintable characters are rendered: highlight or whitespace")
+	scrollLeftHintOption := flagSet.String("scroll-left-hint", "ESC[7m<",
+		"Shown when view can scroll left. One character with optional ANSI highlighting.")
+	scrollRightHintOption := flagSet.String("scroll-right-hint", "ESC[7m>",
+		"Shown when view can scroll right. One character with optional ANSI highlighting.")
 
 	// Combine flags from environment and from command line
 	flags := os.Args[1:]
@@ -274,6 +296,9 @@ func main() {
 	formatter := parseColorsOption(*colorsOption, flagSet)
 	statusBarStyle := parseStatusBarStyle(*statusBarStyleOption, flagSet)
 	unprintableStyle := parseUnprintableStyle(*UnprintableStyleOption, flagSet)
+
+	scrollLeftHint := parseScrollHint(*scrollLeftHintOption, flagSet)
+	scrollRightHint := parseScrollHint(*scrollRightHintOption, flagSet)
 
 	log.SetLevel(log.InfoLevel)
 	if *trace {
@@ -343,7 +368,9 @@ func main() {
 	if stdinIsRedirected {
 		// Display input pipe contents
 		reader := m.NewReaderFromStream("", os.Stdin)
-		startPaging(reader, *wrap, *noLineNumbers, *noStatusBar, *noClearOnExit, statusBarStyle, unprintableStyle)
+		startPaging(reader,
+			*wrap, *noLineNumbers, *noStatusBar, *noClearOnExit, statusBarStyle, unprintableStyle,
+			scrollLeftHint, scrollRightHint)
 		return
 	}
 
@@ -353,13 +380,17 @@ func main() {
 		fmt.Fprintf(os.Stderr, "ERROR: %v\n", err)
 		os.Exit(1)
 	}
-	startPaging(reader, *wrap, *noLineNumbers, *noStatusBar, *noClearOnExit, statusBarStyle, unprintableStyle)
+	startPaging(reader,
+		*wrap, *noLineNumbers, *noStatusBar, *noClearOnExit, statusBarStyle, unprintableStyle,
+		scrollLeftHint, scrollRightHint)
 }
 
 func startPaging(reader *m.Reader,
 	wrapLongLines, noLineNumbers, noStatusBar, noClearOnExit bool,
 	statusBarStyle m.StatusBarStyle,
 	unprintableStyle m.UnprintableStyle,
+	scrollLeftHint twin.Cell,
+	scrollRightHint twin.Cell,
 ) {
 	screen, e := twin.NewScreen()
 	if e != nil {
@@ -374,6 +405,8 @@ func startPaging(reader *m.Reader,
 	pager.ShowStatusBar = !noStatusBar
 	pager.StatusBarStyle = statusBarStyle
 	pager.UnprintableStyle = unprintableStyle
+	pager.ScrollLeftHint = scrollLeftHint
+	pager.ScrollRightHint = scrollRightHint
 
 	defer func() {
 		// Restore screen...

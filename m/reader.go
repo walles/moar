@@ -191,7 +191,7 @@ func (reader *Reader) readStream(stream io.Reader, originalFileName *string, fro
 			reader.lock.Unlock()
 			break
 		}
-		reader.lines = append(reader.lines, newLine)
+		reader.lines = append(reader.lines, &newLine)
 		reader.lock.Unlock()
 		completeLine = completeLine[:0]
 
@@ -263,8 +263,9 @@ func NewReaderFromText(name string, text string) *Reader {
 	noExternalNewlines := strings.Trim(text, "\n")
 	lines := []*Line{}
 	if len(noExternalNewlines) > 0 {
-		for _, line := range strings.Split(noExternalNewlines, "\n") {
-			lines = append(lines, NewLine(line))
+		for _, lineString := range strings.Split(noExternalNewlines, "\n") {
+			line := NewLine(lineString)
+			lines = append(lines, &line)
 		}
 	}
 	done := make(chan bool, 1)
@@ -540,8 +541,9 @@ func (r *Reader) getLinesUnlocked(firstLineOneBased int, wantedLineCount int) *I
 // Replace reader contents with the given text and mark as done
 func (reader *Reader) setText(text string) {
 	lines := []*Line{}
-	for _, line := range strings.Split(text, "\n") {
-		lines = append(lines, NewLine(line))
+	for _, lineString := range strings.Split(text, "\n") {
+		line := NewLine(lineString)
+		lines = append(lines, &line)
 	}
 
 	if len(lines) > 0 && strings.HasSuffix(text, "\n") {

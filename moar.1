@@ -51,6 +51,24 @@ Hide the status bar, toggle with
 \fB\-\-render\-unprintable\fR={\fBhighlight\fR | \fBwhitespace\fR}
 How unprintable characters are rendered
 .TP
+\fB\-\-scroll\-left\-hint\fR=string
+UTF-8 character indicating the view can scroll left, defaults to an inverse \fB<\fR.
+This can be a string containing ANSI formatting.
+The word
+.B ESC
+in caps will be interpreted as one escape character.
+Example value for faint (using ANSI SGR code 2) tilde characters:
+.B ESC[2m~
+.TP
+\fB\-\-scroll\-right\-hint\fR=string
+UTF-8 character indicating the view can scroll right, defaults to an inverse \fB>\fR.
+This can be a string containing ANSI formatting.
+The word
+.B ESC
+in caps will be interpreted as one escape character.
+Example value for faint (using ANSI SGR code 2) tilde characters:
+.B ESC[2m~
+.TP
 \fB\-\-statusbar\fR={\fBinverse\fR | \fBplain\fR | \fBbold\fR}
 Status bar style
 .TP
