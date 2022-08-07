@@ -9,11 +9,13 @@ import (
 )
 
 func testHorizontalCropping(t *testing.T, contents string, firstIndex int, lastIndex int, expected string) {
-	pager := Pager{
-		screen:              twin.NewFakeScreen(1+lastIndex-firstIndex, 99),
-		leftColumnZeroBased: firstIndex,
-		scrollPosition:      newScrollPosition("testHorizontalCropping"),
-	}
+	pager := NewPager(nil)
+	pager.ShowLineNumbers = false
+
+	pager.screen = twin.NewFakeScreen(1+lastIndex-firstIndex, 99)
+	pager.leftColumnZeroBased = firstIndex
+	pager.scrollPosition = newScrollPosition("testHorizontalCropping")
+
 	lineContents := NewLine(contents)
 	screenLine := pager.renderLine(lineContents, 0)
 	assert.Equal(t, rowToString(screenLine[0].cells), expected)
