@@ -73,3 +73,23 @@ func TestScrollToNextSearchHit_WrapAfterNotFound(t *testing.T) {
 	assert.Equal(t, _Viewing, pager.mode)
 	assert.Equal(t, 1, pager.lineNumberOneBased())
 }
+
+func TestScrollToNextSearchHit_WrapAfterFound(t *testing.T) {
+	// Create a pager scrolled to the last line
+	pager := createThreeLinesPager(t)
+	pager.scrollToEnd()
+
+	// Search for "f", it's on the last line (ref createThreeLinesPager())
+	pager.searchString = "f"
+	pager.searchPattern = toPattern(pager.searchString)
+
+	// Scroll to the next search hit, this should take us into _NotFound
+	pager.scrollToNextSearchHit()
+	require.Equal(t, _NotFound, pager.mode)
+
+	// Scroll to the next search hit, this should wrap the search and take us
+	// back to the bottom again
+	pager.scrollToNextSearchHit()
+	require.Equal(t, _Viewing, pager.mode)
+	require.Equal(t, 5, pager.lineNumberOneBased())
+}
