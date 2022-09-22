@@ -4,6 +4,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/stretchr/testify/require"
 	"github.com/walles/moar/twin"
 )
 
@@ -19,9 +20,7 @@ func createThreeLinesPager(t *testing.T) *Pager {
 
 	pager.screen = screen
 
-	if pager.mode != _Viewing {
-		t.Errorf("Expected initial pager state to be %v but got %v", _Viewing, pager.mode)
-	}
+	require.Equal(t, _Viewing, pager.mode, "Initial pager state")
 
 	return pager
 }
@@ -38,9 +37,7 @@ func TestScrollToNextSearchHit_StartAtBottom(t *testing.T) {
 	// Scroll to the next search hit
 	pager.scrollToNextSearchHit()
 
-	if pager.mode != _NotFound {
-		t.Errorf("Expected state %v but got %v", _NotFound, pager.mode)
-	}
+	require.Equal(t, _NotFound, pager.mode)
 }
 
 func TestScrollToNextSearchHit_StartAtTop(t *testing.T) {
@@ -54,9 +51,7 @@ func TestScrollToNextSearchHit_StartAtTop(t *testing.T) {
 	// Scroll to the next search hit
 	pager.scrollToNextSearchHit()
 
-	if pager.mode != _NotFound {
-		t.Errorf("Expected state %v but got %v", _NotFound, pager.mode)
-	}
+	require.Equal(t, _NotFound, pager.mode)
 }
 
 func TestScrollToNextSearchHit_WrapAfterNotFound(t *testing.T) {
@@ -70,17 +65,11 @@ func TestScrollToNextSearchHit_WrapAfterNotFound(t *testing.T) {
 
 	// Scroll to the next search hit, this should take us into _NotFound
 	pager.scrollToNextSearchHit()
-	if pager.mode != _NotFound {
-		t.Errorf("Expected state %v but got %v", _NotFound, pager.mode)
-	}
+	require.Equal(t, _NotFound, pager.mode)
 
 	// Scroll to the next search hit, this should wrap the search and take us to
 	// the top
 	pager.scrollToNextSearchHit()
-	if pager.mode != _Viewing {
-		t.Errorf("Expected state %v but got %v", _Viewing, pager.mode)
-	}
-	if pager.lineNumberOneBased() != 1 {
-		t.Errorf("Expected line number %v but got %v", 1, pager.lineNumberOneBased())
-	}
+	require.Equal(t, _Viewing, pager.mode)
+	require.Equal(t, 1, pager.lineNumberOneBased())
 }
