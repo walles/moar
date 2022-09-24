@@ -4,8 +4,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/stretchr/testify/require"
 	"github.com/walles/moar/twin"
+	"gotest.tools/assert"
 )
 
 // Create a pager with three screen lines reading from a six lines stream
@@ -20,7 +20,7 @@ func createThreeLinesPager(t *testing.T) *Pager {
 
 	pager.screen = screen
 
-	require.Equal(t, _Viewing, pager.mode, "Initial pager state")
+	assert.Equal(t, _Viewing, pager.mode, "Initial pager state")
 
 	return pager
 }
@@ -37,7 +37,7 @@ func TestScrollToNextSearchHit_StartAtBottom(t *testing.T) {
 	// Scroll to the next search hit
 	pager.scrollToNextSearchHit()
 
-	require.Equal(t, _NotFound, pager.mode)
+	assert.Equal(t, _NotFound, pager.mode)
 }
 
 func TestScrollToNextSearchHit_StartAtTop(t *testing.T) {
@@ -51,7 +51,7 @@ func TestScrollToNextSearchHit_StartAtTop(t *testing.T) {
 	// Scroll to the next search hit
 	pager.scrollToNextSearchHit()
 
-	require.Equal(t, _NotFound, pager.mode)
+	assert.Equal(t, _NotFound, pager.mode)
 }
 
 func TestScrollToNextSearchHit_WrapAfterNotFound(t *testing.T) {
@@ -65,11 +65,11 @@ func TestScrollToNextSearchHit_WrapAfterNotFound(t *testing.T) {
 
 	// Scroll to the next search hit, this should take us into _NotFound
 	pager.scrollToNextSearchHit()
-	require.Equal(t, _NotFound, pager.mode)
+	assert.Equal(t, _NotFound, pager.mode)
 
 	// Scroll to the next search hit, this should wrap the search and take us to
 	// the top
 	pager.scrollToNextSearchHit()
-	require.Equal(t, _Viewing, pager.mode)
-	require.Equal(t, 1, pager.lineNumberOneBased())
+	assert.Equal(t, _Viewing, pager.mode)
+	assert.Equal(t, 1, pager.lineNumberOneBased())
 }
