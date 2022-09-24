@@ -353,7 +353,7 @@ func TestIsScrolledToEnd_ShortFile(t *testing.T) {
 	reader := NewReaderFromText("Testing", "a\nb\nc")
 
 	// Six lines screen
-	screen := twin.NewFakeScreen(20, 3)
+	screen := twin.NewFakeScreen(20, 6)
 
 	// Create the pager
 	pager := NewPager(reader)
