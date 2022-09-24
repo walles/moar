@@ -85,11 +85,11 @@ func TestScrollToNextSearchHit_WrapAfterFound(t *testing.T) {
 
 	// Scroll to the next search hit, this should take us into _NotFound
 	pager.scrollToNextSearchHit()
-	require.Equal(t, _NotFound, pager.mode)
+	assert.Equal(t, _NotFound, pager.mode)
 
 	// Scroll to the next search hit, this should wrap the search and take us
 	// back to the bottom again
 	pager.scrollToNextSearchHit()
-	require.Equal(t, _Viewing, pager.mode)
-	require.Equal(t, 5, pager.lineNumberOneBased())
+	assert.Equal(t, _Viewing, pager.mode)
+	assert.Equal(t, 5, pager.lineNumberOneBased())
 }
