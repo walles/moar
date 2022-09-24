@@ -1,7 +1,6 @@
 package m
 
 import (
-	"strings"
 	"testing"
 
 	"github.com/walles/moar/twin"
@@ -10,10 +9,7 @@ import (
 
 // Create a pager with three screen lines reading from a six lines stream
 func createThreeLinesPager(t *testing.T) *Pager {
-	reader := NewReaderFromStream("", strings.NewReader("a\nb\nc\nd\ne\nf\n"))
-	if err := reader._wait(); err != nil {
-		panic(err)
-	}
+	reader := NewReaderFromText("", "a\nb\nc\nd\ne\nf\n")
 
 	screen := twin.NewFakeScreen(20, 3)
 	pager := NewPager(reader)
