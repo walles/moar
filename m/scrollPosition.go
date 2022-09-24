@@ -265,6 +265,10 @@ func (sp *scrollPosition) deltaScreenLines(pager *Pager) int {
 
 func (p *Pager) scrollToEnd() {
 	inputLineCount := p.reader.GetLineCount()
+	if inputLineCount == 0 {
+		return
+	}
+
 	inputLine := p.reader.GetLine(inputLineCount)
 	screenLines := p.renderLine(inputLine, 0)
 
