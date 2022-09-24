@@ -382,6 +382,28 @@ func TestIsScrolledToEnd_ExactFile(t *testing.T) {
 	assert.Equal(t, true, pager.isScrolledToEnd())
 }
 
+func TestIsScrolledToEnd_WrappedLastLine(t *testing.T) {
+	// Three lines of contents
+	reader := NewReaderFromText("Testing", "a\nb\nc d e f g h i j k l m n")
+
+	// Three lines screen
+	screen := twin.NewFakeScreen(5, 3)
+
+	// Create the pager
+	pager := NewPager(reader)
+	pager.screen = screen
+	pager.WrapLongLines = true
+
+	assert.Equal(t, false, pager.isScrolledToEnd())
+
+	pager.scrollToEnd()
+	assert.Equal(t, true, pager.isScrolledToEnd())
+
+	pager.onKey(twin.KeyUp)
+	pager.redraw("XXX")
+	assert.Equal(t, true, pager.isScrolledToEnd())
+}
+
 func TestIsScrolledToEnd_EmptyFile(t *testing.T) {
 	// No contents
 	reader := NewReaderFromText("Testing", "")
