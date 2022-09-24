@@ -375,6 +375,7 @@ func TestIsScrolledToEnd_ExactFile(t *testing.T) {
 	// Create the pager
 	pager := NewPager(reader)
 	pager.screen = screen
+	pager.ShowStatusBar = false
 
 	assert.Equal(t, true, pager.isScrolledToEnd())
 
