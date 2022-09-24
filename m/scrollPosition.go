@@ -264,21 +264,29 @@ func (sp *scrollPosition) deltaScreenLines(pager *Pager) int {
 }
 
 func (p *Pager) scrollToEnd() {
-	lastInputLine := p.reader.GetLineCount()
-	inputLine := p.reader.GetLine(lastInputLine)
+	inputLineCount := p.reader.GetLineCount()
+	inputLine := p.reader.GetLine(inputLineCount)
 	screenLines := p.renderLine(inputLine, 0)
 
-	p.scrollPosition.internalDontTouch.lineNumberOneBased = lastInputLine
+	p.scrollPosition.internalDontTouch.lineNumberOneBased = inputLineCount
 	p.scrollPosition.internalDontTouch.deltaScreenLines = len(screenLines) - 1
 }
 
 // Can be either because Pager.scrollToEnd() was just called or because the user
-// just pressed the down arrow enough times.
+// has pressed the down arrow enough times.
 func (p *Pager) isScrolledToEnd() bool {
-	// FIXME: Write real code here
-	return false
+	inputLineCount := p.reader.GetLineCount()
+	lastInputLineOneBased := inputLineCount
+
+	lastVisiblePosition := p.getLastVisiblePosition()
+	if lastVisiblePosition == nil {
+		// No lines available, which means we can't scroll any further down
+		return true
+	}
+	return lastVisiblePosition.internalDontTouch.lineNumberOneBased == lastInputLineOneBased
 }
 
+// Returns nil if there are no lines
 func (p *Pager) getLastVisiblePosition() *scrollPosition {
 	renderedLines, _ := p.renderLines()
 	if len(renderedLines) == 0 {
