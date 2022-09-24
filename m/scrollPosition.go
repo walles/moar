@@ -272,6 +272,13 @@ func (p *Pager) scrollToEnd() {
 	p.scrollPosition.internalDontTouch.deltaScreenLines = len(screenLines) - 1
 }
 
+// Can be either because Pager.scrollToEnd() was just called or because the user
+// just pressed the down arrow enough times.
+func (p *Pager) isScrolledToEnd() bool {
+	FIXME: Write real code here, but tests first!
+	return false
+}
+
 func (p *Pager) getLastVisiblePosition() *scrollPosition {
 	renderedLines, _ := p.renderLines()
 	if len(renderedLines) == 0 {
