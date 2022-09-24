@@ -331,6 +331,74 @@ func TestScrollToBottomWrapNextToLastLine(t *testing.T) {
 	assert.Equal(t, actual, expected)
 }
 
+func TestIsScrolledToEnd_LongFile(t *testing.T) {
+	// Six lines of contents
+	reader := NewReaderFromText("Testing", "a\nb\nc\nd\ne\nf\n")
+
+	// Three lines screen
+	screen := twin.NewFakeScreen(20, 3)
+
+	// Create the pager
+	pager := NewPager(reader)
+	pager.screen = screen
+
+	assert.Equal(t, false, pager.isScrolledToEnd())
+
+	pager.scrollToEnd()
+	assert.Equal(t, true, pager.isScrolledToEnd())
+}
+
+func TestIsScrolledToEnd_ShortFile(t *testing.T) {
+	// Three lines of contents
+	reader := NewReaderFromText("Testing", "a\nb\nc")
+
+	// Six lines screen
+	screen := twin.NewFakeScreen(20, 3)
+
+	// Create the pager
+	pager := NewPager(reader)
+	pager.screen = screen
+
+	assert.Equal(t, true, pager.isScrolledToEnd())
+
+	pager.scrollToEnd()
+	assert.Equal(t, true, pager.isScrolledToEnd())
+}
+
+func TestIsScrolledToEnd_ExactFile(t *testing.T) {
+	// Three lines of contents
+	reader := NewReaderFromText("Testing", "a\nb\nc")
+
+	// Three lines screen
+	screen := twin.NewFakeScreen(20, 3)
+
+	// Create the pager
+	pager := NewPager(reader)
+	pager.screen = screen
+
+	assert.Equal(t, true, pager.isScrolledToEnd())
+
+	pager.scrollToEnd()
+	assert.Equal(t, true, pager.isScrolledToEnd())
+}
+
+func TestIsScrolledToEnd_EmptyFile(t *testing.T) {
+	// No contents
+	reader := NewReaderFromText("Testing", "")
+
+	// Three lines screen
+	screen := twin.NewFakeScreen(20, 3)
+
+	// Create the pager
+	pager := NewPager(reader)
+	pager.screen = screen
+
+	assert.Equal(t, true, pager.isScrolledToEnd())
+
+	pager.scrollToEnd()
+	assert.Equal(t, true, pager.isScrolledToEnd())
+}
+
 // Verify that we can page all files in ../sample-files/* without crashing
 func TestPageSamples(t *testing.T) {
 	for _, fileName := range getTestFiles() {

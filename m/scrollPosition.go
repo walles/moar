@@ -275,7 +275,7 @@ func (p *Pager) scrollToEnd() {
 // Can be either because Pager.scrollToEnd() was just called or because the user
 // just pressed the down arrow enough times.
 func (p *Pager) isScrolledToEnd() bool {
-	FIXME: Write real code here, but tests first!
+	// FIXME: Write real code here
 	return false
 }
 
