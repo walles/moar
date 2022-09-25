@@ -40,8 +40,6 @@ func NewLine(raw string) Line {
 // Returns a representation of the string split into styled tokens. Any regexp
 // matches are highlighted in inverse video. A nil regexp means no highlighting.
 func (line *Line) HighlightedTokens(search *regexp.Regexp) []twin.Cell {
-	searchHitDelta := 0
-
 	plain := line.Plain()
 	matchRanges := getMatchRanges(&plain, search)
 
@@ -49,7 +47,7 @@ func (line *Line) HighlightedTokens(search *regexp.Regexp) []twin.Cell {
 	returnMe := make([]twin.Cell, 0, len(cells))
 	for _, token := range cells {
 		style := token.Style
-		if matchRanges.InRange(len(returnMe) + searchHitDelta) {
+		if matchRanges.InRange(len(returnMe)) {
 			// Search hits in reverse video
 			style = style.WithAttr(twin.AttrReverse)
 		}
