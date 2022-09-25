@@ -1,9 +1,11 @@
 package m
 
 import (
+	"regexp"
 	"strings"
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
 	"github.com/walles/moar/twin"
 	"gotest.tools/v3/assert"
 )
@@ -59,6 +61,30 @@ func TestEmpty(t *testing.T) {
 	assert.Equal(t, len(rendered), 0)
 	assert.Equal(t, "test: <empty>", statusText)
 	assert.Equal(t, pager.lineNumberOneBased(), 0)
+}
+
+func TestSearchHighlight(t *testing.T) {
+	line := Line{
+		raw: "x\"\"x",
+	}
+	pager := Pager{
+		screen:        twin.NewFakeScreen(100, 10),
+		searchPattern: regexp.MustCompile("\""),
+	}
+
+	rendered := pager.renderLine(&line, 1)
+	assert.DeepEqual(t, []renderedLine{
+		{
+			inputLineOneBased: 1,
+			wrapIndex:         0,
+			cells: []twin.Cell{
+				{Rune: 'x', Style: twin.StyleDefault},
+				{Rune: '"', Style: twin.StyleDefault.WithAttr(twin.AttrReverse)},
+				{Rune: '"', Style: twin.StyleDefault.WithAttr(twin.AttrReverse)},
+				{Rune: 'x', Style: twin.StyleDefault},
+			},
+		},
+	}, rendered, cmp.AllowUnexported(twin.Style{}), cmp.AllowUnexported(renderedLine{}))
 }
 
 func TestOverflowDown(t *testing.T) {
