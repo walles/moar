@@ -1,7 +1,6 @@
 package m
 
 import (
-	"strings"
 	"testing"
 
 	"github.com/walles/moar/twin"
@@ -10,10 +9,7 @@ import (
 
 // Create a pager with three screen lines reading from a six lines stream
 func createThreeLinesPager(t *testing.T) *Pager {
-	reader := NewReaderFromStream("", strings.NewReader("a\nb\nc\nd\ne\nf\n"))
-	if err := reader._wait(); err != nil {
-		panic(err)
-	}
+	reader := NewReaderFromText("", "a\nb\nc\nd\ne\nf\n")
 
 	screen := twin.NewFakeScreen(20, 3)
 	pager := NewPager(reader)
@@ -72,4 +68,24 @@ func TestScrollToNextSearchHit_WrapAfterNotFound(t *testing.T) {
 	pager.scrollToNextSearchHit()
 	assert.Equal(t, _Viewing, pager.mode)
 	assert.Equal(t, 1, pager.lineNumberOneBased())
+}
+
+func TestScrollToNextSearchHit_WrapAfterFound(t *testing.T) {
+	// Create a pager scrolled to the last line
+	pager := createThreeLinesPager(t)
+	pager.scrollToEnd()
+
+	// Search for "f", it's on the last line (ref createThreeLinesPager())
+	pager.searchString = "f"
+	pager.searchPattern = toPattern(pager.searchString)
+
+	// Scroll to the next search hit, this should take us into _NotFound
+	pager.scrollToNextSearchHit()
+	assert.Equal(t, _NotFound, pager.mode)
+
+	// Scroll to the next search hit, this should wrap the search and take us
+	// back to the bottom again
+	pager.scrollToNextSearchHit()
+	assert.Equal(t, _Viewing, pager.mode)
+	assert.Equal(t, 5, pager.lineNumberOneBased())
 }

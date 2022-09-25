@@ -88,6 +88,11 @@ func (p *Pager) scrollToNextSearchHit() {
 		return
 	}
 
+	if p.mode == _Viewing && p.isScrolledToEnd() {
+		p.mode = _NotFound
+		return
+	}
+
 	var firstSearchPosition scrollPosition
 
 	switch p.mode {

@@ -259,6 +259,9 @@ func newReaderFromStream(reader io.Reader, originalFileName *string, fromFilter 
 //
 // First parameter is the name of this Reader. This name will be displayed by
 // Moar in the bottom left corner of the screen.
+//
+// Calling _wait() on this Reader will always return immediately, no
+// asynchronous ops will be performed.
 func NewReaderFromText(name string, text string) *Reader {
 	noExternalNewlines := strings.Trim(text, "\n")
 	lines := []*Line{}

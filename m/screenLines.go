@@ -96,8 +96,9 @@ func (p *Pager) renderScreenLines() (lines [][]twin.Cell, statusText string) {
 // The returned lines are display ready, meaning that they come with horizontal
 // scroll markers and line numbers as necessary.
 //
-// The maximum number of lines returned by this method will be one less than the
-// screen height, leaving space for the status line.
+// The maximum number of lines returned by this method is limited by the screen
+// height. If the status line is visible, you'll get at most one less than the
+// screen height from this method.
 func (p *Pager) renderLines() ([]renderedLine, string) {
 	_, height := p.screen.Size()
 	wantedLineCount := height - 1

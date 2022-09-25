@@ -264,14 +264,48 @@ func (sp *scrollPosition) deltaScreenLines(pager *Pager) int {
 }
 
 func (p *Pager) scrollToEnd() {
-	lastInputLine := p.reader.GetLineCount()
-	inputLine := p.reader.GetLine(lastInputLine)
-	screenLines := p.renderLine(inputLine, 0)
+	inputLineCount := p.reader.GetLineCount()
+	if inputLineCount == 0 {
+		return
+	}
+	lastInputLineNumberOneBased := inputLineCount
 
-	p.scrollPosition.internalDontTouch.lineNumberOneBased = lastInputLine
+	lastInputLine := p.reader.GetLine(lastInputLineNumberOneBased)
+	screenLines := p.renderLine(lastInputLine, lastInputLineNumberOneBased)
+
+	p.scrollPosition.internalDontTouch.lineNumberOneBased = lastInputLineNumberOneBased
 	p.scrollPosition.internalDontTouch.deltaScreenLines = len(screenLines) - 1
 }
 
+// Can be either because Pager.scrollToEnd() was just called or because the user
+// has pressed the down arrow enough times.
+func (p *Pager) isScrolledToEnd() bool {
+	inputLineCount := p.reader.GetLineCount()
+	if inputLineCount == 0 {
+		// No lines available, which means we can't scroll any further down
+		return true
+	}
+	lastInputLineNumberOneBased := inputLineCount
+
+	visibleLines, _ := p.renderLines()
+	lastVisibleLine := visibleLines[len(visibleLines)-1]
+	if lastVisibleLine.inputLineOneBased != lastInputLineNumberOneBased {
+		// Last input line is not on the screen
+		return false
+	}
+
+	// Last line is on screen, now we need to figure out whether we can see all
+	// of it
+	lastInputLine := p.reader.GetLine(lastInputLineNumberOneBased)
+	lastInputLineRendered := p.renderLine(lastInputLine, lastInputLineNumberOneBased)
+	lastRenderedSubLine := lastInputLineRendered[len(lastInputLineRendered)-1]
+
+	// If the last visible subline is the same as the last possible subline then
+	// we're at the bottom
+	return lastVisibleLine.wrapIndex == lastRenderedSubLine.wrapIndex
+}
+
+// Returns nil if there are no lines
 func (p *Pager) getLastVisiblePosition() *scrollPosition {
 	renderedLines, _ := p.renderLines()
 	if len(renderedLines) == 0 {
