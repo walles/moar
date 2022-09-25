@@ -73,3 +73,17 @@ func TestEndMatch(t *testing.T) {
 	assert.Assert(t, matchRanges.InRange(1))  // ä
 	assert.Assert(t, !matchRanges.InRange(2)) // Past the end
 }
+
+func TestRealWorldBug(t *testing.T) {
+	// Verify a real world bug found in v1.9.8
+
+	testString := "anna"
+	matchRanges := getMatchRanges(&testString, regexp.MustCompile("n"))
+	assert.Equal(t, len(matchRanges.Matches), 2) // Two matches
+
+	assert.DeepEqual(t, matchRanges.Matches[0][0], 1) // First match starts at 1
+	assert.DeepEqual(t, matchRanges.Matches[0][1], 2) // And ends on 2 exclusive
+
+	assert.DeepEqual(t, matchRanges.Matches[1][0], 2) // Second match starts at 2
+	assert.DeepEqual(t, matchRanges.Matches[1][1], 3) // And ends on 3 exclusive
+}
