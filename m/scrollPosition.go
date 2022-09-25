@@ -294,6 +294,8 @@ func (p *Pager) isScrolledToEnd() bool {
 		return false
 	}
 
+	// Last line is on screen, now we need to figure out whether we can see all
+	// of it
 	lastInputLine := p.reader.GetLine(lastInputLineNumberOneBased)
 	lastInputLineRendered := p.renderLine(lastInputLine, lastInputLineNumberOneBased)
 	lastRenderedSubLine := lastInputLineRendered[len(lastInputLineRendered)-1]
