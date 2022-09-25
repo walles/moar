@@ -25,7 +25,7 @@ echo "Please provide a version number on the form 'v1.2.3' for the new release:"
 read -r VERSION
 
 # https://github.com/walles/moar/issues/47
-if ! echo "$VERSION" | grep -q -E '^v[0-9]+\.[0-9]+\.[0-9]+$' ; then
+if ! echo "$VERSION" | grep -q -E '^v[0-9]+\.[0-9]+\.[0-9]+$'; then
   echo "ERROR: Version number must be on the form: v1.2.3: $VERSION"
   exit 1
 fi
@@ -64,4 +64,4 @@ echo
 echo "Also, update the brew packaging by making a PR to this file:"
 echo "https://github.com/Homebrew/homebrew-core/blob/master/Formula/moar.rb"
 echo
-echo "brew bump-formula-pr --url=https://github.com/walles/moar/archive/refs/tags/$VERSION.tar.gz"
+echo "brew bump-formula-pr --url=https://github.com/walles/moar/archive/refs/tags/$VERSION.tar.gz moar"
