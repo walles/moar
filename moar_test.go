@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/walles/moar/twin"
-	"gotest.tools/assert"
+	"gotest.tools/v3/assert"
 )
 
 func TestParseScrollHint(t *testing.T) {

@@ -11,7 +11,7 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"github.com/walles/moar/twin"
-	"gotest.tools/assert"
+	"gotest.tools/v3/assert"
 )
 
 // Convert a cells array to a plain string

@@ -4,7 +4,7 @@ import (
 	"regexp"
 	"testing"
 
-	"gotest.tools/assert"
+	"gotest.tools/v3/assert"
 )
 
 // This is really a constant, don't change it!

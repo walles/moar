@@ -4,7 +4,7 @@ import (
 	"reflect"
 	"testing"
 
-	"gotest.tools/assert"
+	"gotest.tools/v3/assert"
 )
 
 func TestTrimSpaceRight(t *testing.T) {

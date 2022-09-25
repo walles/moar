@@ -12,7 +12,7 @@ import (
 
 	"github.com/alecthomas/chroma/formatters"
 	"github.com/alecthomas/chroma/styles"
-	"gotest.tools/assert"
+	"gotest.tools/v3/assert"
 )
 
 func testGetLineCount(t *testing.T, reader *Reader) {

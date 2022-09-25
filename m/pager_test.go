@@ -11,7 +11,7 @@ import (
 	"github.com/alecthomas/chroma/formatters"
 	"github.com/alecthomas/chroma/styles"
 	"github.com/walles/moar/twin"
-	"gotest.tools/assert"
+	"gotest.tools/v3/assert"
 )
 
 func TestUnicodeRendering(t *testing.T) {

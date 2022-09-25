@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/walles/moar/twin"
-	"gotest.tools/assert"
+	"gotest.tools/v3/assert"
 )
 
 func testHorizontalCropping(t *testing.T, contents string, firstIndex int, lastIndex int, expected string) {

@@ -3,7 +3,7 @@ package m
 import (
 	"testing"
 
-	"gotest.tools/assert"
+	"gotest.tools/v3/assert"
 )
 
 func TestNumberFormatting(t *testing.T) {
