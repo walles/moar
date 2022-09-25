@@ -20,44 +20,29 @@ func getMatchRanges(String *string, Pattern *regexp.Regexp) *MatchRanges {
 
 // Convert byte indices to rune indices
 func toRunePositions(byteIndices [][]int, matchedString *string) [][2]int {
-	// FIXME: Will this function need to handle overlapping ranges?
-
 	var returnMe [][2]int
-
 	if len(byteIndices) == 0 {
 		// Nothing to see here, move along
 		return returnMe
 	}
 
-	fromByte := byteIndices[len(returnMe)][0]
-	toByte := byteIndices[len(returnMe)][1]
-	fromRune := -1
-	runePosition := 0
-	for bytePosition := range *matchedString {
-		if fromByte == bytePosition {
-			fromRune = runePosition
-		}
-		if toByte == bytePosition {
-			toRune := runePosition
-			returnMe = append(returnMe, [2]int{fromRune, toRune})
+	runeIndex := 0
+	byteIndicesToRuneIndices := make(map[int]int, 0)
+	for byteIndex := range *matchedString {
+		byteIndicesToRuneIndices[byteIndex] = runeIndex
 
-			fromRune = -1
-
-			if len(returnMe) >= len(byteIndices) {
-				// No more byte indices
-				break
-			}
-
-			fromByte = byteIndices[len(returnMe)][0]
-			toByte = byteIndices[len(returnMe)][1]
-		}
-
-		runePosition++
+		runeIndex++
 	}
 
-	if fromRune != -1 {
-		toRune := runePosition
-		returnMe = append(returnMe, [2]int{fromRune, toRune})
+	// If a match touches the end of the string, that will be encoded as one
+	// byte past the end of the string. Therefore we must add a mapping for
+	// first-index-after-the-end.
+	byteIndicesToRuneIndices[len(*matchedString)] = runeIndex
+
+	for _, bytePair := range byteIndices {
+		fromRuneIndex := byteIndicesToRuneIndices[bytePair[0]]
+		toRuneIndex := byteIndicesToRuneIndices[bytePair[1]]
+		returnMe = append(returnMe, [2]int{fromRuneIndex, toRuneIndex})
 	}
 
 	return returnMe

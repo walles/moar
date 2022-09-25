@@ -63,6 +63,7 @@ func TestEmpty(t *testing.T) {
 	assert.Equal(t, pager.lineNumberOneBased(), 0)
 }
 
+// Repro case for a search bug discovered in v1.9.8.
 func TestSearchHighlight(t *testing.T) {
 	line := Line{
 		raw: "x\"\"x",
