@@ -271,10 +271,12 @@ func (p *Pager) scrollToEnd() {
 	lastInputLineNumberOneBased := inputLineCount
 
 	lastInputLine := p.reader.GetLine(lastInputLineNumberOneBased)
-	screenLines := p.renderLine(lastInputLine, lastInputLineNumberOneBased)
 
 	p.scrollPosition.internalDontTouch.lineNumberOneBased = lastInputLineNumberOneBased
-	p.scrollPosition.internalDontTouch.deltaScreenLines = len(screenLines) - 1
+
+	// Scroll down enough. We know for sure the last line won't wrap into more
+	// lines than the number of characters it contains.
+	p.scrollPosition.internalDontTouch.deltaScreenLines = len(lastInputLine.raw)
 }
 
 // Can be either because Pager.scrollToEnd() was just called or because the user
