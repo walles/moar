@@ -331,6 +331,36 @@ func TestScrollToBottomWrapNextToLastLine(t *testing.T) {
 	assert.Equal(t, actual, expected)
 }
 
+// Repro for https://github.com/walles/moar/issues/105
+func TestScrollToEndLongInput(t *testing.T) {
+	const lineCount = 10100 // At least five digits
+
+	// "X" marks the spot
+	reader := NewReaderFromText("test", strings.Repeat(".\n", lineCount-1)+"X")
+	pager := NewPager(reader)
+	pager.ShowLineNumbers = true
+
+	// Tell our Pager to quit immediately
+	pager.Quit()
+
+	// Connect the pager with a screen
+	const screenHeight = 10
+	screen := twin.NewFakeScreen(20, screenHeight)
+	pager.StartPaging(screen)
+
+	// This is what we're really testing
+	pager.scrollToEnd()
+
+	// This makes sure at least one frame gets rendered
+	pager.redraw("")
+
+	// The last screen line holds the status field, and the next to last screen
+	// line holds the last contents line.
+	lastContentsLine := screen.GetRow(screenHeight - 2)
+	firstContentsColumn := len("10_100 ")
+	logDifference(t, twin.NewCell('X', twin.StyleDefault), lastContentsLine[firstContentsColumn])
+}
+
 func TestIsScrolledToEnd_LongFile(t *testing.T) {
 	// Six lines of contents
 	reader := NewReaderFromText("Testing", "a\nb\nc\nd\ne\nf\n")
