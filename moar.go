@@ -221,7 +221,7 @@ func parseUnprintableStyle(styleOption string, flagSet *flag.FlagSet) m.Unprinta
 func parseScrollHint(scrollHint string, flagSet *flag.FlagSet) twin.Cell {
 	scrollHint = strings.ReplaceAll(scrollHint, "ESC", "\x1b")
 	hintParser := m.NewLine(scrollHint)
-	parsedTokens := hintParser.HighlightedTokens(nil)
+	parsedTokens := hintParser.HighlightedTokens(nil).Cells
 	if len(parsedTokens) == 1 {
 		return parsedTokens[0]
 	}
