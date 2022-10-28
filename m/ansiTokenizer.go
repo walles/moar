@@ -22,6 +22,9 @@ var unprintableStyle UnprintableStyle = UNPRINTABLE_STYLE_HIGHLIGHT
 
 // ESC[...m: https://en.wikipedia.org/wiki/ANSI_escape_code#SGR
 //
+// m: "Select Graphic Rendition":
+// https://en.wikipedia.org/wiki/ANSI_escape_code#SGR_(Select_Graphic_Rendition)_parameters
+//
 // K: https://en.wikipedia.org/wiki/ANSI_escape_code#EL
 var sgrSequencePattern = regexp.MustCompile("\x1b\\[([0-9;]*[mK])")
 
@@ -455,7 +458,6 @@ func styledStringsFromString(s string) styledStringsWithTrailer {
 
 		styleChange := s[match[0]:match[1]]
 		if isClearToEol(styleChange) {
-			// FIXME
 			trailer = style
 		} else {
 			style = updateStyle(style, styleChange)
