@@ -14,6 +14,12 @@ type renderedLine struct {
 	wrapIndex int
 
 	cells []twin.Cell
+
+	// Used for rendering clear-to-end-of-line control sequences:
+	// https://en.wikipedia.org/wiki/ANSI_escape_code#EL
+	//
+	// Ref: https://github.com/walles/moar/issues/106
+	trailer twin.Style
 }
 
 // Refresh the whole pager display, both contents lines and the status line at
@@ -38,7 +44,7 @@ func (p *Pager) redraw(spinner string) {
 		// This happens when we're done
 		eofSpinner = "---"
 	}
-	spinnerLine := cellsFromString(_EofMarkerFormat + eofSpinner)
+	spinnerLine := cellsFromString(_EofMarkerFormat + eofSpinner).Cells
 	for column, cell := range spinnerLine {
 		p.screen.SetCell(column, lastUpdatedScreenLineNumber+1, cell)
 	}
@@ -86,12 +92,25 @@ func (p *Pager) renderScreenLines() (lines [][]twin.Cell, statusText string) {
 	screenLines := make([][]twin.Cell, 0, len(renderedLines))
 	for _, renderedLine := range renderedLines {
 		screenLines = append(screenLines, renderedLine.cells)
+
+		if renderedLine.trailer == twin.StyleDefault {
+			continue
+		}
+
+		// Fill up with the trailer
+		screenWidth, _ := p.screen.Size()
+		for len(screenLines[len(screenLines)-1]) < screenWidth {
+			screenLines[len(screenLines)-1] =
+				append(screenLines[len(screenLines)-1], twin.NewCell(' ', renderedLine.trailer))
+		}
 	}
 
 	return screenLines, statusText
 }
 
 // Render all lines that should go on the screen.
+//
+// Returns both the lines and a suitable status text.
 //
 // The returned lines are display ready, meaning that they come with horizontal
 // scroll markers and line numbers as necessary.
@@ -161,10 +180,10 @@ func (p *Pager) renderLine(line *Line, lineNumber int) []renderedLine {
 	var wrapped [][]twin.Cell
 	if p.WrapLongLines {
 		width, _ := p.screen.Size()
-		wrapped = wrapLine(width-p.numberPrefixLength(), highlighted)
+		wrapped = wrapLine(width-p.numberPrefixLength(), highlighted.Cells)
 	} else {
 		// All on one line
-		wrapped = [][]twin.Cell{highlighted}
+		wrapped = [][]twin.Cell{highlighted.Cells}
 	}
 
 	rendered := make([]renderedLine, 0)
@@ -179,6 +198,12 @@ func (p *Pager) renderLine(line *Line, lineNumber int) []renderedLine {
 			wrapIndex:         wrapIndex,
 			cells:             p.decorateLine(visibleLineNumber, inputLinePart),
 		})
+	}
+
+	if highlighted.Trailer != twin.StyleDefault {
+		// In the presence of wrapping, add the trailer to the last of the wrap
+		// lines only. This matches what both iTerm and the macOS Terminal does.
+		rendered[len(rendered)-1].trailer = highlighted.Trailer
 	}
 
 	return rendered

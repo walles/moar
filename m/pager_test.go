@@ -10,9 +10,13 @@ import (
 
 	"github.com/alecthomas/chroma/formatters"
 	"github.com/alecthomas/chroma/styles"
+	"github.com/google/go-cmp/cmp"
 	"github.com/walles/moar/twin"
 	"gotest.tools/v3/assert"
 )
+
+const blueBackgroundClearToEol0 = "\x1b[44m\x1b[0K" // With 0 before the K, should clear to EOL
+const blueBackgroundClearToEol = "\x1b[44m\x1b[K"   // No 0 before the K, should also clear to EOL
 
 func TestUnicodeRendering(t *testing.T) {
 	reader := NewReaderFromStream("", strings.NewReader("åäö"))
@@ -490,6 +494,70 @@ func TestPageSamples(t *testing.T) {
 		firstPagerLine := rowToString(screen.GetRow(0))
 		assert.Assert(t, strings.HasPrefix(firstReaderLine.Plain(), firstPagerLine))
 	}
+}
+
+// Validate rendering of https://en.wikipedia.org/wiki/ANSI_escape_code#EL
+func TestClearToEndOfLine_ClearFromStart(t *testing.T) {
+	screen := startPaging(t, NewReaderFromText("TestClearToEol", blueBackgroundClearToEol))
+
+	screenWidth, _ := screen.Size()
+	var expected []twin.Cell
+	for len(expected) < screenWidth {
+		expected = append(expected,
+			twin.NewCell(' ', twin.StyleDefault.Background(twin.NewColor16(4))),
+		)
+	}
+
+	actual := screen.GetRow(0)
+	assert.DeepEqual(t, actual, expected, cmp.AllowUnexported(twin.Style{}))
+}
+
+// Validate rendering of https://en.wikipedia.org/wiki/ANSI_escape_code#EL
+func TestClearToEndOfLine_ClearFromNotStart(t *testing.T) {
+	screen := startPaging(t, NewReaderFromText("TestClearToEol", "a"+blueBackgroundClearToEol))
+
+	screenWidth, _ := screen.Size()
+	expected := []twin.Cell{
+		twin.NewCell('a', twin.StyleDefault),
+	}
+	for len(expected) < screenWidth {
+		expected = append(expected,
+			twin.NewCell(' ', twin.StyleDefault.Background(twin.NewColor16(4))),
+		)
+	}
+
+	actual := screen.GetRow(0)
+	assert.DeepEqual(t, actual, expected, cmp.AllowUnexported(twin.Style{}))
+}
+
+// Validate rendering of https://en.wikipedia.org/wiki/ANSI_escape_code#EL
+func TestClearToEndOfLine_ClearFromStartScrolledRight(t *testing.T) {
+	pager := NewPager(NewReaderFromText("TestClearToEol", blueBackgroundClearToEol0))
+	pager.ShowLineNumbers = false
+
+	// Tell our Pager to quit immediately
+	pager.Quit()
+
+	// Except for just quitting, this also associates a FakeScreen with the Pager
+	screen := twin.NewFakeScreen(3, 10)
+	pager.StartPaging(screen)
+
+	// Scroll right, this is what we're testing
+	pager.leftColumnZeroBased = 44
+
+	// This makes sure at least one frame gets rendered
+	pager.redraw("")
+
+	screenWidth, _ := screen.Size()
+	var expected []twin.Cell
+	for len(expected) < screenWidth {
+		expected = append(expected,
+			twin.NewCell(' ', twin.StyleDefault.Background(twin.NewColor16(4))),
+		)
+	}
+
+	actual := screen.GetRow(0)
+	assert.DeepEqual(t, actual, expected, cmp.AllowUnexported(twin.Style{}))
 }
 
 func benchmarkSearch(b *testing.B, highlighted bool) {

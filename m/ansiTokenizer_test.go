@@ -48,7 +48,7 @@ func TestTokenize(t *testing.T) {
 			var loglines strings.Builder
 			log.SetOutput(&loglines)
 
-			tokens := cellsFromString(line.raw)
+			tokens := cellsFromString(line.raw).Cells
 			plainString := withoutFormatting(line.raw)
 			if len(tokens) != utf8.RuneCountInString(plainString) {
 				t.Errorf("%s:%d: len(tokens)=%d, len(plainString)=%d for: <%s>",
@@ -100,7 +100,7 @@ func TestTokenize(t *testing.T) {
 }
 
 func TestUnderline(t *testing.T) {
-	tokens := cellsFromString("a\x1b[4mb\x1b[24mc")
+	tokens := cellsFromString("a\x1b[4mb\x1b[24mc").Cells
 	assert.Equal(t, len(tokens), 3)
 	assert.Equal(t, tokens[0], twin.Cell{Rune: 'a', Style: twin.StyleDefault})
 	assert.Equal(t, tokens[1], twin.Cell{Rune: 'b', Style: twin.StyleDefault.WithAttr(twin.AttrUnderline)})
@@ -109,14 +109,14 @@ func TestUnderline(t *testing.T) {
 
 func TestManPages(t *testing.T) {
 	// Bold
-	tokens := cellsFromString("ab\bbc")
+	tokens := cellsFromString("ab\bbc").Cells
 	assert.Equal(t, len(tokens), 3)
 	assert.Equal(t, tokens[0], twin.Cell{Rune: 'a', Style: twin.StyleDefault})
 	assert.Equal(t, tokens[1], twin.Cell{Rune: 'b', Style: twin.StyleDefault.WithAttr(twin.AttrBold)})
 	assert.Equal(t, tokens[2], twin.Cell{Rune: 'c', Style: twin.StyleDefault})
 
 	// Underline
-	tokens = cellsFromString("a_\bbc")
+	tokens = cellsFromString("a_\bbc").Cells
 	assert.Equal(t, len(tokens), 3)
 	assert.Equal(t, tokens[0], twin.Cell{Rune: 'a', Style: twin.StyleDefault})
 	assert.Equal(t, tokens[1], twin.Cell{Rune: 'b', Style: twin.StyleDefault.WithAttr(twin.AttrUnderline)})
@@ -124,7 +124,7 @@ func TestManPages(t *testing.T) {
 
 	// Bullet point 1, taken from doing this on my macOS system:
 	// env PAGER="hexdump -C" man printf | moar
-	tokens = cellsFromString("a+\b+\bo\bob")
+	tokens = cellsFromString("a+\b+\bo\bob").Cells
 	assert.Equal(t, len(tokens), 3)
 	assert.Equal(t, tokens[0], twin.Cell{Rune: 'a', Style: twin.StyleDefault})
 	assert.Equal(t, tokens[1], twin.Cell{Rune: '•', Style: twin.StyleDefault})
@@ -132,7 +132,7 @@ func TestManPages(t *testing.T) {
 
 	// Bullet point 2, taken from doing this using the "fish" shell on my macOS system:
 	// man printf | hexdump -C | moar
-	tokens = cellsFromString("a+\bob")
+	tokens = cellsFromString("a+\bob").Cells
 	assert.Equal(t, len(tokens), 3)
 	assert.Equal(t, tokens[0], twin.Cell{Rune: 'a', Style: twin.StyleDefault})
 	assert.Equal(t, tokens[1], twin.Cell{Rune: '•', Style: twin.StyleDefault})

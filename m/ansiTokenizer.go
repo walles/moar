@@ -21,12 +21,22 @@ var manPageUnderline = twin.StyleDefault.WithAttr(twin.AttrUnderline)
 var unprintableStyle UnprintableStyle = UNPRINTABLE_STYLE_HIGHLIGHT
 
 // ESC[...m: https://en.wikipedia.org/wiki/ANSI_escape_code#SGR
-var sgrSequencePattern = regexp.MustCompile("\x1b\\[([0-9;]*m)")
+//
+// m: "Select Graphic Rendition":
+// https://en.wikipedia.org/wiki/ANSI_escape_code#SGR_(Select_Graphic_Rendition)_parameters
+//
+// K: https://en.wikipedia.org/wiki/ANSI_escape_code#EL
+var sgrSequencePattern = regexp.MustCompile("\x1b\\[([0-9;]*[mK])")
 
 // A Line represents a line of text that can / will be paged
 type Line struct {
 	raw   string
 	plain *string
+}
+
+type cellsWithTrailer struct {
+	Cells   []twin.Cell
+	Trailer twin.Style
 }
 
 // NewLine creates a new Line from a (potentially ANSI / man page formatted) string
@@ -39,26 +49,29 @@ func NewLine(raw string) Line {
 
 // Returns a representation of the string split into styled tokens. Any regexp
 // matches are highlighted in inverse video. A nil regexp means no highlighting.
-func (line *Line) HighlightedTokens(search *regexp.Regexp) []twin.Cell {
+func (line *Line) HighlightedTokens(search *regexp.Regexp) cellsWithTrailer {
 	plain := line.Plain()
 	matchRanges := getMatchRanges(&plain, search)
 
-	cells := cellsFromString(line.raw)
-	returnMe := make([]twin.Cell, 0, len(cells))
-	for _, token := range cells {
+	fromString := cellsFromString(line.raw)
+	returnCells := make([]twin.Cell, 0, len(fromString.Cells))
+	for _, token := range fromString.Cells {
 		style := token.Style
-		if matchRanges.InRange(len(returnMe)) {
+		if matchRanges.InRange(len(returnCells)) {
 			// Search hits in reverse video
 			style = style.WithAttr(twin.AttrReverse)
 		}
 
-		returnMe = append(returnMe, twin.Cell{
+		returnCells = append(returnCells, twin.Cell{
 			Rune:  token.Rune,
 			Style: style,
 		})
 	}
 
-	return returnMe
+	return cellsWithTrailer{
+		Cells:   returnCells,
+		Trailer: fromString.Trailer,
+	}
 }
 
 // Plain returns a plain text representation of the initial string
@@ -88,7 +101,7 @@ func SetManPageFormatFromEnv() {
 
 func termcapToStyle(termcap string) twin.Style {
 	// Add a character to be sure we have one to take the format from
-	cells := cellsFromString(termcap + "x")
+	cells := cellsFromString(termcap + "x").Cells
 	return cells[len(cells)-1].Style
 }
 
@@ -114,7 +127,7 @@ func withoutFormatting(s string) string {
 	stripped := strings.Builder{}
 	runeCount := 0
 	stripped.Grow(len(s))
-	for _, styledString := range styledStringsFromString(s) {
+	for _, styledString := range styledStringsFromString(s).styledStrings {
 		for _, runeValue := range runesFromStyledString(styledString) {
 			switch runeValue {
 
@@ -159,13 +172,14 @@ func withoutFormatting(s string) string {
 }
 
 // Turn a (formatted) string into a series of screen cells
-func cellsFromString(s string) []twin.Cell {
+func cellsFromString(s string) cellsWithTrailer {
 	var cells []twin.Cell
 
 	// Specs: https://en.wikipedia.org/wiki/ANSI_escape_code#3-bit_and_4-bit
 	styleUnprintable := twin.StyleDefault.Background(twin.NewColor16(1)).Foreground(twin.NewColor16(7))
 
-	for _, styledString := range styledStringsFromString(s) {
+	stringsWithTrailer := styledStringsFromString(s)
+	for _, styledString := range stringsWithTrailer.styledStrings {
 		for _, token := range tokensFromStyledString(styledString) {
 			switch token.Rune {
 
@@ -225,7 +239,10 @@ func cellsFromString(s string) []twin.Cell {
 		}
 	}
 
-	return cells
+	return cellsWithTrailer{
+		Cells:   cells,
+		Trailer: stringsWithTrailer.trailer,
+	}
 }
 
 // Consume 'x<x', where '<' is backspace and the result is a bold 'x'
@@ -389,12 +406,17 @@ func tokensFromStyledString(styledString _StyledString) []twin.Cell {
 	return tokens
 }
 
+type styledStringsWithTrailer struct {
+	styledStrings []_StyledString
+	trailer       twin.Style
+}
+
 type _StyledString struct {
 	String string
 	Style  twin.Style
 }
 
-func styledStringsFromString(s string) []_StyledString {
+func styledStringsFromString(s string) styledStringsWithTrailer {
 	hasEsc := false
 	for _, currentByte := range []byte(s) {
 		if currentByte == '\x1b' {
@@ -403,10 +425,13 @@ func styledStringsFromString(s string) []_StyledString {
 		}
 	}
 	if !hasEsc {
-		return []_StyledString{{
-			String: s,
-			Style:  twin.StyleDefault,
-		}}
+		return styledStringsWithTrailer{
+			trailer: twin.StyleDefault,
+			styledStrings: []_StyledString{{
+				String: s,
+				Style:  twin.StyleDefault,
+			}},
+		}
 	}
 
 	// The rest of this function was inspired by the
@@ -416,6 +441,7 @@ func styledStringsFromString(s string) []_StyledString {
 	styledStrings := make([]_StyledString, 0, len(matches)+1)
 
 	style := twin.StyleDefault
+	trailer := twin.StyleDefault
 
 	beg := 0
 	end := 0
@@ -430,8 +456,12 @@ func styledStringsFromString(s string) []_StyledString {
 			})
 		}
 
-		matchedPart := s[match[0]:match[1]]
-		style = updateStyle(style, matchedPart)
+		styleChange := s[match[0]:match[1]]
+		if isClearToEol(styleChange) {
+			trailer = style
+		} else {
+			style = updateStyle(style, styleChange)
+		}
 
 		beg = match[1]
 	}
@@ -443,7 +473,20 @@ func styledStringsFromString(s string) []_StyledString {
 		})
 	}
 
-	return styledStrings
+	return styledStringsWithTrailer{
+		styledStrings: styledStrings,
+		trailer:       trailer,
+	}
+}
+
+func isClearToEol(escapeSequence string) bool {
+	if escapeSequence == "\x1b[K" {
+		return true
+	}
+	if escapeSequence == "\x1b[0K" {
+		return true
+	}
+	return false
 }
 
 // updateStyle parses a string of the form "ESC[33m" into changes to style
