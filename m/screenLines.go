@@ -200,6 +200,12 @@ func (p *Pager) renderLine(line *Line, lineNumber int) []renderedLine {
 		})
 	}
 
+	if highlighted.Trailer != twin.StyleDefault {
+		// In the presence of wrapping, add the trailer to the last of the wrap
+		// lines only. This matches what both iTerm and the macOS Terminal does.
+		rendered[len(rendered)-1].trailer = highlighted.Trailer
+	}
+
 	return rendered
 }
 
