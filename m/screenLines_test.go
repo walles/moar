@@ -10,9 +10,6 @@ import (
 	"gotest.tools/v3/assert"
 )
 
-const blueBackgroundClearToEol0 = "\x1b[44m\x1b[0K" // With 0 before the K, should clear to EOL
-const blueBackgroundClearToEol = "\x1b[44m\x1b[K"   // No 0 before the K, should also clear to EOL
-
 func testHorizontalCropping(t *testing.T, contents string, firstIndex int, lastIndex int, expected string) {
 	pager := NewPager(nil)
 	pager.ShowLineNumbers = false
@@ -180,61 +177,4 @@ func TestWrapping(t *testing.T) {
 		"---",
 		"",
 	}, "\n"))
-}
-
-// Validate rendering of https://en.wikipedia.org/wiki/ANSI_escape_code#EL
-func TestClearToEndOfLine_ClearFromStart(t *testing.T) {
-	pager := NewPager(nil)
-	pager.ShowLineNumbers = false
-	pager.screen = twin.NewFakeScreen(3, 10)
-	pager.scrollPosition = newScrollPosition("TestClearToEol")
-	pager.reader = NewReaderFromText("TestClearToEol", "TestClearToEol")
-
-	// Blue background, clear to EOL
-	lineContents := NewLine(blueBackgroundClearToEol)
-	screenLine := pager.renderLine(&lineContents, 0)
-	assert.DeepEqual(t, screenLine[0].cells, []twin.Cell{
-		twin.NewCell(' ', twin.StyleDefault.Background(twin.NewColor16(4))),
-		twin.NewCell(' ', twin.StyleDefault.Background(twin.NewColor16(4))),
-		twin.NewCell(' ', twin.StyleDefault.Background(twin.NewColor16(4))),
-	}, cmp.AllowUnexported(twin.Style{}))
-}
-
-// Validate rendering of https://en.wikipedia.org/wiki/ANSI_escape_code#EL
-func TestClearToEndOfLine_ClearFromNotStart(t *testing.T) {
-	pager := NewPager(nil)
-	pager.ShowLineNumbers = false
-	pager.screen = twin.NewFakeScreen(3, 10)
-	pager.scrollPosition = newScrollPosition("TestClearToEol")
-	pager.reader = NewReaderFromText("TestClearToEol", "TestClearToEol")
-
-	// Blue background, clear to EOL
-	lineContents := NewLine("a" + blueBackgroundClearToEol)
-	screenLine := pager.renderLine(&lineContents, 0)
-	assert.DeepEqual(t, screenLine[0].cells, []twin.Cell{
-		twin.NewCell('a', twin.StyleDefault),
-		twin.NewCell(' ', twin.StyleDefault.Background(twin.NewColor16(4))),
-		twin.NewCell(' ', twin.StyleDefault.Background(twin.NewColor16(4))),
-	}, cmp.AllowUnexported(twin.Style{}))
-}
-
-// Validate rendering of https://en.wikipedia.org/wiki/ANSI_escape_code#EL
-func TestClearToEndOfLine_ClearFromStartScrolledRight(t *testing.T) {
-	pager := NewPager(nil)
-	pager.ShowLineNumbers = false
-	pager.screen = twin.NewFakeScreen(3, 10)
-	pager.scrollPosition = newScrollPosition("TestClearToEol")
-	pager.reader = NewReaderFromText("TestClearToEol", "TestClearToEol")
-
-	// Scroll right
-	pager.leftColumnZeroBased = 44
-
-	// Blue background, clear to EOL
-	lineContents := NewLine(blueBackgroundClearToEol0)
-	screenLine := pager.renderLine(&lineContents, 0)
-	assert.DeepEqual(t, screenLine[0].cells, []twin.Cell{
-		twin.NewCell('<', twin.StyleDefault.WithAttr(twin.AttrReverse)),
-		twin.NewCell(' ', twin.StyleDefault.Background(twin.NewColor16(4))),
-		twin.NewCell(' ', twin.StyleDefault.Background(twin.NewColor16(4))),
-	}, cmp.AllowUnexported(twin.Style{}))
 }
