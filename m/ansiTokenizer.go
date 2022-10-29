@@ -20,14 +20,6 @@ var manPageBold = twin.StyleDefault.WithAttr(twin.AttrBold)
 var manPageUnderline = twin.StyleDefault.WithAttr(twin.AttrUnderline)
 var unprintableStyle UnprintableStyle = UNPRINTABLE_STYLE_HIGHLIGHT
 
-// ESC[...m: https://en.wikipedia.org/wiki/ANSI_escape_code#SGR
-//
-// m: "Select Graphic Rendition":
-// https://en.wikipedia.org/wiki/ANSI_escape_code#SGR_(Select_Graphic_Rendition)_parameters
-//
-// K: https://en.wikipedia.org/wiki/ANSI_escape_code#EL
-var sgrSequencePattern = regexp.MustCompile("\x1b\\[([0-9;]*[mK])")
-
 // A Line represents a line of text that can / will be paged
 type Line struct {
 	raw   string
@@ -421,15 +413,17 @@ type _StyledString struct {
 	Style  twin.Style
 }
 
+type parseState int
+
+const (
+	initial parseState = iota
+	justSawEsc
+	inStyle
+)
+
 func styledStringsFromString(s string) styledStringsWithTrailer {
-	hasEsc := false
-	for _, currentByte := range []byte(s) {
-		if currentByte == '\x1b' {
-			hasEsc = true
-			break
-		}
-	}
-	if !hasEsc {
+	if !strings.ContainsAny(s, "\x1b") {
+		// This shortcut makes BenchmarkPlainTextSearch() perform a lot better
 		return styledStringsWithTrailer{
 			trailer: twin.StyleDefault,
 			styledStrings: []_StyledString{{
@@ -439,59 +433,91 @@ func styledStringsFromString(s string) styledStringsWithTrailer {
 		}
 	}
 
-	// The rest of this function was inspired by the
-	// https://golang.org/pkg/regexp/#Regexp.Split source code
-
-	matches := sgrSequencePattern.FindAllStringIndex(s, -1)
-	styledStrings := make([]_StyledString, 0, len(matches)+1)
-
-	style := twin.StyleDefault
 	trailer := twin.StyleDefault
+	parts := make([]_StyledString, 1)
 
-	beg := 0
-	end := 0
-	for _, match := range matches {
-		end = match[0]
+	state := initial
+	escIndex := -1 // Byte index into s
+	partStart := 0 // Byte index into s
+	style := twin.StyleDefault
+	for byteIndex, char := range s {
+		if state == initial {
+			if char == '\x1b' {
+				escIndex = byteIndex
+				state = justSawEsc
+			}
+			continue
+		} else if state == justSawEsc {
+			if char == '\x1b' {
+				escIndex = byteIndex
+				state = justSawEsc
+			} else if char == '[' {
+				state = inStyle
+			} else {
+				state = initial
+			}
+			continue
+		} else if state == inStyle {
+			if char == '\x1b' {
+				escIndex = byteIndex
+				state = justSawEsc
+			} else if (char >= '0' && char <= '9') || char == ';' {
+				// Stay in style
+			} else if char == 'm' {
+				if partStart < escIndex {
+					// Consume the most recent part
+					parts = append(parts, _StyledString{
+						String: s[partStart:escIndex],
+						Style:  style,
+					})
+				}
 
-		if end > beg {
-			// Found non-zero length string
-			styledStrings = append(styledStrings, _StyledString{
-				String: s[beg:end],
-				Style:  style,
-			})
+				style = updateStyle(style, s[escIndex:byteIndex+1])
+				partStart = byteIndex + 1 // Next part starts after this 'm'
+				state = initial
+			} else if char == 'K' {
+				ansiStyle := s[escIndex : byteIndex+1]
+				if ansiStyle != "\x1b[K" && ansiStyle != "\x1b[0K" {
+					// Not a supported clear operation, just treat the whole thing as plain text
+					state = initial
+					continue
+				}
+
+				// Handle clear-to-end-of-line
+
+				if partStart < escIndex {
+					// Consume the most recent part
+					parts = append(parts, _StyledString{
+						String: s[partStart:escIndex],
+						Style:  style,
+					})
+				}
+
+				trailer = style
+				partStart = byteIndex + 1 // Next part starts after this 'K'
+				state = initial
+			} else {
+				// Unsupported sequence, just treat the whole thing as plain text
+				state = initial
+			}
+			continue
 		}
 
-		styleChange := s[match[0]:match[1]]
-		if isClearToEol(styleChange) {
-			trailer = style
-		} else {
-			style = updateStyle(style, styleChange)
-		}
-
-		beg = match[1]
+		panic("We should never get here")
 	}
 
-	if end != len(s) {
-		styledStrings = append(styledStrings, _StyledString{
-			String: s[beg:],
+	if partStart < len(s) {
+		// Consume the most recent part
+		parts = append(parts, _StyledString{
+			String: s[partStart:],
 			Style:  style,
 		})
 	}
 
 	return styledStringsWithTrailer{
-		styledStrings: styledStrings,
+		styledStrings: parts,
 		trailer:       trailer,
 	}
-}
-
-func isClearToEol(escapeSequence string) bool {
-	if escapeSequence == "\x1b[K" {
-		return true
-	}
-	if escapeSequence == "\x1b[0K" {
-		return true
-	}
-	return false
 }
 
 // updateStyle parses a string of the form "ESC[33m" into changes to style
