@@ -422,6 +422,17 @@ const (
 )
 
 func styledStringsFromString(s string) styledStringsWithTrailer {
+	if !strings.ContainsAny(s, "\x1b") {
+		// This shortcut makes BenchmarkPlainTextSearch() perform a lot better
+		return styledStringsWithTrailer{
+			trailer: twin.StyleDefault,
+			styledStrings: []_StyledString{{
+				String: s,
+				Style:  twin.StyleDefault,
+			}},
+		}
+	}
+
 	trailer := twin.StyleDefault
 	parts := make([]_StyledString, 1)
 
