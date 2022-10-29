@@ -165,6 +165,13 @@ Run microbenchmarks:
 go test -benchmem -run='^$' -bench=. . ./...
 ```
 
+Profiling `BenchmarkPlainTextSearch()`. Try replacing `-alloc_objects` with
+`-alloc_space` or change the `-focus` function:
+
+```bash
+go test -memprofilerate 1 -memprofile memprofile.out -benchmem -run='^$' -bench '^BenchmarkPlainTextSearch$' github.com/walles/moar/m && go tool pprof -alloc_objects -focus findFirstHit -relative_percentages -web memprofile.out
+```
+
 Build + run:
 
 ```bash
