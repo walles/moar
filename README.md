@@ -162,7 +162,7 @@ Run tests:
 Run microbenchmarks:
 
 ```bash
-go test -run='^$' -bench=. . ./...
+go test -benchmem -run='^$' -bench=. . ./...
 ```
 
 Build + run:
