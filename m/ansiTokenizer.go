@@ -466,7 +466,7 @@ func styledStringsFromString(s string) styledStringsWithTrailer {
 				state = initial
 			} else if char == 'K' {
 				ansiStyle := s[escIndex : byteIndex+1]
-				if ansiStyle != "\x1b[K" && ansiStyle != "\x1b0K" {
+				if ansiStyle != "\x1b[K" && ansiStyle != "\x1b[0K" {
 					// Not a supported clear operation, just treat the whole thing as plain text
 					state = initial
 					continue
