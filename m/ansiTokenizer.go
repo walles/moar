@@ -126,7 +126,12 @@ func withoutFormatting(s string) string {
 
 	stripped := strings.Builder{}
 	runeCount := 0
-	stripped.Grow(len(s))
+
+	// " * 2" here makes BenchmarkPlainTextSearch() perform 30% faster. Probably
+	// due to avoiding a number of additional implicit Grow() calls when adding
+	// runes.
+	stripped.Grow(len(s) * 2)
+
 	for _, styledString := range styledStringsFromString(s).styledStrings {
 		for _, runeValue := range runesFromStyledString(styledString) {
 			switch runeValue {
