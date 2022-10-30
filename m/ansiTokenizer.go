@@ -111,18 +111,21 @@ func isPlain(s string) bool {
 	return true
 }
 
+// NOTE: Since this is global, calling withoutFormatting() from multiple
+// goroutines at the same time will not work.
+//
+// Interface mimics strings.Builder.
+var stripped reusableStringBuilder
+
+// NOTE: Uses a global "stripped" variable for performance. If you start calling
+// this from multiple threads at the same time it will break.
 func withoutFormatting(s string) string {
 	if isPlain(s) {
 		return s
 	}
 
-	stripped := strings.Builder{}
 	runeCount := 0
-
-	// " * 2" here makes BenchmarkPlainTextSearch() perform 30% faster. Probably
-	// due to avoiding a number of additional implicit Grow() calls when adding
-	// runes.
-	stripped.Grow(len(s) * 2)
+	stripped.Reset()
 
 	for _, styledString := range styledStringsFromString(s).styledStrings {
 		for _, runeValue := range runesFromStyledString(styledString) {
