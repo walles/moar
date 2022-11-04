@@ -6,6 +6,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"sync"
 	"unicode"
 
 	log "github.com/sirupsen/logrus"
@@ -116,6 +117,7 @@ func isPlain(s string) bool {
 //
 // Interface mimics strings.Builder.
 var stripped reusableStringBuilder
+var strippedLock sync.Mutex // FIXME: Try removing this and see if we still work
 
 // NOTE: Uses a global "stripped" variable for performance. If you start calling
 // this from multiple threads at the same time it will break.
@@ -123,6 +125,9 @@ func withoutFormatting(s string) string {
 	if isPlain(s) {
 		return s
 	}
+
+	strippedLock.Lock()
+	defer strippedLock.Unlock()
 
 	runeCount := 0
 	stripped.Reset()
