@@ -487,10 +487,11 @@ func (p *Pager) StartPaging(screen twin.Screen) {
 			// We'll be implicitly redrawn just by taking another lap in the loop
 
 		case eventMoreLinesAvailable:
-			// Doing nothing here is fine; screen will be refreshed on the next
-			// iteration of the main loop.
-			if p.mode.isViewing() && p.scrollPosition.HasScrolledDown() && p.Following {
+			if p.mode.isViewing() && p.Following {
 				p.scrollToEnd()
+			} else {
+				// Doing nothing here is fine; screen will be refreshed on the next
+				// iteration of the main loop.
 			}
 
 		case eventSpinnerUpdate:

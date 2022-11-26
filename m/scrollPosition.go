@@ -56,10 +56,6 @@ func canonicalFromPager(pager *Pager) scrollPositionCanonical {
 	}
 }
 
-func (s *scrollPosition) HasScrolledDown() bool {
-	return s.internalDontTouch.lineNumberOneBased > 1 || s.internalDontTouch.deltaScreenLines > 0
-}
-
 // Create a new position, scrolled towards the end of the file
 func (s scrollPosition) PreviousLine(scrollDistance int) scrollPosition {
 	return scrollPosition{
