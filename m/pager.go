@@ -133,6 +133,10 @@ Source Code
 Available at https://github.com/walles/moar/.
 `)
 
+func (pm _PagerMode) isViewing() bool {
+	return pm == _Viewing || pm == _NotFound
+}
+
 // NewPager creates a new Pager
 func NewPager(r *Reader) *Pager {
 	var name string
@@ -460,6 +464,9 @@ func (p *Pager) StartPaging(screen twin.Screen) {
 		case eventMoreLinesAvailable:
 			// Doing nothing here is fine; screen will be refreshed on the next
 			// iteration of the main loop.
+			if p.mode.isViewing() && p.scrollPosition.HasScrolledDown() && p.wasScrolledToEnd() {
+				p.scrollToEnd()
+			}
 
 		case eventSpinnerUpdate:
 			spinner = event.spinner
