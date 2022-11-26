@@ -281,6 +281,8 @@ func (p *Pager) scrollToEnd() {
 	// Scroll down enough. We know for sure the last line won't wrap into more
 	// lines than the number of characters it contains.
 	p.scrollPosition.internalDontTouch.deltaScreenLines = len(lastInputLine.raw)
+
+	p.Following = true
 }
 
 // Can be either because Pager.scrollToEnd() was just called or because the user

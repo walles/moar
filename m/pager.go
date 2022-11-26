@@ -55,6 +55,7 @@ type Pager struct {
 	searchString   string
 	searchPattern  *regexp.Regexp
 	gotoLineString string
+	Following      bool
 
 	isShowingHelp bool
 	preHelpState  *_PreHelpState
@@ -82,6 +83,7 @@ type _PreHelpState struct {
 	reader              *Reader
 	scrollPosition      scrollPosition
 	leftColumnZeroBased int
+	following           bool
 }
 
 const _EofMarkerFormat = "\x1b[7m" // Reverse video
@@ -193,6 +195,7 @@ func (p *Pager) Quit() {
 	p.reader = p.preHelpState.reader
 	p.scrollPosition = p.preHelpState.scrollPosition
 	p.leftColumnZeroBased = p.preHelpState.leftColumnZeroBased
+	p.Following = p.preHelpState.following
 	p.preHelpState = nil
 }
 
@@ -213,6 +216,14 @@ func (p *Pager) moveRight(delta int) {
 	} else {
 		p.leftColumnZeroBased = result
 	}
+}
+
+func (p *Pager) handleScrolledUp() {
+	p.Following = false
+}
+
+func (p *Pager) handleScrolledDown() {
+	p.Following = p.isScrolledToEnd()
 }
 
 func (p *Pager) onKey(keyCode twin.KeyCode) {
@@ -238,10 +249,12 @@ func (p *Pager) onKey(keyCode twin.KeyCode) {
 	case twin.KeyUp:
 		// Clipping is done in _Redraw()
 		p.scrollPosition = p.scrollPosition.PreviousLine(1)
+		p.handleScrolledUp()
 
 	case twin.KeyDown, twin.KeyEnter:
 		// Clipping is done in _Redraw()
 		p.scrollPosition = p.scrollPosition.NextLine(1)
+		p.handleScrolledDown()
 
 	case twin.KeyRight:
 		p.moveRight(16)
@@ -251,17 +264,20 @@ func (p *Pager) onKey(keyCode twin.KeyCode) {
 
 	case twin.KeyHome:
 		p.scrollPosition = newScrollPosition("Pager scroll position")
+		p.handleScrolledUp()
 
 	case twin.KeyEnd:
 		p.scrollToEnd()
 
-	case twin.KeyPgDown:
-		_, height := p.screen.Size()
-		p.scrollPosition = p.scrollPosition.NextLine(height - 1)
-
 	case twin.KeyPgUp:
 		_, height := p.screen.Size()
 		p.scrollPosition = p.scrollPosition.PreviousLine(height - 1)
+		p.handleScrolledUp()
+
+	case twin.KeyPgDown:
+		_, height := p.screen.Size()
+		p.scrollPosition = p.scrollPosition.NextLine(height - 1)
+		p.handleScrolledDown()
 
 	default:
 		log.Debugf("Unhandled key event %v", keyCode)
@@ -291,10 +307,12 @@ func (p *Pager) onRune(char rune) {
 				reader:              p.reader,
 				scrollPosition:      p.scrollPosition,
 				leftColumnZeroBased: p.leftColumnZeroBased,
+				following:           p.Following,
 			}
 			p.reader = _HelpReader
 			p.scrollPosition = newScrollPosition("Pager scroll position")
 			p.leftColumnZeroBased = 0
+			p.Following = false
 			p.isShowingHelp = true
 		}
 
@@ -304,10 +322,12 @@ func (p *Pager) onRune(char rune) {
 	case 'k', 'y':
 		// Clipping is done in _Redraw()
 		p.scrollPosition = p.scrollPosition.PreviousLine(1)
+		p.handleScrolledUp()
 
 	case 'j', 'e':
 		// Clipping is done in _Redraw()
 		p.scrollPosition = p.scrollPosition.NextLine(1)
+		p.handleScrolledDown()
 
 	case 'l':
 		// vim right
@@ -319,6 +339,7 @@ func (p *Pager) onRune(char rune) {
 
 	case '<':
 		p.scrollPosition = newScrollPosition("Pager scroll position")
+		p.handleScrolledUp()
 
 	case '>', 'G':
 		p.scrollToEnd()
@@ -326,22 +347,26 @@ func (p *Pager) onRune(char rune) {
 	case 'f', ' ':
 		_, height := p.screen.Size()
 		p.scrollPosition = p.scrollPosition.NextLine(height - 1)
+		p.handleScrolledDown()
 
 	case 'b':
 		_, height := p.screen.Size()
 		p.scrollPosition = p.scrollPosition.PreviousLine(height - 1)
+		p.handleScrolledUp()
 
 	// '\x15' = CTRL-u, should work like just 'u'.
 	// Ref: https://github.com/walles/moar/issues/90
 	case 'u', '\x15':
 		_, height := p.screen.Size()
 		p.scrollPosition = p.scrollPosition.PreviousLine(height / 2)
+		p.handleScrolledUp()
 
 	// '\x04' = CTRL-d, should work like just 'd'.
 	// Ref: https://github.com/walles/moar/issues/90
 	case 'd', '\x04':
 		_, height := p.screen.Size()
 		p.scrollPosition = p.scrollPosition.NextLine(height / 2)
+		p.handleScrolledDown()
 
 	case '/':
 		p.mode = _Searching
@@ -464,7 +489,7 @@ func (p *Pager) StartPaging(screen twin.Screen) {
 		case eventMoreLinesAvailable:
 			// Doing nothing here is fine; screen will be refreshed on the next
 			// iteration of the main loop.
-			if p.mode.isViewing() && p.scrollPosition.HasScrolledDown() && p.wasScrolledToEnd() {
+			if p.mode.isViewing() && p.scrollPosition.HasScrolledDown() && p.Following {
 				p.scrollToEnd()
 			}
 
