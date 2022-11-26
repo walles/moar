@@ -489,9 +489,6 @@ func (p *Pager) StartPaging(screen twin.Screen) {
 		case eventMoreLinesAvailable:
 			if p.mode.isViewing() && p.Following {
 				p.scrollToEnd()
-			} else {
-				// Doing nothing here is fine; screen will be refreshed on the next
-				// iteration of the main loop.
 			}
 
 		case eventSpinnerUpdate:
