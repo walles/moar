@@ -30,6 +30,7 @@ Doing the right thing includes:
 - The position in the file is always shown
 - Supports **word wrapping** (on actual word boundaries) if requested using
   `--wrap` or by pressing <kbd>w</kbd>
+- **Follows output** as long as you are on the last line, just like `tail -f`
 
 [For compatibility reasons](https://github.com/walles/moar/issues/14), `moar`
 uses the formats declared in these environment variables when viewing man pages:
