@@ -107,8 +107,8 @@ Moving around
 * PageUp / 'b' and PageDown / 'f'
 * SPACE moves down a page
 * Home and End for start / end of the document
-* < / ALT-< to go to the start of the document
-* > / ALT-> / 'G' to go to the end of the document
+* < to go to the start of the document
+* > / 'G' to go to the end of the document
 * 'h', 'l' for left and right (as in vim)
 * Half page 'u'p / 'd'own, or CTRL-u / CTRL-d
 * RETURN moves down one line
@@ -343,15 +343,11 @@ func (p *Pager) onRune(char rune) {
 		// vim left
 		p.moveRight(-16)
 
-	// '≤' = ALT-< on my MacBook, should work like '<'
-	// Ref: https://github.com/walles/moar/issues/107#issuecomment-1328354080
-	case '<', '≤':
+	case '<':
 		p.scrollPosition = newScrollPosition("Pager scroll position")
 		p.handleScrolledUp()
 
-	// '≤' = ALT-> on my MacBook, should work like '<'
-	// Ref: https://github.com/walles/moar/issues/107#issuecomment-1328354080
-	case '>', '≥', 'G':
+	case '>', 'G':
 		p.scrollToEnd()
 
 	case 'f', ' ':
