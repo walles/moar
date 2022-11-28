@@ -100,13 +100,15 @@ Miscellaneous
 Moving around
 -------------
 * Arrow keys
-* SPACE moves down a page
-* 'g' for going to a specific line number
 * Left / right can be used to hide / show line numbers
+* CTRL-p moves to the previous line
+* CTRL-n moves to the next line
+* 'g' for going to a specific line number
 * PageUp / 'b' and PageDown / 'f'
+* SPACE moves down a page
 * Home and End for start / end of the document
-* < to go to the start of the document
-* > / 'G' to go to the end of the document
+* < / ALT-< to go to the start of the document
+* > / ALT-> / 'G' to go to the end of the document
 * 'h', 'l' for left and right (as in vim)
 * Half page 'u'p / 'd'own, or CTRL-u / CTRL-d
 * RETURN moves down one line
@@ -319,12 +321,16 @@ func (p *Pager) onRune(char rune) {
 	case '=':
 		p.ShowStatusBar = !p.ShowStatusBar
 
-	case 'k', 'y':
+	// '\x10' = CTRL-p, should scroll up one line.
+	// Ref: https://github.com/walles/moar/issues/107#issuecomment-1328354080
+	case 'k', 'y', '\x10':
 		// Clipping is done in _Redraw()
 		p.scrollPosition = p.scrollPosition.PreviousLine(1)
 		p.handleScrolledUp()
 
-	case 'j', 'e':
+	// '\x0e' = CTRL-n, should scroll down one line.
+	// Ref: https://github.com/walles/moar/issues/107#issuecomment-1328354080
+	case 'j', 'e', '\x0e':
 		// Clipping is done in _Redraw()
 		p.scrollPosition = p.scrollPosition.NextLine(1)
 		p.handleScrolledDown()
@@ -337,11 +343,15 @@ func (p *Pager) onRune(char rune) {
 		// vim left
 		p.moveRight(-16)
 
-	case '<':
+	// '≤' = ALT-< on my MacBook, should work like '<'
+	// Ref: https://github.com/walles/moar/issues/107#issuecomment-1328354080
+	case '<', '≤':
 		p.scrollPosition = newScrollPosition("Pager scroll position")
 		p.handleScrolledUp()
 
-	case '>', 'G':
+	// '≤' = ALT-> on my MacBook, should work like '<'
+	// Ref: https://github.com/walles/moar/issues/107#issuecomment-1328354080
+	case '>', '≥', 'G':
 		p.scrollToEnd()
 
 	case 'f', ' ':
