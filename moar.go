@@ -256,6 +256,7 @@ func main() {
 	debug := flagSet.Bool("debug", false, "Print debug logs after exiting")
 	trace := flagSet.Bool("trace", false, "Print trace logs after exiting")
 	wrap := flagSet.Bool("wrap", false, "Wrap long lines")
+	follow := flagSet.Bool("follow", false, "Follow piped input just like \"tail -f\"")
 	styleOption := flagSet.String("style", "native",
 		"Highlighting style from https://xyproto.github.io/splash/docs/longer/all.html")
 	colorsOption := flagSet.String("colors", "auto", "Highlighting palette size: 8, 16, 256, 16M, auto")
@@ -371,7 +372,7 @@ func main() {
 		// Display input pipe contents
 		reader := m.NewReaderFromStream("", os.Stdin)
 		startPaging(reader,
-			*wrap, *noLineNumbers, *noStatusBar, *noClearOnExit, statusBarStyle, unprintableStyle,
+			*wrap, *follow, *noLineNumbers, *noStatusBar, *noClearOnExit, statusBarStyle, unprintableStyle,
 			scrollLeftHint, scrollRightHint)
 		return
 	}
@@ -383,12 +384,12 @@ func main() {
 		os.Exit(1)
 	}
 	startPaging(reader,
-		*wrap, *noLineNumbers, *noStatusBar, *noClearOnExit, statusBarStyle, unprintableStyle,
+		*wrap, *follow, *noLineNumbers, *noStatusBar, *noClearOnExit, statusBarStyle, unprintableStyle,
 		scrollLeftHint, scrollRightHint)
 }
 
 func startPaging(reader *m.Reader,
-	wrapLongLines, noLineNumbers, noStatusBar, noClearOnExit bool,
+	wrapLongLines, follow, noLineNumbers, noStatusBar, noClearOnExit bool,
 	statusBarStyle m.StatusBarStyle,
 	unprintableStyle m.UnprintableStyle,
 	scrollLeftHint twin.Cell,
@@ -403,6 +404,7 @@ func startPaging(reader *m.Reader,
 	log.SetOutput(&loglines)
 	pager := m.NewPager(reader)
 	pager.WrapLongLines = wrapLongLines
+	pager.Following = follow
 	pager.ShowLineNumbers = !noLineNumbers
 	pager.ShowStatusBar = !noStatusBar
 	pager.StatusBarStyle = statusBarStyle
