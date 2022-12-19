@@ -23,6 +23,7 @@ go test -timeout 20s ./...
 
 # Ensure we can cross compile
 # NOTE: Make sure this list matches the one in release.sh
+echo "Testing cross compilation..."
 GOOS=linux GOARCH=386 ./build.sh
 GOOS=darwin GOARCH=amd64 ./build.sh
 GOOS=windows GOARCH=amd64 ./build.sh
@@ -30,17 +31,17 @@ GOOS=windows GOARCH=amd64 ./build.sh
 # Verify sending the output to a file
 RESULT="$(mktemp)"
 function cleanup {
-  rm -rf "$RESULT"
+  rm -rf "${RESULT}"
 }
 trap cleanup EXIT
 
 echo Test reading from redirected stdin, writing to redirected stdout...
-./moar <moar.go >"$RESULT"
-diff -u moar.go "$RESULT"
+./moar <moar.go >"${RESULT}"
+diff -u moar.go "${RESULT}"
 
 echo Test redirecting a file by name into file by redirecting stdout...
-./moar moar.go >"$RESULT"
-diff -u moar.go "$RESULT"
+./moar moar.go >"${RESULT}"
+diff -u moar.go "${RESULT}"
 
 echo Test redirecting non-existing file by name into redirected stdout...
 if ./moar does-not-exist >&/dev/null; then
@@ -55,7 +56,7 @@ diff -u <(./moar --version) <(git describe --tags --dirty --always)
 echo Test that the man page and --help document the same set of options...
 MAN_OPTIONS="$(grep -E '^\\fB' moar.1 | cut -d\\ -f4- | sed 's/fR.*//' | sed 's/\\//g')"
 MOAR_OPTIONS="$(./moar --help | grep -E '^  -' | cut -d' ' -f3 | grep -v -- -version)"
-diff -u <(echo "$MAN_OPTIONS") <(echo "$MOAR_OPTIONS")
+diff -u <(echo "${MAN_OPTIONS}") <(echo "${MOAR_OPTIONS}")
 
 # FIXME: On unknown command line options, test that help text goes to stderr
 
