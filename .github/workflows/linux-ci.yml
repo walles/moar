@@ -16,10 +16,11 @@ jobs:
       - name: Install golangci-lint
         run: curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b "$(go env GOPATH)"/bin v1.50.1
 
-      # Required for the golangci-lint that we just installed to work. Also
-      # gives us some caching.
+      # Source: https://www.scivision.dev/github-actions-path-append/
+      #
+      # Required for the golangci-lint that we just installed to work.
       - name: Add GOPATH/bin to PATH
-        uses: actions/setup-go@v3
+        run: echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
 
       - name: Check out repository code
         uses: actions/checkout@v2
