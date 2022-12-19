@@ -93,7 +93,7 @@ Welcome to Moar, the nice pager!
 
 Miscellaneous
 -------------
-* Press 'q' or ESC to quit
+* Press 'q' or 'ESC' to quit
 * Press 'w' to toggle wrapping of long lines
 * Press '=' to toggle showing the status bar at the bottom
 
