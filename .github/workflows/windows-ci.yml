@@ -14,6 +14,8 @@ jobs:
 
       # Add some caching, should help for PRs with multiple pushes.
       - uses: actions/setup-go@v3
+        with:
+          cache: true
 
       - run: go build
       - run: go test -timeout 30s ./...
