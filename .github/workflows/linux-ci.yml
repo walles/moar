@@ -1,0 +1,28 @@
+name: Linux CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+jobs:
+  validate:
+    runs-on: ubuntu-22.04
+    steps:
+      # golangci-lint is required by test.sh. Latest version here if you want
+      # to bump it, version number is at the end of the "curl | sh"
+      # commandline below:
+      # https://github.com/golangci/golangci-lint/releases/latest
+      - name: Install golangci-lint
+        run: curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b "$(go env GOPATH)"/bin v1.50.1
+
+      # Source: https://www.scivision.dev/github-actions-path-append/
+      #
+      # Required for the golangci-lint that we just installed to work.
+      - name: Add GOPATH/bin to PATH
+        run: echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
+
+      - name: Check out repository code
+        uses: actions/checkout@v2
+
+      - run: ./test.sh

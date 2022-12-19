@@ -1,0 +1,15 @@
+name: Windows CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+jobs:
+  validate:
+    runs-on: windows-2022
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v2
+      - run: go build
+      - run: go test -timeout 30s ./...
