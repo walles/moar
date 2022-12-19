@@ -60,9 +60,9 @@ func (p *Pager) redraw(spinner string) {
 		p.addGotoLineFooter()
 
 	case _Viewing:
-		helpText := "Press 'ESC' or 'q' to exit, '/' to search, '?' for help"
+		helpText := "Press 'ESC' / 'q' to exit, '/' to search, '?' for help"
 		if p.isShowingHelp {
-			helpText = "Press 'ESC' or 'q' to exit help, '/' to search"
+			helpText = "Press 'ESC' / 'q' to exit help, '/' to search"
 		}
 
 		if p.ShowStatusBar {
