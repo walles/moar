@@ -1,0 +1,13 @@
+name: Windows CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+jobs:
+  validate:
+    runs-on: windows-2022
+    steps:
+      - run: go build
+      - run: go test -timeout 30s ./...
