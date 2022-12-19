@@ -1,3 +1,9 @@
+# From: https://blog.travis-ci.com/2022-01-28-pullrequests
+#
+# "Assuming you want to build all PRs, something like the following will do the
+# trick":
+if: (type = push AND branch = master) OR (type = pull_request)
+
 language: go
 go:
   - 1.16.x
