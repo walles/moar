@@ -11,5 +11,9 @@ jobs:
     steps:
       - name: Check out repository code
         uses: actions/checkout@v2
+
+      # Add some caching, should help for PRs with multiple pushes.
+      - uses: actions/setup-go@v3
+
       - run: go build
       - run: go test -timeout 30s ./...
