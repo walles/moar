@@ -17,7 +17,7 @@ fi
 # List existing version numbers...
 echo
 echo "Previous version numbers:"
-git tag | cat
+git tag | sort -V | tail
 
 # ... and ask for a new version number.
 echo
