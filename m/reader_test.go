@@ -10,8 +10,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/alecthomas/chroma/formatters"
-	"github.com/alecthomas/chroma/styles"
+	"github.com/alecthomas/chroma/v2/formatters"
+	"github.com/alecthomas/chroma/v2/styles"
 	"gotest.tools/v3/assert"
 )
 

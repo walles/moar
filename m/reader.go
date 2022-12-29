@@ -12,7 +12,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/alecthomas/chroma"
+	"github.com/alecthomas/chroma/v2"
 	log "github.com/sirupsen/logrus"
 )
 
