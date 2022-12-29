@@ -8,8 +8,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/alecthomas/chroma/formatters"
-	"github.com/alecthomas/chroma/styles"
+	"github.com/alecthomas/chroma/v2/formatters"
+	"github.com/alecthomas/chroma/v2/styles"
 	"github.com/google/go-cmp/cmp"
 	"github.com/walles/moar/twin"
 	"gotest.tools/v3/assert"

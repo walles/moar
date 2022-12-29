@@ -5,8 +5,8 @@ import (
 	"os"
 	"strings"
 
-	"github.com/alecthomas/chroma"
-	"github.com/alecthomas/chroma/lexers"
+	"github.com/alecthomas/chroma/v2"
+	"github.com/alecthomas/chroma/v2/lexers"
 
 	log "github.com/sirupsen/logrus"
 )
