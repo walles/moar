@@ -18,6 +18,7 @@ const BACKSPACE = '\b'
 
 var manPageBold = twin.StyleDefault.WithAttr(twin.AttrBold)
 var manPageUnderline = twin.StyleDefault.WithAttr(twin.AttrUnderline)
+var standoutStyle *twin.Style = nil
 var unprintableStyle UnprintableStyle = UNPRINTABLE_STYLE_HIGHLIGHT
 
 // A Line represents a line of text that can / will be paged
@@ -40,7 +41,7 @@ func NewLine(raw string) Line {
 }
 
 // Returns a representation of the string split into styled tokens. Any regexp
-// matches are highlighted in inverse video. A nil regexp means no highlighting.
+// matches are highlighted. A nil regexp means no highlighting.
 func (line *Line) HighlightedTokens(search *regexp.Regexp) cellsWithTrailer {
 	plain := line.Plain()
 	matchRanges := getMatchRanges(&plain, search)
@@ -50,8 +51,11 @@ func (line *Line) HighlightedTokens(search *regexp.Regexp) cellsWithTrailer {
 	for _, token := range fromString.Cells {
 		style := token.Style
 		if matchRanges.InRange(len(returnCells)) {
-			// Search hits in reverse video
-			style = style.WithAttr(twin.AttrReverse)
+			if standoutStyle != nil {
+				style = *standoutStyle
+			} else {
+				style = style.WithAttr(twin.AttrReverse)
+			}
 		}
 
 		returnCells = append(returnCells, twin.Cell{
@@ -88,6 +92,12 @@ func SetManPageFormatFromEnv() {
 	lessTermcapUs := os.Getenv("LESS_TERMCAP_us")
 	if lessTermcapUs != "" {
 		manPageUnderline = termcapToStyle(lessTermcapUs)
+	}
+
+	lessTermcapSo := os.Getenv("LESS_TERMCAP_so")
+	if lessTermcapSo != "" {
+		_standoutStyle := termcapToStyle(lessTermcapSo)
+		standoutStyle = &_standoutStyle
 	}
 }
 
