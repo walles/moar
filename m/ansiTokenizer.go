@@ -95,7 +95,12 @@ func ConsumeLessTermcapEnvs() {
 
 	setStyleFromEnv(&manPageBold, "LESS_TERMCAP_md")
 	setStyleFromEnv(&manPageUnderline, "LESS_TERMCAP_us")
-	setStyleFromEnv(standoutStyle, "LESS_TERMCAP_so")
+
+	value := os.Getenv("LESS_TERMCAP_so")
+	if value != "" {
+		_standoutStyle := termcapToStyle(value)
+		standoutStyle = &_standoutStyle
+	}
 }
 
 func termcapToStyle(termcap string) twin.Style {
