@@ -34,10 +34,11 @@ Doing the right thing includes:
   just like `tail -f`
 
 [For compatibility reasons](https://github.com/walles/moar/issues/14), `moar`
-uses the formats declared in these environment variables when viewing man pages:
+uses the formats declared in these environment variables if present:
 
-- `LESS_TERMCAP_md`: Bold
-- `LESS_TERMCAP_us`: Underline
+- `LESS_TERMCAP_md`: Man page <b>bold</b>
+- `LESS_TERMCAP_us`: Man page <u>underline</u>
+- `LESS_TERMCAP_so`: [Status bar and search hits](https://github.com/walles/moar/issues/114)
 
 For configurability reasons, `moar` reads extra command line options from the
 `MOAR` environment variable.

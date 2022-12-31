@@ -166,7 +166,9 @@ func (p *Pager) setFooter(footer string) {
 
 	pos := 0
 	var footerStyle twin.Style
-	if p.StatusBarStyle == STATUSBAR_STYLE_INVERSE {
+	if standoutStyle != nil {
+		footerStyle = *standoutStyle
+	} else if p.StatusBarStyle == STATUSBAR_STYLE_INVERSE {
 		footerStyle = twin.StyleDefault.WithAttr(twin.AttrReverse)
 	} else if p.StatusBarStyle == STATUSBAR_STYLE_PLAIN {
 		footerStyle = twin.StyleDefault
@@ -400,7 +402,7 @@ func (p *Pager) onRune(char rune) {
 // StartPaging brings up the pager on screen
 func (p *Pager) StartPaging(screen twin.Screen) {
 	unprintableStyle = p.UnprintableStyle
-	SetManPageFormatFromEnv()
+	ConsumeLessTermcapEnvs()
 
 	p.screen = screen
 

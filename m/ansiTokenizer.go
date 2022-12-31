@@ -18,6 +18,7 @@ const BACKSPACE = '\b'
 
 var manPageBold = twin.StyleDefault.WithAttr(twin.AttrBold)
 var manPageUnderline = twin.StyleDefault.WithAttr(twin.AttrUnderline)
+var standoutStyle *twin.Style = nil
 var unprintableStyle UnprintableStyle = UNPRINTABLE_STYLE_HIGHLIGHT
 
 // A Line represents a line of text that can / will be paged
@@ -40,7 +41,7 @@ func NewLine(raw string) Line {
 }
 
 // Returns a representation of the string split into styled tokens. Any regexp
-// matches are highlighted in inverse video. A nil regexp means no highlighting.
+// matches are highlighted. A nil regexp means no highlighting.
 func (line *Line) HighlightedTokens(search *regexp.Regexp) cellsWithTrailer {
 	plain := line.Plain()
 	matchRanges := getMatchRanges(&plain, search)
@@ -50,8 +51,11 @@ func (line *Line) HighlightedTokens(search *regexp.Regexp) cellsWithTrailer {
 	for _, token := range fromString.Cells {
 		style := token.Style
 		if matchRanges.InRange(len(returnCells)) {
-			// Search hits in reverse video
-			style = style.WithAttr(twin.AttrReverse)
+			if standoutStyle != nil {
+				style = *standoutStyle
+			} else {
+				style = style.WithAttr(twin.AttrReverse)
+			}
 		}
 
 		returnCells = append(returnCells, twin.Cell{
@@ -75,19 +79,27 @@ func (line *Line) Plain() string {
 	return *line.plain
 }
 
-// SetManPageFormatFromEnv parses LESS_TERMCAP_xx environment variables and
-// adapts the moar output accordingly.
-func SetManPageFormatFromEnv() {
-	// Requested here: https://github.com/walles/moar/issues/14
-
-	lessTermcapMd := os.Getenv("LESS_TERMCAP_md")
-	if lessTermcapMd != "" {
-		manPageBold = termcapToStyle(lessTermcapMd)
+func setStyleFromEnv(updateMe *twin.Style, envVarName string) {
+	envValue := os.Getenv(envVarName)
+	if envValue == "" {
+		return
 	}
 
-	lessTermcapUs := os.Getenv("LESS_TERMCAP_us")
-	if lessTermcapUs != "" {
-		manPageUnderline = termcapToStyle(lessTermcapUs)
+	*updateMe = termcapToStyle(envValue)
+}
+
+// ConsumeLessTermcapEnvs parses LESS_TERMCAP_xx environment variables and
+// adapts the moar output accordingly.
+func ConsumeLessTermcapEnvs() {
+	// Requested here: https://github.com/walles/moar/issues/14
+
+	setStyleFromEnv(&manPageBold, "LESS_TERMCAP_md")
+	setStyleFromEnv(&manPageUnderline, "LESS_TERMCAP_us")
+
+	value := os.Getenv("LESS_TERMCAP_so")
+	if value != "" {
+		_standoutStyle := termcapToStyle(value)
+		standoutStyle = &_standoutStyle
 	}
 }
 
