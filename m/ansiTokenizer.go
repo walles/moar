@@ -88,9 +88,9 @@ func setStyleFromEnv(updateMe *twin.Style, envVarName string) {
 	*updateMe = termcapToStyle(envValue)
 }
 
-// SetManPageFormatFromEnv parses LESS_TERMCAP_xx environment variables and
+// ConsumeLessTermcapEnvs parses LESS_TERMCAP_xx environment variables and
 // adapts the moar output accordingly.
-func SetManPageFormatFromEnv() {
+func ConsumeLessTermcapEnvs() {
 	// Requested here: https://github.com/walles/moar/issues/14
 
 	setStyleFromEnv(&manPageBold, "LESS_TERMCAP_md")

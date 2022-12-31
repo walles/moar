@@ -400,7 +400,7 @@ func (p *Pager) onRune(char rune) {
 // StartPaging brings up the pager on screen
 func (p *Pager) StartPaging(screen twin.Screen) {
 	unprintableStyle = p.UnprintableStyle
-	SetManPageFormatFromEnv()
+	ConsumeLessTermcapEnvs()
 
 	p.screen = screen
 
