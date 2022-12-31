@@ -79,26 +79,23 @@ func (line *Line) Plain() string {
 	return *line.plain
 }
 
+func setStyleFromEnv(updateMe *twin.Style, envVarName string) {
+	envValue := os.Getenv(envVarName)
+	if envValue == "" {
+		return
+	}
+
+	*updateMe = termcapToStyle(envValue)
+}
+
 // SetManPageFormatFromEnv parses LESS_TERMCAP_xx environment variables and
 // adapts the moar output accordingly.
 func SetManPageFormatFromEnv() {
 	// Requested here: https://github.com/walles/moar/issues/14
 
-	lessTermcapMd := os.Getenv("LESS_TERMCAP_md")
-	if lessTermcapMd != "" {
-		manPageBold = termcapToStyle(lessTermcapMd)
-	}
-
-	lessTermcapUs := os.Getenv("LESS_TERMCAP_us")
-	if lessTermcapUs != "" {
-		manPageUnderline = termcapToStyle(lessTermcapUs)
-	}
-
-	lessTermcapSo := os.Getenv("LESS_TERMCAP_so")
-	if lessTermcapSo != "" {
-		_standoutStyle := termcapToStyle(lessTermcapSo)
-		standoutStyle = &_standoutStyle
-	}
+	setStyleFromEnv(&manPageBold, "LESS_TERMCAP_md")
+	setStyleFromEnv(&manPageUnderline, "LESS_TERMCAP_us")
+	setStyleFromEnv(standoutStyle, "LESS_TERMCAP_so")
 }
 
 func termcapToStyle(termcap string) twin.Style {
