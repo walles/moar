@@ -363,6 +363,7 @@ func main() {
 		// Display input pipe contents
 		reader = m.NewReaderFromStream("", os.Stdin)
 	} else {
+		// Display the input file contents
 		reader, err = m.NewReaderFromFilename(*inputFilename, *style, *formatter)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "ERROR: %v\n", err)
@@ -370,7 +371,6 @@ func main() {
 		}
 	}
 
-	// Display the input file contents
 	pager := m.NewPager(reader)
 	pager.WrapLongLines = *wrap
 	pager.Following = *follow
