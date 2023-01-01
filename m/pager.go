@@ -550,3 +550,15 @@ func (p *Pager) ReprintAfterExit() error {
 	}
 	return nil
 }
+
+func (p *Pager) entireFileDisplayed() bool {
+	if !p.reader.IsDone() {
+		return false
+	}
+
+	if !FIXME.HighlightingDone() {
+		return false
+	}
+
+	return FIXME.lastRedrawFitOnOneScreen
+}
