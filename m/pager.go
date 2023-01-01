@@ -210,6 +210,7 @@ func (p *Pager) Quit() {
 	p.preHelpState = nil
 }
 
+// Negative deltas move left instead
 func (p *Pager) moveRight(delta int) {
 	if p.ShowLineNumbers && delta > 0 {
 		p.ShowLineNumbers = false
@@ -467,7 +468,7 @@ func (p *Pager) StartPaging(screen twin.Screen) {
 
 			// Ref:
 			// https://github.com/gwsw/less/blob/ff8869aa0485f7188d942723c9fb50afb1892e62/command.c#L828-L831
-			if FIXME.entire_file_displayed() && p.QuitIfOneScreen && !p.isShowingHelp {
+			if p.QuitIfOneScreen && !p.isShowingHelp && p.entireFileDisplayed() {
 				// Ref:
 				// https://github.com/walles/moar/issues/113#issuecomment-1368294132
 				p.ShowLineNumbers = false
