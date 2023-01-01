@@ -70,6 +70,9 @@ type Pager struct {
 
 	WrapLongLines bool
 
+	// Ref: https://github.com/walles/moar/issues/113
+	QuitIfOneScreen bool
+
 	// Ref: https://github.com/walles/moar/issues/94
 	ScrollLeftHint  twin.Cell
 	ScrollRightHint twin.Cell
@@ -460,7 +463,20 @@ func (p *Pager) StartPaging(screen twin.Screen) {
 	spinner := ""
 	for !p.quit {
 		if len(screen.Events()) == 0 {
-			// Nothing more to process for now, redraw the screen!
+			// Nothing more to process for now
+
+			// Ref:
+			// https://github.com/gwsw/less/blob/ff8869aa0485f7188d942723c9fb50afb1892e62/command.c#L828-L831
+			if FIXME.entire_file_displayed() && p.QuitIfOneScreen && !p.isShowingHelp {
+				// Ref:
+				// https://github.com/walles/moar/issues/113#issuecomment-1368294132
+				p.ShowLineNumbers = false
+				p.DeInit = false
+				p.quit = true
+				break
+			}
+
+			// Redraw the screen!
 			p.redraw(spinner)
 		}
 
