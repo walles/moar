@@ -368,33 +368,33 @@ func main() {
 	// INVARIANT: At this point, stdoutIsRedirected is false and we should
 	// proceed with paging.
 
+	var reader *m.Reader
 	if stdinIsRedirected {
 		// Display input pipe contents
-		reader := m.NewReaderFromStream("", os.Stdin)
-		startPaging(reader,
-			*wrap, *follow, *noLineNumbers, *noStatusBar, *noClearOnExit, statusBarStyle, unprintableStyle,
-			scrollLeftHint, scrollRightHint)
-		return
+		reader = m.NewReaderFromStream("", os.Stdin)
+	} else {
+		reader, err = m.NewReaderFromFilename(*inputFilename, style, formatter)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "ERROR: %v\n", err)
+			os.Exit(1)
+		}
 	}
 
 	// Display the input file contents
-	reader, err := m.NewReaderFromFilename(*inputFilename, style, formatter)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "ERROR: %v\n", err)
-		os.Exit(1)
-	}
-	startPaging(reader,
-		*wrap, *follow, *noLineNumbers, *noStatusBar, *noClearOnExit, statusBarStyle, unprintableStyle,
-		scrollLeftHint, scrollRightHint)
+	pager := m.NewPager(reader)
+	pager.WrapLongLines = *wrap
+	pager.Following = *follow
+	pager.ShowLineNumbers = !*noLineNumbers
+	pager.ShowStatusBar = !*noStatusBar
+	pager.DeInit = !*noClearOnExit
+	pager.StatusBarStyle = statusBarStyle
+	pager.UnprintableStyle = unprintableStyle
+	pager.ScrollLeftHint = scrollLeftHint
+	pager.ScrollRightHint = scrollRightHint
+	startPaging(pager)
 }
 
-func startPaging(reader *m.Reader,
-	wrapLongLines, follow, noLineNumbers, noStatusBar, noClearOnExit bool,
-	statusBarStyle m.StatusBarStyle,
-	unprintableStyle m.UnprintableStyle,
-	scrollLeftHint twin.Cell,
-	scrollRightHint twin.Cell,
-) {
+func startPaging(pager *m.Pager) {
 	screen, e := twin.NewScreen()
 	if e != nil {
 		panic(e)
@@ -402,15 +402,6 @@ func startPaging(reader *m.Reader,
 
 	var loglines strings.Builder
 	log.SetOutput(&loglines)
-	pager := m.NewPager(reader)
-	pager.WrapLongLines = wrapLongLines
-	pager.Following = follow
-	pager.ShowLineNumbers = !noLineNumbers
-	pager.ShowStatusBar = !noStatusBar
-	pager.StatusBarStyle = statusBarStyle
-	pager.UnprintableStyle = unprintableStyle
-	pager.ScrollLeftHint = scrollLeftHint
-	pager.ScrollRightHint = scrollRightHint
 
 	defer func() {
 		// Restore screen...
@@ -422,7 +413,7 @@ func startPaging(reader *m.Reader,
 			panic(err)
 		}
 
-		if noClearOnExit {
+		if !pager.DeInit {
 			err := pager.ReprintAfterExit()
 			if err != nil {
 				log.Error("Failed reprinting pager view after exit", err)
