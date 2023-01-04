@@ -70,6 +70,14 @@ sudo port install moar
 
 More info [here](https://ports.macports.org/port/moar/).
 
+## Using [Gentoo](https://gentoo.org/)
+
+```sh
+emerge --ask --verbose sys-apps/moar
+```
+
+More info [here](https://packages.gentoo.org/packages/sys-apps/moar).
+
 ## Manual Install
 
 1. Download `moar` for your platform from
