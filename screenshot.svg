@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" id="terminal" baseProfile="full" viewBox="0 0 648 274" width="648" version="1.1">
+    <defs>
+        <termtosvg:template_settings xmlns:termtosvg="https://github.com/nbedos/termtosvg">
+            <termtosvg:screen_geometry columns="81" rows="16"/>
+            <termtosvg:animation type="css"/>
+        </termtosvg:template_settings>
+        <style type="text/css" id="generated-style"><![CDATA[#screen {
+                font-family: 'DejaVu Sans Mono', monospace;
+                font-style: normal;
+                font-size: 14px;
+            }
+
+        text {
+            dominant-baseline: text-before-edge;
+            white-space: pre;
+        }
+    ]]></style>
+        <style type="text/css" id="user-style">
+            /* The colors defined below are the default 16 colors used for rendering text of the terminal. Adjust
+               them as needed.
+               PowerShell colors based on https://en.wikipedia.org/wiki/ANSI_escape_code#Colors */
+            .foreground {fill: #cccccc;}
+            .background {fill: #0c0c0c;}
+            .color0 {fill: #0c0c0c;}
+            .color1 {fill: #c50f1f;}
+            .color2 {fill: #13a10e;}
+            .color3 {fill: #c19c00;}
+            .color4 {fill: #0037da;}
+            .color5 {fill: #881798;}
+            .color6 {fill: #3a96dd;}
+            .color7 {fill: #cccccc;}
+            .color8 {fill: #767676;}
+            .color9 {fill: #e74856;}
+            .color10 {fill: #16c60c;}
+            .color11 {fill: #f9f1a5;}
+            .color12 {fill: #3b78ff;}
+            .color13 {fill: #b4009e;}
+            .color14 {fill: #61d6d6;}
+            .color15 {fill: #f2f2f2;}
+        </style>
+    </defs>
+    <svg id="screen" width="648" height="272" viewBox="0 0 648 272" preserveAspectRatio="xMidYMin slice">
+    <rect class="background" height="100%" width="100%" x="0" y="0"/><defs><g id="g1"><text x="0" textLength="224" class="foreground"> 59     absMoarPath, err := </text><text x="224" textLength="88" fill="#5f87d7">absLookPath</text><text x="312" textLength="72" class="foreground">(os.Args[</text><text x="384" textLength="8" fill="#5f87af">0</text><text x="392" textLength="256" class="foreground">])                              </text></g><g id="g2"><text x="0" textLength="64" class="foreground"> 60     </text><text x="64" textLength="16" font-weight="bold" fill="#5faf00">if</text><text x="80" textLength="64" class="foreground"> err == </text><text x="144" textLength="24" font-weight="bold" fill="#5faf00">nil</text><text x="168" textLength="480" class="foreground"> {                                                          </text></g><g id="g3"><text x="0" textLength="272" class="foreground"> 61         absPagerValue, err := </text><text x="272" textLength="88" fill="#5f87d7">absLookPath</text><text x="360" textLength="32" class="foreground">(os.</text><text x="392" textLength="48" fill="#5f87d7">Getenv</text><text x="440" textLength="8" class="foreground">(</text><text x="448" textLength="56" fill="#ffaf00">"PAGER"</text><text x="504" textLength="144" class="foreground">))                </text></g><g id="g4"><text x="0" textLength="96" class="foreground"> 62         </text><text x="96" textLength="16" font-weight="bold" fill="#5faf00">if</text><text x="112" textLength="64" class="foreground"> err != </text><text x="176" textLength="24" font-weight="bold" fill="#5faf00">nil</text><text x="200" textLength="448" class="foreground"> {                                                      </text></g><g id="g5"><text x="0" textLength="256" class="foreground"> 63             absPagerValue = </text><text x="256" textLength="16" fill="#ffaf00">""</text><text x="272" textLength="376" class="foreground">                                               </text></g><g id="g6"><text x="0" textLength="648" class="foreground"> 64         }                                                                    </text></g><g id="g7"><text x="0" textLength="96" class="foreground"> 65         </text><text x="96" textLength="16" font-weight="bold" fill="#5faf00">if</text><text x="112" textLength="536" class="foreground"> absPagerValue != absMoarPath {                                    </text></g><g id="g8"><text x="0" textLength="128" class="foreground"> 66             </text><text x="128" textLength="240" font-style="italic" fill="#9e9e9e">// We're not the default pager</text><text x="368" textLength="280" class="foreground">                                   </text></g><g id="g9"><text x="0" textLength="216" class="foreground"> 67             _, _ = fmt.</text><text x="216" textLength="64" fill="#5f87d7">Fprintln</text><text x="280" textLength="368" class="foreground">(output)                                      </text></g><g id="g10"><text x="0" textLength="216" class="foreground"> 68             _, _ = fmt.</text><text x="216" textLength="64" fill="#5f87d7">Fprintln</text><text x="280" textLength="72" class="foreground">(output, </text><text x="352" textLength="264" fill="#ffaf00">"Making moar your default pager:"</text><text x="616" textLength="32" class="foreground">)   </text></g><g id="g11"><text x="0" textLength="216" class="foreground"> 69             _, _ = fmt.</text><text x="216" textLength="64" fill="#5f87d7">Fprintln</text><text x="280" textLength="72" class="foreground">(output, </text><text x="352" textLength="288" fill="#ffaf00">"  Put the following line in your ~/</text><text x="640" textLength="8" class="background">&gt;</text></g><g id="g12"><text x="0" textLength="216" class="foreground"> 70             _, _ = fmt.</text><text x="216" textLength="64" fill="#5f87d7">Fprintln</text><text x="280" textLength="72" class="foreground">(output, </text><text x="352" textLength="288" fill="#ffaf00">"  and moar will be used as the defa</text><text x="640" textLength="8" class="background">&gt;</text></g><g id="g13"><text x="0" textLength="216" class="foreground"> 71             _, _ = fmt.</text><text x="216" textLength="64" fill="#5f87d7">Fprintln</text><text x="280" textLength="368" class="foreground">(output)                                      </text></g><g id="g14"><text x="0" textLength="216" class="foreground"> 72             _, _ = fmt.</text><text x="216" textLength="56" fill="#5f87d7">Fprintf</text><text x="272" textLength="72" class="foreground">(output, </text><text x="344" textLength="192" fill="#ffaf00">"     export PAGER=%s\n"</text><text x="536" textLength="16" class="foreground">, </text><text x="552" textLength="88" fill="#5f87d7">getMoarPath</text><text x="640" textLength="8" class="background">&gt;</text></g><g id="g15"><text x="0" textLength="648" class="foreground"> 73         }                                                                    </text></g><g id="g16"><text x="0" textLength="648" class="background">moar.go: 434 lines  16%  Press 'ESC' / 'q' to exit, '/' to search, '?' for help  </text></g></defs><g><use xlink:href="#g1" y="0"/><use xlink:href="#g2" y="17"/><use xlink:href="#g3" y="34"/><use xlink:href="#g4" y="51"/><use xlink:href="#g5" y="68"/><use xlink:href="#g6" y="85"/><use xlink:href="#g7" y="102"/><use xlink:href="#g8" y="119"/><use xlink:href="#g9" y="136"/><use xlink:href="#g10" y="153"/><rect x="640" y="170" width="8" height="17" class="foreground"/><use xlink:href="#g11" y="170"/><rect x="640" y="187" width="8" height="17" class="foreground"/><use xlink:href="#g12" y="187"/><use xlink:href="#g13" y="204"/><rect x="640" y="221" width="8" height="17" class="foreground"/><use xlink:href="#g14" y="221"/><use xlink:href="#g15" y="238"/><rect x="0" y="255" width="648" height="17" class="foreground"/><use xlink:href="#g16" y="255"/></g></svg>
+</svg>

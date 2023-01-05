@@ -3,7 +3,7 @@ pipelines.
 
 `moar` is designed to just do the right thing without any configuration:
 
-![Moar displaying its own source code](screenshot.png)
+![Moar displaying its own source code](screenshot.svg)
 
 The intention is that Moar should be trivial to get into if you have previously
 been using [Less](http://www.greenwoodsoftware.com/less/). If you come from Less
@@ -197,7 +197,7 @@ Install (into `/usr/local/bin`) from source:
 
 # Making a new Release
 
-Make sure that [screenshot.png](screenshot.png) matches moar's current UI.
+Make sure that [screenshot.svg](screenshot.svg) matches moar's current UI.
 If it doesn't, scale a window to 81x16 characters and make a new one.
 
 Execute `release.sh` and follow instructions.
