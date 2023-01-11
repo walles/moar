@@ -275,26 +275,32 @@ func consumeEncodedEvent(encodedEventSequences string) (*Event, string) {
 
 	// No escape sequence prefix matched
 	runes := []rune(encodedEventSequences)
-	if len(runes) != 1 {
-		// This means one or more sequences should be added to
-		// escapeSequenceToKeyCode in keys.go.
-		log.Debug("Unhandled multi character terminal escape sequence(s): ", encodedEventSequences)
-
-		// Mark everything as consumed since we don't know how to proceed otherwise.
+	if len(runes) == 0 {
 		return nil, ""
 	}
 
-	var event Event
 	if runes[0] == '\x1b' {
-		event = EventKeyCode{KeyEscape}
-	} else if runes[0] == '\r' {
-		event = EventKeyCode{KeyEnter}
-	} else {
-		// Report the single rune
-		event = EventRune{rune: runes[0]}
+		if len(runes) != 1 {
+			// This means one or more sequences should be added to
+			// escapeSequenceToKeyCode in keys.go.
+			log.Debug("Unhandled multi character terminal escape sequence(s): ", encodedEventSequences)
+
+			// Mark everything as consumed since we don't know how to proceed otherwise.
+			return nil, ""
+		}
+
+		var event Event = EventKeyCode{KeyEscape}
+		return &event, string(runes[1:])
 	}
 
-	return &event, ""
+	if runes[0] == '\r' {
+		var event Event = EventKeyCode{KeyEnter}
+		return &event, string(runes[1:])
+	}
+
+	// Report the single rune
+	var event Event = EventRune{rune: runes[0]}
+	return &event, string(runes[1:])
 }
 
 // Returns screen width and height.
