@@ -260,12 +260,12 @@ func consumeEncodedEvent(encodedEventSequences string) (*Event, string) {
 
 	mouseMatch := MOUSE_EVENT_REGEX.FindStringSubmatch(encodedEventSequences)
 	if mouseMatch != nil {
-		if mouseMatch[1] == "65" {
-			var event Event = EventMouse{buttons: MouseWheelDown}
-			return &event, strings.TrimPrefix(encodedEventSequences, mouseMatch[0])
-		}
 		if mouseMatch[1] == "64" {
 			var event Event = EventMouse{buttons: MouseWheelUp}
+			return &event, strings.TrimPrefix(encodedEventSequences, mouseMatch[0])
+		}
+		if mouseMatch[1] == "65" {
+			var event Event = EventMouse{buttons: MouseWheelDown}
 			return &event, strings.TrimPrefix(encodedEventSequences, mouseMatch[0])
 		}
 
