@@ -42,3 +42,9 @@ func TestConsumeEncodedEventWithUnsupportedEscapeCode(t *testing.T) {
 	assert.Assert(t, event == nil)
 	assert.Equal(t, remainder, "")
 }
+
+func TestConsumeEncodedEventWithNoInput(t *testing.T) {
+	event, remainder := consumeEncodedEvent("")
+	assert.Assert(t, event == nil)
+	assert.Equal(t, remainder, "")
+}
