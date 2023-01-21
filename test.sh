@@ -24,7 +24,6 @@ go test -timeout 20s ./...
 # Ensure we can cross compile
 echo "Testing cross compilation..."
 source arches.sh
-arches
 
 # Verify sending the output to a file
 RESULT="$(mktemp)"

@@ -47,7 +47,6 @@ git tag --annotate "${VERSION}"
 # above tagging.
 #
 source arches.sh
-arches
 
 # Push the newly built release tag
 git push --tags
