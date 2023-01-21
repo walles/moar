@@ -22,14 +22,9 @@ echo "Running unit tests..."
 go test -timeout 20s ./...
 
 # Ensure we can cross compile
-# NOTE: Make sure this list matches the one in release.sh
 echo "Testing cross compilation..."
-echo "  Linux i386..."
-GOOS=linux GOARCH=386 ./build.sh
-echo "  macOS amd64..."
-GOOS=darwin GOARCH=amd64 ./build.sh
-echo "  Windows amd64..."
-GOOS=windows GOARCH=amd64 ./build.sh
+source arches.sh
+arches
 
 # Verify sending the output to a file
 RESULT="$(mktemp)"

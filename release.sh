@@ -46,10 +46,8 @@ git tag --annotate "${VERSION}"
 # NOTE: To get the version number right, these builds must be done after the
 # above tagging.
 #
-# NOTE: Make sure this list matches the one in test.sh
-GOOS=linux GOARCH=386 ./build.sh
-GOOS=darwin GOARCH=amd64 ./build.sh
-GOOS=windows GOARCH=amd64 ./build.sh
+source arches.sh
+arches
 
 # Push the newly built release tag
 git push --tags
