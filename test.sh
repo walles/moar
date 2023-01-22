@@ -31,6 +31,10 @@ GOOS=darwin GOARCH=amd64 ./build.sh
 echo "  Windows amd64..."
 GOOS=windows GOARCH=amd64 ./build.sh
 
+# Build locally so we can do our testing
+echo "Doing a local build so we can continue testing..."
+./build.sh
+
 # Verify sending the output to a file
 RESULT="$(mktemp)"
 function cleanup {
