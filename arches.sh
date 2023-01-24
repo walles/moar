@@ -8,10 +8,6 @@ echo "  Linux arm..."
 GOOS=linux GOARCH=arm64 ./build.sh
 echo "  Linux arm64..."
 GOOS=linux GOARCH=arm64 ./build.sh
-echo "  macOS amd64..."
-GOOS=darwin GOARCH=amd64 ./build.sh
-echo "  macOS arm64..."
-GOOS=darwin GOARCH=arm64 ./build.sh
 echo "  Windows 386..."
 GOOS=windows GOARCH=386 ./build.sh
 echo "  Windows amd64..."
