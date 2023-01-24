@@ -1,4 +1,3 @@
-#!/bin/bash
 # Not intended to be run directly.
 echo "  Linux i386..."
 GOOS=linux GOARCH=386 ./build.sh
