@@ -47,6 +47,11 @@ func (p *Pager) onGotoLineKey(key twin.KeyCode) {
 }
 
 func (p *Pager) onGotoLineRune(char rune) {
+	if char == 'q' {
+		p.mode = _Viewing
+		return
+	}
+
 	newGotoLineString := p.gotoLineString + string(char)
 	_, err := strconv.Atoi(newGotoLineString)
 	if err != nil {
