@@ -163,7 +163,7 @@ func TestCodeHighlighting(t *testing.T) {
 		panic("Getting current filename failed")
 	}
 
-	reader, err := NewReaderFromFilename(filename, *styles.Native, formatters.TTY16m)
+	reader, err := NewReaderFromFilename(filename, *styles.Get("native"), formatters.TTY16m)
 	if err != nil {
 		panic(err)
 	}
@@ -573,7 +573,7 @@ func benchmarkSearch(b *testing.B, highlighted bool) {
 	// Read one copy of the example input
 	var fileContents string
 	if highlighted {
-		highlightedSourceCode, err := highlight(sourceFilename, true, *styles.Native, formatters.TTY16m)
+		highlightedSourceCode, err := highlight(sourceFilename, true, *styles.Get("native"), formatters.TTY16m)
 		if err != nil {
 			panic(err)
 		}

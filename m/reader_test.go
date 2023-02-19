@@ -159,7 +159,7 @@ func TestGetLines(t *testing.T) {
 			}
 		}
 
-		reader, err := NewReaderFromFilename(file, *styles.Native, formatters.TTY16m)
+		reader, err := NewReaderFromFilename(file, *styles.Get("native"), formatters.TTY16m)
 		if err != nil {
 			t.Errorf("Error opening file <%s>: %s", file, err.Error())
 			continue
@@ -207,7 +207,7 @@ func testHighlightingLineCount(t *testing.T, filenameWithPath string) {
 	}
 
 	// Then load the same file using one of our Readers
-	reader, err := NewReaderFromFilename(filenameWithPath, *styles.Native, formatters.TTY16m)
+	reader, err := NewReaderFromFilename(filenameWithPath, *styles.Get("native"), formatters.TTY16m)
 	if err != nil {
 		panic(err)
 	}
@@ -222,7 +222,7 @@ func testHighlightingLineCount(t *testing.T, filenameWithPath string) {
 
 func TestGetLongLine(t *testing.T) {
 	file := "../sample-files/very-long-line.txt"
-	reader, err := NewReaderFromFilename(file, *styles.Native, formatters.TTY16m)
+	reader, err := NewReaderFromFilename(file, *styles.Get("native"), formatters.TTY16m)
 	if err != nil {
 		panic(err)
 	}
@@ -266,7 +266,7 @@ func TestStatusText(t *testing.T) {
 	testStatusText(t, 1, 1, 1, "1 line  100%")
 
 	// Test with filename
-	testMe, err := NewReaderFromFilename(getSamplesDir()+"/empty", *styles.Native, formatters.TTY16m)
+	testMe, err := NewReaderFromFilename(getSamplesDir()+"/empty", *styles.Get("native"), formatters.TTY16m)
 	if err != nil {
 		panic(err)
 	}
@@ -280,7 +280,7 @@ func TestStatusText(t *testing.T) {
 
 func testCompressedFile(t *testing.T, filename string) {
 	filenameWithPath := getSamplesDir() + "/" + filename
-	reader, e := NewReaderFromFilename(filenameWithPath, *styles.Native, formatters.TTY16m)
+	reader, e := NewReaderFromFilename(filenameWithPath, *styles.Get("native"), formatters.TTY16m)
 	if e != nil {
 		t.Errorf("Error opening file <%s>: %s", filenameWithPath, e.Error())
 		panic(e)
@@ -346,7 +346,7 @@ func BenchmarkReaderDone(b *testing.B) {
 	b.ResetTimer()
 	for n := 0; n < b.N; n++ {
 		// This is our longest .go file
-		readMe, err := NewReaderFromFilename(filename, *styles.Native, formatters.TTY16m)
+		readMe, err := NewReaderFromFilename(filename, *styles.Get("native"), formatters.TTY16m)
 		if err != nil {
 			panic(err)
 		}
@@ -394,7 +394,7 @@ func BenchmarkReadLargeFile(b *testing.B) {
 
 	b.ResetTimer()
 	for n := 0; n < b.N; n++ {
-		readMe, err := NewReaderFromFilename(largeFileName, *styles.Native, formatters.TTY16m)
+		readMe, err := NewReaderFromFilename(largeFileName, *styles.Get("native"), formatters.TTY16m)
 		if err != nil {
 			panic(err)
 		}
