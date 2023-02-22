@@ -78,6 +78,14 @@ emerge --ask --verbose sys-apps/moar
 
 More info [here](https://packages.gentoo.org/packages/sys-apps/moar).
 
+## Using [Arch Linux](https://archlinux.org/)
+
+```sh
+yay -S moar-git
+```
+
+More info [here](https://aur.archlinux.org/packages/moar-git).
+
 ## Manual Install
 
 1. Download `moar` for your platform from
