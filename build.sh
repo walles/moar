@@ -8,12 +8,12 @@ fi
 VERSION="$(git describe --tags --dirty --always)"
 
 BINARY="moar"
-if [ -n "$GOOS$GOARCH" ]; then
+if [ -n "${GOOS}${GOARCH}" ]; then
     EXE=""
-    if [ "$GOOS" = "windows" ]; then
+    if [ "${GOOS}" = "windows" ]; then
         EXE=".exe"
     fi
-    BINARY="releases/$BINARY-$VERSION-$GOOS-$GOARCH$EXE"
+    BINARY="releases/${BINARY}-${VERSION}-${GOOS}-${GOARCH}${EXE}"
 fi
 
 # Linker flags version number trick below from here:
@@ -25,4 +25,4 @@ fi
 
 # This line must be last in the script so that its return code
 # propagates properly to its caller
-go build -ldflags="-s -w -X main.versionString=$VERSION" -o "$BINARY"
+go build -ldflags="-s -w -X main.versionString=${VERSION}" -o "${BINARY}"
