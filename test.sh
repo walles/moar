@@ -28,7 +28,7 @@ echo "  Linux i386..."
 GOOS=linux GOARCH=386 ./build.sh
 
 # Ref: https://github.com/walles/moar/issues/122
-echo "  Linux ARM32..."
+echo "  Linux arm32..."
 GOOS=linux GOARCH=arm ./build.sh
 
 echo "  macOS amd64..."
