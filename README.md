@@ -1,3 +1,6 @@
+![Linux CI](https://github.com/walles/moar/actions/workflows/linux-ci.yml/badge.svg?branch=master)
+![Windows CI](https://github.com/walles/moar/actions/workflows/windows-ci.yml/badge.svg?branch=master)
+
 Moar is a pager. It reads and displays UTF-8 encoded text from files or
 pipelines.
 
