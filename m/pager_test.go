@@ -29,11 +29,11 @@ func TestUnicodeRendering(t *testing.T) {
 
 	contents := startPaging(t, reader).GetRow(0)
 	for pos, expected := range answers {
-		logDifference(t, expected, contents[pos])
+		assertCellsEqual(t, expected, contents[pos])
 	}
 }
 
-func logDifference(t *testing.T, expected twin.Cell, actual twin.Cell) {
+func assertCellsEqual(t *testing.T, expected twin.Cell, actual twin.Cell) {
 	if actual.Rune == expected.Rune && actual.Style == expected.Style {
 		return
 	}
@@ -59,7 +59,7 @@ func TestFgColorRendering(t *testing.T) {
 
 	contents := startPaging(t, reader).GetRow(0)
 	for pos, expected := range answers {
-		logDifference(t, expected, contents[pos])
+		assertCellsEqual(t, expected, contents[pos])
 	}
 }
 
@@ -88,7 +88,7 @@ func TestBrokenUtf8(t *testing.T) {
 
 	contents := startPaging(t, reader).GetRow(0)
 	for pos, expected := range answers {
-		logDifference(t, expected, contents[pos])
+		assertCellsEqual(t, expected, contents[pos])
 	}
 }
 
@@ -184,8 +184,23 @@ func TestCodeHighlighting(t *testing.T) {
 
 	contents := startPaging(t, reader).GetRow(0)
 	for pos, expected := range answers {
-		logDifference(t, expected, contents[pos])
+		assertCellsEqual(t, expected, contents[pos])
 	}
+}
+
+func TestUnicodePrivateUse(t *testing.T) {
+	// This character lives in a Private Use Area:
+	// https://codepoints.net/U+f244
+	//
+	// It's used by Font Awesome as "fa-battery-empty":
+	// https://fontawesome.com/v4/icon/battery-empty
+	char := '\uf244'
+
+	reader := NewReaderFromText("hello", string(char))
+	renderedCell := startPaging(t, reader).GetRow(0)[0]
+
+	// Make sure we display this character unmodified
+	assertCellsEqual(t, twin.NewCell(char, twin.StyleDefault), renderedCell)
 }
 
 func resetManPageFormat() {
@@ -210,7 +225,7 @@ func testManPageFormatting(t *testing.T, input string, expected twin.Cell) {
 	resetManPageFormat()
 
 	contents := startPaging(t, reader).GetRow(0)
-	logDifference(t, expected, contents[0])
+	assertCellsEqual(t, expected, contents[0])
 	assert.Equal(t, contents[1].Rune, ' ')
 }
 
@@ -365,7 +380,7 @@ func TestScrollToEndLongInput(t *testing.T) {
 	// line holds the last contents line.
 	lastContentsLine := screen.GetRow(screenHeight - 2)
 	firstContentsColumn := len("10_100 ")
-	logDifference(t, twin.NewCell('X', twin.StyleDefault), lastContentsLine[firstContentsColumn])
+	assertCellsEqual(t, twin.NewCell('X', twin.StyleDefault), lastContentsLine[firstContentsColumn])
 }
 
 func TestIsScrolledToEnd_LongFile(t *testing.T) {

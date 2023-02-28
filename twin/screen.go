@@ -6,7 +6,6 @@ import (
 	"os"
 	"regexp"
 	"strings"
-	"unicode"
 	"unicode/utf8"
 
 	log "github.com/sirupsen/logrus"
@@ -421,7 +420,7 @@ func renderLine(row []Cell) (string, int) {
 
 		style := cell.Style
 		runeToWrite := cell.Rune
-		if !unicode.IsPrint(runeToWrite) {
+		if !Printable(runeToWrite) {
 			// Highlight unprintable runes
 			style = Style{
 				fg:    NewColor16(7), // White

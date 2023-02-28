@@ -5,7 +5,6 @@ import (
 	"os"
 	"strings"
 	"testing"
-	"unicode"
 	"unicode/utf8"
 
 	log "github.com/sirupsen/logrus"
@@ -74,11 +73,11 @@ func TestTokenize(t *testing.T) {
 				plainStringFromCells := cellsToPlainString(tokens)
 				positionMarker := strings.Repeat(" ", index) + "^"
 				cellCharString := string(cellChar.Rune)
-				if !unicode.IsPrint(cellChar.Rune) {
+				if !twin.Printable(cellChar.Rune) {
 					cellCharString = fmt.Sprint(int(cellChar.Rune))
 				}
 				plainCharString := string(plainChar)
-				if !unicode.IsPrint(plainChar) {
+				if !twin.Printable(plainChar) {
 					plainCharString = fmt.Sprint(int(plainChar))
 				}
 				t.Errorf("%s:%d, 0-based column %d: cell char <%s> != plain char <%s>:\nPlain: %s\nCells: %s\n       %s",

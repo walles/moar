@@ -51,3 +51,22 @@ func TrimSpaceLeft(cells []Cell) []Cell {
 	// All whitespace, return empty
 	return []Cell{}
 }
+
+func Printable(char rune) bool {
+	if unicode.IsPrint(char) {
+		return true
+	}
+
+	if unicode.Is(unicode.Co, char) {
+		// Co == "Private Use": https://www.compart.com/en/unicode/category
+		//
+		// This space is used by Font Awesome, for "fa-battery-empty" for
+		// example: https://fontawesome.com/v4/icon/battery-empty
+		//
+		// So we want to print these and let the rendering engine deal with
+		// outputting them in a way that's helpful to the user.
+		return true
+	}
+
+	return false
+}

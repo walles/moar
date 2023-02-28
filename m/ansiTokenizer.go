@@ -6,7 +6,6 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
-	"unicode"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/walles/moar/twin"
@@ -166,7 +165,7 @@ func withoutFormatting(s string) string {
 				runeCount++
 
 			default:
-				if !unicode.IsPrint(runeValue) {
+				if !twin.Printable(runeValue) {
 					stripped.WriteRune('?')
 					runeCount++
 					continue
@@ -227,7 +226,7 @@ func cellsFromString(s string) cellsWithTrailer {
 				})
 
 			default:
-				if !unicode.IsPrint(token.Rune) {
+				if !twin.Printable(token.Rune) {
 					if unprintableStyle == UNPRINTABLE_STYLE_HIGHLIGHT {
 						cells = append(cells, twin.Cell{
 							Rune:  '?',
