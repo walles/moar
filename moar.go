@@ -243,11 +243,8 @@ func main() {
 		panic(err)
 	}()
 
-	flagSet := flag.NewFlagSet("", flag.ExitOnError)
-	flagSet.Usage = func() {
-		fmt.Println()
-		printUsage(os.Stdout, flagSet, false)
-	}
+	flagSet := flag.NewFlagSet("", flag.ContinueOnError)
+	flagSet.SetOutput(io.Discard) // We want to do our own printing
 	printVersion := flagSet.Bool("version", false, "Prints the moar version number")
 	debug := flagSet.Bool("debug", false, "Print debug logs after exiting")
 	trace := flagSet.Bool("trace", false, "Print trace logs after exiting")
@@ -279,9 +276,15 @@ func main() {
 
 	err := flagSet.Parse(flags)
 	if err != nil {
-		// We should never get any error as long as we're passing ExitOnError
-		// when creating the flagSet above.
-		panic(err)
+		if err == flag.ErrHelp {
+			printUsage(os.Stdout, flagSet, false)
+			return
+		}
+
+		fmt.Fprintln(os.Stderr, "ERROR:", err.Error())
+		fmt.Fprintln(os.Stderr)
+		printUsage(os.Stderr, flagSet, true)
+		os.Exit(1)
 	}
 
 	if *printVersion {
