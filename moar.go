@@ -151,7 +151,7 @@ func parseStyleOption(styleOption string, flagSet *flag.FlagSet) chroma.Style {
 	return *style
 }
 
-func parseColorsOption(colorsOption string, flagSet *flag.FlagSet) chroma.Formatter {
+func parseColorsOption(colorsOption string) (chroma.Formatter, error) {
 	if strings.ToLower(colorsOption) == "auto" {
 		colorsOption = "16M"
 		if strings.Contains(os.Getenv("TERM"), "256") {
@@ -162,21 +162,16 @@ func parseColorsOption(colorsOption string, flagSet *flag.FlagSet) chroma.Format
 
 	switch strings.ToUpper(colorsOption) {
 	case "8":
-		return formatters.TTY8
+		return formatters.TTY8, nil
 	case "16":
-		return formatters.TTY16
+		return formatters.TTY16, nil
 	case "256":
-		return formatters.TTY256
+		return formatters.TTY256, nil
 	case "16M":
-		return formatters.TTY16m
+		return formatters.TTY16m, nil
 	}
 
-	fmt.Fprintf(os.Stderr, "ERROR: Invalid color count \"%s\", valid counts are 8, 16, 256 or 16M.\n", colorsOption)
-	fmt.Fprintln(os.Stderr)
-	printUsage(os.Stderr, flagSet, true)
-
-	os.Exit(1)
-	panic("We just did os.Exit(), why are we still executing?")
+	return nil, fmt.Errorf("Valid counts are 8, 16, 256, 16M or auto.")
 }
 
 func parseStatusBarStyle(styleOption string, flagSet *flag.FlagSet) m.StatusBarStyle {
@@ -250,6 +245,7 @@ func main() {
 
 	flagSet := flag.NewFlagSet("", flag.ExitOnError)
 	flagSet.Usage = func() {
+		fmt.Println()
 		printUsage(os.Stdout, flagSet, false)
 	}
 	printVersion := flagSet.Bool("version", false, "Prints the moar version number")
@@ -259,7 +255,8 @@ func main() {
 	follow := flagSet.Bool("follow", false, "Follow piped input just like \"tail -f\"")
 	styleOption := flagSet.String("style", "native",
 		"Highlighting style from https://xyproto.github.io/splash/docs/longer/all.html")
-	colorsOption := flagSet.String("colors", "auto", "Highlighting palette size: 8, 16, 256, 16M, auto")
+	formatter := flagSetFunc(flagSet,
+		"colors", formatters.TTY256, "Highlighting palette size: 8, 16, 256, 16M, auto", parseColorsOption)
 	noLineNumbers := flagSet.Bool("no-linenumbers", false, "Hide line numbers on startup, press left arrow key to show")
 	noStatusBar := flagSet.Bool("no-statusbar", false, "Hide the status bar, toggle with '='")
 	noClearOnExit := flagSet.Bool("no-clear-on-exit", false, "Retain screen contents when exiting moar")
@@ -277,17 +274,14 @@ func main() {
 	if len(moarEnv) > 0 {
 		// FIXME: It would be nice if we could debug log that we're doing this,
 		// but logging is not yet set up and depends on command line parameters.
-		flags = append(strings.Split(moarEnv, " "), flags...)
+		flags = append(strings.Fields(moarEnv), flags...)
 	}
 
 	err := flagSet.Parse(flags)
 	if err != nil {
-		printProblemsHeader()
-		fmt.Fprintln(os.Stderr, "ERROR: Command line parsing failed:", err.Error())
-		fmt.Fprintln(os.Stderr)
-		printUsage(os.Stderr, flagSet, true)
-
-		os.Exit(1)
+		// We should never get any error as long as we're passing ExitOnError
+		// when creating the flagSet above.
+		panic(err)
 	}
 
 	if *printVersion {
@@ -296,7 +290,6 @@ func main() {
 	}
 
 	style := parseStyleOption(*styleOption, flagSet)
-	formatter := parseColorsOption(*colorsOption, flagSet)
 	statusBarStyle := parseStatusBarStyle(*statusBarStyleOption, flagSet)
 	unprintableStyle := parseUnprintableStyle(*UnprintableStyleOption, flagSet)
 
@@ -373,7 +366,7 @@ func main() {
 		// Display input pipe contents
 		reader = m.NewReaderFromStream("", os.Stdin)
 	} else {
-		reader, err = m.NewReaderFromFilename(*inputFilename, style, formatter)
+		reader, err = m.NewReaderFromFilename(*inputFilename, style, *formatter)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "ERROR: %v\n", err)
 			os.Exit(1)
@@ -392,6 +385,24 @@ func main() {
 	pager.ScrollLeftHint = scrollLeftHint
 	pager.ScrollRightHint = scrollRightHint
 	startPaging(pager)
+}
+
+// Define a generic flag with specified name, default value, and usage string.
+// The return value is the address of a variable that stores the parsed value of
+// the flag.
+func flagSetFunc[T any](flagSet *flag.FlagSet, name string, defaultValue T, usage string, parser func(valueString string) (T, error)) *T {
+	parsed := defaultValue
+
+	flagSet.Func(name, usage, func(valueString string) error {
+		parseResult, err := parser(valueString)
+		if err != nil {
+			return err
+		}
+		parsed = parseResult
+		return nil
+	})
+
+	return &parsed
 }
 
 func startPaging(pager *m.Pager) {
