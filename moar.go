@@ -136,19 +136,14 @@ func printProblemsHeader() {
 	fmt.Fprintln(os.Stderr)
 }
 
-func parseStyleOption(styleOption string, flagSet *flag.FlagSet) chroma.Style {
+func parseStyleOption(styleOption string) (chroma.Style, error) {
 	style, ok := styles.Registry[styleOption]
 	if !ok {
-		fmt.Fprintf(os.Stderr,
-			"ERROR: Unrecognized style \"%s\", pick a style from here: https://xyproto.github.io/splash/docs/longer/all.html\n",
-			styleOption)
-		fmt.Fprintln(os.Stderr)
-		printUsage(os.Stderr, flagSet, true)
-
-		os.Exit(1)
+		return *styles.Fallback, fmt.Errorf(
+			"Pick a style from here: https://xyproto.github.io/splash/docs/longer/all.html\n")
 	}
 
-	return *style
+	return *style, nil
 }
 
 func parseColorsOption(colorsOption string) (chroma.Formatter, error) {
@@ -250,8 +245,12 @@ func main() {
 	trace := flagSet.Bool("trace", false, "Print trace logs after exiting")
 	wrap := flagSet.Bool("wrap", false, "Wrap long lines")
 	follow := flagSet.Bool("follow", false, "Follow piped input just like \"tail -f\"")
-	styleOption := flagSet.String("style", "native",
-		"Highlighting style from https://xyproto.github.io/splash/docs/longer/all.html")
+
+	// FIXME: Use flagSetFunc() for all ...Option flags
+
+	style := flagSetFunc(flagSet,
+		"style", *styles.Registry["native"],
+		"Highlighting style from https://xyproto.github.io/splash/docs/longer/all.html", parseStyleOption)
 	formatter := flagSetFunc(flagSet,
 		"colors", formatters.TTY256, "Highlighting palette size: 8, 16, 256, 16M, auto", parseColorsOption)
 	noLineNumbers := flagSet.Bool("no-linenumbers", false, "Hide line numbers on startup, press left arrow key to show")
@@ -292,7 +291,6 @@ func main() {
 		os.Exit(0)
 	}
 
-	style := parseStyleOption(*styleOption, flagSet)
 	statusBarStyle := parseStatusBarStyle(*statusBarStyleOption, flagSet)
 	unprintableStyle := parseUnprintableStyle(*UnprintableStyleOption, flagSet)
 
@@ -369,7 +367,7 @@ func main() {
 		// Display input pipe contents
 		reader = m.NewReaderFromStream("", os.Stdin)
 	} else {
-		reader, err = m.NewReaderFromFilename(*inputFilename, style, *formatter)
+		reader, err = m.NewReaderFromFilename(*inputFilename, *style, *formatter)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "ERROR: %v\n", err)
 			os.Exit(1)
