@@ -169,25 +169,18 @@ func parseColorsOption(colorsOption string) (chroma.Formatter, error) {
 	return nil, fmt.Errorf("Valid counts are 8, 16, 256, 16M or auto.")
 }
 
-func parseStatusBarStyle(styleOption string, flagSet *flag.FlagSet) m.StatusBarStyle {
+func parseStatusBarStyle(styleOption string) (m.StatusBarStyle, error) {
 	if styleOption == "inverse" {
-		return m.STATUSBAR_STYLE_INVERSE
+		return m.STATUSBAR_STYLE_INVERSE, nil
 	}
 	if styleOption == "plain" {
-		return m.STATUSBAR_STYLE_PLAIN
+		return m.STATUSBAR_STYLE_PLAIN, nil
 	}
 	if styleOption == "bold" {
-		return m.STATUSBAR_STYLE_BOLD
+		return m.STATUSBAR_STYLE_BOLD, nil
 	}
 
-	fmt.Fprintf(os.Stderr,
-		"ERROR: Unrecognized status bar style \"%s\", good ones are inverse, plain and bold.\n",
-		styleOption)
-	fmt.Fprintln(os.Stderr)
-	printUsage(os.Stderr, flagSet, true)
-
-	os.Exit(1)
-	panic("os.Exit(1) just failed")
+	return 0, fmt.Errorf("good ones are inverse, plain and bold")
 }
 
 func parseUnprintableStyle(styleOption string, flagSet *flag.FlagSet) m.UnprintableStyle {
@@ -246,7 +239,7 @@ func main() {
 	wrap := flagSet.Bool("wrap", false, "Wrap long lines")
 	follow := flagSet.Bool("follow", false, "Follow piped input just like \"tail -f\"")
 
-	// FIXME: Use flagSetFunc() for all ...Option flags
+	// FIXME: Use flagSetFunc() for all "...Option :=" flags
 
 	style := flagSetFunc(flagSet,
 		"style", *styles.Registry["native"],
@@ -256,7 +249,7 @@ func main() {
 	noLineNumbers := flagSet.Bool("no-linenumbers", false, "Hide line numbers on startup, press left arrow key to show")
 	noStatusBar := flagSet.Bool("no-statusbar", false, "Hide the status bar, toggle with '='")
 	noClearOnExit := flagSet.Bool("no-clear-on-exit", false, "Retain screen contents when exiting moar")
-	statusBarStyleOption := flagSet.String("statusbar", "inverse", "Status bar style: inverse, plain or bold")
+	statusBarStyle := flagSetFunc(flagSet, "statusbar", m.STATUSBAR_STYLE_INVERSE, "Status bar style: inverse, plain or bold", parseStatusBarStyle)
 	UnprintableStyleOption := flagSet.String("render-unprintable", "highlight",
 		"How unprintable characters are rendered: highlight or whitespace")
 	scrollLeftHintOption := flagSet.String("scroll-left-hint", "ESC[7m<",
@@ -291,7 +284,6 @@ func main() {
 		os.Exit(0)
 	}
 
-	statusBarStyle := parseStatusBarStyle(*statusBarStyleOption, flagSet)
 	unprintableStyle := parseUnprintableStyle(*UnprintableStyleOption, flagSet)
 
 	scrollLeftHint := parseScrollHint(*scrollLeftHintOption, flagSet)
@@ -381,7 +373,7 @@ func main() {
 	pager.ShowLineNumbers = !*noLineNumbers
 	pager.ShowStatusBar = !*noStatusBar
 	pager.DeInit = !*noClearOnExit
-	pager.StatusBarStyle = statusBarStyle
+	pager.StatusBarStyle = *statusBarStyle
 	pager.UnprintableStyle = unprintableStyle
 	pager.ScrollLeftHint = scrollLeftHint
 	pager.ScrollRightHint = scrollRightHint
