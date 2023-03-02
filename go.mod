@@ -1,6 +1,6 @@
 module github.com/walles/moar
 
-go 1.16
+go 1.20
 
 require (
 	github.com/alecthomas/chroma/v2 v2.4.0
@@ -10,3 +10,5 @@ require (
 	golang.org/x/term v0.0.0-20210503060354-a79de5458b56
 	gotest.tools/v3 v3.3.0
 )
+
+require github.com/dlclark/regexp2 v1.4.0 // indirect

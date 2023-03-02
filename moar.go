@@ -136,22 +136,17 @@ func printProblemsHeader() {
 	fmt.Fprintln(os.Stderr)
 }
 
-func parseStyleOption(styleOption string, flagSet *flag.FlagSet) chroma.Style {
+func parseStyleOption(styleOption string) (chroma.Style, error) {
 	style, ok := styles.Registry[styleOption]
 	if !ok {
-		fmt.Fprintf(os.Stderr,
-			"ERROR: Unrecognized style \"%s\", pick a style from here: https://xyproto.github.io/splash/docs/longer/all.html\n",
-			styleOption)
-		fmt.Fprintln(os.Stderr)
-		printUsage(os.Stderr, flagSet, true)
-
-		os.Exit(1)
+		return *styles.Fallback, fmt.Errorf(
+			"Pick a style from here: https://xyproto.github.io/splash/docs/longer/all.html\n")
 	}
 
-	return *style
+	return *style, nil
 }
 
-func parseColorsOption(colorsOption string, flagSet *flag.FlagSet) chroma.Formatter {
+func parseColorsOption(colorsOption string) (chroma.Formatter, error) {
 	if strings.ToLower(colorsOption) == "auto" {
 		colorsOption = "16M"
 		if strings.Contains(os.Getenv("TERM"), "256") {
@@ -162,77 +157,52 @@ func parseColorsOption(colorsOption string, flagSet *flag.FlagSet) chroma.Format
 
 	switch strings.ToUpper(colorsOption) {
 	case "8":
-		return formatters.TTY8
+		return formatters.TTY8, nil
 	case "16":
-		return formatters.TTY16
+		return formatters.TTY16, nil
 	case "256":
-		return formatters.TTY256
+		return formatters.TTY256, nil
 	case "16M":
-		return formatters.TTY16m
+		return formatters.TTY16m, nil
 	}
 
-	fmt.Fprintf(os.Stderr, "ERROR: Invalid color count \"%s\", valid counts are 8, 16, 256 or 16M.\n", colorsOption)
-	fmt.Fprintln(os.Stderr)
-	printUsage(os.Stderr, flagSet, true)
-
-	os.Exit(1)
-	panic("We just did os.Exit(), why are we still executing?")
+	return nil, fmt.Errorf("Valid counts are 8, 16, 256, 16M or auto.")
 }
 
-func parseStatusBarStyle(styleOption string, flagSet *flag.FlagSet) m.StatusBarStyle {
+func parseStatusBarStyle(styleOption string) (m.StatusBarStyle, error) {
 	if styleOption == "inverse" {
-		return m.STATUSBAR_STYLE_INVERSE
+		return m.STATUSBAR_STYLE_INVERSE, nil
 	}
 	if styleOption == "plain" {
-		return m.STATUSBAR_STYLE_PLAIN
+		return m.STATUSBAR_STYLE_PLAIN, nil
 	}
 	if styleOption == "bold" {
-		return m.STATUSBAR_STYLE_BOLD
+		return m.STATUSBAR_STYLE_BOLD, nil
 	}
 
-	fmt.Fprintf(os.Stderr,
-		"ERROR: Unrecognized status bar style \"%s\", good ones are inverse, plain and bold.\n",
-		styleOption)
-	fmt.Fprintln(os.Stderr)
-	printUsage(os.Stderr, flagSet, true)
-
-	os.Exit(1)
-	panic("os.Exit(1) just failed")
+	return 0, fmt.Errorf("good ones are inverse, plain and bold")
 }
 
-func parseUnprintableStyle(styleOption string, flagSet *flag.FlagSet) m.UnprintableStyle {
+func parseUnprintableStyle(styleOption string) (m.UnprintableStyle, error) {
 	if styleOption == "highlight" {
-		return m.UNPRINTABLE_STYLE_HIGHLIGHT
+		return m.UNPRINTABLE_STYLE_HIGHLIGHT, nil
 	}
 	if styleOption == "whitespace" {
-		return m.UNPRINTABLE_STYLE_WHITESPACE
+		return m.UNPRINTABLE_STYLE_WHITESPACE, nil
 	}
 
-	fmt.Fprintf(os.Stderr,
-		"ERROR: Unrecognized invalid UTF8 rendering style \"%s\", good ones are highlight or whitespace.\n",
-		styleOption)
-	fmt.Fprintln(os.Stderr)
-	printUsage(os.Stderr, flagSet, true)
-
-	os.Exit(1)
-	panic("os.Exit(1) just failed")
+	return 0, fmt.Errorf("Good ones are highlight or whitespace")
 }
 
-func parseScrollHint(scrollHint string, flagSet *flag.FlagSet) twin.Cell {
+func parseScrollHint(scrollHint string) (twin.Cell, error) {
 	scrollHint = strings.ReplaceAll(scrollHint, "ESC", "\x1b")
 	hintParser := m.NewLine(scrollHint)
 	parsedTokens := hintParser.HighlightedTokens(nil).Cells
 	if len(parsedTokens) == 1 {
-		return parsedTokens[0]
+		return parsedTokens[0], nil
 	}
 
-	fmt.Fprintln(os.Stderr,
-		"ERROR: Scroll hint must be exactly one (optionally highlighted) character. For example: 'ESC[2m…'")
-	fmt.Fprintln(os.Stderr)
-	printUsage(os.Stderr, flagSet, true)
-
-	os.Exit(1)
-	panic("os.Exit(1) just failed")
+	return twin.Cell{}, fmt.Errorf("Expected exactly one (optionally highlighted) character. For example: 'ESC[2m…'")
 }
 
 func main() {
@@ -248,28 +218,34 @@ func main() {
 		panic(err)
 	}()
 
-	flagSet := flag.NewFlagSet("", flag.ExitOnError)
-	flagSet.Usage = func() {
-		printUsage(os.Stdout, flagSet, false)
-	}
+	flagSet := flag.NewFlagSet("",
+		flag.ContinueOnError, // We want to do our own error handling
+	)
+	flagSet.SetOutput(io.Discard) // We want to do our own printing
+
 	printVersion := flagSet.Bool("version", false, "Prints the moar version number")
 	debug := flagSet.Bool("debug", false, "Print debug logs after exiting")
 	trace := flagSet.Bool("trace", false, "Print trace logs after exiting")
 	wrap := flagSet.Bool("wrap", false, "Wrap long lines")
 	follow := flagSet.Bool("follow", false, "Follow piped input just like \"tail -f\"")
-	styleOption := flagSet.String("style", "native",
-		"Highlighting style from https://xyproto.github.io/splash/docs/longer/all.html")
-	colorsOption := flagSet.String("colors", "auto", "Highlighting palette size: 8, 16, 256, 16M, auto")
+	style := flagSetFunc(flagSet,
+		"style", *styles.Registry["native"],
+		"Highlighting style from https://xyproto.github.io/splash/docs/longer/all.html", parseStyleOption)
+	formatter := flagSetFunc(flagSet,
+		"colors", formatters.TTY256, "Highlighting palette size: 8, 16, 256, 16M, auto", parseColorsOption)
 	noLineNumbers := flagSet.Bool("no-linenumbers", false, "Hide line numbers on startup, press left arrow key to show")
 	noStatusBar := flagSet.Bool("no-statusbar", false, "Hide the status bar, toggle with '='")
 	noClearOnExit := flagSet.Bool("no-clear-on-exit", false, "Retain screen contents when exiting moar")
-	statusBarStyleOption := flagSet.String("statusbar", "inverse", "Status bar style: inverse, plain or bold")
-	UnprintableStyleOption := flagSet.String("render-unprintable", "highlight",
-		"How unprintable characters are rendered: highlight or whitespace")
-	scrollLeftHintOption := flagSet.String("scroll-left-hint", "ESC[7m<",
-		"Shown when view can scroll left. One character with optional ANSI highlighting.")
-	scrollRightHintOption := flagSet.String("scroll-right-hint", "ESC[7m>",
-		"Shown when view can scroll right. One character with optional ANSI highlighting.")
+	statusBarStyle := flagSetFunc(flagSet, "statusbar", m.STATUSBAR_STYLE_INVERSE,
+		"Status bar style: inverse, plain or bold", parseStatusBarStyle)
+	unprintableStyle := flagSetFunc(flagSet, "render-unprintable", m.UNPRINTABLE_STYLE_HIGHLIGHT,
+		"How unprintable characters are rendered: highlight or whitespace", parseUnprintableStyle)
+	scrollLeftHint := flagSetFunc(flagSet, "scroll-left-hint",
+		twin.NewCell('<', twin.StyleDefault.WithAttr(twin.AttrReverse)),
+		"Shown when view can scroll left. One character with optional ANSI highlighting.", parseScrollHint)
+	scrollRightHint := flagSetFunc(flagSet, "scroll-right-hint",
+		twin.NewCell('>', twin.StyleDefault.WithAttr(twin.AttrReverse)),
+		"Shown when view can scroll right. One character with optional ANSI highlighting.", parseScrollHint)
 
 	// Combine flags from environment and from command line
 	flags := os.Args[1:]
@@ -277,16 +253,20 @@ func main() {
 	if len(moarEnv) > 0 {
 		// FIXME: It would be nice if we could debug log that we're doing this,
 		// but logging is not yet set up and depends on command line parameters.
-		flags = append(strings.Split(moarEnv, " "), flags...)
+		flags = append(strings.Fields(moarEnv), flags...)
 	}
 
 	err := flagSet.Parse(flags)
 	if err != nil {
-		printProblemsHeader()
-		fmt.Fprintln(os.Stderr, "ERROR: Command line parsing failed:", err.Error())
+		if err == flag.ErrHelp {
+			printUsage(os.Stdout, flagSet, false)
+			return
+		}
+
+		boldErrorMessage := "\x1b[1m" + err.Error() + "\x1b[m"
+		fmt.Fprintln(os.Stderr, "ERROR:", boldErrorMessage)
 		fmt.Fprintln(os.Stderr)
 		printUsage(os.Stderr, flagSet, true)
-
 		os.Exit(1)
 	}
 
@@ -294,14 +274,6 @@ func main() {
 		fmt.Println(versionString)
 		os.Exit(0)
 	}
-
-	style := parseStyleOption(*styleOption, flagSet)
-	formatter := parseColorsOption(*colorsOption, flagSet)
-	statusBarStyle := parseStatusBarStyle(*statusBarStyleOption, flagSet)
-	unprintableStyle := parseUnprintableStyle(*UnprintableStyleOption, flagSet)
-
-	scrollLeftHint := parseScrollHint(*scrollLeftHintOption, flagSet)
-	scrollRightHint := parseScrollHint(*scrollRightHintOption, flagSet)
 
 	log.SetLevel(log.InfoLevel)
 	if *trace {
@@ -373,7 +345,7 @@ func main() {
 		// Display input pipe contents
 		reader = m.NewReaderFromStream("", os.Stdin)
 	} else {
-		reader, err = m.NewReaderFromFilename(*inputFilename, style, formatter)
+		reader, err = m.NewReaderFromFilename(*inputFilename, *style, *formatter)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "ERROR: %v\n", err)
 			os.Exit(1)
@@ -387,11 +359,29 @@ func main() {
 	pager.ShowLineNumbers = !*noLineNumbers
 	pager.ShowStatusBar = !*noStatusBar
 	pager.DeInit = !*noClearOnExit
-	pager.StatusBarStyle = statusBarStyle
-	pager.UnprintableStyle = unprintableStyle
-	pager.ScrollLeftHint = scrollLeftHint
-	pager.ScrollRightHint = scrollRightHint
+	pager.StatusBarStyle = *statusBarStyle
+	pager.UnprintableStyle = *unprintableStyle
+	pager.ScrollLeftHint = *scrollLeftHint
+	pager.ScrollRightHint = *scrollRightHint
 	startPaging(pager)
+}
+
+// Define a generic flag with specified name, default value, and usage string.
+// The return value is the address of a variable that stores the parsed value of
+// the flag.
+func flagSetFunc[T any](flagSet *flag.FlagSet, name string, defaultValue T, usage string, parser func(valueString string) (T, error)) *T {
+	parsed := defaultValue
+
+	flagSet.Func(name, usage, func(valueString string) error {
+		parseResult, err := parser(valueString)
+		if err != nil {
+			return err
+		}
+		parsed = parseResult
+		return nil
+	})
+
+	return &parsed
 }
 
 func startPaging(pager *m.Pager) {
