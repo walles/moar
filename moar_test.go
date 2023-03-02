@@ -8,7 +8,8 @@ import (
 )
 
 func TestParseScrollHint(t *testing.T) {
-	token := parseScrollHint("ESC[7m>", nil)
+	token, err := parseScrollHint("ESC[7m>")
+	assert.NilError(t, err)
 	assert.Equal(t, token, twin.Cell{
 		Rune:  '>',
 		Style: twin.StyleDefault.WithAttr(twin.AttrReverse),

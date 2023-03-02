@@ -240,7 +240,7 @@ func main() {
 	scrollLeftHint := flagSetFunc(flagSet, "scroll-left-hint",
 		twin.NewCell('<', twin.StyleDefault.WithAttr(twin.AttrReverse)),
 		"Shown when view can scroll left. One character with optional ANSI highlighting.", parseScrollHint)
-	scrollRightHint := flagSetFunc(flagSet, "scroll-righte-hint",
+	scrollRightHint := flagSetFunc(flagSet, "scroll-right-hint",
 		twin.NewCell('>', twin.StyleDefault.WithAttr(twin.AttrReverse)),
 		"Shown when view can scroll right. One character with optional ANSI highlighting.", parseScrollHint)
 
