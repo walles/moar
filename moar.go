@@ -218,8 +218,11 @@ func main() {
 		panic(err)
 	}()
 
-	flagSet := flag.NewFlagSet("", flag.ContinueOnError)
+	flagSet := flag.NewFlagSet("",
+		flag.ContinueOnError, // We want to do our own error handling
+	)
 	flagSet.SetOutput(io.Discard) // We want to do our own printing
+
 	printVersion := flagSet.Bool("version", false, "Prints the moar version number")
 	debug := flagSet.Bool("debug", false, "Print debug logs after exiting")
 	trace := flagSet.Bool("trace", false, "Print trace logs after exiting")
