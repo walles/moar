@@ -260,7 +260,8 @@ func main() {
 			return
 		}
 
-		fmt.Fprintln(os.Stderr, "ERROR:", err.Error())
+		boldErrorMessage := "\x1b[1m" + err.Error() + "\x1b[m"
+		fmt.Fprintln(os.Stderr, "ERROR:", boldErrorMessage)
 		fmt.Fprintln(os.Stderr)
 		printUsage(os.Stderr, flagSet, true)
 		os.Exit(1)
