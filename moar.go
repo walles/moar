@@ -183,22 +183,15 @@ func parseStatusBarStyle(styleOption string) (m.StatusBarStyle, error) {
 	return 0, fmt.Errorf("good ones are inverse, plain and bold")
 }
 
-func parseUnprintableStyle(styleOption string, flagSet *flag.FlagSet) m.UnprintableStyle {
+func parseUnprintableStyle(styleOption string) (m.UnprintableStyle, error) {
 	if styleOption == "highlight" {
-		return m.UNPRINTABLE_STYLE_HIGHLIGHT
+		return m.UNPRINTABLE_STYLE_HIGHLIGHT, nil
 	}
 	if styleOption == "whitespace" {
-		return m.UNPRINTABLE_STYLE_WHITESPACE
+		return m.UNPRINTABLE_STYLE_WHITESPACE, nil
 	}
 
-	fmt.Fprintf(os.Stderr,
-		"ERROR: Unrecognized invalid UTF8 rendering style \"%s\", good ones are highlight or whitespace.\n",
-		styleOption)
-	fmt.Fprintln(os.Stderr)
-	printUsage(os.Stderr, flagSet, true)
-
-	os.Exit(1)
-	panic("os.Exit(1) just failed")
+	return 0, fmt.Errorf("Good ones are highlight or whitespace")
 }
 
 func parseScrollHint(scrollHint string, flagSet *flag.FlagSet) twin.Cell {
@@ -249,9 +242,11 @@ func main() {
 	noLineNumbers := flagSet.Bool("no-linenumbers", false, "Hide line numbers on startup, press left arrow key to show")
 	noStatusBar := flagSet.Bool("no-statusbar", false, "Hide the status bar, toggle with '='")
 	noClearOnExit := flagSet.Bool("no-clear-on-exit", false, "Retain screen contents when exiting moar")
-	statusBarStyle := flagSetFunc(flagSet, "statusbar", m.STATUSBAR_STYLE_INVERSE, "Status bar style: inverse, plain or bold", parseStatusBarStyle)
-	UnprintableStyleOption := flagSet.String("render-unprintable", "highlight",
-		"How unprintable characters are rendered: highlight or whitespace")
+	statusBarStyle := flagSetFunc(flagSet, "statusbar", m.STATUSBAR_STYLE_INVERSE,
+		"Status bar style: inverse, plain or bold", parseStatusBarStyle)
+	unprintableStyle := flagSetFunc(flagSet, "render-unprintable", m.UNPRINTABLE_STYLE_HIGHLIGHT,
+		"How unprintable characters are rendered: highlight or whitespace", parseUnprintableStyle)
+
 	scrollLeftHintOption := flagSet.String("scroll-left-hint", "ESC[7m<",
 		"Shown when view can scroll left. One character with optional ANSI highlighting.")
 	scrollRightHintOption := flagSet.String("scroll-right-hint", "ESC[7m>",
@@ -283,8 +278,6 @@ func main() {
 		fmt.Println(versionString)
 		os.Exit(0)
 	}
-
-	unprintableStyle := parseUnprintableStyle(*UnprintableStyleOption, flagSet)
 
 	scrollLeftHint := parseScrollHint(*scrollLeftHintOption, flagSet)
 	scrollRightHint := parseScrollHint(*scrollRightHintOption, flagSet)
@@ -374,7 +367,7 @@ func main() {
 	pager.ShowStatusBar = !*noStatusBar
 	pager.DeInit = !*noClearOnExit
 	pager.StatusBarStyle = *statusBarStyle
-	pager.UnprintableStyle = unprintableStyle
+	pager.UnprintableStyle = *unprintableStyle
 	pager.ScrollLeftHint = scrollLeftHint
 	pager.ScrollRightHint = scrollRightHint
 	startPaging(pager)
