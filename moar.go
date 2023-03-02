@@ -194,21 +194,15 @@ func parseUnprintableStyle(styleOption string) (m.UnprintableStyle, error) {
 	return 0, fmt.Errorf("Good ones are highlight or whitespace")
 }
 
-func parseScrollHint(scrollHint string, flagSet *flag.FlagSet) twin.Cell {
+func parseScrollHint(scrollHint string) (twin.Cell, error) {
 	scrollHint = strings.ReplaceAll(scrollHint, "ESC", "\x1b")
 	hintParser := m.NewLine(scrollHint)
 	parsedTokens := hintParser.HighlightedTokens(nil).Cells
 	if len(parsedTokens) == 1 {
-		return parsedTokens[0]
+		return parsedTokens[0], nil
 	}
 
-	fmt.Fprintln(os.Stderr,
-		"ERROR: Scroll hint must be exactly one (optionally highlighted) character. For example: 'ESC[2m…'")
-	fmt.Fprintln(os.Stderr)
-	printUsage(os.Stderr, flagSet, true)
-
-	os.Exit(1)
-	panic("os.Exit(1) just failed")
+	return twin.Cell{}, fmt.Errorf("Expected exactly one (optionally highlighted) character. For example: 'ESC[2m…'")
 }
 
 func main() {
@@ -231,9 +225,6 @@ func main() {
 	trace := flagSet.Bool("trace", false, "Print trace logs after exiting")
 	wrap := flagSet.Bool("wrap", false, "Wrap long lines")
 	follow := flagSet.Bool("follow", false, "Follow piped input just like \"tail -f\"")
-
-	// FIXME: Use flagSetFunc() for all "...Option :=" flags
-
 	style := flagSetFunc(flagSet,
 		"style", *styles.Registry["native"],
 		"Highlighting style from https://xyproto.github.io/splash/docs/longer/all.html", parseStyleOption)
@@ -246,11 +237,12 @@ func main() {
 		"Status bar style: inverse, plain or bold", parseStatusBarStyle)
 	unprintableStyle := flagSetFunc(flagSet, "render-unprintable", m.UNPRINTABLE_STYLE_HIGHLIGHT,
 		"How unprintable characters are rendered: highlight or whitespace", parseUnprintableStyle)
-
-	scrollLeftHintOption := flagSet.String("scroll-left-hint", "ESC[7m<",
-		"Shown when view can scroll left. One character with optional ANSI highlighting.")
-	scrollRightHintOption := flagSet.String("scroll-right-hint", "ESC[7m>",
-		"Shown when view can scroll right. One character with optional ANSI highlighting.")
+	scrollLeftHint := flagSetFunc(flagSet, "scroll-left-hint",
+		twin.NewCell('<', twin.StyleDefault.WithAttr(twin.AttrReverse)),
+		"Shown when view can scroll left. One character with optional ANSI highlighting.", parseScrollHint)
+	scrollRightHint := flagSetFunc(flagSet, "scroll-righte-hint",
+		twin.NewCell('>', twin.StyleDefault.WithAttr(twin.AttrReverse)),
+		"Shown when view can scroll right. One character with optional ANSI highlighting.", parseScrollHint)
 
 	// Combine flags from environment and from command line
 	flags := os.Args[1:]
@@ -278,9 +270,6 @@ func main() {
 		fmt.Println(versionString)
 		os.Exit(0)
 	}
-
-	scrollLeftHint := parseScrollHint(*scrollLeftHintOption, flagSet)
-	scrollRightHint := parseScrollHint(*scrollRightHintOption, flagSet)
 
 	log.SetLevel(log.InfoLevel)
 	if *trace {
@@ -368,8 +357,8 @@ func main() {
 	pager.DeInit = !*noClearOnExit
 	pager.StatusBarStyle = *statusBarStyle
 	pager.UnprintableStyle = *unprintableStyle
-	pager.ScrollLeftHint = scrollLeftHint
-	pager.ScrollRightHint = scrollRightHint
+	pager.ScrollLeftHint = *scrollLeftHint
+	pager.ScrollRightHint = *scrollRightHint
 	startPaging(pager)
 }
 
