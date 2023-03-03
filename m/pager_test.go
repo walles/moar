@@ -95,7 +95,7 @@ func TestBrokenUtf8(t *testing.T) {
 func startPaging(t *testing.T, reader *Reader) *twin.FakeScreen {
 	err := reader._wait()
 	if err != nil {
-		panic(err)
+		t.Fatalf("Failed waiting for reader: %v", err)
 	}
 
 	screen := twin.NewFakeScreen(20, 10)

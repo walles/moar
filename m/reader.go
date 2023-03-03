@@ -448,7 +448,7 @@ func NewReaderFromFilename(filename string, style chroma.Style, formatter chroma
 }
 
 // createStatusUnlocked() assumes that its caller is holding the lock
-func (r *Reader) createStatusUnlocked(firstLineOneBased int, lastLineOneBased int) string {
+func (r *Reader) createStatusUnlocked(lastLineOneBased int) string {
 	prefix := ""
 	if r.name != nil {
 		prefix = path.Base(*r.name) + ": "
@@ -511,7 +511,7 @@ func (r *Reader) getLinesUnlocked(firstLineOneBased int, wantedLineCount int) *I
 			// The line number set here won't matter, we'll clip it anyway when we get it back
 			firstLineOneBased: 0,
 
-			statusText: r.createStatusUnlocked(0, 0),
+			statusText: r.createStatusUnlocked(0),
 		}
 	}
 
@@ -537,7 +537,7 @@ func (r *Reader) getLinesUnlocked(firstLineOneBased int, wantedLineCount int) *I
 	return &InputLines{
 		lines:             r.lines[firstLineZeroBased : lastLineZeroBased+1],
 		firstLineOneBased: firstLineOneBased,
-		statusText:        r.createStatusUnlocked(firstLineOneBased, lastLineZeroBased+1),
+		statusText:        r.createStatusUnlocked(lastLineZeroBased + 1),
 	}
 }
 

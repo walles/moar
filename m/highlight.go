@@ -27,7 +27,7 @@ func highlight(filename string, force bool, style chroma.Style, formatter chroma
 	if err != nil {
 		return nil, err
 	}
-	if fileInfo.Size() > MAX_HIGHLIGHT_SIZE {
+	if fileInfo.Size() > MAX_HIGHLIGHT_SIZE && !force {
 		log.Debugf("Not highlighting %s because it is %d bytes large, which is larger than moar's built-in highlighting limit of %d bytes",
 			filename, fileInfo.Size(), MAX_HIGHLIGHT_SIZE)
 		return nil, nil
