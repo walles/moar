@@ -100,6 +100,7 @@ Miscellaneous
 Moving around
 -------------
 * Arrow keys
+* Alt key plus left / right arrow steps one column at a time
 * Left / right can be used to hide / show line numbers
 * CTRL-p moves to the previous line
 * CTRL-n moves to the next line
@@ -265,6 +266,12 @@ func (p *Pager) onKey(keyCode twin.KeyCode) {
 
 	case twin.KeyLeft:
 		p.moveRight(-16)
+
+	case twin.KeyAltRight:
+		p.moveRight(1)
+
+	case twin.KeyAltLeft:
+		p.moveRight(-1)
 
 	case twin.KeyHome:
 		p.scrollPosition = newScrollPosition("Pager scroll position")
