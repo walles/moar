@@ -8,6 +8,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"runtime"
+	"strconv"
 	"strings"
 	"time"
 
@@ -205,6 +206,21 @@ func parseScrollHint(scrollHint string) (twin.Cell, error) {
 	return twin.Cell{}, fmt.Errorf("Expected exactly one (optionally highlighted) character. For example: 'ESC[2m…'")
 }
 
+func parseShiftAmount(shiftAmount string) (uint, error) {
+	value, err := strconv.ParseUint(shiftAmount, 10, 32)
+	if err != nil {
+		return 0, err
+	}
+
+	if value < 1 {
+		return 0, fmt.Errorf("Shift amount must be at least 1, was %d", value)
+	}
+
+	// Let's add an upper bound as well if / when requested
+
+	return uint(value), nil
+}
+
 func main() {
 	// FIXME: If we get a CTRL-C, get terminal back into a useful state before terminating
 
@@ -226,6 +242,7 @@ func main() {
 	printVersion := flagSet.Bool("version", false, "Prints the moar version number")
 	debug := flagSet.Bool("debug", false, "Print debug logs after exiting")
 	trace := flagSet.Bool("trace", false, "Print trace logs after exiting")
+
 	wrap := flagSet.Bool("wrap", false, "Wrap long lines")
 	follow := flagSet.Bool("follow", false, "Follow piped input just like \"tail -f\"")
 	style := flagSetFunc(flagSet,
@@ -246,6 +263,7 @@ func main() {
 	scrollRightHint := flagSetFunc(flagSet, "scroll-right-hint",
 		twin.NewCell('>', twin.StyleDefault.WithAttr(twin.AttrReverse)),
 		"Shown when view can scroll right. One character with optional ANSI highlighting.", parseScrollHint)
+	shift := flagSetFunc(flagSet, "shift", 16, "Horizontal scroll amount >=1, defaults to 16", parseShiftAmount)
 
 	// Combine flags from environment and from command line
 	flags := os.Args[1:]
@@ -363,6 +381,7 @@ func main() {
 	pager.UnprintableStyle = *unprintableStyle
 	pager.ScrollLeftHint = *scrollLeftHint
 	pager.ScrollRightHint = *scrollRightHint
+	pager.SideScrollAmount = int(*shift)
 	startPaging(pager)
 }
 

@@ -74,6 +74,8 @@ type Pager struct {
 	ScrollLeftHint  twin.Cell
 	ScrollRightHint twin.Cell
 
+	SideScrollAmount int // Should be positive
+
 	// If true, pager will clear the screen on return. If false, pager will
 	// clear the last line, and show the cursor.
 	DeInit bool
@@ -142,7 +144,7 @@ func (pm _PagerMode) isViewing() bool {
 	return pm == _Viewing || pm == _NotFound
 }
 
-// NewPager creates a new Pager
+// NewPager creates a new Pager with default settings
 func NewPager(r *Reader) *Pager {
 	var name string
 	if r == nil || r.name == nil || len(*r.name) == 0 {
@@ -151,14 +153,15 @@ func NewPager(r *Reader) *Pager {
 		name = "Pager " + *r.name
 	}
 	return &Pager{
-		reader:          r,
-		quit:            false,
-		ShowLineNumbers: true,
-		ShowStatusBar:   true,
-		DeInit:          true,
-		ScrollLeftHint:  twin.NewCell('<', twin.StyleDefault.WithAttr(twin.AttrReverse)),
-		ScrollRightHint: twin.NewCell('>', twin.StyleDefault.WithAttr(twin.AttrReverse)),
-		scrollPosition:  newScrollPosition(name),
+		reader:           r,
+		quit:             false,
+		ShowLineNumbers:  true,
+		ShowStatusBar:    true,
+		DeInit:           true,
+		SideScrollAmount: 16,
+		ScrollLeftHint:   twin.NewCell('<', twin.StyleDefault.WithAttr(twin.AttrReverse)),
+		ScrollRightHint:  twin.NewCell('>', twin.StyleDefault.WithAttr(twin.AttrReverse)),
+		scrollPosition:   newScrollPosition(name),
 	}
 }
 
@@ -262,10 +265,10 @@ func (p *Pager) onKey(keyCode twin.KeyCode) {
 		p.handleScrolledDown()
 
 	case twin.KeyRight:
-		p.moveRight(16)
+		p.moveRight(p.SideScrollAmount)
 
 	case twin.KeyLeft:
-		p.moveRight(-16)
+		p.moveRight(-p.SideScrollAmount)
 
 	case twin.KeyAltRight:
 		p.moveRight(1)
@@ -346,11 +349,11 @@ func (p *Pager) onRune(char rune) {
 
 	case 'l':
 		// vim right
-		p.moveRight(16)
+		p.moveRight(p.SideScrollAmount)
 
 	case 'h':
 		// vim left
-		p.moveRight(-16)
+		p.moveRight(-p.SideScrollAmount)
 
 	case '<':
 		p.scrollPosition = newScrollPosition("Pager scroll position")
@@ -492,10 +495,10 @@ func (p *Pager) StartPaging(screen twin.Screen) {
 				p.scrollPosition = p.scrollPosition.NextLine(1)
 
 			case twin.MouseWheelLeft:
-				p.moveRight(-16)
+				p.moveRight(-p.SideScrollAmount)
 
 			case twin.MouseWheelRight:
-				p.moveRight(16)
+				p.moveRight(p.SideScrollAmount)
 			}
 
 		case twin.EventResize:
