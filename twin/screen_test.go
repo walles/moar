@@ -48,3 +48,27 @@ func TestConsumeEncodedEventWithNoInput(t *testing.T) {
 	assert.Assert(t, event == nil)
 	assert.Equal(t, remainder, "")
 }
+
+func TestRenderLine(t *testing.T) {
+	row := []Cell{
+		{
+			Rune:  '<',
+			Style: StyleDefault.WithAttr(AttrReverse),
+		},
+		{
+			Rune:  'f',
+			Style: StyleDefault.WithAttr(AttrDim),
+		},
+	}
+
+	rendered, count := renderLine(row)
+	assert.Equal(t, count, 2)
+	reset := "[m"
+	reversed := "[7m"
+	notReversed := "[27m"
+	dim := "[2m"
+	clearToEol := "[K"
+	assert.Equal(t,
+		strings.ReplaceAll(rendered, "", "ESC"),
+		strings.ReplaceAll(reset+reversed+"<"+dim+notReversed+"f"+clearToEol+reset, "", "ESC"))
+}
