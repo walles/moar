@@ -22,6 +22,16 @@ type Style struct {
 	fg    Color
 	bg    Color
 	attrs AttrMask
+
+	// This hyperlinkUrl is a URL for in-terminal hyperlinks.
+	//
+	// Since we don't want to do error handling of broken URLs, we just store
+	// these URLs as strings.
+	//
+	// Ref:
+	// * https://gist.github.com/egmontkob/eb114294efbcd5adb1944c9f3cb5feda
+	// * https://github.com/walles/moar/issues/131
+	hyperlinkUrl *string
 }
 
 var StyleDefault Style
@@ -59,9 +69,10 @@ func (style Style) String() string {
 
 func (style Style) WithAttr(attr AttrMask) Style {
 	result := Style{
-		fg:    style.fg,
-		bg:    style.bg,
-		attrs: style.attrs | attr,
+		fg:           style.fg,
+		bg:           style.bg,
+		attrs:        style.attrs | attr,
+		hyperlinkUrl: style.hyperlinkUrl,
 	}
 
 	// Bold and dim are mutually exclusive
@@ -75,11 +86,22 @@ func (style Style) WithAttr(attr AttrMask) Style {
 	return result
 }
 
+// Call with nil to remove the link
+func (style Style) WithHyperlink(hyperlinkUrl *string) Style {
+	return Style{
+		fg:           style.fg,
+		bg:           style.bg,
+		attrs:        style.attrs,
+		hyperlinkUrl: hyperlinkUrl,
+	}
+}
+
 func (style Style) WithoutAttr(attr AttrMask) Style {
 	return Style{
-		fg:    style.fg,
-		bg:    style.bg,
-		attrs: style.attrs & ^attr,
+		fg:           style.fg,
+		bg:           style.bg,
+		attrs:        style.attrs & ^attr,
+		hyperlinkUrl: style.hyperlinkUrl,
 	}
 }
 
@@ -89,17 +111,19 @@ func (attr AttrMask) has(attrs AttrMask) bool {
 
 func (style Style) Background(color Color) Style {
 	return Style{
-		fg:    style.fg,
-		bg:    color,
-		attrs: style.attrs,
+		fg:           style.fg,
+		bg:           color,
+		attrs:        style.attrs,
+		hyperlinkUrl: style.hyperlinkUrl,
 	}
 }
 
 func (style Style) Foreground(color Color) Style {
 	return Style{
-		fg:    color,
-		bg:    style.bg,
-		attrs: style.attrs,
+		fg:           color,
+		bg:           style.bg,
+		attrs:        style.attrs,
+		hyperlinkUrl: style.hyperlinkUrl,
 	}
 }
 
@@ -173,6 +197,16 @@ func (current Style) RenderUpdateFrom(previous Style) string {
 		} else {
 			builder.WriteString("\x1b[29m")
 		}
+	}
+
+	if current.hyperlinkUrl != previous.hyperlinkUrl {
+		newUrl := ""
+		if current.hyperlinkUrl != nil {
+			newUrl = *current.hyperlinkUrl
+		}
+		builder.WriteString("\x1b]8;;")
+		builder.WriteString(newUrl)
+		builder.WriteString("\x1b\\")
 	}
 
 	return builder.String()
