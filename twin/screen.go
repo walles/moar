@@ -439,13 +439,14 @@ func renderLine(row []Cell) (string, int) {
 	}
 
 	// Set trailer attributes
-	builder.WriteString(lastCell.Style.RenderUpdateFrom(lastStyle))
+	trailerStyle := lastStyle.WithHyperlink(nil)
+	builder.WriteString(trailerStyle.RenderUpdateFrom(lastStyle))
 
 	// Clear to end of line
 	// https://en.wikipedia.org/wiki/ANSI_escape_code#CSI_(Control_Sequence_Introducer)_sequences
 	builder.WriteString("\x1b[K")
 
-	if lastStyle != StyleDefault {
+	if trailerStyle != StyleDefault {
 		// Reset style after each line
 		builder.WriteString("\x1b[m")
 	}
