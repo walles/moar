@@ -204,9 +204,17 @@ func (current Style) RenderUpdateFrom(previous Style) string {
 		if current.hyperlinkUrl != nil {
 			newUrl = *current.hyperlinkUrl
 		}
-		builder.WriteString("\x1b]8;;")
-		builder.WriteString(newUrl)
-		builder.WriteString("\x1b\\")
+
+		previousUrl := ""
+		if previous.hyperlinkUrl != nil {
+			previousUrl = *previous.hyperlinkUrl
+		}
+
+		if newUrl != previousUrl {
+			builder.WriteString("\x1b]8;;")
+			builder.WriteString(newUrl)
+			builder.WriteString("\x1b\\")
+		}
 	}
 
 	return builder.String()
