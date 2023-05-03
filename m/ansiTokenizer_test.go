@@ -276,7 +276,8 @@ func TestHyperlink_nonTerminatingEsc(t *testing.T) {
 			// good enough.
 			continue
 		}
-		assert.Equal(t, tokens[i], twin.Cell{Rune: rune(complete[i]), Style: twin.StyleDefault})
+		assert.Equal(t, tokens[i], twin.Cell{Rune: rune(complete[i]), Style: twin.StyleDefault},
+			"i=%d, c=%s, tokens=%v", i, string(complete[i]), tokens)
 	}
 }
 

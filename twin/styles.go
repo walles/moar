@@ -63,6 +63,9 @@ func (style Style) String() string {
 	if style.attrs.has(AttrStrikeThrough) {
 		attrNames = append(attrNames, "strikethrough")
 	}
+	if style.hyperlinkUrl != nil {
+		attrNames = append(attrNames, "\""+*style.hyperlinkUrl+"\"")
+	}
 
 	return fmt.Sprint(strings.Join(attrNames, " "), " ", style.fg, " on ", style.bg)
 }
