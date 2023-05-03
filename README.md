@@ -35,6 +35,9 @@ Doing the right thing includes:
   `--wrap` or by pressing <kbd>w</kbd>
 - [**Follows output** as long as you are on the last line](https://github.com/walles/moar/issues/108#issuecomment-1331743242),
   just like `tail -f`
+- Renders [terminal
+  hyperlinks](https://gist.github.com/egmontkob/eb114294efbcd5adb1944c9f3cb5feda)
+  properly
 
 [For compatibility reasons](https://github.com/walles/moar/issues/14), `moar`
 uses the formats declared in these environment variables if present:
