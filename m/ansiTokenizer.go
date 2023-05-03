@@ -430,6 +430,10 @@ const (
 	initial parseState = iota
 	justSawEsc
 	inStyle
+	gotOsc      // OSC = Operating System Command = ESC]
+	gotOscSemi  // ESC];
+	inUrl       // After ESC];;
+	inUrlGotEsc // Expecting a \ now to terminate the URL
 )
 
 func styledStringsFromString(s string) styledStringsWithTrailer {
@@ -450,6 +454,7 @@ func styledStringsFromString(s string) styledStringsWithTrailer {
 	state := initial
 	escIndex := -1 // Byte index into s
 	partStart := 0 // Byte index into s
+	urlStart := -1 // Byte index into s
 	style := twin.StyleDefault
 	for byteIndex, char := range s {
 		if state == initial {
@@ -464,6 +469,8 @@ func styledStringsFromString(s string) styledStringsWithTrailer {
 				state = justSawEsc
 			} else if char == '[' {
 				state = inStyle
+			} else if char == ']' {
+				state = gotOsc
 			} else {
 				state = initial
 			}
@@ -511,6 +518,48 @@ func styledStringsFromString(s string) styledStringsWithTrailer {
 				// Unsupported sequence, just treat the whole thing as plain text
 				state = initial
 			}
+			continue
+		} else if state == gotOsc {
+			if char == ';' {
+				state = gotOscSemi
+			} else {
+				state = initial
+			}
+			continue
+		} else if state == gotOscSemi {
+			if char == ';' {
+				urlStart = byteIndex + 1
+				state = inUrl
+			} else {
+				state = initial
+			}
+			continue
+		} else if state == inUrl {
+			// Ref: https://stackoverflow.com/a/1547940/473672
+			const validChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~:/?#[]@!$&'()*+,;="
+			if char == '\x1b' {
+				state = inUrlGotEsc
+			} else if char == '\x07' {
+				// End of URL
+				url := s[urlStart:byteIndex]
+				style = style.WithHyperlink(&url)
+				state = initial
+			} else if strings.ContainsRune(validChars, char) {
+				// Stay in URL
+			} else {
+				// Invalid URL character, just treat the whole thing as plain text
+				state = initial
+			}
+			continue
+		} else if state == inUrlGotEsc {
+			if char == '\\' {
+				// End of URL
+				url := s[urlStart:byteIndex]
+				style = style.WithHyperlink(&url)
+			} else {
+				// Broken ending, just treat the whole thing as plain text
+			}
+			state = initial
 			continue
 		}
 
