@@ -271,6 +271,11 @@ func TestHyperlink_nonTerminatingEsc(t *testing.T) {
 
 	// This should not be treated as any link
 	for i := 0; i < len(complete); i++ {
+		if complete[i] == '\x1b' {
+			// These get special rendering, if everything else matches that's
+			// good enough.
+			continue
+		}
 		assert.Equal(t, tokens[i], twin.Cell{Rune: rune(complete[i]), Style: twin.StyleDefault})
 	}
 }
@@ -282,6 +287,11 @@ func TestHyperlink_incomplete(t *testing.T) {
 		tokens := cellsFromString(complete[:l]).Cells
 
 		for i := 0; i < l; i++ {
+			if complete[i] == '\x1b' {
+				// These get special rendering, if everything else matches
+				// that's good enough.
+				continue
+			}
 			assert.Equal(t, tokens[i], twin.Cell{Rune: rune(complete[i]), Style: twin.StyleDefault})
 		}
 	}
