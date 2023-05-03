@@ -266,7 +266,7 @@ func TestHyperlink_bell(t *testing.T) {
 
 // Test with some other ESC sequence than ESC-backslash
 func TestHyperlink_nonTerminatingEsc(t *testing.T) {
-	complete := "a\x1b]8;;https://example.com\x1b\\bc\x1b]8;;\x1bd"
+	complete := "a\x1b]8;;https://example.com\x1bbc"
 	tokens := cellsFromString(complete).Cells
 
 	// This should not be treated as any link
