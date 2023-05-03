@@ -1,0 +1,9 @@
+Below is an example hyperlink as described here:
+https://gist.github.com/egmontkob/eb114294efbcd5adb1944c9f3cb5feda
+
+]8;;http://example.com\This is a link]8;;\
+
+It can also come with a \a (bell) as a terminator. This is recommended against
+at the above URL, but we do need to support it.
+
+]8;;http://example.comThis is a link]8;;

@@ -430,6 +430,11 @@ const (
 	initial parseState = iota
 	justSawEsc
 	inStyle
+	gotOsc      // OSC = Operating System Command = ESC]
+	gotOsc8     // ESC]8
+	gotOsc8Semi // ESC]8;
+	inUrl       // After ESC]8;;
+	inUrlGotEsc // Expecting a \ now to terminate the URL
 )
 
 func styledStringsFromString(s string) styledStringsWithTrailer {
@@ -450,6 +455,7 @@ func styledStringsFromString(s string) styledStringsWithTrailer {
 	state := initial
 	escIndex := -1 // Byte index into s
 	partStart := 0 // Byte index into s
+	urlStart := -1 // Byte index into s
 	style := twin.StyleDefault
 	for byteIndex, char := range s {
 		if state == initial {
@@ -464,6 +470,8 @@ func styledStringsFromString(s string) styledStringsWithTrailer {
 				state = justSawEsc
 			} else if char == '[' {
 				state = inStyle
+			} else if char == ']' {
+				state = gotOsc
 			} else {
 				state = initial
 			}
@@ -509,6 +517,76 @@ func styledStringsFromString(s string) styledStringsWithTrailer {
 				state = initial
 			} else {
 				// Unsupported sequence, just treat the whole thing as plain text
+				state = initial
+			}
+			continue
+		} else if state == gotOsc {
+			if char == '8' {
+				state = gotOsc8
+			} else {
+				state = initial
+			}
+			continue
+		} else if state == gotOsc8 {
+			if char == ';' {
+				state = gotOsc8Semi
+			} else {
+				state = initial
+			}
+			continue
+		} else if state == gotOsc8Semi {
+			if char == ';' {
+				urlStart = byteIndex + 1
+				state = inUrl
+			} else {
+				state = initial
+			}
+			continue
+		} else if state == inUrl {
+			// Ref: https://stackoverflow.com/a/1547940/473672
+			const validChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~:/?#[]@!$&'()*+,;="
+			if char == '\x1b' {
+				state = inUrlGotEsc
+			} else if char == '\x07' {
+				// End of URL
+
+				if partStart < escIndex {
+					// Consume the most recent part
+					parts = append(parts, _StyledString{
+						String: s[partStart:escIndex],
+						Style:  style,
+					})
+				}
+				partStart = byteIndex + 1
+
+				url := s[urlStart:byteIndex]
+				style = style.WithHyperlink(&url)
+				state = initial
+			} else if strings.ContainsRune(validChars, char) {
+				// Stay in URL
+			} else {
+				// Invalid URL character, just treat the whole thing as plain text
+				state = initial
+			}
+			continue
+		} else if state == inUrlGotEsc {
+			if char == '\\' {
+				// End of URL
+
+				if partStart < escIndex {
+					// Consume the most recent part
+					parts = append(parts, _StyledString{
+						String: s[partStart:escIndex],
+						Style:  style,
+					})
+				}
+				partStart = byteIndex + 1
+
+				url := s[urlStart : byteIndex-1]
+				style = style.WithHyperlink(&url)
+				state = initial
+			} else {
+				// Broken ending, just treat the whole thing as plain text
 				state = initial
 			}
 			continue
