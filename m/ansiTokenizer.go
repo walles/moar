@@ -431,8 +431,9 @@ const (
 	justSawEsc
 	inStyle
 	gotOsc      // OSC = Operating System Command = ESC]
-	gotOscSemi  // ESC];
-	inUrl       // After ESC];;
+	gotOsc8     // ESC]8
+	gotOsc8Semi // ESC]8;
+	inUrl       // After ESC]8;;
 	inUrlGotEsc // Expecting a \ now to terminate the URL
 )
 
@@ -520,13 +521,20 @@ func styledStringsFromString(s string) styledStringsWithTrailer {
 			}
 			continue
 		} else if state == gotOsc {
-			if char == ';' {
-				state = gotOscSemi
+			if char == '8' {
+				state = gotOsc8
 			} else {
 				state = initial
 			}
 			continue
-		} else if state == gotOscSemi {
+		} else if state == gotOsc8 {
+			if char == ';' {
+				state = gotOsc8Semi
+			} else {
+				state = initial
+			}
+			continue
+		} else if state == gotOsc8Semi {
 			if char == ';' {
 				urlStart = byteIndex + 1
 				state = inUrl
@@ -554,7 +562,7 @@ func styledStringsFromString(s string) styledStringsWithTrailer {
 		} else if state == inUrlGotEsc {
 			if char == '\\' {
 				// End of URL
-				url := s[urlStart:byteIndex]
+				url := s[urlStart : byteIndex-1]
 				style = style.WithHyperlink(&url)
 			} else {
 				// Broken ending, just treat the whole thing as plain text
