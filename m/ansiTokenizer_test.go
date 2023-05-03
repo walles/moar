@@ -7,6 +7,7 @@ import (
 	"testing"
 	"unicode/utf8"
 
+	"github.com/google/go-cmp/cmp"
 	log "github.com/sirupsen/logrus"
 
 	"github.com/walles/moar/twin"
@@ -229,4 +230,59 @@ func TestConsumeCompositeColorIncomplete24Bit(t *testing.T) {
 func TestUpdateStyle(t *testing.T) {
 	numberColored := updateStyle(twin.StyleDefault, "\x1b[33m")
 	assert.Equal(t, numberColored, twin.StyleDefault.Foreground(twin.NewColor16(3)))
+}
+
+// Test with the recommended terminator ESC-backslash.
+//
+// Ref: https://gist.github.com/egmontkob/eb114294efbcd5adb1944c9f3cb5feda#the-escape-sequence
+func TestHyperlink_escBackslash(t *testing.T) {
+	url := "http://example.com"
+
+	tokens := cellsFromString("a\x1b]8;;" + url + "\x1b\\bc\x1b]8;;\x1b\\d").Cells
+
+	assert.DeepEqual(t, tokens, []twin.Cell{
+		{Rune: 'a', Style: twin.StyleDefault},
+		{Rune: 'b', Style: twin.StyleDefault.WithHyperlink(&url)},
+		{Rune: 'c', Style: twin.StyleDefault.WithHyperlink(&url)},
+		{Rune: 'd', Style: twin.StyleDefault},
+	}, cmp.AllowUnexported(twin.Style{}))
+}
+
+// Test with the not-recommended terminator BELL (ASCII 7).
+//
+// Ref: https://gist.github.com/egmontkob/eb114294efbcd5adb1944c9f3cb5feda#the-escape-sequence
+func TestHyperlink_bell(t *testing.T) {
+	url := "http://example.com"
+
+	tokens := cellsFromString("a\x1b]8;;" + url + "\x07bc\x1b]8;;\x07d").Cells
+
+	assert.DeepEqual(t, tokens, []twin.Cell{
+		{Rune: 'a', Style: twin.StyleDefault},
+		{Rune: 'b', Style: twin.StyleDefault.WithHyperlink(&url)},
+		{Rune: 'c', Style: twin.StyleDefault.WithHyperlink(&url)},
+		{Rune: 'd', Style: twin.StyleDefault},
+	}, cmp.AllowUnexported(twin.Style{}))
+}
+
+// Test with some other ESC sequence than ESC-backslash
+func TestHyperlink_nonTerminatingEsc(t *testing.T) {
+	complete := "a\x1b]8;;https://example.com\x1b\\bc\x1b]8;;\x1bd"
+	tokens := cellsFromString(complete).Cells
+
+	// This should not be treated as any link
+	for i := 0; i < len(complete); i++ {
+		assert.Equal(t, tokens[i], twin.Cell{Rune: rune(complete[i]), Style: twin.StyleDefault})
+	}
+}
+
+func TestHyperlink_incomplete(t *testing.T) {
+	complete := "a\x1b]8;;X\x1b\\"
+
+	for l := len(complete) - 1; l >= 0; l-- {
+		tokens := cellsFromString(complete[:l]).Cells
+
+		for i := 0; i < l; i++ {
+			assert.Equal(t, tokens[i], twin.Cell{Rune: rune(complete[i]), Style: twin.StyleDefault})
+		}
+	}
 }
