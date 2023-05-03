@@ -584,10 +584,11 @@ func styledStringsFromString(s string) styledStringsWithTrailer {
 
 				url := s[urlStart : byteIndex-1]
 				style = style.WithHyperlink(&url)
+				state = initial
 			} else {
 				// Broken ending, just treat the whole thing as plain text
+				state = initial
 			}
-			state = initial
 			continue
 		}
 
