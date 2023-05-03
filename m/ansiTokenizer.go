@@ -546,9 +546,20 @@ func styledStringsFromString(s string) styledStringsWithTrailer {
 			// Ref: https://stackoverflow.com/a/1547940/473672
 			const validChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~:/?#[]@!$&'()*+,;="
 			if char == '\x1b' {
-				state = inUrlGotEsc
+				escIndex = byteIndex
+				state = justSawEsc
 			} else if char == '\x07' {
 				// End of URL
+
+				if partStart < escIndex {
+					// Consume the most recent part
+					parts = append(parts, _StyledString{
+						String: s[partStart:escIndex],
+						Style:  style,
+					})
+				}
+				partStart = byteIndex + 1
+
 				url := s[urlStart:byteIndex]
 				style = style.WithHyperlink(&url)
 				state = initial
@@ -562,6 +573,16 @@ func styledStringsFromString(s string) styledStringsWithTrailer {
 		} else if state == inUrlGotEsc {
 			if char == '\\' {
 				// End of URL
+
+				if partStart < escIndex {
+					// Consume the most recent part
+					parts = append(parts, _StyledString{
+						String: s[partStart:escIndex],
+						Style:  style,
+					})
+				}
+				partStart = byteIndex + 1
+
 				url := s[urlStart : byteIndex-1]
 				style = style.WithHyperlink(&url)
 			} else {
