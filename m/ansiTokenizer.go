@@ -546,8 +546,7 @@ func styledStringsFromString(s string) styledStringsWithTrailer {
 			// Ref: https://stackoverflow.com/a/1547940/473672
 			const validChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~:/?#[]@!$&'()*+,;="
 			if char == '\x1b' {
-				escIndex = byteIndex
-				state = justSawEsc
+				state = inUrlGotEsc
 			} else if char == '\x07' {
 				// End of URL
 
