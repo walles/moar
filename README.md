@@ -87,7 +87,7 @@ More info [here](https://packages.gentoo.org/packages/sys-apps/moar).
 ## Using [Arch Linux](https://archlinux.org/)
 
 ```sh
-yay -S moar-git
+yay -S moar
 ```
 
 More info [here](https://aur.archlinux.org/packages/moar-git).
