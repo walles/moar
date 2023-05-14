@@ -627,8 +627,9 @@ func benchmarkSearch(b *testing.B, highlighted bool) {
 	for !reader.done.Load() {
 	}
 
-	// ... and finish highlighting
-	<-reader.highlightingDone
+	// ... and wait for highlighting to finish
+	for !reader.highlightingDone.Load() {
+	}
 
 	// I hope forcing a GC here will make numbers more predictable
 	runtime.GC()

@@ -143,7 +143,8 @@ func (r *Reader) _wait() error {
 	// Wait for our goroutine to finish
 	for !r.done.Load() {
 	}
-	<-r.highlightingDone
+	for !r.highlightingDone.Load() {
+	}
 
 	r.lock.Lock()
 	defer r.lock.Unlock()

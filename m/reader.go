@@ -34,7 +34,7 @@ type Reader struct {
 	replaced bool
 
 	done             *atomic.Bool
-	highlightingDone chan bool // Used by tests
+	highlightingDone *atomic.Bool // Used by tests
 	moreLinesAdded   chan bool
 }
 
@@ -210,7 +210,7 @@ func (reader *Reader) readStream(stream io.Reader, originalFileName *string, fro
 // corner to help the user keep track of what is being paged.
 func NewReaderFromStream(name string, reader io.Reader) *Reader {
 	mReader := newReaderFromStream(reader, nil, nil)
-	mReader.highlightingDone <- true // No highlighting of streams = nothing left to do = Done!
+	mReader.highlightingDone.Store(true) // No highlighting of streams = nothing left to do = Done!
 
 	if len(name) > 0 {
 		mReader.lock.Lock()
@@ -233,13 +233,15 @@ func NewReaderFromStream(name string, reader io.Reader) *Reader {
 func newReaderFromStream(reader io.Reader, originalFileName *string, fromFilter *exec.Cmd) *Reader {
 	done := atomic.Bool{}
 	done.Store(false)
+	highlightingDone := atomic.Bool{}
+	highlightingDone.Store(false)
 	returnMe := Reader{
 		lock: new(sync.Mutex),
 		// This needs to be size 1. If it would be 0, and we add more
 		// lines while the pager is processing, the pager would miss
 		// the lines added while it was processing.
 		moreLinesAdded:   make(chan bool, 1),
-		highlightingDone: make(chan bool, 1),
+		highlightingDone: &highlightingDone,
 		done:             &done,
 	}
 
@@ -268,16 +270,15 @@ func NewReaderFromText(name string, text string) *Reader {
 	}
 	done := atomic.Bool{}
 	done.Store(true)
-	highlightingDone := make(chan bool, 1)
+	highlightingDone := atomic.Bool{}
+	highlightingDone.Store(true) // No highlighting to do = nothing left = Done!
 	returnMe := &Reader{
 		name:             &name,
 		lines:            lines,
 		lock:             &sync.Mutex{},
 		done:             &done,
-		highlightingDone: highlightingDone,
+		highlightingDone: &highlightingDone,
 	}
-
-	returnMe.highlightingDone <- true // No highlighting to do = nothing left = Done!
 
 	return returnMe
 }
@@ -305,7 +306,7 @@ func newReaderFromCommand(filename string, filterCommand ...string) (*Reader, er
 	}
 
 	reader := newReaderFromStream(filterOut, nil, filter)
-	reader.highlightingDone <- true // No highlighting to do == nothing left == Done!
+	reader.highlightingDone.Store(true) // No highlighting to do == nothing left == Done!
 	reader.lock.Lock()
 	reader.name = &filename
 	reader._stderr = filterErr
@@ -422,7 +423,7 @@ func NewReaderFromFilename(filename string, style chroma.Style, formatter chroma
 
 	go func() {
 		defer func() {
-			returnMe.highlightingDone <- true
+			returnMe.highlightingDone.Store(true)
 		}()
 
 		highlighted, err := highlight(filename, false, style, formatter)
