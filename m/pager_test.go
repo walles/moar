@@ -267,7 +267,8 @@ func TestFindFirstHitSimple(t *testing.T) {
 	pager.screen = twin.NewFakeScreen(40, 10)
 
 	// Wait for reader to finish reading
-	<-reader.done
+	for !reader.done.Load() {
+	}
 
 	pager.searchPattern = toPattern("AB")
 
@@ -282,7 +283,8 @@ func TestFindFirstHitAnsi(t *testing.T) {
 	pager.screen = twin.NewFakeScreen(40, 10)
 
 	// Wait for reader to finish reading
-	<-reader.done
+	for !reader.done.Load() {
+	}
 
 	pager.searchPattern = toPattern("AB")
 
@@ -297,7 +299,8 @@ func TestFindFirstHitNoMatch(t *testing.T) {
 	pager.screen = twin.NewFakeScreen(40, 10)
 
 	// Wait for reader to finish reading
-	<-reader.done
+	for !reader.done.Load() {
+	}
 
 	pager.searchPattern = toPattern("this pattern should not be found")
 
@@ -328,7 +331,8 @@ func TestScrollToBottomWrapNextToLastLine(t *testing.T) {
 	pager.screen = screen
 
 	// Wait for reader to finish reading
-	<-reader.done
+	for !reader.done.Load() {
+	}
 
 	// This is what we're testing really
 	pager.scrollToEnd()
@@ -489,7 +493,8 @@ func TestPageSamples(t *testing.T) {
 		}()
 
 		myReader := NewReaderFromStream(fileName, file)
-		<-myReader.done
+		for !myReader.done.Load() {
+		}
 
 		pager := NewPager(myReader)
 		pager.WrapLongLines = false
@@ -619,7 +624,8 @@ func benchmarkSearch(b *testing.B, highlighted bool) {
 	pager.searchPattern = regexp.MustCompile("This won'[t] match anything")
 
 	// Wait for reader to finish reading...
-	<-reader.done
+	for !reader.done.Load() {
+	}
 
 	// ... and finish highlighting
 	<-reader.highlightingDone

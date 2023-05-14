@@ -141,7 +141,8 @@ func getTestFiles() []string {
 // Wait for reader to finish reading and highlighting. Used by tests.
 func (r *Reader) _wait() error {
 	// Wait for our goroutine to finish
-	<-r.done
+	for !r.done.Load() {
+	}
 	<-r.highlightingDone
 
 	r.lock.Lock()
@@ -352,7 +353,8 @@ func BenchmarkReaderDone(b *testing.B) {
 		}
 
 		// Wait for the reader to finish
-		<-readMe.done
+		for !readMe.done.Load() {
+		}
 		if readMe.err != nil {
 			panic(readMe.err)
 		}
@@ -400,7 +402,8 @@ func BenchmarkReadLargeFile(b *testing.B) {
 		}
 
 		// Wait for the reader to finish
-		<-readMe.done
+		for !readMe.done.Load() {
+		}
 		if readMe.err != nil {
 			panic(readMe.err)
 		}

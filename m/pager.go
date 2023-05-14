@@ -436,19 +436,10 @@ func (p *Pager) StartPaging(screen twin.Screen) {
 
 	go func() {
 		// Spin the spinner as long as contents is still loading
-		done := false
 		spinnerFrames := [...]string{"/.\\", "-o-", "\\O/", "| |"}
 		spinnerIndex := 0
 		for {
-			// Break this loop on the reader.done signal...
-			select {
-			case <-p.reader.done:
-				done = true
-			default:
-				// This default case makes this an async read
-			}
-
-			if done {
+			if p.reader.done.Load() {
 				break
 			}
 

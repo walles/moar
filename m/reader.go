@@ -10,6 +10,7 @@ import (
 	"path"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/alecthomas/chroma/v2"
@@ -32,7 +33,7 @@ type Reader struct {
 	// Have we had our contents replaced using setText()?
 	replaced bool
 
-	done             chan bool
+	done             *atomic.Bool
 	highlightingDone chan bool // Used by tests
 	moreLinesAdded   chan bool
 }
@@ -53,7 +54,7 @@ func (reader *Reader) cleanupFilter(fromFilter *exec.Cmd) {
 	// FIXME: Close the stream now that we're done reading it?
 
 	if fromFilter == nil {
-		reader.done <- true
+		reader.done.Store(true)
 		return
 	}
 
@@ -93,15 +94,7 @@ func (reader *Reader) cleanupFilter(fromFilter *exec.Cmd) {
 
 	// FIXME: Report any filter printouts to stderr to the user
 
-	// Must send non-blocking since the channel has no buffer and sometimes no reader
-	select {
-	case reader.done <- true:
-	default:
-		// Empty default statement required for the write to be non-blocking,
-		// without this the write blocks and just hangs. Then we never get to
-		// the deferred reader.lock.Unlock() (see above), and the pager hangs
-		// when trying to take the lock for getting more lines.
-	}
+	reader.done.Store(true)
 }
 
 // Count lines in the original file and preallocate space for them.  Good
@@ -238,14 +231,16 @@ func NewReaderFromStream(name string, reader io.Reader) *Reader {
 // If fromFilter is not nil this method will wait() for it, and effectively
 // takes over ownership for it.
 func newReaderFromStream(reader io.Reader, originalFileName *string, fromFilter *exec.Cmd) *Reader {
+	done := atomic.Bool{}
+	done.Store(false)
 	returnMe := Reader{
 		lock: new(sync.Mutex),
-		done: make(chan bool, 1),
 		// This needs to be size 1. If it would be 0, and we add more
 		// lines while the pager is processing, the pager would miss
 		// the lines added while it was processing.
 		moreLinesAdded:   make(chan bool, 1),
 		highlightingDone: make(chan bool, 1),
+		done:             &done,
 	}
 
 	// FIXME: Make sure that if we panic somewhere inside of this goroutine,
@@ -271,14 +266,14 @@ func NewReaderFromText(name string, text string) *Reader {
 			lines = append(lines, &line)
 		}
 	}
-	done := make(chan bool, 1)
+	done := atomic.Bool{}
+	done.Store(true)
 	highlightingDone := make(chan bool, 1)
-	done <- true
 	returnMe := &Reader{
 		name:             &name,
 		lines:            lines,
 		lock:             &sync.Mutex{},
-		done:             done,
+		done:             &done,
 		highlightingDone: highlightingDone,
 	}
 
@@ -560,10 +555,7 @@ func (reader *Reader) setText(text string) {
 	reader.replaced = true
 	reader.lock.Unlock()
 
-	select {
-	case reader.done <- true:
-	default:
-	}
+	reader.done.Store(true)
 
 	select {
 	case reader.moreLinesAdded <- true:

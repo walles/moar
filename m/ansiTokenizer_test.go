@@ -40,7 +40,9 @@ func TestTokenize(t *testing.T) {
 		}()
 
 		myReader := NewReaderFromStream(fileName, file)
-		<-myReader.done
+		for !myReader.done.Load() {
+		}
+
 		for lineNumber := 1; lineNumber <= myReader.GetLineCount(); lineNumber++ {
 			line := myReader.GetLine(lineNumber)
 			lineNumber++

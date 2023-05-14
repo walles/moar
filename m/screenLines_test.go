@@ -141,7 +141,8 @@ func TestWrapping(t *testing.T) {
 	pager.ShowLineNumbers = false
 
 	// Wait for reader to finish reading
-	<-reader.done
+	for !reader.done.Load() {
+	}
 
 	// This is what we're testing really
 	pager.scrollToEnd()
