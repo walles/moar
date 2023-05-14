@@ -552,7 +552,7 @@ func (p *Pager) ReprintAfterExit() error {
 }
 
 func (p *Pager) entireFileDisplayed() bool {
-	if !p.reader.IsDone() {
+	if !p.reader.done.Load() {
 		return false
 	}
 
