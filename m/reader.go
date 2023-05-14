@@ -34,7 +34,7 @@ type Reader struct {
 	replaced bool
 
 	done             *atomic.Bool
-	highlightingDone *atomic.Bool // Used by tests
+	highlightingDone *atomic.Bool
 	moreLinesAdded   chan bool
 }
 

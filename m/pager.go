@@ -556,7 +556,7 @@ func (p *Pager) entireFileDisplayed() bool {
 		return false
 	}
 
-	if !FIXME.HighlightingDone() {
+	if !p.reader.highlightingDone.Load() {
 		return false
 	}
 
