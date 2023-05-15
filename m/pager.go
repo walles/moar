@@ -464,21 +464,23 @@ func (p *Pager) StartPaging(screen twin.Screen) {
 	spinner := ""
 	for !p.quit {
 		if len(screen.Events()) == 0 {
-			// Nothing more to process for now
+			// Nothing more to process for now, redraw the screen
+			overflow := p.redraw(spinner)
 
 			// Ref:
 			// https://github.com/gwsw/less/blob/ff8869aa0485f7188d942723c9fb50afb1892e62/command.c#L828-L831
-			if p.QuitIfOneScreen && !p.isShowingHelp && p.entireFileDisplayed() {
-				// Ref:
-				// https://github.com/walles/moar/issues/113#issuecomment-1368294132
-				p.ShowLineNumbers = false
-				p.DeInit = false
-				p.quit = true
-				break
+			if p.QuitIfOneScreen && overflow == didFit && !p.isShowingHelp {
+				// Do the slow (atomic) checks only if the fast ones (no locking
+				// required) passed
+				if p.reader.done.Load() && p.reader.highlightingDone.Load() {
+					// Ref:
+					// https://github.com/walles/moar/issues/113#issuecomment-1368294132
+					p.ShowLineNumbers = false
+					p.DeInit = false
+					p.quit = true
+					break
+				}
 			}
-
-			// Redraw the screen!
-			p.redraw(spinner)
 		}
 
 		event := <-screen.Events()
@@ -536,7 +538,7 @@ func (p *Pager) StartPaging(screen twin.Screen) {
 func (p *Pager) ReprintAfterExit() error {
 	// Figure out how many screen lines are used by pager contents
 
-	renderedScreenLines, _ := p.renderScreenLines()
+	renderedScreenLines, _, _ := p.renderScreenLines()
 	screenLinesCount := len(renderedScreenLines)
 
 	_, screenHeight := p.screen.Size()
@@ -549,16 +551,4 @@ func (p *Pager) ReprintAfterExit() error {
 		p.screen.ShowNLines(screenLinesCount)
 	}
 	return nil
-}
-
-func (p *Pager) entireFileDisplayed() bool {
-	if !p.reader.done.Load() {
-		return false
-	}
-
-	if !p.reader.highlightingDone.Load() {
-		return false
-	}
-
-	return FIXME.lastRedrawFitOnOneScreen
 }
