@@ -24,9 +24,10 @@ import (
 //
 // This package provides query methods for the struct, no peeking!!
 type Reader struct {
+	sync.Mutex
+
 	lines   []*Line
 	name    *string
-	lock    *sync.Mutex
 	err     error
 	_stderr io.Reader
 
@@ -58,8 +59,8 @@ func (reader *Reader) cleanupFilter(fromFilter *exec.Cmd) {
 		return
 	}
 
-	reader.lock.Lock()
-	defer reader.lock.Unlock()
+	reader.Lock()
+	defer reader.Unlock()
 
 	// Give the filter a little time to go away
 	timer := time.AfterFunc(2*time.Second, func() {
@@ -108,8 +109,8 @@ func (reader *Reader) preAllocLines(originalFileName string) {
 		return
 	}
 
-	reader.lock.Lock()
-	defer reader.lock.Unlock()
+	reader.Lock()
+	defer reader.Unlock()
 
 	if len(reader.lines) == 0 {
 		// We had no lines since before, this is the expected happy path.
@@ -155,12 +156,12 @@ func (reader *Reader) readStream(stream io.Reader, originalFileName *string, fro
 					break
 				}
 
-				reader.lock.Lock()
+				reader.Lock()
 				if reader.err == nil {
 					// Store the error unless it overwrites one we already have
 					reader.err = fmt.Errorf("error reading line from input stream: %w", err)
 				}
-				reader.lock.Unlock()
+				reader.Unlock()
 				break
 			}
 
@@ -178,14 +179,14 @@ func (reader *Reader) readStream(stream io.Reader, originalFileName *string, fro
 		newLineString := string(completeLine)
 		newLine := NewLine(newLineString)
 
-		reader.lock.Lock()
+		reader.Lock()
 		if reader.replaced {
 			// Somebody called setText(), never mind reading the rest of this stream
-			reader.lock.Unlock()
+			reader.Unlock()
 			break
 		}
 		reader.lines = append(reader.lines, &newLine)
-		reader.lock.Unlock()
+		reader.Unlock()
 		completeLine = completeLine[:0]
 
 		// This is how to do a non-blocking write to a channel:
@@ -213,9 +214,9 @@ func NewReaderFromStream(name string, reader io.Reader) *Reader {
 	mReader.highlightingDone.Store(true) // No highlighting of streams = nothing left to do = Done!
 
 	if len(name) > 0 {
-		mReader.lock.Lock()
+		mReader.Lock()
 		mReader.name = &name
-		mReader.lock.Unlock()
+		mReader.Unlock()
 	}
 
 	return mReader
@@ -236,7 +237,6 @@ func newReaderFromStream(reader io.Reader, originalFileName *string, fromFilter 
 	highlightingDone := atomic.Bool{}
 	highlightingDone.Store(false)
 	returnMe := Reader{
-		lock: new(sync.Mutex),
 		// This needs to be size 1. If it would be 0, and we add more
 		// lines while the pager is processing, the pager would miss
 		// the lines added while it was processing.
@@ -275,7 +275,6 @@ func NewReaderFromText(name string, text string) *Reader {
 	returnMe := &Reader{
 		name:             &name,
 		lines:            lines,
-		lock:             &sync.Mutex{},
 		done:             &done,
 		highlightingDone: &highlightingDone,
 	}
@@ -307,10 +306,10 @@ func newReaderFromCommand(filename string, filterCommand ...string) (*Reader, er
 
 	reader := newReaderFromStream(filterOut, nil, filter)
 	reader.highlightingDone.Store(true) // No highlighting to do == nothing left == Done!
-	reader.lock.Lock()
+	reader.Lock()
 	reader.name = &filename
 	reader._stderr = filterErr
-	reader.lock.Unlock()
+	reader.Unlock()
 	return reader, nil
 }
 
@@ -417,9 +416,9 @@ func NewReaderFromFilename(filename string, style chroma.Style, formatter chroma
 	}
 
 	returnMe := newReaderFromStream(stream, &filename, nil)
-	returnMe.lock.Lock()
+	returnMe.Lock()
 	returnMe.name = &filename
-	returnMe.lock.Unlock()
+	returnMe.Unlock()
 
 	go func() {
 		defer func() {
@@ -468,16 +467,16 @@ func (r *Reader) createStatusUnlocked(lastLineOneBased int) string {
 
 // GetLineCount returns the number of lines available for viewing
 func (r *Reader) GetLineCount() int {
-	r.lock.Lock()
-	defer r.lock.Unlock()
+	r.Lock()
+	defer r.Unlock()
 
 	return len(r.lines)
 }
 
 // GetLine gets a line. If the requested line number is out of bounds, nil is returned.
 func (r *Reader) GetLine(lineNumberOneBased int) *Line {
-	r.lock.Lock()
-	defer r.lock.Unlock()
+	r.Lock()
+	defer r.Unlock()
 
 	if lineNumberOneBased < 1 {
 		return nil
@@ -493,8 +492,8 @@ func (r *Reader) GetLine(lineNumberOneBased int) *Line {
 // Overflow state will be didFit if we returned all lines we currently have, or
 // didOverflow otherwise.
 func (r *Reader) GetLines(firstLineOneBased int, wantedLineCount int) (*InputLines, overflowState) {
-	r.lock.Lock()
-	defer r.lock.Unlock()
+	r.Lock()
+	defer r.Unlock()
 	return r.getLinesUnlocked(firstLineOneBased, wantedLineCount)
 }
 
@@ -562,10 +561,10 @@ func (reader *Reader) setText(text string) {
 		lines = lines[0 : len(lines)-1]
 	}
 
-	reader.lock.Lock()
+	reader.Lock()
 	reader.lines = lines
 	reader.replaced = true
-	reader.lock.Unlock()
+	reader.Unlock()
 
 	reader.done.Store(true)
 

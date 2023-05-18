@@ -146,8 +146,8 @@ func (r *Reader) _wait() error {
 	for !r.highlightingDone.Load() {
 	}
 
-	r.lock.Lock()
-	defer r.lock.Unlock()
+	r.Lock()
+	defer r.Unlock()
 	return r.err
 }
 
