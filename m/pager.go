@@ -70,6 +70,9 @@ type Pager struct {
 
 	WrapLongLines bool
 
+	// Ref: https://github.com/walles/moar/issues/113
+	QuitIfOneScreen bool
+
 	// Ref: https://github.com/walles/moar/issues/94
 	ScrollLeftHint  twin.Cell
 	ScrollRightHint twin.Cell
@@ -207,6 +210,7 @@ func (p *Pager) Quit() {
 	p.preHelpState = nil
 }
 
+// Negative deltas move left instead
 func (p *Pager) moveRight(delta int) {
 	if p.ShowLineNumbers && delta > 0 {
 		p.ShowLineNumbers = false
@@ -460,8 +464,27 @@ func (p *Pager) StartPaging(screen twin.Screen) {
 	spinner := ""
 	for !p.quit {
 		if len(screen.Events()) == 0 {
-			// Nothing more to process for now, redraw the screen!
-			p.redraw(spinner)
+			// Nothing more to process for now, redraw the screen
+			overflow := p.redraw(spinner)
+
+			// Ref:
+			// https://github.com/gwsw/less/blob/ff8869aa0485f7188d942723c9fb50afb1892e62/command.c#L828-L831
+			if p.QuitIfOneScreen && overflow == didFit && !p.isShowingHelp {
+				// Do the slow (atomic) checks only if the fast ones (no locking
+				// required) passed
+				if p.reader.done.Load() && p.reader.highlightingDone.Load() {
+					// Ref:
+					// https://github.com/walles/moar/issues/113#issuecomment-1368294132
+					p.ShowLineNumbers = false // Requires a redraw to take effect, see below
+					p.DeInit = false
+					p.quit = true
+
+					// Without this the line numbers setting ^ won't take effect
+					p.redraw(spinner)
+
+					break
+				}
+			}
 		}
 
 		event := <-screen.Events()
@@ -519,7 +542,7 @@ func (p *Pager) StartPaging(screen twin.Screen) {
 func (p *Pager) ReprintAfterExit() error {
 	// Figure out how many screen lines are used by pager contents
 
-	renderedScreenLines, _ := p.renderScreenLines()
+	renderedScreenLines, _, _ := p.renderScreenLines()
 	screenLinesCount := len(renderedScreenLines)
 
 	_, screenHeight := p.screen.Size()
