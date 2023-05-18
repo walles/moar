@@ -475,9 +475,13 @@ func (p *Pager) StartPaging(screen twin.Screen) {
 				if p.reader.done.Load() && p.reader.highlightingDone.Load() {
 					// Ref:
 					// https://github.com/walles/moar/issues/113#issuecomment-1368294132
-					p.ShowLineNumbers = false
+					p.ShowLineNumbers = false // Requires a redraw to take effect, see below
 					p.DeInit = false
 					p.quit = true
+
+					// Without this the line numbers setting ^ won't take effect
+					p.redraw(spinner)
+
 					break
 				}
 			}
