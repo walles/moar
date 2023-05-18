@@ -490,8 +490,8 @@ func (r *Reader) GetLine(lineNumberOneBased int) *Line {
 
 // GetLines gets the indicated lines from the input
 //
-// Overflow state will be didFit if we returned all lines in the whole input, or
-// false otherwise.
+// Overflow state will be didFit if we returned all lines we currently have, or
+// didOverflow otherwise.
 func (r *Reader) GetLines(firstLineOneBased int, wantedLineCount int) (*InputLines, overflowState) {
 	r.lock.Lock()
 	defer r.lock.Unlock()
