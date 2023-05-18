@@ -235,7 +235,11 @@ func TestGetLongLine(t *testing.T) {
 	lines, overflow := reader.GetLines(1, 5)
 	assert.Equal(t, lines.firstLineOneBased, 1)
 	assert.Equal(t, len(lines.lines), 1)
-	assert.Equal(t, overflow, didOverflow)
+
+	// This fits because we got all (one) input lines. Given the line length the
+	// line is unlikely to fit on screen, but that's not what this didFit is
+	// about.
+	assert.Equal(t, overflow, didFit)
 
 	line := lines.lines[0]
 	assert.Assert(t, strings.HasPrefix(line.Plain(), "1 2 3 4"), "<%s>", line)
