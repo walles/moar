@@ -139,17 +139,14 @@ func (p *Pager) renderLines() ([]renderedLine, string, overflowState) {
 		screenOverflow = didOverflow
 	}
 
-	// Request one more line than we need. If we get one more than we need, that
-	// means we are overflowing.
-	inputLines := p.reader.GetLines(p.lineNumberOneBased(), wantedLineCount+1)
+	inputLines, readerOverflow := p.reader.GetLines(p.lineNumberOneBased(), wantedLineCount)
 	if inputLines.lines == nil {
 		// Empty input, empty output
 		return []renderedLine{}, inputLines.statusText, didFit
 	}
-	if len(inputLines.lines) > wantedLineCount {
-		// There was an extra line after the ones we wanted
+	if readerOverflow == didOverflow {
+		// This is not the whole input
 		screenOverflow = didOverflow
-		inputLines.lines = inputLines.lines[0:wantedLineCount]
 	}
 
 	allLines := make([]renderedLine, 0)

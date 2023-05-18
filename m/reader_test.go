@@ -58,7 +58,7 @@ func testGetLineCount(t *testing.T, reader *Reader) {
 func testGetLines(t *testing.T, reader *Reader) {
 	t.Logf("Testing file: %s...", *reader.name)
 
-	lines := reader.GetLines(1, 10)
+	lines, _ := reader.GetLines(1, 10)
 	if len(lines.lines) > 10 {
 		t.Errorf("Asked for 10 lines, got too many: %d", len(lines.lines))
 	}
@@ -70,14 +70,14 @@ func testGetLines(t *testing.T, reader *Reader) {
 	}
 
 	// Test clipping at the end
-	lines = reader.GetLines(math.MaxInt32, 10)
+	lines, _ = reader.GetLines(math.MaxInt32, 10)
 	if len(lines.lines) != 10 {
 		t.Errorf("Asked for 10 lines but got %d", len(lines.lines))
 		return
 	}
 
 	startOfLastSection := lines.firstLineOneBased
-	lines = reader.GetLines(startOfLastSection, 10)
+	lines, _ = reader.GetLines(startOfLastSection, 10)
 	if lines.firstLineOneBased != startOfLastSection {
 		t.Errorf("Expected start line %d when asking for the last 10 lines, got %d",
 			startOfLastSection, lines.firstLineOneBased)
@@ -89,7 +89,7 @@ func testGetLines(t *testing.T, reader *Reader) {
 		return
 	}
 
-	lines = reader.GetLines(startOfLastSection+1, 10)
+	lines, _ = reader.GetLines(startOfLastSection+1, 10)
 	if lines.firstLineOneBased != startOfLastSection {
 		t.Errorf("Expected start line %d when asking for the last+1 10 lines, got %d",
 			startOfLastSection, lines.firstLineOneBased)
@@ -101,7 +101,7 @@ func testGetLines(t *testing.T, reader *Reader) {
 		return
 	}
 
-	lines = reader.GetLines(startOfLastSection-1, 10)
+	lines, _ = reader.GetLines(startOfLastSection-1, 10)
 	if lines.firstLineOneBased != startOfLastSection-1 {
 		t.Errorf("Expected start line %d when asking for the last-1 10 lines, got %d",
 			startOfLastSection, lines.firstLineOneBased)
@@ -232,9 +232,10 @@ func TestGetLongLine(t *testing.T) {
 		panic(err)
 	}
 
-	lines := reader.GetLines(1, 5)
+	lines, overflow := reader.GetLines(1, 5)
 	assert.Equal(t, lines.firstLineOneBased, 1)
 	assert.Equal(t, len(lines.lines), 1)
+	assert.Equal(t, overflow, didOverflow)
 
 	line := lines.lines[0]
 	assert.Assert(t, strings.HasPrefix(line.Plain(), "1 2 3 4"), "<%s>", line)
@@ -255,7 +256,8 @@ func getReaderWithLineCount(totalLines int) *Reader {
 func testStatusText(t *testing.T, fromLine int, toLine int, totalLines int, expected string) {
 	testMe := getReaderWithLineCount(totalLines)
 	linesRequested := toLine - fromLine + 1
-	statusText := testMe.GetLines(fromLine, linesRequested).statusText
+	lines, _ := testMe.GetLines(fromLine, linesRequested)
+	statusText := lines.statusText
 	assert.Equal(t, statusText, expected)
 }
 
@@ -276,8 +278,9 @@ func TestStatusText(t *testing.T) {
 		panic(err)
 	}
 
-	statusText := testMe.GetLines(0, 0).statusText
-	assert.Equal(t, statusText, "empty: <empty>")
+	line, overflow := testMe.GetLines(0, 0)
+	assert.Equal(t, line.statusText, "empty: <empty>")
+	assert.Equal(t, overflow, didFit) // Empty always fits
 }
 
 func testCompressedFile(t *testing.T, filename string) {
@@ -291,7 +294,8 @@ func testCompressedFile(t *testing.T, filename string) {
 		panic(err)
 	}
 
-	assert.Equal(t, reader.GetLines(1, 5).lines[0].Plain(), "This is a compressed file", "%s", filename)
+	lines, _ := reader.GetLines(1, 5)
+	assert.Equal(t, lines.lines[0].Plain(), "This is a compressed file", "%s", filename)
 }
 
 func TestCompressedFiles(t *testing.T) {

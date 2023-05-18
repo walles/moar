@@ -489,26 +489,30 @@ func (r *Reader) GetLine(lineNumberOneBased int) *Line {
 }
 
 // GetLines gets the indicated lines from the input
-func (r *Reader) GetLines(firstLineOneBased int, wantedLineCount int) *InputLines {
+//
+// Overflow state will be didFit if we returned all lines in the whole input, or
+// false otherwise.
+func (r *Reader) GetLines(firstLineOneBased int, wantedLineCount int) (*InputLines, overflowState) {
 	r.lock.Lock()
 	defer r.lock.Unlock()
 	return r.getLinesUnlocked(firstLineOneBased, wantedLineCount)
 }
 
-func (r *Reader) getLinesUnlocked(firstLineOneBased int, wantedLineCount int) *InputLines {
+func (r *Reader) getLinesUnlocked(firstLineOneBased int, wantedLineCount int) (*InputLines, overflowState) {
 	if firstLineOneBased < 1 {
 		firstLineOneBased = 1
 	}
 
 	if len(r.lines) == 0 {
 		return &InputLines{
-			lines: nil,
+				lines: nil,
 
-			// The line number set here won't matter, we'll clip it anyway when we get it back
-			firstLineOneBased: 0,
+				// The line number set here won't matter, we'll clip it anyway when we get it back
+				firstLineOneBased: 0,
 
-			statusText: r.createStatusUnlocked(0),
-		}
+				statusText: r.createStatusUnlocked(0),
+			},
+			didFit // Empty files always fit
 	}
 
 	firstLineZeroBased := firstLineOneBased - 1
@@ -530,11 +534,18 @@ func (r *Reader) getLinesUnlocked(firstLineOneBased int, wantedLineCount int) *I
 		return r.getLinesUnlocked(firstLineOneBased, wantedLineCount)
 	}
 
-	return &InputLines{
-		lines:             r.lines[firstLineZeroBased : lastLineZeroBased+1],
-		firstLineOneBased: firstLineOneBased,
-		statusText:        r.createStatusUnlocked(lastLineZeroBased + 1),
+	returnLines := r.lines[firstLineZeroBased : lastLineZeroBased+1]
+	overflow := didFit
+	if len(returnLines) != len(r.lines) {
+		overflow = didOverflow // We're not returning all available lines
 	}
+
+	return &InputLines{
+			lines:             returnLines,
+			firstLineOneBased: firstLineOneBased,
+			statusText:        r.createStatusUnlocked(lastLineZeroBased + 1),
+		},
+		overflow
 }
 
 // Replace reader contents with the given text and mark as done
