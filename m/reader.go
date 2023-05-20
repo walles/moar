@@ -56,6 +56,7 @@ func (reader *Reader) cleanupFilter(fromFilter *exec.Cmd) {
 
 	if fromFilter == nil {
 		reader.done.Store(true)
+		log.Trace("Reader done, no filter")
 		return
 	}
 
@@ -96,6 +97,7 @@ func (reader *Reader) cleanupFilter(fromFilter *exec.Cmd) {
 	// FIXME: Report any filter printouts to stderr to the user
 
 	reader.done.Store(true)
+	log.Trace("Reader done, filter done")
 }
 
 // Count lines in the original file and preallocate space for them.  Good
@@ -382,7 +384,7 @@ func countLines(filename string) (uint64, error) {
 	t1 := time.Now().UnixNano()
 	dtNanos := t1 - t0
 	if count == 0 {
-		log.Debug("Counted ", count, " lines in ", dtNanos/1_000_000, "ms")
+		log.Debug("Counted ", count, " lines in 0ms")
 	} else {
 		log.Debug("Counted ", count, " lines in ", dtNanos/1_000_000, "ms at ", dtNanos/int64(count), "ns/line")
 	}
@@ -423,6 +425,7 @@ func NewReaderFromFilename(filename string, style chroma.Style, formatter chroma
 	go func() {
 		defer func() {
 			returnMe.highlightingDone.Store(true)
+			log.Trace("Highlighting done")
 		}()
 
 		highlighted, err := highlight(filename, false, style, formatter)
@@ -567,6 +570,7 @@ func (reader *Reader) setText(text string) {
 	reader.Unlock()
 
 	reader.done.Store(true)
+	log.Trace("Reader done, contents explicitly set")
 
 	select {
 	case reader.moreLinesAdded <- true:

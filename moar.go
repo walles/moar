@@ -302,7 +302,7 @@ func main() {
 	}
 
 	log.SetFormatter(&log.TextFormatter{
-		TimestampFormat: time.RFC3339Nano,
+		TimestampFormat: time.StampMicro,
 	})
 
 	if len(flagSet.Args()) > 1 {
