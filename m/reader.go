@@ -36,7 +36,12 @@ type Reader struct {
 
 	done             *atomic.Bool
 	highlightingDone *atomic.Bool
-	moreLinesAdded   chan bool
+
+	// For telling the UI it should recheck the --quit-if-one-screen conditions.
+	// Signalled when either highlighting is done or reading is done.
+	maybeDone chan bool
+
+	moreLinesAdded chan bool
 }
 
 // InputLines contains a number of lines from the reader, plus metadata
@@ -52,10 +57,17 @@ type InputLines struct {
 
 // Shut down the filter (if any) after we're done reading the file.
 func (reader *Reader) cleanupFilter(fromFilter *exec.Cmd) {
+	defer func() {
+		reader.done.Store(true)
+		select {
+		case reader.maybeDone <- true:
+		default:
+		}
+	}()
+
 	// FIXME: Close the stream now that we're done reading it?
 
 	if fromFilter == nil {
-		reader.done.Store(true)
 		log.Trace("Reader done, no filter")
 		return
 	}
@@ -96,7 +108,6 @@ func (reader *Reader) cleanupFilter(fromFilter *exec.Cmd) {
 
 	// FIXME: Report any filter printouts to stderr to the user
 
-	reader.done.Store(true)
 	log.Trace("Reader done, filter done")
 }
 
@@ -243,6 +254,7 @@ func newReaderFromStream(reader io.Reader, originalFileName *string, fromFilter 
 		// lines while the pager is processing, the pager would miss
 		// the lines added while it was processing.
 		moreLinesAdded:   make(chan bool, 1),
+		maybeDone:        make(chan bool, 1),
 		highlightingDone: &highlightingDone,
 		done:             &done,
 	}
@@ -425,6 +437,11 @@ func NewReaderFromFilename(filename string, style chroma.Style, formatter chroma
 	go func() {
 		defer func() {
 			returnMe.highlightingDone.Store(true)
+			select {
+			case returnMe.maybeDone <- true:
+			default:
+			}
+
 			log.Trace("Highlighting done")
 		}()
 
@@ -570,6 +587,10 @@ func (reader *Reader) setText(text string) {
 	reader.Unlock()
 
 	reader.done.Store(true)
+	select {
+	case reader.maybeDone <- true:
+	default:
+	}
 	log.Trace("Reader done, contents explicitly set")
 
 	select {

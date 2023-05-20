@@ -40,6 +40,10 @@ type eventSpinnerUpdate struct {
 
 type eventMoreLinesAvailable struct{}
 
+// Either reading, highlighting or both are done. Check reader.Done() and
+// reader.HighlightingDone() for details.
+type eventMaybeDone struct{}
+
 // Styling of line numbers
 var _numberStyle = twin.StyleDefault.WithAttr(twin.AttrDim)
 
@@ -424,11 +428,8 @@ func (p *Pager) StartPaging(screen twin.Screen) {
 	p.screen = screen
 
 	go func() {
-		for {
-			// Wait for new lines to appear...
-			<-p.reader.moreLinesAdded
-
-			// ... and notify the main loop so it can show them:
+		for range p.reader.moreLinesAdded {
+			// Notify the main loop about the new lines so it can show them
 			screen.Events() <- eventMoreLinesAvailable{}
 
 			// Delay updates a bit so that we don't waste time refreshing
@@ -461,6 +462,12 @@ func (p *Pager) StartPaging(screen twin.Screen) {
 
 		// Empty our spinner, loading done!
 		screen.Events() <- eventSpinnerUpdate{""}
+	}()
+
+	go func() {
+		for range p.reader.maybeDone {
+			screen.Events() <- eventMaybeDone{}
+		}
 	}()
 
 	// Main loop
@@ -525,6 +532,10 @@ func (p *Pager) StartPaging(screen twin.Screen) {
 			if p.mode.isViewing() && p.Following {
 				p.scrollToEnd()
 			}
+
+		case eventMaybeDone:
+			// Do nothing. We got this just so that we'll do the QuitIfOneScreen
+			// check (above) as soon as highlighting is done.
 
 		case eventSpinnerUpdate:
 			spinner = event.spinner
