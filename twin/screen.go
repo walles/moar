@@ -242,6 +242,20 @@ func (screen *UnixScreen) mainLoop() {
 	}
 }
 
+// Turn ESC into <0x1b> and other low ASCII characters into <0xXX> for logging
+// purposes.
+func humanizeLowAscii(withLowAsciis string) string {
+	humanized := ""
+	for _, char := range withLowAsciis {
+		if char < ' ' {
+			humanized += fmt.Sprintf("<0x%2x>", char)
+			continue
+		}
+		humanized += string(char)
+	}
+	return humanized
+}
+
 // Consume initial key code from the sequence of encoded keycodes.
 //
 // Returns a (possibly nil) event that should be posted, and the remainder of
@@ -268,8 +282,10 @@ func consumeEncodedEvent(encodedEventSequences string) (*Event, string) {
 			return &event, strings.TrimPrefix(encodedEventSequences, mouseMatch[0])
 		}
 
-		escapedEventSequences := strings.ReplaceAll(encodedEventSequences, "\x1b", "<ESC>")
-		log.Debug("Unhandled multi character mouse escape sequence(s): {", escapedEventSequences, "}")
+		log.Debug(
+			"Unhandled multi character mouse escape sequence(s): {",
+			humanizeLowAscii(encodedEventSequences),
+			"}")
 		return nil, ""
 	}
 
@@ -283,8 +299,10 @@ func consumeEncodedEvent(encodedEventSequences string) (*Event, string) {
 		if len(runes) != 1 {
 			// This means one or more sequences should be added to
 			// escapeSequenceToKeyCode in keys.go.
-			escapedEventSequences := strings.ReplaceAll(encodedEventSequences, "\x1b", "<ESC>")
-			log.Debug("Unhandled multi character terminal escape sequence(s): {", escapedEventSequences, "}")
+			log.Debug(
+				"Unhandled multi character terminal escape sequence(s): {",
+				humanizeLowAscii(encodedEventSequences),
+				"}")
 
 			// Mark everything as consumed since we don't know how to proceed otherwise.
 			return nil, ""
