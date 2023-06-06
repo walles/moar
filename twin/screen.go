@@ -268,7 +268,8 @@ func consumeEncodedEvent(encodedEventSequences string) (*Event, string) {
 			return &event, strings.TrimPrefix(encodedEventSequences, mouseMatch[0])
 		}
 
-		log.Debug("Unhandled multi character mouse escape sequence(s): ", encodedEventSequences)
+		escapedEventSequences := strings.ReplaceAll(encodedEventSequences, "\x1b", "<ESC>")
+		log.Debug("Unhandled multi character mouse escape sequence(s): {", escapedEventSequences, "}")
 		return nil, ""
 	}
 
@@ -282,7 +283,8 @@ func consumeEncodedEvent(encodedEventSequences string) (*Event, string) {
 		if len(runes) != 1 {
 			// This means one or more sequences should be added to
 			// escapeSequenceToKeyCode in keys.go.
-			log.Debug("Unhandled multi character terminal escape sequence(s): ", encodedEventSequences)
+			escapedEventSequences := strings.ReplaceAll(encodedEventSequences, "\x1b", "<ESC>")
+			log.Debug("Unhandled multi character terminal escape sequence(s): {", escapedEventSequences, "}")
 
 			// Mark everything as consumed since we don't know how to proceed otherwise.
 			return nil, ""
