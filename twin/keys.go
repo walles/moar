@@ -51,6 +51,12 @@ var escapeSequenceToKeyCode = map[string]KeyCode{
 	"\x1b[C": KeyRight,
 	"\x1b[D": KeyLeft,
 
+	// Ref: https://github.com/walles/moar/issues/138#issuecomment-1579199274
+	"\x1bOA": KeyUp,
+	"\x1bOB": KeyDown,
+	"\x1bOC": KeyRight,
+	"\x1bOD": KeyLeft,
+
 	"\x1b\x1b[A": KeyAltUp,    // Alt + up arrow
 	"\x1b\x1b[B": KeyAltDown,  // Alt + down arrow
 	"\x1b\x1b[C": KeyAltRight, // Alt + right arrow
