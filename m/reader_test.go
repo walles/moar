@@ -56,8 +56,6 @@ func testGetLineCount(t *testing.T, reader *Reader) {
 }
 
 func testGetLines(t *testing.T, reader *Reader) {
-	t.Logf("Testing file: %s...", *reader.name)
-
 	lines, _ := reader.GetLines(1, 10)
 	if len(lines.lines) > 10 {
 		t.Errorf("Asked for 10 lines, got too many: %d", len(lines.lines))
@@ -157,6 +155,14 @@ func TestGetLines(t *testing.T) {
 			_, err := exec.LookPath("xz")
 			if err != nil {
 				t.Log("Not testing xz compressed file, xz not found in $PATH: ", file)
+				continue
+			}
+		}
+
+		if strings.HasSuffix(file, ".bz2") {
+			_, err := exec.LookPath("bzip2")
+			if err != nil {
+				t.Log("Not testing bzip2 compressed file, bzip2 not found in $PATH: ", file)
 				continue
 			}
 		}
@@ -306,9 +312,15 @@ func testCompressedFile(t *testing.T, filename string) {
 
 func TestCompressedFiles(t *testing.T) {
 	testCompressedFile(t, "compressed.txt.gz")
-	testCompressedFile(t, "compressed.txt.bz2")
 
-	_, err := exec.LookPath("xz")
+	_, err := exec.LookPath("bzip2")
+	if err == nil {
+		testCompressedFile(t, "compressed.txt.bz2")
+	} else {
+		t.Log("WARNING: bzip2 not found in path, not testing automatic bzip2 decompression")
+	}
+
+	_, err = exec.LookPath("xz")
 	if err == nil {
 		testCompressedFile(t, "compressed.txt.xz")
 	} else {
