@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"math"
 	"os"
 	"os/exec"
 	"path"
@@ -517,6 +518,18 @@ func (r *Reader) GetLines(firstLineOneBased int, wantedLineCount int) (*InputLin
 	return r.getLinesUnlocked(firstLineOneBased, wantedLineCount)
 }
 
+func nonWrappingAdd(a int, b int) int {
+	if b < 0 {
+		panic(fmt.Sprintf("b must be >= 0, was: %d", b))
+	}
+
+	if a > math.MaxInt-b {
+		return math.MaxInt
+	}
+
+	return a + b
+}
+
 func (r *Reader) getLinesUnlocked(firstLineOneBased int, wantedLineCount int) (*InputLines, overflowState) {
 	if firstLineOneBased < 1 {
 		firstLineOneBased = 1
@@ -535,7 +548,7 @@ func (r *Reader) getLinesUnlocked(firstLineOneBased int, wantedLineCount int) (*
 	}
 
 	firstLineZeroBased := firstLineOneBased - 1
-	lastLineZeroBased := firstLineZeroBased + wantedLineCount - 1
+	lastLineZeroBased := nonWrappingAdd(firstLineZeroBased, wantedLineCount-1)
 
 	if lastLineZeroBased >= len(r.lines) {
 		lastLineZeroBased = len(r.lines) - 1
