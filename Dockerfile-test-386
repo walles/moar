@@ -1,0 +1,13 @@
+# Run the tests in 32 bit mode:
+# docker build . -f Dockerfile-test-386
+
+FROM golang:1.20
+
+WORKDIR /moar
+
+COPY go.mod go.sum ./
+RUN go mod download
+
+COPY . .
+
+RUN GOARCH=386 go test -v ./...

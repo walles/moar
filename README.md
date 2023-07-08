@@ -184,6 +184,9 @@ Run tests:
 ./test.sh
 ```
 
+To run tests in 32 bit mode, either do `GOARCH=386 ./test.sh` if you're on
+Linux, or `docker build . -f Dockerfile-test-386` (tested on macOS).
+
 Run microbenchmarks:
 
 ```bash
