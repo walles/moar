@@ -171,9 +171,11 @@ func TestGetLines(t *testing.T) {
 			continue
 		}
 
-		testGetLines(t, reader)
-		testGetLineCount(t, reader)
-		testHighlightingLineCount(t, file)
+		t.Run(file, func(t *testing.T) {
+			testGetLines(t, reader)
+			testGetLineCount(t, reader)
+			testHighlightingLineCount(t, file)
+		})
 	}
 }
 
