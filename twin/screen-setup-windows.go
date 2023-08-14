@@ -4,6 +4,7 @@
 package twin
 
 import (
+	"fmt"
 	"os"
 	"syscall"
 
@@ -22,7 +23,7 @@ func (screen *UnixScreen) setupSigwinchNotification() {
 func (screen *UnixScreen) setupTtyInTtyOut() error {
 	in, err := syscall.Open("CONIN$", syscall.O_RDWR, 0)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to open CONIN$: %w", err)
 	}
 
 	screen.ttyIn = os.NewFile(uintptr(in), "/dev/tty")
@@ -31,17 +32,17 @@ func (screen *UnixScreen) setupTtyInTtyOut() error {
 	stdin := windows.Handle(screen.ttyIn.Fd())
 	err = windows.GetConsoleMode(stdin, &screen.oldTtyInMode)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to get stdin console mode: %w", err)
 	}
 	err = windows.SetConsoleMode(stdin, screen.oldTtyInMode|windows.ENABLE_VIRTUAL_TERMINAL_INPUT)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to set stdin console mode: %w", err)
 	}
 
 	screen.oldTerminalState, err = term.MakeRaw(int(screen.ttyIn.Fd()))
 	if err != nil {
 		screen.restoreTtyInTtyOut() // Error intentionally ignored, report the first one only
-		return err
+		return fmt.Errorf("failed to set raw mode: %w", err)
 	}
 
 	screen.ttyOut = os.Stdout
@@ -51,12 +52,12 @@ func (screen *UnixScreen) setupTtyInTtyOut() error {
 	err = windows.GetConsoleMode(stdout, &screen.oldTtyOutMode)
 	if err != nil {
 		screen.restoreTtyInTtyOut() // Error intentionally ignored, report the first one only
-		return err
+		return fmt.Errorf("failed to get stdout console mode: %w", err)
 	}
 	err = windows.SetConsoleMode(stdout, screen.oldTtyOutMode|windows.ENABLE_VIRTUAL_TERMINAL_PROCESSING)
 	if err != nil {
 		screen.restoreTtyInTtyOut() // Error intentionally ignored, report the first one only
-		return err
+		return fmt.Errorf("failed to set stdout console mode: %w", err)
 	}
 
 	return nil
