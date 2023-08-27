@@ -102,7 +102,7 @@ func NewScreen() (Screen, error) {
 	screen.setupSigwinchNotification()
 	err := screen.setupTtyInTtyOut()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("problem setting up TTY: %w", err)
 	}
 	screen.setAlternateScreenMode(true)
 	screen.enableMouseTracking(true)

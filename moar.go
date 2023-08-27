@@ -133,8 +133,6 @@ func printProblemsHeader() {
 	fmt.Fprintln(os.Stderr, "GOARCH  :", runtime.GOARCH)
 	fmt.Fprintln(os.Stderr, "Compiler:", runtime.Compiler)
 	fmt.Fprintln(os.Stderr, "NumCPU  :", runtime.NumCPU())
-
-	fmt.Fprintln(os.Stderr)
 }
 
 func parseStyleOption(styleOption string) (chroma.Style, error) {
@@ -224,14 +222,29 @@ func parseShiftAmount(shiftAmount string) (uint, error) {
 func main() {
 	// FIXME: If we get a CTRL-C, get terminal back into a useful state before terminating
 
+	var loglines strings.Builder
+	log.SetOutput(&loglines)
 	defer func() {
 		err := recover()
-		if err == nil {
+		if len(loglines.String()) == 0 && err == nil {
+			// No problems
 			return
 		}
 
 		printProblemsHeader()
-		panic(err)
+
+		if len(loglines.String()) > 0 {
+			fmt.Fprintln(os.Stderr)
+			// Consider not printing duplicate log messages more than once
+			fmt.Fprintf(os.Stderr, "%s", loglines.String())
+		}
+
+		if err != nil {
+			fmt.Fprintln(os.Stderr)
+			panic(err)
+		}
+
+		os.Exit(1)
 	}()
 
 	flagSet := flag.NewFlagSet("",
@@ -356,8 +369,12 @@ func main() {
 		os.Exit(0)
 	}
 
-	// INVARIANT: At this point, stdoutIsRedirected is false and we should
-	// proceed with paging.
+	// INVARIANT: At this point, stdout is a terminal and we should proceed with
+	// paging.
+	stdoutIsTerminal := !stdoutIsRedirected
+	if !stdoutIsTerminal {
+		panic("Invariant broken: stdout is not a terminal")
+	}
 
 	var reader *m.Reader
 	if stdinIsRedirected {
@@ -406,17 +423,12 @@ func flagSetFunc[T any](flagSet *flag.FlagSet, name string, defaultValue T, usag
 }
 
 func startPaging(pager *m.Pager) {
-	screen, e := twin.NewScreen()
-	if e != nil {
-		panic(e)
-	}
-
-	var loglines strings.Builder
-	log.SetOutput(&loglines)
-
+	var screen twin.Screen
 	defer func() {
 		// Restore screen...
-		screen.Close()
+		if screen != nil {
+			screen.Close()
+		}
 
 		// ... before printing panic() output, otherwise the output will have
 		// broken linefeeds and be hard to follow.
@@ -430,16 +442,12 @@ func startPaging(pager *m.Pager) {
 				log.Error("Failed reprinting pager view after exit", err)
 			}
 		}
-
-		if len(loglines.String()) > 0 {
-			printProblemsHeader()
-
-			// FIXME: Don't print duplicate log messages more than once,
-			// maybe invent our own logger for this?
-			fmt.Fprintf(os.Stderr, "%s", loglines.String())
-			os.Exit(1)
-		}
 	}()
+
+	screen, e := twin.NewScreen()
+	if e != nil {
+		panic(e)
+	}
 
 	pager.StartPaging(screen)
 }
