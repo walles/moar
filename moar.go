@@ -219,6 +219,58 @@ func parseShiftAmount(shiftAmount string) (uint, error) {
 	return uint(value), nil
 }
 
+func pumpToStdout(inputFilename *string) error {
+	if inputFilename != nil {
+		// If we get both redirected stdin and an input filename, we must prefer
+		// to copy the file, because that's how less works. That's why we go for
+		// the filename first.
+		inputFile, err := os.Open(*inputFilename)
+		if err != nil {
+			return fmt.Errorf("Failed to open %s: %w", *inputFilename, err)
+		}
+
+		_, err = io.Copy(os.Stdout, inputFile)
+		if err != nil {
+			return fmt.Errorf("Failed to copy %s to stdout: %w", *inputFilename, err)
+		}
+		return nil
+	}
+
+	// Must be done after trying to pump the input filename to stdout to be
+	// compatible with less, see above.
+	_, err := io.Copy(os.Stdout, os.Stdin)
+	if err != nil {
+		return fmt.Errorf("Failed to copy stdin to stdout: %w", err)
+	}
+	return nil
+}
+
+// Duplicate of m/reader.go:tryOpen
+func tryOpen(filename string) error {
+	// Try opening the file
+	tryMe, err := os.Open(filename)
+	if err != nil {
+		return err
+	}
+
+	// Try reading a byte
+	buffer := make([]byte, 1)
+	_, err = tryMe.Read(buffer)
+
+	if err != nil && err.Error() == "EOF" {
+		// Empty file, this is fine
+		err = nil
+	}
+
+	closeErr := tryMe.Close()
+	if err == nil && closeErr != nil {
+		// Everything worked up until Close(), report the Close() error
+		return closeErr
+	}
+
+	return err
+}
+
 func main() {
 	// FIXME: If we get a CTRL-C, get terminal back into a useful state before terminating
 
@@ -332,6 +384,14 @@ func main() {
 	if len(flagSet.Args()) == 1 {
 		word := flagSet.Arg(0)
 		inputFilename = &word
+
+		// Need to check before twin.NewScreen() below, otherwise the screen
+		// will be cleared before we print the "No such file" error.
+		err := tryOpen(*inputFilename)
+		if err != nil {
+			fmt.Fprintln(os.Stderr, "ERROR:", err)
+			os.Exit(1)
+		}
 	}
 
 	if inputFilename == nil && !stdinIsRedirected {
@@ -341,30 +401,11 @@ func main() {
 		os.Exit(1)
 	}
 
-	if inputFilename != nil && stdoutIsRedirected {
-		// Pump file to stdout.
-		//
-		// If we get both redirected stdin and an input filename, we must prefer
-		// to copy the file, because that's how less works.
-		inputFile, err := os.Open(*inputFilename)
+	if stdoutIsRedirected {
+		err := pumpToStdout(inputFilename)
 		if err != nil {
-			fmt.Fprintln(os.Stderr, "ERROR: Failed to open", inputFile, ": ")
+			fmt.Fprintln(os.Stderr, "ERROR:", err)
 			os.Exit(1)
-		}
-
-		_, err = io.Copy(os.Stdout, inputFile)
-		if err != nil {
-			log.Fatal("Failed to copy ", inputFilename, " to stdout: ", err)
-		}
-		os.Exit(0)
-	}
-
-	if stdinIsRedirected && stdoutIsRedirected {
-		// Must be done after trying to pump the input filename to stdout to be
-		// compatible with less, see above.
-		_, err := io.Copy(os.Stdout, os.Stdin)
-		if err != nil {
-			log.Fatal("Failed to copy stdin to stdout: ", err)
 		}
 		os.Exit(0)
 	}
@@ -374,6 +415,18 @@ func main() {
 	stdoutIsTerminal := !stdoutIsRedirected
 	if !stdoutIsTerminal {
 		panic("Invariant broken: stdout is not a terminal")
+	}
+
+	screen, err := twin.NewScreen()
+	if err != nil {
+		// Ref: https://github.com/walles/moar/issues/149
+		log.Debug("Failed to set up screen for paging, pumping to stdout instead: ", err)
+		err := pumpToStdout(inputFilename)
+		if err != nil {
+			fmt.Fprintln(os.Stderr, "ERROR:", err)
+			os.Exit(1)
+		}
+		return
 	}
 
 	var reader *m.Reader
@@ -401,7 +454,7 @@ func main() {
 	pager.ScrollLeftHint = *scrollLeftHint
 	pager.ScrollRightHint = *scrollRightHint
 	pager.SideScrollAmount = int(*shift)
-	startPaging(pager)
+	startPaging(pager, screen)
 }
 
 // Define a generic flag with specified name, default value, and usage string.
@@ -422,16 +475,13 @@ func flagSetFunc[T any](flagSet *flag.FlagSet, name string, defaultValue T, usag
 	return &parsed
 }
 
-func startPaging(pager *m.Pager) {
-	var screen twin.Screen
+func startPaging(pager *m.Pager, screen twin.Screen) {
 	defer func() {
 		// Restore screen...
-		if screen != nil {
-			screen.Close()
-		}
+		screen.Close()
 
-		// ... before printing panic() output, otherwise the output will have
-		// broken linefeeds and be hard to follow.
+		// ... before printing any panic() output, otherwise the output will
+		// have broken linefeeds and be hard to follow.
 		if err := recover(); err != nil {
 			panic(err)
 		}
@@ -443,11 +493,6 @@ func startPaging(pager *m.Pager) {
 			}
 		}
 	}()
-
-	screen, e := twin.NewScreen()
-	if e != nil {
-		panic(e)
-	}
 
 	pager.StartPaging(screen)
 }

@@ -328,6 +328,7 @@ func newReaderFromCommand(filename string, filterCommand ...string) (*Reader, er
 	return reader, nil
 }
 
+// Duplicate of moar/moar.go:tryOpen
 func tryOpen(filename string) error {
 	// Try opening the file
 	tryMe, err := os.Open(filename)
