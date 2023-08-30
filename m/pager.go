@@ -422,6 +422,12 @@ func (p *Pager) StartPaging(screen twin.Screen) {
 	log.Trace("Pager starting")
 	defer log.Trace("Pager done")
 
+	defer func() {
+		if p.reader.err != nil {
+			log.Warnf("Reader reported an error: %s", p.reader.err.Error())
+		}
+	}()
+
 	unprintableStyle = p.UnprintableStyle
 	ConsumeLessTermcapEnvs()
 
@@ -528,6 +534,10 @@ func (p *Pager) StartPaging(screen twin.Screen) {
 		case twin.EventResize:
 			// We'll be implicitly redrawn just by taking another lap in the loop
 
+		case twin.EventExit:
+			log.Debug("Got a Twin exit event, exiting")
+			return
+
 		case eventMoreLinesAvailable:
 			if p.mode.isViewing() && p.Following {
 				p.scrollToEnd()
@@ -543,10 +553,6 @@ func (p *Pager) StartPaging(screen twin.Screen) {
 		default:
 			log.Warnf("Unhandled event type: %v", event)
 		}
-	}
-
-	if p.reader.err != nil {
-		log.Warnf("Reader reported an error: %s", p.reader.err.Error())
 	}
 }
 

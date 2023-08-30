@@ -30,6 +30,14 @@ type EventResize struct {
 	// This interface intentionally left blank
 }
 
+// If we're unable to continue showing the screen, we'll send this event and
+// drop out.
+//
+// Ref: https://github.com/walles/moar/issues/126
+type EventExit struct {
+	// This interface intentionally left blank
+}
+
 func (eventRune *EventRune) Rune() rune {
 	return eventRune.rune
 }

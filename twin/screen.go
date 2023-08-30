@@ -2,7 +2,9 @@
 package twin
 
 import (
+	"errors"
 	"fmt"
+	"io"
 	"os"
 	"regexp"
 	"strings"
@@ -206,6 +208,14 @@ func (screen *UnixScreen) mainLoop() {
 	for {
 		count, err := screen.ttyIn.Read(buffer)
 		if err != nil {
+			if errors.Is(err, io.EOF) {
+				// This happens when the terminal window is closed
+				var event Event = EventExit{}
+				screen.events <- event
+				return
+			}
+
+			// Unknown error
 			panic(err)
 		}
 
