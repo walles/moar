@@ -2,9 +2,7 @@
 package twin
 
 import (
-	"errors"
 	"fmt"
-	"io"
 	"os"
 	"regexp"
 	"strings"
@@ -124,7 +122,11 @@ func (screen *UnixScreen) Close() {
 
 	err := screen.restoreTtyInTtyOut()
 	if err != nil {
-		log.Warn("Problem restoring TTY state: ", err)
+		// Debug logging because this is expected to fail in some cases:
+		// * https://github.com/walles/moar/issues/145
+		// * https://github.com/walles/moar/issues/149
+		// * https://github.com/walles/moar/issues/150
+		log.Debug("Problem restoring TTY state: ", err)
 	}
 }
 
@@ -208,15 +210,15 @@ func (screen *UnixScreen) mainLoop() {
 	for {
 		count, err := screen.ttyIn.Read(buffer)
 		if err != nil {
-			if errors.Is(err, io.EOF) {
-				// This happens when the terminal window is closed
-				var event Event = EventExit{}
-				screen.events <- event
-				return
-			}
+			// Ref:
+			// * https://github.com/walles/moar/issues/145
+			// * https://github.com/walles/moar/issues/149
+			// * https://github.com/walles/moar/issues/150
+			log.Debug("ttyin read error, twin giving up: ", err)
 
-			// Unknown error
-			panic(err)
+			var event Event = EventExit{}
+			screen.events <- event
+			return
 		}
 
 		if count > maxBytesRead {

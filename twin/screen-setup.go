@@ -67,10 +67,5 @@ func (screen *UnixScreen) setupTtyInTtyOut() error {
 }
 
 func (screen *UnixScreen) restoreTtyInTtyOut() error {
-	err := term.Restore(int(screen.ttyIn.Fd()), screen.oldTerminalState)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return term.Restore(int(screen.ttyIn.Fd()), screen.oldTerminalState)
 }
