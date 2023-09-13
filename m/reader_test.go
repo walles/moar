@@ -276,7 +276,7 @@ func testStatusText(t *testing.T, fromLine int, toLine int, totalLines int, expe
 func TestStatusText(t *testing.T) {
 	testStatusText(t, 1, 10, 20, "20 lines  50%")
 	testStatusText(t, 1, 5, 5, "5 lines  100%")
-	testStatusText(t, 998, 999, 1000, "1_000 lines  99%")
+	testStatusText(t, 998, 999, 1000, "1000 lines  99%")
 
 	testStatusText(t, 0, 0, 0, "<empty>")
 	testStatusText(t, 1, 1, 1, "1 line  100%")
