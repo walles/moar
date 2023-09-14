@@ -184,3 +184,17 @@ func TestWrapping(t *testing.T) {
 		"",
 	}, "\n"))
 }
+
+// Repro for https://github.com/walles/moar/issues/153
+func TestOneLineTerminal(t *testing.T) {
+	pager := Pager{
+		// Single line terminal window, this is what we're testing
+		screen: twin.NewFakeScreen(20, 1),
+
+		reader:        NewReaderFromText("test", "hej"),
+		ShowStatusBar: true,
+	}
+
+	rendered, _, _ := pager.renderScreenLines()
+	assert.Equal(t, len(rendered), 0)
+}

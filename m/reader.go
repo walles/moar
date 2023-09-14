@@ -536,14 +536,11 @@ func (r *Reader) getLinesUnlocked(firstLineOneBased int, wantedLineCount int) (*
 		firstLineOneBased = 1
 	}
 
-	if len(r.lines) == 0 {
+	if len(r.lines) == 0 || wantedLineCount == 0 {
 		return &InputLines{
-				lines: nil,
-
-				// The line number set here won't matter, we'll clip it anyway when we get it back
-				firstLineOneBased: 0,
-
-				statusText: r.createStatusUnlocked(0),
+				lines:             nil,
+				firstLineOneBased: firstLineOneBased,
+				statusText:        r.createStatusUnlocked(firstLineOneBased),
 			},
 			didFit // Empty files always fit
 	}
