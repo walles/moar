@@ -327,24 +327,3 @@ func createLinePrefix(fileLineNumber *int, numberPrefixLength int) []twin.Cell {
 
 	return lineNumberPrefix
 }
-
-// Is the given position visible on screen?
-func (p *Pager) isVisible(scrollPosition scrollPosition) bool {
-	if scrollPosition.lineNumberOneBased(p) < p.lineNumberOneBased() {
-		// It's above the screen, not visible
-		return false
-	}
-
-	lastVisiblePosition := p.getLastVisiblePosition()
-	if scrollPosition.lineNumberOneBased(p) > lastVisiblePosition.lineNumberOneBased(p) {
-		// Line number too high, not visible
-		return false
-	}
-
-	if scrollPosition.deltaScreenLines(p) > lastVisiblePosition.deltaScreenLines(p) {
-		// Sub-line-number too high, not visible
-		return false
-	}
-
-	return true
-}

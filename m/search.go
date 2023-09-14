@@ -42,7 +42,7 @@ func (p *Pager) scrollToSearchHits() {
 		return
 	}
 
-	if p.isVisible(*firstHitPosition) {
+	if firstHitPosition.isVisible(p) {
 		// Already on-screen, never mind
 		return
 	}

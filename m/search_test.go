@@ -89,3 +89,23 @@ func TestScrollToNextSearchHit_WrapAfterFound(t *testing.T) {
 	assert.Equal(t, _Viewing, pager.mode)
 	assert.Equal(t, 5, pager.lineNumberOneBased())
 }
+
+// Ref: https://github.com/walles/moar/issues/152
+func Test152(t *testing.T) {
+	// Show a pager on a five lines terminal
+	reader := NewReaderFromText("", "a\nab\nabc\nabcd\nabcde\nabcdef\n")
+	screen := twin.NewFakeScreen(20, 5)
+	pager := NewPager(reader)
+	pager.screen = screen
+	assert.Equal(t, _Viewing, pager.mode, "Initial pager state")
+
+	// Search for the first not-visible hit
+	pager.searchString = "abcde"
+	pager.mode = _Searching
+
+	// Scroll to the next search hit
+	pager.updateSearchPattern()
+
+	assert.Equal(t, _Searching, pager.mode)
+	assert.Equal(t, 3, pager.lineNumberOneBased())
+}
