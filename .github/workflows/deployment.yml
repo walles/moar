@@ -1,0 +1,16 @@
+name: Continuous Delivery
+
+on:
+  push:
+    tags:
+      - "*"
+
+jobs:
+  homebrew:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Bump Homebrew formula
+        uses: dawidd6/action-homebrew-bump-formula@v3
+        with:
+          token: ${{secrets.JOHAN_GITHUB_API_TOKEN}}
+          formula: moar
