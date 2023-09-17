@@ -52,6 +52,13 @@ func (p *Pager) onGotoLineRune(char rune) {
 		return
 	}
 
+	if char == 'g' {
+		p.scrollPosition = newScrollPosition("Pager scroll position")
+		p.handleScrolledUp()
+		p.mode = _Viewing
+		return
+	}
+
 	newGotoLineString := p.gotoLineString + string(char)
 	_, err := strconv.Atoi(newGotoLineString)
 	if err != nil {
