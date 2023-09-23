@@ -117,7 +117,7 @@ Moving around
 * PageUp / 'b' and PageDown / 'f'
 * SPACE moves down a page
 * Home and End for start / end of the document
-* < to go to the start of the document
+* < / 'gg' to go to the start of the document
 * > / 'G' to go to the end of the document
 * 'h', 'l' for left and right (as in vim)
 * Half page 'u'p / 'd'own, or CTRL-u / CTRL-d
