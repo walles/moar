@@ -288,6 +288,11 @@ func getTargetLineNumberOneBased(flagSet *flag.FlagSet) (int, []string) {
 
 		lineNumber, err := strconv.ParseInt(arg[1:], 10, 32)
 		if err != nil {
+			// Let's pretend this is a file name
+			continue
+		}
+		if lineNumber < 1 {
+			// Pretend this is a file name
 			continue
 		}
 
