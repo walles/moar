@@ -117,7 +117,7 @@ func (p *Pager) scrollToNextSearchHit() {
 	p.scrollPosition = *firstHitPosition
 
 	// Don't let any search hit scroll out of sight
-	p.Following = false
+	p.TargetLineNumberOneBased = 0
 }
 
 func (p *Pager) scrollToPreviousSearchHit() {
@@ -155,7 +155,7 @@ func (p *Pager) scrollToPreviousSearchHit() {
 	p.scrollPosition = *firstHitPosition
 
 	// Don't let any search hit scroll out of sight
-	p.Following = false
+	p.TargetLineNumberOneBased = 0
 }
 
 func (p *Pager) updateSearchPattern() {

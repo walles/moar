@@ -1,6 +1,9 @@
 package m
 
-import "fmt"
+import (
+	"fmt"
+	"math"
+)
 
 // Please create using newScrollPosition(name)
 type scrollPosition struct {
@@ -305,7 +308,13 @@ func (p *Pager) scrollToEnd() {
 	// lines than the number of characters it contains.
 	p.scrollPosition.internalDontTouch.deltaScreenLines = len(lastInputLine.raw)
 
-	p.Following = true
+	if p.TargetLineNumberOneBased == 0 {
+		// Start following the end of the file
+		//
+		// Otherwise, if we're already aiming for some place, don't overwrite
+		// that.
+		p.TargetLineNumberOneBased = math.MaxInt
+	}
 }
 
 // Can be either because Pager.scrollToEnd() was just called or because the user

@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"math"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -80,6 +81,9 @@ func printUsage(output io.Writer, flagSet *flag.FlagSet, printCommandline bool) 
 	_, _ = fmt.Fprintln(output, "Options:")
 
 	flagSet.PrintDefaults()
+
+	_, _ = fmt.Fprintln(output, "  +1234")
+	_, _ = fmt.Fprintln(output, "    \tImmediately scroll to line 1234")
 }
 
 // "moar" if we're in the $PATH, otherwise an absolute path
@@ -271,6 +275,35 @@ func tryOpen(filename string) error {
 	return err
 }
 
+// Parses an argument like "+123" anywhere on the command line into a one-based
+// line number, and returns the remaining args.
+//
+// Returns 0 on no target line number specified.
+func getTargetLineNumberOneBased(flagSet *flag.FlagSet) (int, []string) {
+	args := flagSet.Args()
+	for i, arg := range args {
+		if !strings.HasPrefix(arg, "+") {
+			continue
+		}
+
+		lineNumber, err := strconv.ParseInt(arg[1:], 10, 32)
+		if err != nil {
+			continue
+		}
+
+		// Remove the target line number from the args
+		//
+		// Ref: https://stackoverflow.com/a/57213476/473672
+		remainingArgs := make([]string, 0)
+		remainingArgs = append(remainingArgs, args[:i]...)
+		remainingArgs = append(remainingArgs, args[i+1:]...)
+
+		return int(lineNumber), remainingArgs
+	}
+
+	return 0, args
+}
+
 func main() {
 	// FIXME: If we get a CTRL-C, get terminal back into a useful state before terminating
 
@@ -370,8 +403,10 @@ func main() {
 		TimestampFormat: time.StampMicro,
 	})
 
-	if len(flagSet.Args()) > 1 {
-		fmt.Fprintln(os.Stderr, "ERROR: Expected exactly one filename, or data piped from stdin, got:", flagSet.Args())
+	targetLineNumberOneBased, remainingArgs := getTargetLineNumberOneBased(flagSet)
+
+	if len(remainingArgs) > 1 {
+		fmt.Fprintln(os.Stderr, "ERROR: Expected exactly one filename, or data piped from stdin, got:", remainingArgs)
 		fmt.Fprintln(os.Stderr)
 		printUsage(os.Stderr, flagSet, true)
 
@@ -381,7 +416,7 @@ func main() {
 	stdinIsRedirected := !term.IsTerminal(int(os.Stdin.Fd()))
 	stdoutIsRedirected := !term.IsTerminal(int(os.Stdout.Fd()))
 	var inputFilename *string
-	if len(flagSet.Args()) == 1 {
+	if len(remainingArgs) == 1 {
 		word := flagSet.Arg(0)
 		inputFilename = &word
 
@@ -444,7 +479,6 @@ func main() {
 
 	pager := m.NewPager(reader)
 	pager.WrapLongLines = *wrap
-	pager.Following = *follow
 	pager.ShowLineNumbers = !*noLineNumbers
 	pager.ShowStatusBar = !*noStatusBar
 	pager.DeInit = !*noClearOnExit
@@ -454,6 +488,12 @@ func main() {
 	pager.ScrollLeftHint = *scrollLeftHint
 	pager.ScrollRightHint = *scrollRightHint
 	pager.SideScrollAmount = int(*shift)
+
+	pager.TargetLineNumberOneBased = targetLineNumberOneBased
+	if *follow && pager.TargetLineNumberOneBased == 0 {
+		pager.TargetLineNumberOneBased = math.MaxInt
+	}
+
 	startPaging(pager, screen)
 }
 
