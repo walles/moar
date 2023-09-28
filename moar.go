@@ -422,7 +422,7 @@ func main() {
 	stdoutIsRedirected := !term.IsTerminal(int(os.Stdout.Fd()))
 	var inputFilename *string
 	if len(remainingArgs) == 1 {
-		word := flagSet.Arg(0)
+		word := remainingArgs[0]
 		inputFilename = &word
 
 		// Need to check before twin.NewScreen() below, otherwise the screen
