@@ -279,8 +279,7 @@ func tryOpen(filename string) error {
 // line number, and returns the remaining args.
 //
 // Returns 0 on no target line number specified.
-func getTargetLineNumberOneBased(flagSet *flag.FlagSet) (int, []string) {
-	args := flagSet.Args()
+func getTargetLineNumberOneBased(args []string) (int, []string) {
 	for i, arg := range args {
 		if !strings.HasPrefix(arg, "+") {
 			continue
@@ -378,7 +377,9 @@ func main() {
 		flags = append(strings.Fields(moarEnv), flags...)
 	}
 
-	err := flagSet.Parse(flags)
+	targetLineNumberOneBased, remainingArgs := getTargetLineNumberOneBased(flags)
+
+	err := flagSet.Parse(remainingArgs)
 	if err != nil {
 		if err == flag.ErrHelp {
 			printUsage(os.Stdout, flagSet, false)
@@ -408,10 +409,8 @@ func main() {
 		TimestampFormat: time.StampMicro,
 	})
 
-	targetLineNumberOneBased, remainingArgs := getTargetLineNumberOneBased(flagSet)
-
-	if len(remainingArgs) > 1 {
-		fmt.Fprintln(os.Stderr, "ERROR: Expected exactly one filename, or data piped from stdin, got:", remainingArgs)
+	if len(flagSet.Args()) > 1 {
+		fmt.Fprintln(os.Stderr, "ERROR: Expected exactly one filename, or data piped from stdin, got:", flagSet.Args())
 		fmt.Fprintln(os.Stderr)
 		printUsage(os.Stderr, flagSet, true)
 
@@ -421,8 +420,8 @@ func main() {
 	stdinIsRedirected := !term.IsTerminal(int(os.Stdin.Fd()))
 	stdoutIsRedirected := !term.IsTerminal(int(os.Stdout.Fd()))
 	var inputFilename *string
-	if len(remainingArgs) == 1 {
-		word := remainingArgs[0]
+	if len(flagSet.Args()) == 1 {
+		word := flagSet.Args()[0]
 		inputFilename = &word
 
 		// Need to check before twin.NewScreen() below, otherwise the screen

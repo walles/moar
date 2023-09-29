@@ -61,6 +61,13 @@ if ./moar does-not-exist >&/dev/null; then
   exit 1
 fi
 
+echo Testing not crashing with different argument orders...
+./moar +123 moar.go >/dev/null
+./moar moar.go +123 >/dev/null
+./moar +123 --trace moar.go >/dev/null
+./moar --trace +123 moar.go >/dev/null
+./moar --trace moar.go +123 >/dev/null
+
 echo Test --version...
 ./moar --version >/dev/null # Should exit with code 0
 diff -u <(./moar --version) <(git describe --tags --dirty --always)
