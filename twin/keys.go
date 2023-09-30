@@ -64,6 +64,8 @@ var escapeSequenceToKeyCode = map[string]KeyCode{
 
 	"\x1b[H":  KeyHome,
 	"\x1b[F":  KeyEnd,
+	"\x1b[1~": KeyHome,
+	"\x1b[4~": KeyEnd,
 	"\x1b[5~": KeyPgUp,
 	"\x1b[6~": KeyPgDown,
 }
