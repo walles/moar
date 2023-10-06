@@ -583,6 +583,15 @@ func TestClearToEndOfLine_ClearFromStartScrolledRight(t *testing.T) {
 	assert.DeepEqual(t, actual, expected, cmp.AllowUnexported(twin.Style{}))
 }
 
+func TestInitStyle(t *testing.T) {
+	testMe := Pager{
+		ChromaStyle:     styles.Registry["gruvbox"],
+		ChromaFormatter: &formatters.TTY16m,
+	}
+	testMe.initStyle()
+	assert.Equal(t, testMe.linePrefix, "\x1b[38;2;235;219;178m")
+}
+
 func benchmarkSearch(b *testing.B, highlighted bool) {
 	// Pick a go file so we get something with highlighting
 	_, sourceFilename, _, ok := runtime.Caller(0)

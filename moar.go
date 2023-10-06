@@ -199,8 +199,8 @@ func parseUnprintableStyle(styleOption string) (m.UnprintableStyle, error) {
 
 func parseScrollHint(scrollHint string) (twin.Cell, error) {
 	scrollHint = strings.ReplaceAll(scrollHint, "ESC", "\x1b")
-	hintParser := m.NewLine(scrollHint)
-	parsedTokens := hintParser.HighlightedTokens(nil).Cells
+	hintAsLine := m.NewLine(scrollHint)
+	parsedTokens := hintAsLine.HighlightedTokens("", nil).Cells
 	if len(parsedTokens) == 1 {
 		return parsedTokens[0], nil
 	}
@@ -492,6 +492,8 @@ func main() {
 	pager.ScrollLeftHint = *scrollLeftHint
 	pager.ScrollRightHint = *scrollRightHint
 	pager.SideScrollAmount = int(*shift)
+	pager.ChromaStyle = style
+	pager.ChromaFormatter = formatter
 
 	pager.TargetLineNumberOneBased = targetLineNumberOneBased
 	if *follow && pager.TargetLineNumberOneBased == 0 {

@@ -4,8 +4,10 @@ import (
 	"fmt"
 	"math"
 	"regexp"
+	"strings"
 	"time"
 
+	"github.com/alecthomas/chroma/v2"
 	log "github.com/sirupsen/logrus"
 	"github.com/walles/moar/twin"
 )
@@ -93,6 +95,16 @@ type Pager struct {
 	// If true, pager will clear the screen on return. If false, pager will
 	// clear the last line, and show the cursor.
 	DeInit bool
+
+	// Render the UI using this style
+	ChromaStyle *chroma.Style
+
+	// Render the UI using this formatter
+	ChromaFormatter *chroma.Formatter
+
+	// Optional ANSI to prefix each text line with. Initialised using
+	// ChromaStyle and ChromaFormatter.
+	linePrefix string
 }
 
 type _PreHelpState struct {
@@ -428,6 +440,32 @@ func (p *Pager) onRune(char rune) {
 	}
 }
 
+func (p *Pager) initStyle() {
+	if p.ChromaStyle == nil && p.ChromaFormatter == nil {
+		return
+	}
+	if p.ChromaStyle == nil || p.ChromaFormatter == nil {
+		panic("Both ChromaStyle and ChromaFormatter should be set or neither")
+	}
+
+	stringBuilder := strings.Builder{}
+	err := (*p.ChromaFormatter).Format(&stringBuilder, p.ChromaStyle, chroma.Literator(chroma.Token{
+		Type:  chroma.Other,
+		Value: "XXX",
+	}))
+	if err != nil {
+		panic(err)
+	}
+
+	string := stringBuilder.String()
+	cutoff := strings.Index(string, "XXX")
+	if cutoff < 0 {
+		panic("XXX not found in " + string)
+	}
+
+	p.linePrefix = string[:cutoff]
+}
+
 // StartPaging brings up the pager on screen
 func (p *Pager) StartPaging(screen twin.Screen) {
 	log.Trace("Pager starting")
@@ -443,6 +481,7 @@ func (p *Pager) StartPaging(screen twin.Screen) {
 	ConsumeLessTermcapEnvs()
 
 	p.screen = screen
+	p.initStyle()
 
 	go func() {
 		for range p.reader.moreLinesAdded {

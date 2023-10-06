@@ -41,11 +41,11 @@ func NewLine(raw string) Line {
 
 // Returns a representation of the string split into styled tokens. Any regexp
 // matches are highlighted. A nil regexp means no highlighting.
-func (line *Line) HighlightedTokens(search *regexp.Regexp) cellsWithTrailer {
+func (line *Line) HighlightedTokens(linePrefix string, search *regexp.Regexp) cellsWithTrailer {
 	plain := line.Plain()
 	matchRanges := getMatchRanges(&plain, search)
 
-	fromString := cellsFromString(line.raw)
+	fromString := cellsFromString(linePrefix + line.raw)
 	returnCells := make([]twin.Cell, 0, len(fromString.Cells))
 	for _, token := range fromString.Cells {
 		style := token.Style

@@ -204,7 +204,7 @@ func (p *Pager) renderLines() ([]renderedLine, string, overflowState) {
 // lineNumber and numberPrefixLength are required for knowing how much to
 // indent, and to (optionally) render the line number.
 func (p *Pager) renderLine(line *Line, lineNumber int) ([]renderedLine, overflowState) {
-	highlighted := line.HighlightedTokens(p.searchPattern)
+	highlighted := line.HighlightedTokens(p.linePrefix, p.searchPattern)
 	var wrapped [][]twin.Cell
 	overflow := didFit
 	if p.WrapLongLines {

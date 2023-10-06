@@ -9,7 +9,7 @@ import (
 
 func tokenize(input string) []twin.Cell {
 	line := NewLine(input)
-	return line.HighlightedTokens(nil).Cells
+	return line.HighlightedTokens("", nil).Cells
 }
 
 func rowsToString(cellLines [][]twin.Cell) string {
