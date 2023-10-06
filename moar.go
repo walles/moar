@@ -350,8 +350,14 @@ func main() {
 	style := flagSetFunc(flagSet,
 		"style", *styles.Registry["native"],
 		"Highlighting style from https://xyproto.github.io/splash/docs/longer/all.html", parseStyleOption)
+
+	defaultFormatter, err := parseColorsOption("auto")
+	if err != nil {
+		panic(fmt.Errorf("Failed parsing default formatter: %w", err))
+	}
 	formatter := flagSetFunc(flagSet,
-		"colors", formatters.TTY256, "Highlighting palette size: 8, 16, 256, 16M, auto", parseColorsOption)
+		"colors", defaultFormatter, "Highlighting palette size: 8, 16, 256, 16M, auto", parseColorsOption)
+
 	noLineNumbers := flagSet.Bool("no-linenumbers", false, "Hide line numbers on startup, press left arrow key to show")
 	noStatusBar := flagSet.Bool("no-statusbar", false, "Hide the status bar, toggle with '='")
 	quitIfOneScreen := flagSet.Bool("quit-if-one-screen", false, "Don't page if contents fits on one screen")
@@ -379,7 +385,7 @@ func main() {
 
 	targetLineNumberOneBased, remainingArgs := getTargetLineNumberOneBased(flags)
 
-	err := flagSet.Parse(remainingArgs)
+	err = flagSet.Parse(remainingArgs)
 	if err != nil {
 		if err == flag.ErrHelp {
 			printUsage(os.Stdout, flagSet, false)
