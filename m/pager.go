@@ -47,9 +47,6 @@ type eventMoreLinesAvailable struct{}
 // reader.HighlightingDone() for details.
 type eventMaybeDone struct{}
 
-// Styling of line numbers
-var _numberStyle = twin.StyleDefault.WithAttr(twin.AttrDim)
-
 // Pager is the main on-screen pager
 type Pager struct {
 	reader              *Reader
@@ -105,6 +102,9 @@ type Pager struct {
 	// Optional ANSI to prefix each text line with. Initialised using
 	// ChromaStyle and ChromaFormatter.
 	linePrefix string
+
+	// Line numbers style, initialised in Pager.initStyle()
+	numberStyle twin.Style
 }
 
 type _PreHelpState struct {
@@ -440,17 +440,13 @@ func (p *Pager) onRune(char rune) {
 	}
 }
 
-func (p *Pager) initStyle() {
-	if p.ChromaStyle == nil && p.ChromaFormatter == nil {
-		return
-	}
-	if p.ChromaStyle == nil || p.ChromaFormatter == nil {
-		panic("Both ChromaStyle and ChromaFormatter should be set or neither")
-	}
-
+// Converts a Chroma token type to an ANSI SGR string
+//
+// If the returned string is empty you need to decide on your own default.
+func toAnsiSgr(tokenType chroma.TokenType, style chroma.Style, formatter chroma.Formatter) string {
 	stringBuilder := strings.Builder{}
-	err := (*p.ChromaFormatter).Format(&stringBuilder, p.ChromaStyle, chroma.Literator(chroma.Token{
-		Type:  chroma.Other,
+	err := formatter.Format(&stringBuilder, &style, chroma.Literator(chroma.Token{
+		Type:  tokenType,
 		Value: "XXX",
 	}))
 	if err != nil {
@@ -463,7 +459,31 @@ func (p *Pager) initStyle() {
 		panic("XXX not found in " + string)
 	}
 
-	p.linePrefix = string[:cutoff]
+	return string[:cutoff]
+}
+
+func (p *Pager) initStyle() {
+	if p.ChromaStyle == nil && p.ChromaFormatter == nil {
+		return
+	}
+	if p.ChromaStyle == nil || p.ChromaFormatter == nil {
+		panic("Both ChromaStyle and ChromaFormatter should be set or neither")
+	}
+
+	p.linePrefix = toAnsiSgr(chroma.Other, *p.ChromaStyle, *p.ChromaFormatter)
+
+	numberStyleAnsi := toAnsiSgr(chroma.LineNumbers, *p.ChromaStyle, *p.ChromaFormatter) + "X"
+	if numberStyleAnsi == "" {
+		p.numberStyle = twin.StyleDefault.WithAttr(twin.AttrDim)
+	} else {
+		// Turn numberStyleAnsi into a twin.Style
+		numberStyleAsLine := NewLine(numberStyleAnsi)
+		parsedTokens := numberStyleAsLine.HighlightedTokens("", nil).Cells
+		if len(parsedTokens) != 1 {
+			panic(fmt.Sprint("Not exactly one token: ", len(parsedTokens)))
+		}
+		p.numberStyle = parsedTokens[0].Style
+	}
 }
 
 // StartPaging brings up the pager on screen

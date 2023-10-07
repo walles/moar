@@ -255,7 +255,7 @@ func (p *Pager) decorateLine(lineNumberToShow *int, contents []twin.Cell) ([]twi
 	width, _ := p.screen.Size()
 	newLine := make([]twin.Cell, 0, width)
 	numberPrefixLength := p.numberPrefixLength()
-	newLine = append(newLine, createLinePrefix(lineNumberToShow, numberPrefixLength)...)
+	newLine = append(newLine, createLinePrefix(lineNumberToShow, numberPrefixLength, p.numberStyle)...)
 	overflow := didFit
 
 	startColumn := p.leftColumnZeroBased
@@ -296,7 +296,7 @@ func (p *Pager) decorateLine(lineNumberToShow *int, contents []twin.Cell) ([]twi
 // Generate a line number prefix of the given length.
 //
 // Can be empty or all-whitespace depending on parameters.
-func createLinePrefix(fileLineNumber *int, numberPrefixLength int) []twin.Cell {
+func createLinePrefix(fileLineNumber *int, numberPrefixLength int, style twin.Style) []twin.Cell {
 	if numberPrefixLength == 0 {
 		return []twin.Cell{}
 	}
@@ -322,7 +322,7 @@ func createLinePrefix(fileLineNumber *int, numberPrefixLength int) []twin.Cell {
 			break
 		}
 
-		lineNumberPrefix = append(lineNumberPrefix, twin.NewCell(digit, _numberStyle))
+		lineNumberPrefix = append(lineNumberPrefix, twin.NewCell(digit, style))
 	}
 
 	return lineNumberPrefix
