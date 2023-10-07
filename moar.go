@@ -172,7 +172,7 @@ func parseColorsOption(colorsOption string) (chroma.Formatter, error) {
 	return nil, fmt.Errorf("Valid counts are 8, 16, 256, 16M or auto.")
 }
 
-func parseStatusBarStyle(styleOption string) (m.StatusBarStyle, error) {
+func parseStatusBarStyle(styleOption string) (m.StatusBarStyleType, error) {
 	if styleOption == "inverse" {
 		return m.STATUSBAR_STYLE_INVERSE, nil
 	}
@@ -493,7 +493,7 @@ func main() {
 	pager.ShowStatusBar = !*noStatusBar
 	pager.DeInit = !*noClearOnExit
 	pager.QuitIfOneScreen = *quitIfOneScreen
-	pager.StatusBarStyle = *statusBarStyle
+	pager.StatusBarStyleOption = *statusBarStyle
 	pager.UnprintableStyle = *unprintableStyle
 	pager.ScrollLeftHint = *scrollLeftHint
 	pager.ScrollRightHint = *scrollRightHint

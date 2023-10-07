@@ -21,10 +21,10 @@ const (
 	_GotoLine
 )
 
-type StatusBarStyle int
+type StatusBarStyleType int
 
 const (
-	STATUSBAR_STYLE_INVERSE StatusBarStyle = iota
+	STATUSBAR_STYLE_INVERSE StatusBarStyleType = iota
 	STATUSBAR_STYLE_PLAIN
 	STATUSBAR_STYLE_BOLD
 )
@@ -69,8 +69,8 @@ type Pager struct {
 	// NewPager shows lines by default, this field can hide them
 	ShowLineNumbers bool
 
-	StatusBarStyle StatusBarStyle
-	ShowStatusBar  bool
+	StatusBarStyleOption StatusBarStyleType
+	ShowStatusBar        bool
 
 	UnprintableStyle UnprintableStyle
 
@@ -105,6 +105,9 @@ type Pager struct {
 
 	// Line numbers style, initialised in Pager.initStyle()
 	numberStyle twin.Style
+
+	// Status bar style, initialised in Pager.initStyle()
+	statusBarStyle twin.Style
 }
 
 type _PreHelpState struct {
@@ -195,18 +198,12 @@ func (p *Pager) setFooter(footer string) {
 	width, height := p.screen.Size()
 
 	pos := 0
-	var footerStyle twin.Style
+	footerStyle := p.statusBarStyle
 	if standoutStyle != nil {
+		// Ref: https://github.com/walles/moar/issues/14
 		footerStyle = *standoutStyle
-	} else if p.StatusBarStyle == STATUSBAR_STYLE_INVERSE {
-		footerStyle = twin.StyleDefault.WithAttr(twin.AttrReverse)
-	} else if p.StatusBarStyle == STATUSBAR_STYLE_PLAIN {
-		footerStyle = twin.StyleDefault
-	} else if p.StatusBarStyle == STATUSBAR_STYLE_BOLD {
-		footerStyle = twin.StyleDefault.WithAttr(twin.AttrBold)
-	} else {
-		panic(fmt.Sprint("Unrecognized footer style: ", footerStyle))
 	}
+
 	for _, token := range footer {
 		p.screen.SetCell(pos, height-1, twin.NewCell(token, footerStyle))
 		pos++
@@ -483,6 +480,29 @@ func (p *Pager) initStyle() {
 			panic(fmt.Sprint("Not exactly one token: ", len(parsedTokens)))
 		}
 		p.numberStyle = parsedTokens[0].Style
+	}
+
+	statusBarStyleAnsi := toAnsiSgr(chroma.None, *p.ChromaStyle, *p.ChromaFormatter) + "X"
+	if statusBarStyleAnsi == "X" {
+		p.statusBarStyle = twin.StyleDefault
+	} else {
+		// Turn statusBarStyleAnsi into a twin.Style
+		statusBarStyleAsLine := NewLine(statusBarStyleAnsi)
+		parsedTokens := statusBarStyleAsLine.HighlightedTokens("", nil).Cells
+		if len(parsedTokens) != 1 {
+			panic(fmt.Sprint("Not exactly one token: ", len(parsedTokens)))
+		}
+		p.statusBarStyle = parsedTokens[0].Style
+	}
+	switch p.StatusBarStyleOption {
+	case STATUSBAR_STYLE_INVERSE:
+		p.statusBarStyle = p.statusBarStyle.WithAttr(twin.AttrReverse)
+	case STATUSBAR_STYLE_PLAIN:
+		// This case intentionally left blank
+	case STATUSBAR_STYLE_BOLD:
+		p.statusBarStyle = p.statusBarStyle.WithAttr(twin.AttrBold)
+	default:
+		panic(fmt.Sprint("Unknown status bar style option: ", p.StatusBarStyleOption))
 	}
 }
 
