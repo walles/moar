@@ -470,7 +470,7 @@ func (p *Pager) initStyle() {
 		panic("Both ChromaStyle and ChromaFormatter should be set or neither")
 	}
 
-	p.linePrefix = toAnsiSgr(chroma.Other, *p.ChromaStyle, *p.ChromaFormatter)
+	p.linePrefix = toAnsiSgr(chroma.None, *p.ChromaStyle, *p.ChromaFormatter)
 
 	numberStyleAnsi := toAnsiSgr(chroma.LineNumbers, *p.ChromaStyle, *p.ChromaFormatter) + "X"
 	if numberStyleAnsi == "" {
