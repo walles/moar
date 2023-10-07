@@ -482,9 +482,20 @@ func (p *Pager) initStyle() {
 		p.numberStyle = parsedTokens[0].Style
 	}
 
-	statusBarStyleAnsi := toAnsiSgr(chroma.None, *p.ChromaStyle, *p.ChromaFormatter) + "X"
+	statusBarStyleAnsi := toAnsiSgr(chroma.Background, *p.ChromaStyle, *p.ChromaFormatter) + "X"
 	if statusBarStyleAnsi == "X" {
 		p.statusBarStyle = twin.StyleDefault
+
+		switch p.StatusBarStyleOption {
+		case STATUSBAR_STYLE_INVERSE:
+			p.statusBarStyle = p.statusBarStyle.WithAttr(twin.AttrReverse)
+		case STATUSBAR_STYLE_PLAIN:
+			// This case intentionally left blank
+		case STATUSBAR_STYLE_BOLD:
+			p.statusBarStyle = p.statusBarStyle.WithAttr(twin.AttrBold)
+		default:
+			panic(fmt.Sprint("Unknown status bar style option: ", p.StatusBarStyleOption))
+		}
 	} else {
 		// Turn statusBarStyleAnsi into a twin.Style
 		statusBarStyleAsLine := NewLine(statusBarStyleAnsi)
@@ -493,16 +504,6 @@ func (p *Pager) initStyle() {
 			panic(fmt.Sprint("Not exactly one token: ", len(parsedTokens)))
 		}
 		p.statusBarStyle = parsedTokens[0].Style
-	}
-	switch p.StatusBarStyleOption {
-	case STATUSBAR_STYLE_INVERSE:
-		p.statusBarStyle = p.statusBarStyle.WithAttr(twin.AttrReverse)
-	case STATUSBAR_STYLE_PLAIN:
-		// This case intentionally left blank
-	case STATUSBAR_STYLE_BOLD:
-		p.statusBarStyle = p.statusBarStyle.WithAttr(twin.AttrBold)
-	default:
-		panic(fmt.Sprint("Unknown status bar style option: ", p.StatusBarStyleOption))
 	}
 }
 

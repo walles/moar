@@ -590,6 +590,8 @@ func TestInitStyle(t *testing.T) {
 	}
 	testMe.initStyle()
 	assert.Equal(t, testMe.linePrefix, "\x1b[38;2;235;219;178m")
+	assert.Equal(t, testMe.statusBarStyle,
+		twin.StyleDefault.Foreground(twin.NewColorHex(0xebdbb2)).Background(twin.NewColorHex(0x282828)))
 }
 
 func benchmarkSearch(b *testing.B, highlighted bool) {
