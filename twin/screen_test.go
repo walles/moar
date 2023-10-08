@@ -72,3 +72,21 @@ func TestRenderLine(t *testing.T) {
 		strings.ReplaceAll(rendered, "", "ESC"),
 		strings.ReplaceAll(reset+reversed+"<"+dim+notReversed+"f"+clearToEol+reset, "", "ESC"))
 }
+
+func TestRenderLineLastReversed(t *testing.T) {
+	row := []Cell{
+		{
+			Rune:  '<',
+			Style: StyleDefault.WithAttr(AttrReverse),
+		},
+	}
+
+	rendered, count := renderLine(row)
+	assert.Equal(t, count, 1)
+	reset := "[m"
+	reversed := "[7m"
+	clearToEol := "[K"
+	assert.Equal(t,
+		strings.ReplaceAll(rendered, "", "ESC"),
+		strings.ReplaceAll(reset+reversed+"<"+reset+clearToEol, "", "ESC"))
+}
