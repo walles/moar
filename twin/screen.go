@@ -470,17 +470,23 @@ func renderLine(row []Cell) (string, int) {
 		builder.WriteRune(runeToWrite)
 	}
 
-	// Set trailer attributes
-	trailerStyle := lastStyle.WithHyperlink(nil)
-	builder.WriteString(trailerStyle.RenderUpdateFrom(lastStyle))
+	if trailerLength > 0 {
+		// Set trailer attributes
+		trailerStyle := lastStyle.WithHyperlink(nil)
+		builder.WriteString(trailerStyle.RenderUpdateFrom(lastStyle))
+		lastStyle = trailerStyle
+	} else {
+		builder.WriteString(StyleDefault.RenderUpdateFrom(lastStyle))
+		lastStyle = StyleDefault
+	}
 
 	// Clear to end of line
 	// https://en.wikipedia.org/wiki/ANSI_escape_code#CSI_(Control_Sequence_Introducer)_sequences
 	builder.WriteString("\x1b[K")
 
-	if trailerStyle != StyleDefault {
+	if lastStyle != StyleDefault {
 		// Reset style after each line
-		builder.WriteString("\x1b[m")
+		builder.WriteString(StyleDefault.RenderUpdateFrom(lastStyle))
 	}
 
 	return builder.String(), headerLength
