@@ -70,7 +70,7 @@ func TestRenderLine(t *testing.T) {
 	clearToEol := "[K"
 	assert.Equal(t,
 		strings.ReplaceAll(rendered, "", "ESC"),
-		strings.ReplaceAll(reset+reversed+"<"+dim+notReversed+"f"+clearToEol+reset, "", "ESC"))
+		strings.ReplaceAll(reset+reversed+"<"+dim+notReversed+"f"+reset+clearToEol, "", "ESC"))
 }
 
 func TestRenderLineLastReversed(t *testing.T) {
