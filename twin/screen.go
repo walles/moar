@@ -414,37 +414,22 @@ func renderLine(row []Cell) (string, int) {
 
 	lastCell := row[len(row)-1]
 
-	// How many trailing whitespace characters are there matching lastCell?
-	trailerLength := 0
-	if lastCell.Style.attrs.has(AttrBlink) {
-		// This block intentionally left blank.
-		//
-		// Trailer is rendered by clearing to EOL, and AttrBlink will most
-		// likely not survive that. Don't bother with any trailer in this case.
-	} else if lastCell.Style.attrs.has(AttrReverse) {
-		// This block intentionally left blank.
-		//
-		// Trailer is rendered by clearing to EOL, and AttrReverse didn't
-		// survive that when I tried it using iTerm2 3.4.4 on my MacBook. Don't
-		// bother with any trailer in this case.
-	} else if lastCell.Style.hyperlinkUrl != nil {
-		// This block intentionally left blank.
-		//
-		// Trailer is rendered by clearing to EOL, and I don't see how
-		// hyperlinks could play well with that.
-	} else if lastCell.Rune == ' ' {
-		// Line has a number of trailing spaces
+	// How many trailing whitespace characters are there that we can just ignore?
+	trailingWhitespaceCount := 0
+	if lastCell.Rune == ' ' && lastCell.Style == StyleDefault {
+		// No need to draw plain trailing whitespace, we just cleared the screen
+		// anyway
 		for i := len(row) - 1; i >= 0; i-- {
 			currentCell := row[i]
 			if currentCell != lastCell {
 				break
 			}
-			trailerLength++
+			trailingWhitespaceCount++
 		}
 	}
 
 	// How many information carrying cells are there before the trailer?
-	headerLength := len(row) - trailerLength
+	headerLength := len(row) - trailingWhitespaceCount
 
 	var builder strings.Builder
 
@@ -475,24 +460,10 @@ func renderLine(row []Cell) (string, int) {
 		builder.WriteRune(runeToWrite)
 	}
 
-	if trailerLength > 0 {
-		// Set trailer attributes
-		trailerStyle := lastCell.Style.WithHyperlink(nil)
-		builder.WriteString(trailerStyle.RenderUpdateFrom(lastStyle))
-		lastStyle = trailerStyle
-	} else {
-		builder.WriteString(StyleDefault.RenderUpdateFrom(lastStyle))
-		lastStyle = StyleDefault
-	}
-
 	// Clear to end of line
 	// https://en.wikipedia.org/wiki/ANSI_escape_code#CSI_(Control_Sequence_Introducer)_sequences
+	builder.WriteString(StyleDefault.RenderUpdateFrom(lastStyle))
 	builder.WriteString("\x1b[K")
-
-	if lastStyle != StyleDefault {
-		// Reset style after each line
-		builder.WriteString(StyleDefault.RenderUpdateFrom(lastStyle))
-	}
 
 	return builder.String(), headerLength
 }
