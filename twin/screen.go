@@ -407,39 +407,19 @@ func (screen *UnixScreen) Clear() {
 // Returns the rendered line, plus how many information carrying cells went into
 // it (see headerLength inside of this function).
 func renderLine(row []Cell) (string, int) {
-	width := len(row)
-	if width == 0 {
-		return "", 0
-	}
-
-	lastCell := row[len(row)-1]
-
-	// How many trailing whitespace characters are there matching lastCell?
-	trailerLength := 0
-	if lastCell.Style.attrs.has(AttrBlink) {
-		// This block intentionally left blank.
-		//
-		// Trailer is rendered by clearing to EOL, and AttrBlink will most
-		// likely not survive that. Don't bother with any trailer in this case.
-	} else if lastCell.Style.attrs.has(AttrReverse) {
-		// This block intentionally left blank.
-		//
-		// Trailer is rendered by clearing to EOL, and AttrReverse didn't
-		// survive that when I tried it using iTerm2 3.4.4 on my MacBook. Don't
-		// bother with any trailer in this case.
-	} else if lastCell.Rune == ' ' {
-		// Line has a number of trailing spaces
-		for i := len(row) - 1; i >= 0; i-- {
-			currentCell := row[i]
-			if currentCell != lastCell {
-				break
-			}
-			trailerLength++
+	lastSignificantCellIndex := len(row) - 1
+	for ; lastSignificantCellIndex >= 0; lastSignificantCellIndex-- {
+		lastCell := row[lastSignificantCellIndex]
+		if lastCell.Rune != ' ' || lastCell.Style != StyleDefault {
+			break
 		}
 	}
+	row = row[0 : lastSignificantCellIndex+1]
 
-	// How many information carrying cells are there before the trailer?
-	headerLength := len(row) - trailerLength
+	if lastSignificantCellIndex < 0 {
+		// The entire line is whitespace, no need to render it
+		return "", 0
+	}
 
 	var builder strings.Builder
 
@@ -447,7 +427,7 @@ func renderLine(row []Cell) (string, int) {
 	builder.WriteString("\x1b[m")
 	lastStyle := StyleDefault
 
-	for column := 0; column < headerLength; column++ {
+	for column := 0; column < len(row); column++ {
 		cell := row[column]
 
 		style := cell.Style
@@ -470,20 +450,12 @@ func renderLine(row []Cell) (string, int) {
 		builder.WriteRune(runeToWrite)
 	}
 
-	// Set trailer attributes
-	trailerStyle := lastStyle.WithHyperlink(nil)
-	builder.WriteString(trailerStyle.RenderUpdateFrom(lastStyle))
-
 	// Clear to end of line
 	// https://en.wikipedia.org/wiki/ANSI_escape_code#CSI_(Control_Sequence_Introducer)_sequences
+	builder.WriteString(StyleDefault.RenderUpdateFrom(lastStyle))
 	builder.WriteString("\x1b[K")
 
-	if trailerStyle != StyleDefault {
-		// Reset style after each line
-		builder.WriteString("\x1b[m")
-	}
-
-	return builder.String(), headerLength
+	return builder.String(), len(row)
 }
 
 func (screen *UnixScreen) Show() {

@@ -92,6 +92,7 @@ func (style Style) WithAttr(attr AttrMask) Style {
 // Call with nil to remove the link
 func (style Style) WithHyperlink(hyperlinkUrl *string) Style {
 	if hyperlinkUrl != nil && *hyperlinkUrl == "" {
+		// Use nil instead of empty string
 		hyperlinkUrl = nil
 	}
 
@@ -137,6 +138,14 @@ func (style Style) Foreground(color Color) Style {
 // Emit an ANSI escape sequence switching from a previous style to the current
 // one.
 func (current Style) RenderUpdateFrom(previous Style) string {
+	if current == previous {
+		// Shortcut for the common case
+		return ""
+	}
+	if current == StyleDefault {
+		return "\x1b[m"
+	}
+
 	var builder strings.Builder
 	if current.fg != previous.fg {
 		builder.WriteString(current.fg.ForegroundAnsiString())
