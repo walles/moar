@@ -121,6 +121,23 @@ func TestRenderLineLastReversedPlusTrailingSpace(t *testing.T) {
 		strings.ReplaceAll(reset+reversed+"<"+reset+clearToEol, "", "ESC"))
 }
 
+func TestRenderLineOnlyTrailingSpaces(t *testing.T) {
+	row := []Cell{
+		{
+			Rune:  ' ',
+			Style: StyleDefault,
+		},
+		{
+			Rune:  ' ',
+			Style: StyleDefault,
+		},
+	}
+
+	rendered, count := renderLine(row)
+	assert.Equal(t, count, 0)
+	assert.Equal(t, rendered, "")
+}
+
 func TestRenderLineLastReversedSpaces(t *testing.T) {
 	row := []Cell{
 		{

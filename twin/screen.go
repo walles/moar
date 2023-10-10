@@ -407,29 +407,19 @@ func (screen *UnixScreen) Clear() {
 // Returns the rendered line, plus how many information carrying cells went into
 // it (see headerLength inside of this function).
 func renderLine(row []Cell) (string, int) {
-	width := len(row)
-	if width == 0 {
-		return "", 0
-	}
-
-	lastCell := row[len(row)-1]
-
-	// How many trailing whitespace characters are there that we can just ignore?
-	trailingWhitespaceCount := 0
-	if lastCell.Rune == ' ' && lastCell.Style == StyleDefault {
-		// No need to draw plain trailing whitespace, we just cleared the screen
-		// anyway
-		for i := len(row) - 1; i >= 0; i-- {
-			currentCell := row[i]
-			if currentCell != lastCell {
-				break
-			}
-			trailingWhitespaceCount++
+	lastSignificantCellIndex := len(row) - 1
+	for ; lastSignificantCellIndex >= 0; lastSignificantCellIndex-- {
+		lastCell := row[lastSignificantCellIndex]
+		if lastCell.Rune != ' ' || lastCell.Style != StyleDefault {
+			break
 		}
 	}
+	row = row[0 : lastSignificantCellIndex+1]
 
-	// How many information carrying cells are there before the trailer?
-	headerLength := len(row) - trailingWhitespaceCount
+	if lastSignificantCellIndex < 0 {
+		// The entire line is whitespace, no need to render it
+		return "", 0
+	}
 
 	var builder strings.Builder
 
@@ -437,7 +427,7 @@ func renderLine(row []Cell) (string, int) {
 	builder.WriteString("\x1b[m")
 	lastStyle := StyleDefault
 
-	for column := 0; column < headerLength; column++ {
+	for column := 0; column < len(row); column++ {
 		cell := row[column]
 
 		style := cell.Style
@@ -465,7 +455,7 @@ func renderLine(row []Cell) (string, int) {
 	builder.WriteString(StyleDefault.RenderUpdateFrom(lastStyle))
 	builder.WriteString("\x1b[K")
 
-	return builder.String(), headerLength
+	return builder.String(), len(row)
 }
 
 func (screen *UnixScreen) Show() {
