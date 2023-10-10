@@ -427,6 +427,11 @@ func renderLine(row []Cell) (string, int) {
 		// Trailer is rendered by clearing to EOL, and AttrReverse didn't
 		// survive that when I tried it using iTerm2 3.4.4 on my MacBook. Don't
 		// bother with any trailer in this case.
+	} else if lastCell.Style.hyperlinkUrl != nil {
+		// This block intentionally left blank.
+		//
+		// Trailer is rendered by clearing to EOL, and I don't see how
+		// hyperlinks could play well with that.
 	} else if lastCell.Rune == ' ' {
 		// Line has a number of trailing spaces
 		for i := len(row) - 1; i >= 0; i-- {
@@ -472,7 +477,7 @@ func renderLine(row []Cell) (string, int) {
 
 	if trailerLength > 0 {
 		// Set trailer attributes
-		trailerStyle := lastStyle.WithHyperlink(nil)
+		trailerStyle := lastCell.Style.WithHyperlink(nil)
 		builder.WriteString(trailerStyle.RenderUpdateFrom(lastStyle))
 		lastStyle = trailerStyle
 	} else {

@@ -92,6 +92,7 @@ func (style Style) WithAttr(attr AttrMask) Style {
 // Call with nil to remove the link
 func (style Style) WithHyperlink(hyperlinkUrl *string) Style {
 	if hyperlinkUrl != nil && *hyperlinkUrl == "" {
+		// Use nil instead of empty string
 		hyperlinkUrl = nil
 	}
 
