@@ -73,6 +73,14 @@ func TestRenderLine(t *testing.T) {
 		strings.ReplaceAll(reset+reversed+"<"+dim+notReversed+"f"+reset+clearToEol, "", "ESC"))
 }
 
+func TestRenderLineEmpty(t *testing.T) {
+	row := []Cell{}
+
+	rendered, count := renderLine(row)
+	assert.Equal(t, count, 0)
+	assert.Equal(t, rendered, "")
+}
+
 func TestRenderLineLastReversed(t *testing.T) {
 	row := []Cell{
 		{
