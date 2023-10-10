@@ -172,3 +172,22 @@ func TestRenderLineLastReversedSpaces(t *testing.T) {
 		strings.ReplaceAll(rendered, "", "ESC"),
 		strings.ReplaceAll(reset+reversed+" "+reset+clearToEol, "", "ESC"))
 }
+
+func TestRenderLineNonPrintable(t *testing.T) {
+	row := []Cell{
+		{
+			Rune: '',
+		},
+	}
+
+	rendered, count := renderLine(row)
+	assert.Equal(t, count, 1)
+	reset := "[m"
+	white := "[37m"
+	redBg := "[41m"
+	bold := "[1m"
+	clearToEol := "[K"
+	assert.Equal(t,
+		strings.ReplaceAll(rendered, "", "ESC"),
+		strings.ReplaceAll(reset+white+redBg+bold+"?"+reset+clearToEol, "", "ESC"))
+}
