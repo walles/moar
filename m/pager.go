@@ -450,7 +450,7 @@ func (p *Pager) initStyle() {
 
 	stringBuilder := strings.Builder{}
 	err := (*p.ChromaFormatter).Format(&stringBuilder, p.ChromaStyle, chroma.Literator(chroma.Token{
-		Type:  chroma.Other,
+		Type:  chroma.None,
 		Value: "XXX",
 	}))
 	if err != nil {
