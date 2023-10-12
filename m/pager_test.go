@@ -583,13 +583,22 @@ func TestClearToEndOfLine_ClearFromStartScrolledRight(t *testing.T) {
 	assert.DeepEqual(t, actual, expected, cmp.AllowUnexported(twin.Style{}))
 }
 
-func TestInitStyle(t *testing.T) {
+func TestInitStyle16M(t *testing.T) {
 	testMe := Pager{
 		ChromaStyle:     styles.Registry["gruvbox"],
 		ChromaFormatter: &formatters.TTY16m,
 	}
 	testMe.initStyle()
 	assert.Equal(t, testMe.linePrefix, "\x1b[38;2;235;219;178m")
+}
+
+func TestInitStyle256(t *testing.T) {
+	testMe := Pager{
+		ChromaStyle:     styles.Registry["gruvbox"],
+		ChromaFormatter: &formatters.TTY256,
+	}
+	testMe.initStyle()
+	assert.Equal(t, testMe.linePrefix, "FIXME: correct ANSI sequence")
 }
 
 func benchmarkSearch(b *testing.B, highlighted bool) {
