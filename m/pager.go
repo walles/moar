@@ -457,13 +457,13 @@ func (p *Pager) initStyle() {
 		panic(err)
 	}
 
-	string := stringBuilder.String()
-	cutoff := strings.Index(string, "XXX")
+	formatted := stringBuilder.String()
+	cutoff := strings.Index(formatted, "XXX")
 	if cutoff < 0 {
-		panic("XXX not found in " + string)
+		panic("XXX not found in " + formatted)
 	}
 
-	p.linePrefix = string[:cutoff]
+	p.linePrefix = formatted[:cutoff]
 }
 
 // StartPaging brings up the pager on screen
