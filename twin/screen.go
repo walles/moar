@@ -416,11 +416,6 @@ func renderLine(row []Cell) (string, int) {
 	}
 	row = row[0 : lastSignificantCellIndex+1]
 
-	if lastSignificantCellIndex < 0 {
-		// The entire line is whitespace, no need to render it
-		return "", 0
-	}
-
 	var builder strings.Builder
 
 	// Set initial line style to normal
