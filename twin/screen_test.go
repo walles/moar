@@ -78,7 +78,7 @@ func TestRenderLineEmpty(t *testing.T) {
 
 	rendered, count := renderLine(row)
 	assert.Equal(t, count, 0)
-	assert.Equal(t, rendered, "")
+	assert.Equal(t, rendered, "\x1b[m\x1b[K")
 }
 
 func TestRenderLineLastReversed(t *testing.T) {
@@ -152,7 +152,7 @@ func TestRenderLineOnlyTrailingSpaces(t *testing.T) {
 
 	rendered, count := renderLine(row)
 	assert.Equal(t, count, 0)
-	assert.Equal(t, rendered, "")
+	assert.Equal(t, rendered, "\x1b[m\x1b[K")
 }
 
 func TestRenderLineLastReversedSpaces(t *testing.T) {
