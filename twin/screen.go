@@ -405,8 +405,9 @@ func (screen *UnixScreen) Clear() {
 }
 
 // Returns the rendered line, plus how many information carrying cells went into
-// it (see headerLength inside of this function).
+// it
 func renderLine(row []Cell) (string, int) {
+	// Strip trailing whitespace
 	lastSignificantCellIndex := len(row) - 1
 	for ; lastSignificantCellIndex >= 0; lastSignificantCellIndex-- {
 		lastCell := row[lastSignificantCellIndex]

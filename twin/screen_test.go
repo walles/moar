@@ -78,6 +78,9 @@ func TestRenderLineEmpty(t *testing.T) {
 
 	rendered, count := renderLine(row)
 	assert.Equal(t, count, 0)
+
+	// All lines are expected to stand on their own, so we always need to clear
+	// to EOL whether or not the line is empty.
 	assert.Equal(t, rendered, "\x1b[m\x1b[K")
 }
 
@@ -152,6 +155,9 @@ func TestRenderLineOnlyTrailingSpaces(t *testing.T) {
 
 	rendered, count := renderLine(row)
 	assert.Equal(t, count, 0)
+
+	// All lines are expected to stand on their own, so we always need to clear
+	// to EOL whether or not the line is empty.
 	assert.Equal(t, rendered, "\x1b[m\x1b[K")
 }
 
