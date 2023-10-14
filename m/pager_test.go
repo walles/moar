@@ -592,6 +592,15 @@ func TestInitStyle(t *testing.T) {
 	assert.Equal(t, testMe.linePrefix, "\x1b[38;2;235;219;178m")
 }
 
+func TestInitStyle256(t *testing.T) {
+	testMe := Pager{
+		ChromaStyle:     styles.Registry["catppuccin-macchiato"],
+		ChromaFormatter: &formatters.TTY256,
+	}
+	testMe.initStyle()
+	assert.Equal(t, testMe.linePrefix, "\x1b[38;5;189m")
+}
+
 func benchmarkSearch(b *testing.B, highlighted bool) {
 	// Pick a go file so we get something with highlighting
 	_, sourceFilename, _, ok := runtime.Caller(0)
