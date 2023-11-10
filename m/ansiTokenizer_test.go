@@ -287,15 +287,17 @@ func TestHyperlink_incomplete(t *testing.T) {
 	complete := "a\x1b]8;;X\x1b\\"
 
 	for l := len(complete) - 1; l >= 0; l-- {
-		tokens := cellsFromString(complete[:l]).Cells
+		t.Run(fmt.Sprintf("l=%d", l), func(t *testing.T) {
+			tokens := cellsFromString(complete[:l]).Cells
 
-		for i := 0; i < l; i++ {
-			if complete[i] == '\x1b' {
-				// These get special rendering, if everything else matches
-				// that's good enough.
-				continue
+			for i := 0; i < l; i++ {
+				if complete[i] == '\x1b' {
+					// These get special rendering, if everything else matches
+					// that's good enough.
+					continue
+				}
+				assert.Equal(t, tokens[i], twin.Cell{Rune: rune(complete[i]), Style: twin.StyleDefault})
 			}
-			assert.Equal(t, tokens[i], twin.Cell{Rune: rune(complete[i]), Style: twin.StyleDefault})
-		}
+		})
 	}
 }
