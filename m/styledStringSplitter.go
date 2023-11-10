@@ -44,6 +44,7 @@ func styledStringsFromString(s string) styledStringsWithTrailer {
 
 func (s *styledStringSplitter) nextChar() rune {
 	if s.nextByteIndex >= len(s.input) {
+		s.previousByteIndex = s.nextByteIndex
 		return -1
 	}
 

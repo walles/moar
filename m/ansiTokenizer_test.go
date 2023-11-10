@@ -287,8 +287,9 @@ func TestHyperlink_incomplete(t *testing.T) {
 	complete := "a\x1b]8;;X\x1b\\"
 
 	for l := len(complete) - 1; l >= 0; l-- {
-		t.Run(fmt.Sprintf("l=%d", l), func(t *testing.T) {
-			tokens := cellsFromString(complete[:l]).Cells
+		incomplete := complete[:l]
+		t.Run(fmt.Sprintf("l=%d incomplete=<%s>", l, strings.ReplaceAll(incomplete, "\x1b", "ESC")), func(t *testing.T) {
+			tokens := cellsFromString(incomplete).Cells
 
 			for i := 0; i < l; i++ {
 				if complete[i] == '\x1b' {
