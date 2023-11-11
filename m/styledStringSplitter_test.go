@@ -46,3 +46,17 @@ func TestIgnorePromptHints(t *testing.T) {
 	assert.Equal(t, "hello", result.styledStrings[0].String)
 	assert.Equal(t, twin.StyleDefault, result.styledStrings[0].Style)
 }
+
+// Unsure why colon separated colors exist, but the fact is that a number of
+// things emit colon separated SGR codes. And numerous terminals accept them
+// (search page for "delimiter"): https://github.com/kovidgoyal/kitty/issues/7
+//
+// Johan got an e-mail titled "moar question: "--RAW-CONTROL-CHARS" equivalent"
+// about the sequence we're testing here.
+func TestColonColors(t *testing.T) {
+	result := styledStringsFromString("\x1b[38:5:238mhello")
+	assert.Equal(t, twin.StyleDefault, result.trailer)
+	assert.Equal(t, 1, len(result.styledStrings))
+	assert.Equal(t, "hello", result.styledStrings[0].String)
+	assert.Equal(t, twin.StyleDefault.Foreground(twin.NewColor256(238)), result.styledStrings[0].Style)
+}

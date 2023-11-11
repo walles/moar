@@ -427,7 +427,10 @@ type _StyledString struct {
 // rawUpdateStyle parses a string of the form "33m" into changes to style. This
 // is what comes after ESC[ in an ANSI SGR sequence.
 func rawUpdateStyle(style twin.Style, escapeSequenceWithoutHeader string) twin.Style {
-	numbers := strings.Split(escapeSequenceWithoutHeader[:len(escapeSequenceWithoutHeader)-1], ";")
+	numbers := strings.FieldsFunc(escapeSequenceWithoutHeader[:len(escapeSequenceWithoutHeader)-1], func(r rune) bool {
+		return r == ';' || r == ':'
+	})
+
 	index := 0
 	for index < len(numbers) {
 		number := numbers[index]

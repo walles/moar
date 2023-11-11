@@ -122,7 +122,7 @@ func (s *styledStringSplitter) consumeControlSequence(charAfterEsc rune) bool {
 			return false
 		}
 
-		if char == ';' || (char >= '0' && char <= '9') {
+		if char == ';' || char == ':' || (char >= '0' && char <= '9') {
 			// Sequence still in progress
 
 			if charAfterEsc == ']' && s.input[startIndex:s.nextByteIndex] == "8;;" {
