@@ -28,76 +28,78 @@ func cellsToPlainString(cells []twin.Cell) string {
 // without logging any errors
 func TestTokenize(t *testing.T) {
 	for _, fileName := range getTestFiles() {
-		file, err := os.Open(fileName)
-		if err != nil {
-			t.Errorf("Error opening file <%s>: %s", fileName, err.Error())
-			continue
-		}
-		defer func() {
-			if err := file.Close(); err != nil {
-				panic(err)
+		t.Run(fileName, func(t *testing.T) {
+			file, err := os.Open(fileName)
+			if err != nil {
+				t.Errorf("Error opening file <%s>: %s", fileName, err.Error())
+				return
 			}
-		}()
+			defer func() {
+				if err := file.Close(); err != nil {
+					panic(err)
+				}
+			}()
 
-		myReader := NewReaderFromStream(fileName, file)
-		for !myReader.done.Load() {
-		}
-
-		for lineNumber := 1; lineNumber <= myReader.GetLineCount(); lineNumber++ {
-			line := myReader.GetLine(lineNumber)
-			lineNumber++
-
-			var loglines strings.Builder
-			log.SetOutput(&loglines)
-
-			tokens := cellsFromString(line.raw).Cells
-			plainString := withoutFormatting(line.raw)
-			if len(tokens) != utf8.RuneCountInString(plainString) {
-				t.Errorf("%s:%d: len(tokens)=%d, len(plainString)=%d for: <%s>",
-					fileName, lineNumber,
-					len(tokens), utf8.RuneCountInString(plainString), line.raw)
-				continue
+			myReader := NewReaderFromStream(fileName, file)
+			for !myReader.done.Load() {
 			}
 
-			// Tokens and plain have the same lengths, compare contents
-			plainStringChars := []rune(plainString)
-			for index, plainChar := range plainStringChars {
-				cellChar := tokens[index]
-				if cellChar.Rune == plainChar {
+			for lineNumber := 1; lineNumber <= myReader.GetLineCount(); lineNumber++ {
+				line := myReader.GetLine(lineNumber)
+				lineNumber++
+
+				var loglines strings.Builder
+				log.SetOutput(&loglines)
+
+				tokens := cellsFromString(line.raw).Cells
+				plainString := withoutFormatting(line.raw)
+				if len(tokens) != utf8.RuneCountInString(plainString) {
+					t.Errorf("%s:%d: len(tokens)=%d, len(plainString)=%d for: <%s>",
+						fileName, lineNumber,
+						len(tokens), utf8.RuneCountInString(plainString), line.raw)
 					continue
 				}
 
-				if cellChar.Rune == '•' && plainChar == 'o' {
-					// Pretty bullets on man pages
+				// Tokens and plain have the same lengths, compare contents
+				plainStringChars := []rune(plainString)
+				for index, plainChar := range plainStringChars {
+					cellChar := tokens[index]
+					if cellChar.Rune == plainChar {
+						continue
+					}
+
+					if cellChar.Rune == '•' && plainChar == 'o' {
+						// Pretty bullets on man pages
+						continue
+					}
+
+					// Chars mismatch!
+					plainStringFromCells := cellsToPlainString(tokens)
+					positionMarker := strings.Repeat(" ", index) + "^"
+					cellCharString := string(cellChar.Rune)
+					if !twin.Printable(cellChar.Rune) {
+						cellCharString = fmt.Sprint(int(cellChar.Rune))
+					}
+					plainCharString := string(plainChar)
+					if !twin.Printable(plainChar) {
+						plainCharString = fmt.Sprint(int(plainChar))
+					}
+					t.Errorf("%s:%d, 0-based column %d: cell char <%s> != plain char <%s>:\nPlain: %s\nCells: %s\n       %s",
+						fileName, lineNumber, index,
+						cellCharString, plainCharString,
+						plainString,
+						plainStringFromCells,
+						positionMarker,
+					)
+					break
+				}
+
+				if len(loglines.String()) != 0 {
+					t.Errorf("%s: %s", fileName, loglines.String())
 					continue
 				}
-
-				// Chars mismatch!
-				plainStringFromCells := cellsToPlainString(tokens)
-				positionMarker := strings.Repeat(" ", index) + "^"
-				cellCharString := string(cellChar.Rune)
-				if !twin.Printable(cellChar.Rune) {
-					cellCharString = fmt.Sprint(int(cellChar.Rune))
-				}
-				plainCharString := string(plainChar)
-				if !twin.Printable(plainChar) {
-					plainCharString = fmt.Sprint(int(plainChar))
-				}
-				t.Errorf("%s:%d, 0-based column %d: cell char <%s> != plain char <%s>:\nPlain: %s\nCells: %s\n       %s",
-					fileName, lineNumber, index,
-					cellCharString, plainCharString,
-					plainString,
-					plainStringFromCells,
-					positionMarker,
-				)
-				break
 			}
-
-			if len(loglines.String()) != 0 {
-				t.Errorf("%s: %s", fileName, loglines.String())
-				continue
-			}
-		}
+		})
 	}
 }
 
@@ -229,8 +231,8 @@ func TestConsumeCompositeColorIncomplete24Bit(t *testing.T) {
 	assert.Assert(t, color == nil)
 }
 
-func TestUpdateStyle(t *testing.T) {
-	numberColored := updateStyle(twin.StyleDefault, "\x1b[33m")
+func TestRawUpdateStyle(t *testing.T) {
+	numberColored := rawUpdateStyle(twin.StyleDefault, "33m")
 	assert.Equal(t, numberColored, twin.StyleDefault.Foreground(twin.NewColor16(3)))
 }
 
@@ -287,15 +289,18 @@ func TestHyperlink_incomplete(t *testing.T) {
 	complete := "a\x1b]8;;X\x1b\\"
 
 	for l := len(complete) - 1; l >= 0; l-- {
-		tokens := cellsFromString(complete[:l]).Cells
+		incomplete := complete[:l]
+		t.Run(fmt.Sprintf("l=%d incomplete=<%s>", l, strings.ReplaceAll(incomplete, "\x1b", "ESC")), func(t *testing.T) {
+			tokens := cellsFromString(incomplete).Cells
 
-		for i := 0; i < l; i++ {
-			if complete[i] == '\x1b' {
-				// These get special rendering, if everything else matches
-				// that's good enough.
-				continue
+			for i := 0; i < l; i++ {
+				if complete[i] == '\x1b' {
+					// These get special rendering, if everything else matches
+					// that's good enough.
+					continue
+				}
+				assert.Equal(t, tokens[i], twin.Cell{Rune: rune(complete[i]), Style: twin.StyleDefault})
 			}
-			assert.Equal(t, tokens[i], twin.Cell{Rune: rune(complete[i]), Style: twin.StyleDefault})
-		}
+		})
 	}
 }
