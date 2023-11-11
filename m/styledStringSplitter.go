@@ -14,6 +14,9 @@ type styledStringSplitter struct {
 	nextByteIndex     int
 	previousByteIndex int
 
+	inProgressString strings.Builder
+	inProgressStyle  twin.Style
+
 	parts   []_StyledString
 	trailer twin.Style
 }
@@ -63,18 +66,11 @@ func (s *styledStringSplitter) lastChar() rune {
 	return char
 }
 
-func (s *styledStringSplitter) style() twin.Style {
-	if len(s.parts) == 0 {
-		return twin.StyleDefault
-	}
-
-	return s.parts[len(s.parts)-1].Style
-}
-
 func (s *styledStringSplitter) run() {
 	char := s.nextChar()
 	for {
 		if char == -1 {
+			s.finalizeCurrentPart()
 			return
 		}
 
@@ -102,16 +98,7 @@ func (s *styledStringSplitter) run() {
 }
 
 func (s *styledStringSplitter) handleRune(char rune) {
-	if len(s.parts) == 0 {
-		// We just got started
-		s.parts = append(s.parts, _StyledString{
-			String: "",
-			Style:  twin.StyleDefault,
-		})
-	}
-
-	lastPart := &s.parts[len(s.parts)-1]
-	lastPart.String += string(char)
+	s.inProgressString.WriteRune(char)
 }
 
 func (s *styledStringSplitter) handleEscape() bool {
@@ -161,13 +148,13 @@ func (s *styledStringSplitter) handleCompleteControlSequence(charAfterEsc rune, 
 
 	if sequence == "K" || sequence == "0K" {
 		// Clear to end of line
-		s.trailer = s.style()
+		s.trailer = s.inProgressStyle
 		return true
 	}
 
 	lastChar := sequence[len(sequence)-1]
 	if lastChar == 'm' {
-		newStyle := rawUpdateStyle(s.style(), sequence)
+		newStyle := rawUpdateStyle(s.inProgressStyle, sequence)
 		s.startNewPart(newStyle)
 		return true
 	}
@@ -199,7 +186,7 @@ func (s *styledStringSplitter) handleUrl() bool {
 			// End of URL
 			urlEndIndexExclusive := s.nextByteIndex - 2
 			url := s.input[urlStartIndex:urlEndIndexExclusive]
-			s.startNewPart(s.style().WithHyperlink(&url))
+			s.startNewPart(s.inProgressStyle.WithHyperlink(&url))
 			return true
 		}
 
@@ -214,7 +201,7 @@ func (s *styledStringSplitter) handleUrl() bool {
 			// End of URL
 			urlEndIndexExclusive := s.nextByteIndex - 1
 			url := s.input[urlStartIndex:urlEndIndexExclusive]
-			s.startNewPart(s.style().WithHyperlink(&url))
+			s.startNewPart(s.inProgressStyle.WithHyperlink(&url))
 			return true
 		}
 
@@ -227,13 +214,24 @@ func (s *styledStringSplitter) handleUrl() bool {
 }
 
 func (s *styledStringSplitter) startNewPart(style twin.Style) {
-	if len(s.parts) > 0 && s.parts[len(s.parts)-1].Style == style {
-		// Last part already matches the new style, never mind
+	if style == s.inProgressStyle {
+		// No need to start a new part
+		return
+	}
+
+	s.finalizeCurrentPart()
+	s.inProgressString.Reset()
+	s.inProgressStyle = style
+}
+
+func (s *styledStringSplitter) finalizeCurrentPart() {
+	if s.inProgressString.Len() == 0 {
+		// Nothing to do
 		return
 	}
 
 	s.parts = append(s.parts, _StyledString{
-		String: "",
-		Style:  style,
+		String: s.inProgressString.String(),
+		Style:  s.inProgressStyle,
 	})
 }
