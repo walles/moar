@@ -130,6 +130,12 @@ func (s *styledStringSplitter) consumeControlSequence(charAfterEsc rune) bool {
 
 		if char == ';' || (char >= '0' && char <= '9') {
 			// Sequence still in progress
+
+			if s.input[startIndex:s.nextByteIndex] == "8;;" {
+				// Special case, here comes the URL
+				return s.handleUrl()
+			}
+
 			continue
 		}
 
@@ -207,7 +213,7 @@ func (s *styledStringSplitter) handleUrl() bool {
 
 		if char == '\x07' {
 			// End of URL
-			urlEndIndexExclusive := s.nextByteIndex - 2
+			urlEndIndexExclusive := s.nextByteIndex - 1
 			url := s.input[urlStartIndex:urlEndIndexExclusive]
 			s.startNewPart(s.style.WithHyperlink(&url))
 			return true
