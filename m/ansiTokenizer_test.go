@@ -28,76 +28,78 @@ func cellsToPlainString(cells []twin.Cell) string {
 // without logging any errors
 func TestTokenize(t *testing.T) {
 	for _, fileName := range getTestFiles() {
-		file, err := os.Open(fileName)
-		if err != nil {
-			t.Errorf("Error opening file <%s>: %s", fileName, err.Error())
-			continue
-		}
-		defer func() {
-			if err := file.Close(); err != nil {
-				panic(err)
+		t.Run(fileName, func(t *testing.T) {
+			file, err := os.Open(fileName)
+			if err != nil {
+				t.Errorf("Error opening file <%s>: %s", fileName, err.Error())
+				return
 			}
-		}()
+			defer func() {
+				if err := file.Close(); err != nil {
+					panic(err)
+				}
+			}()
 
-		myReader := NewReaderFromStream(fileName, file)
-		for !myReader.done.Load() {
-		}
-
-		for lineNumber := 1; lineNumber <= myReader.GetLineCount(); lineNumber++ {
-			line := myReader.GetLine(lineNumber)
-			lineNumber++
-
-			var loglines strings.Builder
-			log.SetOutput(&loglines)
-
-			tokens := cellsFromString(line.raw).Cells
-			plainString := withoutFormatting(line.raw)
-			if len(tokens) != utf8.RuneCountInString(plainString) {
-				t.Errorf("%s:%d: len(tokens)=%d, len(plainString)=%d for: <%s>",
-					fileName, lineNumber,
-					len(tokens), utf8.RuneCountInString(plainString), line.raw)
-				continue
+			myReader := NewReaderFromStream(fileName, file)
+			for !myReader.done.Load() {
 			}
 
-			// Tokens and plain have the same lengths, compare contents
-			plainStringChars := []rune(plainString)
-			for index, plainChar := range plainStringChars {
-				cellChar := tokens[index]
-				if cellChar.Rune == plainChar {
+			for lineNumber := 1; lineNumber <= myReader.GetLineCount(); lineNumber++ {
+				line := myReader.GetLine(lineNumber)
+				lineNumber++
+
+				var loglines strings.Builder
+				log.SetOutput(&loglines)
+
+				tokens := cellsFromString(line.raw).Cells
+				plainString := withoutFormatting(line.raw)
+				if len(tokens) != utf8.RuneCountInString(plainString) {
+					t.Errorf("%s:%d: len(tokens)=%d, len(plainString)=%d for: <%s>",
+						fileName, lineNumber,
+						len(tokens), utf8.RuneCountInString(plainString), line.raw)
 					continue
 				}
 
-				if cellChar.Rune == '•' && plainChar == 'o' {
-					// Pretty bullets on man pages
+				// Tokens and plain have the same lengths, compare contents
+				plainStringChars := []rune(plainString)
+				for index, plainChar := range plainStringChars {
+					cellChar := tokens[index]
+					if cellChar.Rune == plainChar {
+						continue
+					}
+
+					if cellChar.Rune == '•' && plainChar == 'o' {
+						// Pretty bullets on man pages
+						continue
+					}
+
+					// Chars mismatch!
+					plainStringFromCells := cellsToPlainString(tokens)
+					positionMarker := strings.Repeat(" ", index) + "^"
+					cellCharString := string(cellChar.Rune)
+					if !twin.Printable(cellChar.Rune) {
+						cellCharString = fmt.Sprint(int(cellChar.Rune))
+					}
+					plainCharString := string(plainChar)
+					if !twin.Printable(plainChar) {
+						plainCharString = fmt.Sprint(int(plainChar))
+					}
+					t.Errorf("%s:%d, 0-based column %d: cell char <%s> != plain char <%s>:\nPlain: %s\nCells: %s\n       %s",
+						fileName, lineNumber, index,
+						cellCharString, plainCharString,
+						plainString,
+						plainStringFromCells,
+						positionMarker,
+					)
+					break
+				}
+
+				if len(loglines.String()) != 0 {
+					t.Errorf("%s: %s", fileName, loglines.String())
 					continue
 				}
-
-				// Chars mismatch!
-				plainStringFromCells := cellsToPlainString(tokens)
-				positionMarker := strings.Repeat(" ", index) + "^"
-				cellCharString := string(cellChar.Rune)
-				if !twin.Printable(cellChar.Rune) {
-					cellCharString = fmt.Sprint(int(cellChar.Rune))
-				}
-				plainCharString := string(plainChar)
-				if !twin.Printable(plainChar) {
-					plainCharString = fmt.Sprint(int(plainChar))
-				}
-				t.Errorf("%s:%d, 0-based column %d: cell char <%s> != plain char <%s>:\nPlain: %s\nCells: %s\n       %s",
-					fileName, lineNumber, index,
-					cellCharString, plainCharString,
-					plainString,
-					plainStringFromCells,
-					positionMarker,
-				)
-				break
 			}
-
-			if len(loglines.String()) != 0 {
-				t.Errorf("%s: %s", fileName, loglines.String())
-				continue
-			}
-		}
+		})
 	}
 }
 
