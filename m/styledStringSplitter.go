@@ -56,6 +56,10 @@ func (s *styledStringSplitter) nextChar() rune {
 
 // Returns whatever the last call to nextChar() returned
 func (s *styledStringSplitter) lastChar() rune {
+	if s.previousByteIndex >= len(s.input) {
+		return -1
+	}
+
 	char, _ := utf8.DecodeRuneInString(s.input[s.previousByteIndex:])
 	return char
 }
@@ -74,8 +78,6 @@ func (s *styledStringSplitter) run() {
 				// Somewhere in handleEscape(), we got a character that was
 				// unexpected. We need to treat everything up to before that
 				// character as just plain runes.
-				//
-				// The character itself, should be retried inside this loop.
 				for _, char := range s.input[escIndex:s.previousByteIndex] {
 					s.handleRune(char)
 				}
