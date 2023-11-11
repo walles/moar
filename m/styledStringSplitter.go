@@ -125,7 +125,7 @@ func (s *styledStringSplitter) consumeControlSequence(charAfterEsc rune) bool {
 		if char == ';' || (char >= '0' && char <= '9') {
 			// Sequence still in progress
 
-			if s.input[startIndex:s.nextByteIndex] == "8;;" {
+			if charAfterEsc == ']' && s.input[startIndex:s.nextByteIndex] == "8;;" {
 				// Special case, here comes the URL
 				return s.handleUrl()
 			}
@@ -142,6 +142,10 @@ func (s *styledStringSplitter) consumeControlSequence(charAfterEsc rune) bool {
 // If the whole CSI sequence is ESC[33m, you should call this function with just
 // "33m".
 func (s *styledStringSplitter) handleCompleteControlSequence(charAfterEsc rune, sequence string) bool {
+	if charAfterEsc == ']' {
+		return s.handleOsc(sequence)
+	}
+
 	if charAfterEsc != '[' {
 		return false
 	}
@@ -157,6 +161,24 @@ func (s *styledStringSplitter) handleCompleteControlSequence(charAfterEsc rune, 
 		newStyle := rawUpdateStyle(s.inProgressStyle, sequence)
 		s.startNewPart(newStyle)
 		return true
+	}
+
+	return false
+}
+
+func (s *styledStringSplitter) handleOsc(sequence string) bool {
+	if strings.HasPrefix(sequence, "133;") && len(sequence) == len("133;A") {
+		// Got ESC]133;X, where "X" could be anything. These are prompt hints,
+		// and rendering those makes no sense. We should just ignore them:
+		// https://gitlab.freedesktop.org/Per_Bothner/specifications/blob/master/proposals/semantic-prompts.md
+		endMarker := s.nextChar()
+		if endMarker == '\x07' {
+			return true
+		}
+
+		if endMarker == esc {
+			return s.nextChar() == '\\'
+		}
 	}
 
 	return false
