@@ -13,7 +13,6 @@ type styledStringSplitter struct {
 	input             string
 	nextByteIndex     int
 	previousByteIndex int
-	style             twin.Style
 
 	parts   []_StyledString
 	trailer twin.Style
@@ -62,6 +61,14 @@ func (s *styledStringSplitter) lastChar() rune {
 
 	char, _ := utf8.DecodeRuneInString(s.input[s.previousByteIndex:])
 	return char
+}
+
+func (s *styledStringSplitter) style() twin.Style {
+	if len(s.parts) == 0 {
+		return twin.StyleDefault
+	}
+
+	return s.parts[len(s.parts)-1].Style
 }
 
 func (s *styledStringSplitter) run() {
@@ -148,29 +155,21 @@ func (s *styledStringSplitter) consumeControlSequence(charAfterEsc rune) bool {
 // If the whole CSI sequence is ESC[33m, you should call this function with just
 // "33m".
 func (s *styledStringSplitter) handleCompleteControlSequence(charAfterEsc rune, sequence string) bool {
-	if charAfterEsc == ']' {
-		return s.handleCompleteOscSequence(sequence)
+	if charAfterEsc != '[' {
+		return false
+	}
+
+	if sequence == "K" || sequence == "0K" {
+		// Clear to end of line
+		s.trailer = s.style()
+		return true
 	}
 
 	lastChar := sequence[len(sequence)-1]
 	if lastChar == 'm' {
-		newStyle := rawUpdateStyle(s.style, sequence)
+		newStyle := rawUpdateStyle(s.style(), sequence)
 		s.startNewPart(newStyle)
 		return true
-	}
-
-	return false
-}
-
-func (s *styledStringSplitter) handleCompleteOscSequence(sequence string) bool {
-	if sequence == "K" || sequence == "0K" {
-		// Clear to end of line
-		s.trailer = s.style
-		return true
-	}
-
-	if sequence == "8;" {
-		return s.handleUrl()
 	}
 
 	return false
@@ -200,7 +199,7 @@ func (s *styledStringSplitter) handleUrl() bool {
 			// End of URL
 			urlEndIndexExclusive := s.nextByteIndex - 2
 			url := s.input[urlStartIndex:urlEndIndexExclusive]
-			s.startNewPart(s.style.WithHyperlink(&url))
+			s.startNewPart(s.style().WithHyperlink(&url))
 			return true
 		}
 
@@ -215,7 +214,7 @@ func (s *styledStringSplitter) handleUrl() bool {
 			// End of URL
 			urlEndIndexExclusive := s.nextByteIndex - 1
 			url := s.input[urlStartIndex:urlEndIndexExclusive]
-			s.startNewPart(s.style.WithHyperlink(&url))
+			s.startNewPart(s.style().WithHyperlink(&url))
 			return true
 		}
 
