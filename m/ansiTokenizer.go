@@ -423,6 +423,55 @@ type _StyledString struct {
 	Style  twin.Style
 }
 
+func splitIntoNumbers(s string) ([]uint, error) {
+	// "5" gives us the best numbers from BenchmarkHighlightedSearch. Higher
+	// gives us larger memory allocations for no extra performance, lower gives
+	// us more memory allocations and lower performance.
+	//
+	// To repro the tuning:
+	//   go test -benchmem -run='^$' -bench=BenchmarkHighlightedSearch . ./...
+	numbers := make([]uint, 0, 5)
+
+	afterLastSeparator := 0
+	for i, char := range s {
+		if char >= '0' && char <= '9' {
+			continue
+		}
+
+		if char == ';' || char == ':' {
+			numberString := s[afterLastSeparator:i]
+			if numberString == "" {
+				numbers = append(numbers, 0)
+				continue
+			}
+
+			number, err := strconv.ParseUint(numberString, 10, 64)
+			if err != nil {
+				return nil, err
+			}
+			numbers = append(numbers, uint(number))
+			afterLastSeparator = i + 1
+			continue
+		}
+
+		return nil, fmt.Errorf("Unrecognized character in <%s>: %c", s, char)
+	}
+
+	// Now we have to handle the last number
+	numberString := s[afterLastSeparator:]
+	if numberString == "" {
+		numbers = append(numbers, 0)
+		return numbers, nil
+	}
+	number, err := strconv.ParseUint(numberString, 10, 64)
+	if err != nil {
+		return nil, err
+	}
+	numbers = append(numbers, uint(number))
+
+	return numbers, nil
+}
+
 // rawUpdateStyle parses a string of the form "33m" into changes to style. This
 // is what comes after ESC[ in an ANSI SGR sequence.
 func rawUpdateStyle(style twin.Style, escapeSequenceWithoutHeader string) (twin.Style, error) {
@@ -433,63 +482,64 @@ func rawUpdateStyle(style twin.Style, escapeSequenceWithoutHeader string) (twin.
 		return style, fmt.Errorf("escape sequence does not end with 'm': %s", escapeSequenceWithoutHeader)
 	}
 
-	numbers := strings.FieldsFunc(escapeSequenceWithoutHeader[:len(escapeSequenceWithoutHeader)-1], func(r rune) bool {
-		return r == ';' || r == ':'
-	})
+	numbers, err := splitIntoNumbers(escapeSequenceWithoutHeader[:len(escapeSequenceWithoutHeader)-1])
+	if err != nil {
+		return style, fmt.Errorf("splitIntoNumbers: %w", err)
+	}
 
 	index := 0
 	for index < len(numbers) {
 		number := numbers[index]
 		index++
-		switch strings.TrimLeft(number, "0") {
-		case "":
+		switch number {
+		case 0:
 			style = twin.StyleDefault
 
-		case "1":
+		case 1:
 			style = style.WithAttr(twin.AttrBold)
 
-		case "2":
+		case 2:
 			style = style.WithAttr(twin.AttrDim)
 
-		case "3":
+		case 3:
 			style = style.WithAttr(twin.AttrItalic)
 
-		case "4":
+		case 4:
 			style = style.WithAttr(twin.AttrUnderline)
 
-		case "7":
+		case 7:
 			style = style.WithAttr(twin.AttrReverse)
 
-		case "22":
+		case 22:
 			style = style.WithoutAttr(twin.AttrBold).WithoutAttr(twin.AttrDim)
 
-		case "23":
+		case 23:
 			style = style.WithoutAttr(twin.AttrItalic)
 
-		case "24":
+		case 24:
 			style = style.WithoutAttr(twin.AttrUnderline)
 
-		case "27":
+		case 27:
 			style = style.WithoutAttr(twin.AttrReverse)
 
 		// Foreground colors, https://pkg.go.dev/github.com/gdamore/tcell#Color
-		case "30":
+		case 30:
 			style = style.Foreground(twin.NewColor16(0))
-		case "31":
+		case 31:
 			style = style.Foreground(twin.NewColor16(1))
-		case "32":
+		case 32:
 			style = style.Foreground(twin.NewColor16(2))
-		case "33":
+		case 33:
 			style = style.Foreground(twin.NewColor16(3))
-		case "34":
+		case 34:
 			style = style.Foreground(twin.NewColor16(4))
-		case "35":
+		case 35:
 			style = style.Foreground(twin.NewColor16(5))
-		case "36":
+		case 36:
 			style = style.Foreground(twin.NewColor16(6))
-		case "37":
+		case 37:
 			style = style.Foreground(twin.NewColor16(7))
-		case "38":
+		case 38:
 			var err error
 			var color *twin.Color
 			index, color, err = consumeCompositeColor(numbers, index-1)
@@ -497,27 +547,27 @@ func rawUpdateStyle(style twin.Style, escapeSequenceWithoutHeader string) (twin.
 				return style, fmt.Errorf("Foreground: %w", err)
 			}
 			style = style.Foreground(*color)
-		case "39":
+		case 39:
 			style = style.Foreground(twin.ColorDefault)
 
 		// Background colors, see https://pkg.go.dev/github.com/gdamore/Color
-		case "40":
+		case 40:
 			style = style.Background(twin.NewColor16(0))
-		case "41":
+		case 41:
 			style = style.Background(twin.NewColor16(1))
-		case "42":
+		case 42:
 			style = style.Background(twin.NewColor16(2))
-		case "43":
+		case 43:
 			style = style.Background(twin.NewColor16(3))
-		case "44":
+		case 44:
 			style = style.Background(twin.NewColor16(4))
-		case "45":
+		case 45:
 			style = style.Background(twin.NewColor16(5))
-		case "46":
+		case 46:
 			style = style.Background(twin.NewColor16(6))
-		case "47":
+		case 47:
 			style = style.Background(twin.NewColor16(7))
-		case "48":
+		case 48:
 			var err error
 			var color *twin.Color
 			index, color, err = consumeCompositeColor(numbers, index-1)
@@ -525,7 +575,7 @@ func rawUpdateStyle(style twin.Style, escapeSequenceWithoutHeader string) (twin.
 				return style, fmt.Errorf("Background: %w", err)
 			}
 			style = style.Background(*color)
-		case "49":
+		case 49:
 			style = style.Background(twin.ColorDefault)
 
 		// Bright foreground colors: see https://pkg.go.dev/github.com/gdamore/Color
@@ -534,46 +584,52 @@ func rawUpdateStyle(style twin.Style, escapeSequenceWithoutHeader string) (twin.
 		// 10.15.4 that's how they seem to handle this, tested with:
 		// * TERM=xterm-256color
 		// * TERM=screen-256color
-		case "90":
+		case 90:
 			style = style.Foreground(twin.NewColor16(8))
-		case "91":
+		case 91:
 			style = style.Foreground(twin.NewColor16(9))
-		case "92":
+		case 92:
 			style = style.Foreground(twin.NewColor16(10))
-		case "93":
+		case 93:
 			style = style.Foreground(twin.NewColor16(11))
-		case "94":
+		case 94:
 			style = style.Foreground(twin.NewColor16(12))
-		case "95":
+		case 95:
 			style = style.Foreground(twin.NewColor16(13))
-		case "96":
+		case 96:
 			style = style.Foreground(twin.NewColor16(14))
-		case "97":
+		case 97:
 			style = style.Foreground(twin.NewColor16(15))
 
-		case "100":
+		case 100:
 			style = style.Background(twin.NewColor16(8))
-		case "101":
+		case 101:
 			style = style.Background(twin.NewColor16(9))
-		case "102":
+		case 102:
 			style = style.Background(twin.NewColor16(10))
-		case "103":
+		case 103:
 			style = style.Background(twin.NewColor16(11))
-		case "104":
+		case 104:
 			style = style.Background(twin.NewColor16(12))
-		case "105":
+		case 105:
 			style = style.Background(twin.NewColor16(13))
-		case "106":
+		case 106:
 			style = style.Background(twin.NewColor16(14))
-		case "107":
+		case 107:
 			style = style.Background(twin.NewColor16(15))
 
 		default:
-			return style, fmt.Errorf("Unrecognized ANSI SGR code <%s>", number)
+			return style, fmt.Errorf("Unrecognized ANSI SGR code <%d>", number)
 		}
 	}
 
 	return style, nil
+}
+
+func joinUints(ints []uint) string {
+	joinedWithBrackets := strings.ReplaceAll(fmt.Sprint(ints), " ", ";")
+	joined := joinedWithBrackets[1 : len(joinedWithBrackets)-1]
+	return joined
 }
 
 // numbers is a list of numbers from a ANSI SGR string
@@ -582,13 +638,13 @@ func rawUpdateStyle(style twin.Style, escapeSequenceWithoutHeader string) (twin.
 // This method will return:
 // * The first index in the string that this function did not consume
 // * A color value that can be applied to a style
-func consumeCompositeColor(numbers []string, index int) (int, *twin.Color, error) {
+func consumeCompositeColor(numbers []uint, index int) (int, *twin.Color, error) {
 	baseIndex := index
-	if numbers[index] != "38" && numbers[index] != "48" {
+	if numbers[index] != 38 && numbers[index] != 48 {
 		err := fmt.Errorf(
-			"unknown start of color sequence <%s>, expected 38 (foreground) or 48 (background): <CSI %sm>",
+			"unknown start of color sequence <%d>, expected 38 (foreground) or 48 (background): <CSI %sm>",
 			numbers[index],
-			strings.Join(numbers[baseIndex:], ";"))
+			joinUints(numbers[baseIndex:]))
 		return -1, nil, err
 	}
 
@@ -596,30 +652,27 @@ func consumeCompositeColor(numbers []string, index int) (int, *twin.Color, error
 	if index >= len(numbers) {
 		err := fmt.Errorf(
 			"incomplete color sequence: <CSI %sm>",
-			strings.Join(numbers[baseIndex:], ";"))
+			joinUints(numbers[baseIndex:]))
 		return -1, nil, err
 	}
 
-	if numbers[index] == "5" {
+	if numbers[index] == 5 {
 		// Handle 8 bit color
 		index++
 		if index >= len(numbers) {
 			err := fmt.Errorf(
 				"incomplete 8 bit color sequence: <CSI %sm>",
-				strings.Join(numbers[baseIndex:], ";"))
+				joinUints(numbers[baseIndex:]))
 			return -1, nil, err
 		}
 
-		colorNumber, err := strconv.Atoi(numbers[index])
-		if err != nil {
-			return -1, nil, err
-		}
+		colorNumber := numbers[index]
 
 		colorValue := twin.NewColor256(uint8(colorNumber))
 		return index + 1, &colorValue, nil
 	}
 
-	if numbers[index] == "2" {
+	if numbers[index] == 2 {
 		// Handle 24 bit color
 		rIndex := index + 1
 		gIndex := index + 2
@@ -627,35 +680,24 @@ func consumeCompositeColor(numbers []string, index int) (int, *twin.Color, error
 		if bIndex >= len(numbers) {
 			err := fmt.Errorf(
 				"incomplete 24 bit color sequence, expected N8;2;R;G;Bm: <CSI %sm>",
-				strings.Join(numbers[baseIndex:], ";"))
+				joinUints(numbers[baseIndex:]))
+
 			return -1, nil, err
 		}
 
-		rValueX, err := strconv.ParseInt(numbers[rIndex], 10, 32)
-		if err != nil {
-			return -1, nil, err
-		}
-		rValue := uint8(rValueX)
-
-		gValueX, err := strconv.Atoi(numbers[gIndex])
-		if err != nil {
-			return -1, nil, err
-		}
-		gValue := uint8(gValueX)
-
-		bValueX, err := strconv.Atoi(numbers[bIndex])
-		if err != nil {
-			return -1, nil, err
-		}
-		bValue := uint8(bValueX)
+		rValue := uint8(numbers[rIndex])
+		gValue := uint8(numbers[gIndex])
+		bValue := uint8(numbers[bIndex])
 
 		colorValue := twin.NewColor24Bit(rValue, gValue, bValue)
+
 		return bIndex + 1, &colorValue, nil
 	}
 
 	err := fmt.Errorf(
-		"unknown color type <%s>, expected 5 (8 bit color) or 2 (24 bit color): <CSI %sm>",
+		"unknown color type <%d>, expected 5 (8 bit color) or 2 (24 bit color): <CSI %sm>",
 		numbers[index],
-		strings.Join(numbers[baseIndex:], ";"))
+		joinUints(numbers[baseIndex:]))
+
 	return -1, nil, err
 }
