@@ -4,6 +4,7 @@ import (
 	"strings"
 	"unicode/utf8"
 
+	log "github.com/sirupsen/logrus"
 	"github.com/walles/moar/twin"
 )
 
@@ -158,7 +159,12 @@ func (s *styledStringSplitter) handleCompleteControlSequence(charAfterEsc rune, 
 
 	lastChar := sequence[len(sequence)-1]
 	if lastChar == 'm' {
-		newStyle := rawUpdateStyle(s.inProgressStyle, sequence)
+		newStyle, err := rawUpdateStyle(s.inProgressStyle, sequence)
+		if err != nil {
+			log.Warnf("Failed to parse style %s: %v", sequence, err)
+			return false
+		}
+
 		s.startNewPart(newStyle)
 		return true
 	}

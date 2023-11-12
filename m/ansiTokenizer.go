@@ -7,7 +7,6 @@ import (
 	"strconv"
 	"strings"
 
-	log "github.com/sirupsen/logrus"
 	"github.com/walles/moar/twin"
 )
 
@@ -426,7 +425,14 @@ type _StyledString struct {
 
 // rawUpdateStyle parses a string of the form "33m" into changes to style. This
 // is what comes after ESC[ in an ANSI SGR sequence.
-func rawUpdateStyle(style twin.Style, escapeSequenceWithoutHeader string) twin.Style {
+func rawUpdateStyle(style twin.Style, escapeSequenceWithoutHeader string) (twin.Style, error) {
+	if len(escapeSequenceWithoutHeader) == 0 {
+		return style, fmt.Errorf("empty escape sequence, expected at least an ending letter")
+	}
+	if escapeSequenceWithoutHeader[len(escapeSequenceWithoutHeader)-1] != 'm' {
+		return style, fmt.Errorf("escape sequence does not end with 'm': %s", escapeSequenceWithoutHeader)
+	}
+
 	numbers := strings.FieldsFunc(escapeSequenceWithoutHeader[:len(escapeSequenceWithoutHeader)-1], func(r rune) bool {
 		return r == ';' || r == ':'
 	})
@@ -488,8 +494,7 @@ func rawUpdateStyle(style twin.Style, escapeSequenceWithoutHeader string) twin.S
 			var color *twin.Color
 			index, color, err = consumeCompositeColor(numbers, index-1)
 			if err != nil {
-				log.Warnf("Foreground: %s", err.Error())
-				return style
+				return style, fmt.Errorf("Foreground: %w", err)
 			}
 			style = style.Foreground(*color)
 		case "39":
@@ -517,8 +522,7 @@ func rawUpdateStyle(style twin.Style, escapeSequenceWithoutHeader string) twin.S
 			var color *twin.Color
 			index, color, err = consumeCompositeColor(numbers, index-1)
 			if err != nil {
-				log.Warnf("Background: %s", err.Error())
-				return style
+				return style, fmt.Errorf("Background: %w", err)
 			}
 			style = style.Background(*color)
 		case "49":
@@ -565,11 +569,11 @@ func rawUpdateStyle(style twin.Style, escapeSequenceWithoutHeader string) twin.S
 			style = style.Background(twin.NewColor16(15))
 
 		default:
-			log.Warnf("Unrecognized ANSI SGR code <%s>", number)
+			return style, fmt.Errorf("Unrecognized ANSI SGR code <%s>", number)
 		}
 	}
 
-	return style
+	return style, nil
 }
 
 // numbers is a list of numbers from a ANSI SGR string

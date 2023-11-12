@@ -232,7 +232,8 @@ func TestConsumeCompositeColorIncomplete24Bit(t *testing.T) {
 }
 
 func TestRawUpdateStyle(t *testing.T) {
-	numberColored := rawUpdateStyle(twin.StyleDefault, "33m")
+	numberColored, err := rawUpdateStyle(twin.StyleDefault, "33m")
+	assert.NilError(t, err)
 	assert.Equal(t, numberColored, twin.StyleDefault.Foreground(twin.NewColor16(3)))
 }
 
