@@ -623,7 +623,6 @@ func (p *Pager) StartPaging(screen twin.Screen) {
 // "leaving" pager contents on screen after exit.
 func (p *Pager) ReprintAfterExit() error {
 	// Figure out how many screen lines are used by pager contents
-
 	renderedScreenLines, _, _ := p.renderScreenLines()
 	screenLinesCount := len(renderedScreenLines)
 
@@ -636,5 +635,7 @@ func (p *Pager) ReprintAfterExit() error {
 	if screenLinesCount > 0 {
 		p.screen.ShowNLines(screenLinesCount)
 	}
+	fmt.Println()
+
 	return nil
 }
