@@ -1,6 +1,7 @@
 package m
 
 import (
+	"fmt"
 	"strings"
 	"unicode/utf8"
 
@@ -77,8 +78,11 @@ func (s *styledStringSplitter) run() {
 
 		if char == esc {
 			escIndex := s.previousByteIndex
-			success := s.handleEscape()
-			if !success {
+			err := s.handleEscape()
+			if err != nil {
+				failed := s.input[escIndex:s.nextByteIndex]
+				log.Debug("Failed to parse <", strings.ReplaceAll(failed, "\x1b", "ESC"), ">: ", err)
+
 				// Somewhere in handleEscape(), we got a character that was
 				// unexpected. We need to treat everything up to before that
 				// character as just plain runes.
@@ -102,17 +106,17 @@ func (s *styledStringSplitter) handleRune(char rune) {
 	s.inProgressString.WriteRune(char)
 }
 
-func (s *styledStringSplitter) handleEscape() bool {
+func (s *styledStringSplitter) handleEscape() error {
 	char := s.nextChar()
 	if char == '[' || char == ']' {
 		// Got the start of a CSI or an OSC sequence
 		return s.consumeControlSequence(char)
 	}
 
-	return false
+	return fmt.Errorf("Unhandled char after ESC: %q", char)
 }
 
-func (s *styledStringSplitter) consumeControlSequence(charAfterEsc rune) bool {
+func (s *styledStringSplitter) consumeControlSequence(charAfterEsc rune) error {
 	// Points to right after "ESC["
 	startIndex := s.nextByteIndex
 
@@ -120,7 +124,7 @@ func (s *styledStringSplitter) consumeControlSequence(charAfterEsc rune) bool {
 	for {
 		char := s.nextChar()
 		if char == -1 {
-			return false
+			return fmt.Errorf("Line ended in the middle of a control sequence")
 		}
 
 		if char == ';' || char == ':' || (char >= '0' && char <= '9') {
@@ -142,56 +146,59 @@ func (s *styledStringSplitter) consumeControlSequence(charAfterEsc rune) bool {
 
 // If the whole CSI sequence is ESC[33m, you should call this function with just
 // "33m".
-func (s *styledStringSplitter) handleCompleteControlSequence(charAfterEsc rune, sequence string) bool {
+func (s *styledStringSplitter) handleCompleteControlSequence(charAfterEsc rune, sequence string) error {
 	if charAfterEsc == ']' {
 		return s.handleOsc(sequence)
 	}
 
 	if charAfterEsc != '[' {
-		return false
+		return fmt.Errorf("Unexpected charAfterEsc: %c", charAfterEsc)
 	}
 
 	if sequence == "K" || sequence == "0K" {
 		// Clear to end of line
 		s.trailer = s.inProgressStyle
-		return true
+		return nil
 	}
 
 	lastChar := sequence[len(sequence)-1]
 	if lastChar == 'm' {
 		newStyle, err := rawUpdateStyle(s.inProgressStyle, sequence)
 		if err != nil {
-			log.Warnf("Failed to parse style %s: %v", sequence, err)
-			return false
+			return err
 		}
 
 		s.startNewPart(newStyle)
-		return true
+		return nil
 	}
 
-	return false
+	return fmt.Errorf("Expected 'm' at the end of the control sequence, got %q", lastChar)
 }
 
-func (s *styledStringSplitter) handleOsc(sequence string) bool {
+func (s *styledStringSplitter) handleOsc(sequence string) error {
 	if strings.HasPrefix(sequence, "133;") && len(sequence) == len("133;A") {
 		// Got ESC]133;X, where "X" could be anything. These are prompt hints,
 		// and rendering those makes no sense. We should just ignore them:
 		// https://gitlab.freedesktop.org/Per_Bothner/specifications/blob/master/proposals/semantic-prompts.md
 		endMarker := s.nextChar()
 		if endMarker == '\x07' {
-			return true
+			return nil
 		}
 
 		if endMarker == esc {
-			return s.nextChar() == '\\'
+			if s.nextChar() == '\\' {
+				return nil
+			} else {
+				return fmt.Errorf("Expected ESC \\ after ESC]133;X, got %q", s.lastChar())
+			}
 		}
 	}
 
-	return false
+	return fmt.Errorf("Unhandled OSC sequence")
 }
 
 // We just got ESC]8; and should now read the URL. URLs end with ASCII 7 BEL or ESC \.
-func (s *styledStringSplitter) handleUrl() bool {
+func (s *styledStringSplitter) handleUrl() error {
 	// Valid URL characters.
 	// Ref: https://stackoverflow.com/a/1547940/473672
 	const validChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~:/?#[]@!$&'()*+,;="
@@ -203,19 +210,19 @@ func (s *styledStringSplitter) handleUrl() bool {
 	for {
 		char := s.nextChar()
 		if char == -1 {
-			return false
+			return fmt.Errorf("Line ended in the middle of a URL")
 		}
 
 		if justSawEsc {
 			if char != '\\' {
-				return false
+				return fmt.Errorf("Expected ESC \\ but got ESC %q", char)
 			}
 
 			// End of URL
 			urlEndIndexExclusive := s.nextByteIndex - 2
 			url := s.input[urlStartIndex:urlEndIndexExclusive]
 			s.startNewPart(s.inProgressStyle.WithHyperlink(&url))
-			return true
+			return nil
 		}
 
 		// Invariant: justSawEsc == false
@@ -230,11 +237,11 @@ func (s *styledStringSplitter) handleUrl() bool {
 			urlEndIndexExclusive := s.nextByteIndex - 1
 			url := s.input[urlStartIndex:urlEndIndexExclusive]
 			s.startNewPart(s.inProgressStyle.WithHyperlink(&url))
-			return true
+			return nil
 		}
 
 		if !strings.ContainsRune(validChars, char) {
-			return false
+			return fmt.Errorf("Invalid URL character: %q", char)
 		}
 
 		// It's a valid URL char, keep going
