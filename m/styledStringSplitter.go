@@ -135,7 +135,9 @@ func (s *styledStringSplitter) consumeControlSequence(charAfterEsc rune) error {
 			return fmt.Errorf("Line ended in the middle of a control sequence")
 		}
 
-		if char == ';' || char == ':' || (char >= '0' && char <= '9') {
+		// Range from here:
+		// https://en.wikipedia.org/wiki/ANSI_escape_code#CSI_(Control_Sequence_Introducer)_sequences
+		if char >= 0x30 && char <= 0x3f {
 			// Sequence still in progress
 
 			if charAfterEsc == ']' && s.input[startIndex:s.nextByteIndex] == "8;;" {
