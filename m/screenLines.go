@@ -51,7 +51,7 @@ func (p *Pager) redraw(spinner string) overflowState {
 		// This happens when we're done
 		eofSpinner = "---"
 	}
-	spinnerLine := cellsFromString(_EofMarkerFormat + eofSpinner).Cells
+	spinnerLine := cellsFromString(_EofMarkerFormat+eofSpinner, nil).Cells
 	for column, cell := range spinnerLine {
 		p.screen.SetCell(column, lastUpdatedScreenLineNumber+1, cell)
 	}
@@ -204,7 +204,7 @@ func (p *Pager) renderLines() ([]renderedLine, string, overflowState) {
 // lineNumber and numberPrefixLength are required for knowing how much to
 // indent, and to (optionally) render the line number.
 func (p *Pager) renderLine(line *Line, lineNumber int) ([]renderedLine, overflowState) {
-	highlighted := line.HighlightedTokens(p.linePrefix, p.searchPattern)
+	highlighted := line.HighlightedTokens(p.linePrefix, p.searchPattern, &lineNumber)
 	var wrapped [][]twin.Cell
 	overflow := didFit
 	if p.WrapLongLines {

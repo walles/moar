@@ -165,7 +165,7 @@ func (si *scrollPositionInternal) emptyBottomLinesCount(pager *Pager) int {
 			break
 		}
 
-		subLines, _ := pager.renderLine(line, 0)
+		subLines, _ := pager.renderLine(line, lineNumberOneBased)
 		unclaimedViewportLines -= len(subLines)
 		if unclaimedViewportLines <= 0 {
 			return 0

@@ -64,7 +64,7 @@ func (p *Pager) findFirstHit(startPosition scrollPosition, backwards bool) *scro
 			return nil
 		}
 
-		lineText := line.Plain()
+		lineText := line.Plain(&searchPosition)
 		if p.searchPattern.MatchString(lineText) {
 			return scrollPositionFromLineNumber("findFirstHit", searchPosition)
 		}

@@ -250,10 +250,10 @@ func TestGetLongLine(t *testing.T) {
 	assert.Equal(t, overflow, didFit)
 
 	line := lines.lines[0]
-	assert.Assert(t, strings.HasPrefix(line.Plain(), "1 2 3 4"), "<%s>", line)
-	assert.Assert(t, strings.HasSuffix(line.Plain(), "0123456789"), line)
+	assert.Assert(t, strings.HasPrefix(line.Plain(nil), "1 2 3 4"), "<%s>", line)
+	assert.Assert(t, strings.HasSuffix(line.Plain(nil), "0123456789"), line)
 
-	assert.Equal(t, len(line.Plain()), 100021)
+	assert.Equal(t, len(line.Plain(nil)), 100021)
 }
 
 func getReaderWithLineCount(totalLines int) *Reader {
@@ -307,7 +307,7 @@ func testCompressedFile(t *testing.T, filename string) {
 	}
 
 	lines, _ := reader.GetLines(1, 5)
-	assert.Equal(t, lines.lines[0].Plain(), "This is a compressed file", "%s", filename)
+	assert.Equal(t, lines.lines[0].Plain(nil), "This is a compressed file", "%s", filename)
 }
 
 func TestCompressedFiles(t *testing.T) {

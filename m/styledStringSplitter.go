@@ -12,7 +12,9 @@ import (
 const esc = '\x1b'
 
 type styledStringSplitter struct {
-	input             string
+	input              string
+	lineNumberOneBased *int
+
 	nextByteIndex     int
 	previousByteIndex int
 
@@ -23,7 +25,7 @@ type styledStringSplitter struct {
 	trailer twin.Style
 }
 
-func styledStringsFromString(s string) styledStringsWithTrailer {
+func styledStringsFromString(s string, lineNumberOneBased *int) styledStringsWithTrailer {
 	if !strings.ContainsAny(s, "\x1b") {
 		// This shortcut makes BenchmarkPlainTextSearch() perform a lot better
 		return styledStringsWithTrailer{
@@ -36,7 +38,8 @@ func styledStringsFromString(s string) styledStringsWithTrailer {
 	}
 
 	splitter := styledStringSplitter{
-		input: s,
+		input:              s,
+		lineNumberOneBased: lineNumberOneBased,
 	}
 	splitter.run()
 
@@ -80,8 +83,13 @@ func (s *styledStringSplitter) run() {
 			escIndex := s.previousByteIndex
 			err := s.handleEscape()
 			if err != nil {
+				header := ""
+				if s.lineNumberOneBased != nil {
+					header = fmt.Sprintf("Line %d: ", *s.lineNumberOneBased)
+				}
+
 				failed := s.input[escIndex:s.nextByteIndex]
-				log.Debug("Failed to parse <", strings.ReplaceAll(failed, "\x1b", "ESC"), ">: ", err)
+				log.Debug(header, "<", strings.ReplaceAll(failed, "\x1b", "ESC"), ">: ", err)
 
 				// Somewhere in handleEscape(), we got a character that was
 				// unexpected. We need to treat everything up to before that
@@ -113,7 +121,7 @@ func (s *styledStringSplitter) handleEscape() error {
 		return s.consumeControlSequence(char)
 	}
 
-	return fmt.Errorf("Unhandled char after ESC: %q", char)
+	return fmt.Errorf("Unhandled Fe sequence ESC%c", char)
 }
 
 func (s *styledStringSplitter) consumeControlSequence(charAfterEsc rune) error {
@@ -172,7 +180,7 @@ func (s *styledStringSplitter) handleCompleteControlSequence(charAfterEsc rune, 
 		return nil
 	}
 
-	return fmt.Errorf("Expected 'm' at the end of the control sequence, got %q", lastChar)
+	return fmt.Errorf("Unhandled CSI type %q", lastChar)
 }
 
 func (s *styledStringSplitter) handleOsc(sequence string) error {

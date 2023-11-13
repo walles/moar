@@ -33,14 +33,14 @@ func TestNextCharLastChar_empty(t *testing.T) {
 // https://gitlab.freedesktop.org/Per_Bothner/specifications/blob/master/proposals/semantic-prompts.md
 func TestIgnorePromptHints(t *testing.T) {
 	// From an e-mail I got titled "moar question: "--RAW-CONTROL-CHARS" equivalent"
-	result := styledStringsFromString("\x1b]133;A\x1b\\hello")
+	result := styledStringsFromString("\x1b]133;A\x1b\\hello", nil)
 	assert.Equal(t, twin.StyleDefault, result.trailer)
 	assert.Equal(t, 1, len(result.styledStrings))
 	assert.Equal(t, "hello", result.styledStrings[0].String)
 	assert.Equal(t, twin.StyleDefault, result.styledStrings[0].Style)
 
 	// C rather than A, different end-of-sequence, should also be ignored
-	result = styledStringsFromString("\x1b]133;C\x07hello")
+	result = styledStringsFromString("\x1b]133;C\x07hello", nil)
 	assert.Equal(t, twin.StyleDefault, result.trailer)
 	assert.Equal(t, 1, len(result.styledStrings))
 	assert.Equal(t, "hello", result.styledStrings[0].String)
@@ -54,7 +54,7 @@ func TestIgnorePromptHints(t *testing.T) {
 // Johan got an e-mail titled "moar question: "--RAW-CONTROL-CHARS" equivalent"
 // about the sequence we're testing here.
 func TestColonColors(t *testing.T) {
-	result := styledStringsFromString("\x1b[38:5:238mhello")
+	result := styledStringsFromString("\x1b[38:5:238mhello", nil)
 	assert.Equal(t, twin.StyleDefault, result.trailer)
 	assert.Equal(t, 1, len(result.styledStrings))
 	assert.Equal(t, "hello", result.styledStrings[0].String)

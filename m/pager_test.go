@@ -515,7 +515,7 @@ func TestPageSamples(t *testing.T) {
 			continue
 		}
 		firstPagerLine := rowToString(screen.GetRow(0))
-		assert.Assert(t, strings.HasPrefix(firstReaderLine.Plain(), firstPagerLine))
+		assert.Assert(t, strings.HasPrefix(firstReaderLine.Plain(nil), firstPagerLine))
 	}
 }
 

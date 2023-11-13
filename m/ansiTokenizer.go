@@ -40,11 +40,11 @@ func NewLine(raw string) Line {
 
 // Returns a representation of the string split into styled tokens. Any regexp
 // matches are highlighted. A nil regexp means no highlighting.
-func (line *Line) HighlightedTokens(linePrefix string, search *regexp.Regexp) cellsWithTrailer {
-	plain := line.Plain()
+func (line *Line) HighlightedTokens(linePrefix string, search *regexp.Regexp, lineNumberOneBased *int) cellsWithTrailer {
+	plain := line.Plain(lineNumberOneBased)
 	matchRanges := getMatchRanges(&plain, search)
 
-	fromString := cellsFromString(linePrefix + line.raw)
+	fromString := cellsFromString(linePrefix+line.raw, lineNumberOneBased)
 	returnCells := make([]twin.Cell, 0, len(fromString.Cells))
 	for _, token := range fromString.Cells {
 		style := token.Style
@@ -69,9 +69,9 @@ func (line *Line) HighlightedTokens(linePrefix string, search *regexp.Regexp) ce
 }
 
 // Plain returns a plain text representation of the initial string
-func (line *Line) Plain() string {
+func (line *Line) Plain(lineNumberOneBased *int) string {
 	if line.plain == nil {
-		plain := withoutFormatting(line.raw)
+		plain := withoutFormatting(line.raw, lineNumberOneBased)
 		line.plain = &plain
 	}
 	return *line.plain
@@ -103,7 +103,7 @@ func ConsumeLessTermcapEnvs() {
 
 func termcapToStyle(termcap string) twin.Style {
 	// Add a character to be sure we have one to take the format from
-	cells := cellsFromString(termcap + "x").Cells
+	cells := cellsFromString(termcap+"x", nil).Cells
 	return cells[len(cells)-1].Style
 }
 
@@ -121,7 +121,7 @@ func isPlain(s string) bool {
 	return true
 }
 
-func withoutFormatting(s string) string {
+func withoutFormatting(s string, lineNumberOneBased *int) string {
 	if isPlain(s) {
 		return s
 	}
@@ -134,7 +134,7 @@ func withoutFormatting(s string) string {
 	// runes.
 	stripped.Grow(len(s) * 2)
 
-	for _, styledString := range styledStringsFromString(s).styledStrings {
+	for _, styledString := range styledStringsFromString(s, lineNumberOneBased).styledStrings {
 		for _, runeValue := range runesFromStyledString(styledString) {
 			switch runeValue {
 
@@ -179,13 +179,13 @@ func withoutFormatting(s string) string {
 }
 
 // Turn a (formatted) string into a series of screen cells
-func cellsFromString(s string) cellsWithTrailer {
+func cellsFromString(s string, lineNumberOneBased *int) cellsWithTrailer {
 	var cells []twin.Cell
 
 	// Specs: https://en.wikipedia.org/wiki/ANSI_escape_code#3-bit_and_4-bit
 	styleUnprintable := twin.StyleDefault.Background(twin.NewColor16(1)).Foreground(twin.NewColor16(7))
 
-	stringsWithTrailer := styledStringsFromString(s)
+	stringsWithTrailer := styledStringsFromString(s, lineNumberOneBased)
 	for _, styledString := range stringsWithTrailer.styledStrings {
 		for _, token := range tokensFromStyledString(styledString) {
 			switch token.Rune {
