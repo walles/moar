@@ -97,7 +97,9 @@ func NewScreen() (Screen, error) {
 	// Now, if you get "Events buffer full" warnings, the buffer is too small.
 	//
 	// By this definition, 40 was too small, and 80 was OK.
-	screen.events = make(chan Event, 80)
+	//
+	// Bumped to 160 because of: https://github.com/walles/moar/issues/164
+	screen.events = make(chan Event, 160)
 
 	screen.setupSigwinchNotification()
 	err := screen.setupTtyInTtyOut()
@@ -248,7 +250,7 @@ func (screen *UnixScreen) mainLoop() {
 			default:
 				// If this happens, consider increasing the channel size in
 				// NewScreen()
-				log.Warn("Events buffer full, events are being dropped")
+				log.Warnf("Events buffer (size %d) full, events are being dropped", cap(screen.events))
 			}
 		}
 	}
