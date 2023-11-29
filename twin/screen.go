@@ -250,7 +250,7 @@ func (screen *UnixScreen) mainLoop() {
 			default:
 				// If this happens, consider increasing the channel size in
 				// NewScreen()
-				log.Warnf("Events buffer (size %d) full, events are being dropped", cap(screen.events))
+				log.Debugf("Events buffer (size %d) full, events are being dropped", cap(screen.events))
 			}
 		}
 	}
