@@ -8,6 +8,7 @@ import (
 	"gotest.tools/v3/assert"
 )
 
+// Repro for: https://github.com/walles/moar/issues/166
 func TestCanonicalize1000(t *testing.T) {
 	pager := Pager{}
 	pager.screen = twin.NewFakeScreen(100, 100)
@@ -15,19 +16,18 @@ func TestCanonicalize1000(t *testing.T) {
 	pager.ShowLineNumbers = true
 
 	// FIXME: Does this matter for reproducing the crash? Recheck after we fix the issue!
-	pager.ShowStatusBar = false
+	pager.ShowStatusBar = true
 
-	scrollPosition := scrollPosition{
+	pager.scrollPosition = scrollPosition{
 		internalDontTouch: scrollPositionInternal{
-			lineNumberOneBased: 1000,
+			lineNumberOneBased: 901,
 			deltaScreenLines:   0,
 			name:               "TestCanonicalize1000",
 			canonicalizing:     false,
 			canonical:          scrollPositionCanonical{},
 		},
 	}
+	lineNumberOneBased := pager.scrollPosition.lineNumberOneBased(&pager)
 
-	lineNumberOneBased := scrollPosition.lineNumberOneBased(&pager)
-
-	assert.Equal(t, lineNumberOneBased, 1)
+	assert.Equal(t, lineNumberOneBased, 42)
 }
