@@ -1,6 +1,7 @@
 package m
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 
@@ -8,16 +9,18 @@ import (
 	"gotest.tools/v3/assert"
 )
 
+const screenHeight = 60
+
 // Repro for: https://github.com/walles/moar/issues/166
-func TestCanonicalize1000(t *testing.T) {
+func testCanonicalize1000(t *testing.T, withStatusBar bool, currentStartLine int, lastVisibleLine int) {
 	pager := Pager{}
-	pager.screen = twin.NewFakeScreen(100, 60)
+	pager.screen = twin.NewFakeScreen(100, screenHeight)
 	pager.reader = NewReaderFromText("test", strings.Repeat("a\n", 2000))
 	pager.ShowLineNumbers = true
-	pager.ShowStatusBar = true
+	pager.ShowStatusBar = withStatusBar
 	pager.scrollPosition = scrollPosition{
 		internalDontTouch: scrollPositionInternal{
-			lineNumberOneBased: 941,
+			lineNumberOneBased: currentStartLine,
 			deltaScreenLines:   0,
 			name:               "findFirstHit",
 			canonicalizing:     false,
@@ -26,13 +29,27 @@ func TestCanonicalize1000(t *testing.T) {
 
 	lastVisiblePosition := scrollPosition{
 		internalDontTouch: scrollPositionInternal{
-			lineNumberOneBased: 999,
+			lineNumberOneBased: lastVisibleLine,
 			deltaScreenLines:   0,
 			name:               "Last Visible Position",
 		},
 	}
 
-	lineNumberOneBased := lastVisiblePosition.lineNumberOneBased(&pager)
+	assert.Equal(t, lastVisiblePosition.lineNumberOneBased(&pager), lastVisibleLine)
+}
 
-	assert.Equal(t, lineNumberOneBased, 42)
+func TestCanonicalize1000WithStatusBar(t *testing.T) {
+	for startLine := 0; startLine < 1500; startLine++ {
+		t.Run(fmt.Sprint("startLine=", startLine), func(t *testing.T) {
+			testCanonicalize1000(t, true, startLine, startLine+screenHeight-2)
+		})
+	}
+}
+
+func TestCanonicalize1000WithoutStatusBar(t *testing.T) {
+	for startLine := 0; startLine < 1500; startLine++ {
+		t.Run(fmt.Sprint("startLine=", startLine), func(t *testing.T) {
+			testCanonicalize1000(t, false, startLine, startLine+screenHeight-1)
+		})
+	}
 }
