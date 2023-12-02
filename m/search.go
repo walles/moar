@@ -241,13 +241,11 @@ func (p *Pager) onSearchKey(key twin.KeyCode) {
 		p.mode = _Viewing
 
 	case twin.KeyPgUp:
-		_, height := p.screen.Size()
-		p.scrollPosition = p.scrollPosition.PreviousLine(height - 1)
+		p.scrollPosition = p.scrollPosition.PreviousLine(p.visibleHeight())
 		p.mode = _Viewing
 
 	case twin.KeyPgDown:
-		_, height := p.screen.Size()
-		p.scrollPosition = p.scrollPosition.NextLine(height - 1)
+		p.scrollPosition = p.scrollPosition.NextLine(p.visibleHeight())
 		p.mode = _Viewing
 
 	default:

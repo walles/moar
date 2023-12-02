@@ -127,11 +127,7 @@ func (p *Pager) renderScreenLines() (lines [][]twin.Cell, statusText string, ove
 // height. If the status line is visible, you'll get at most one less than the
 // screen height from this method.
 func (p *Pager) renderLines() ([]renderedLine, string, overflowState) {
-	_, height := p.screen.Size()
-	wantedLineCount := height - 1
-	if !p.ShowStatusBar {
-		wantedLineCount = height
-	}
+	wantedLineCount := p.visibleHeight()
 
 	screenOverflow := didFit
 	if p.lineNumberOneBased() > 1 {

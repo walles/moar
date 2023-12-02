@@ -147,11 +147,7 @@ func (si *scrollPositionInternal) handlePositiveDeltaScreenLines(pager *Pager) {
 
 // This method assumes si contains a canonical position
 func (si *scrollPositionInternal) emptyBottomLinesCount(pager *Pager) int {
-	_, height := pager.screen.Size()
-	unclaimedViewportLines := height - 1
-	if !pager.ShowStatusBar {
-		unclaimedViewportLines = height
-	}
+	unclaimedViewportLines := pager.visibleHeight()
 
 	// Start counting where the current input line begins
 	unclaimedViewportLines += si.deltaScreenLines
@@ -370,11 +366,6 @@ func numberPrefixLength(pager *Pager, scrollPosition scrollPositionInternal) int
 		return 0
 	}
 
-	_, height := pager.screen.Size()
-	contentHeight := height
-	if pager.ShowStatusBar {
-		contentHeight--
-	}
 	maxPossibleLineNumber := pager.reader.GetLineCount()
 
 	// This is an approximation assuming we don't do any wrapping. Finding the
@@ -385,7 +376,7 @@ func numberPrefixLength(pager *Pager, scrollPosition scrollPositionInternal) int
 	// Let's improve on demand.
 	maxVisibleLineNumber := (scrollPosition.lineNumberOneBased +
 		scrollPosition.deltaScreenLines +
-		contentHeight - 1)
+		pager.visibleHeight() - 1)
 	if maxVisibleLineNumber > maxPossibleLineNumber {
 		maxVisibleLineNumber = maxPossibleLineNumber
 	}

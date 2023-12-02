@@ -191,6 +191,16 @@ func NewPager(r *Reader) *Pager {
 	}
 }
 
+// How many lines are visible on screen? Depends on screen height and whether or
+// not the status bar is visible.
+func (p *Pager) visibleHeight() int {
+	_, height := p.screen.Size()
+	if p.ShowStatusBar {
+		return height - 1
+	}
+	return height
+}
+
 func (p *Pager) setFooter(footer string) {
 	width, height := p.screen.Size()
 
@@ -315,13 +325,11 @@ func (p *Pager) onKey(keyCode twin.KeyCode) {
 		p.scrollToEnd()
 
 	case twin.KeyPgUp:
-		_, height := p.screen.Size()
-		p.scrollPosition = p.scrollPosition.PreviousLine(height - 1)
+		p.scrollPosition = p.scrollPosition.PreviousLine(p.visibleHeight())
 		p.handleScrolledUp()
 
 	case twin.KeyPgDown:
-		_, height := p.screen.Size()
-		p.scrollPosition = p.scrollPosition.NextLine(height - 1)
+		p.scrollPosition = p.scrollPosition.NextLine(p.visibleHeight())
 		p.handleScrolledDown()
 
 	default:
@@ -394,27 +402,23 @@ func (p *Pager) onRune(char rune) {
 		p.scrollToEnd()
 
 	case 'f', ' ':
-		_, height := p.screen.Size()
-		p.scrollPosition = p.scrollPosition.NextLine(height - 1)
+		p.scrollPosition = p.scrollPosition.NextLine(p.visibleHeight())
 		p.handleScrolledDown()
 
 	case 'b':
-		_, height := p.screen.Size()
-		p.scrollPosition = p.scrollPosition.PreviousLine(height - 1)
+		p.scrollPosition = p.scrollPosition.PreviousLine(p.visibleHeight())
 		p.handleScrolledUp()
 
 	// '\x15' = CTRL-u, should work like just 'u'.
 	// Ref: https://github.com/walles/moar/issues/90
 	case 'u', '\x15':
-		_, height := p.screen.Size()
-		p.scrollPosition = p.scrollPosition.PreviousLine(height / 2)
+		p.scrollPosition = p.scrollPosition.PreviousLine(p.visibleHeight() / 2)
 		p.handleScrolledUp()
 
 	// '\x04' = CTRL-d, should work like just 'd'.
 	// Ref: https://github.com/walles/moar/issues/90
 	case 'd', '\x04':
-		_, height := p.screen.Size()
-		p.scrollPosition = p.scrollPosition.NextLine(height / 2)
+		p.scrollPosition = p.scrollPosition.NextLine(p.visibleHeight() / 2)
 		p.handleScrolledDown()
 
 	case '/':
