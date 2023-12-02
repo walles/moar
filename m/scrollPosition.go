@@ -97,7 +97,7 @@ func (si *scrollPositionInternal) handleNegativeDeltaScreenLines(pager *Pager) {
 	for si.lineNumberOneBased > 1 && si.deltaScreenLines < 0 {
 		// Render the previous line
 		previousLine := pager.reader.GetLine(si.lineNumberOneBased - 1)
-		previousSubLines, _ := pager.renderLine(previousLine, 0)
+		previousSubLines, _ := pager.renderLine(previousLine, 0, *si)
 
 		// Adjust lineNumberOneBased and deltaScreenLines to move up into the
 		// previous screen line
@@ -127,14 +127,14 @@ func (si *scrollPositionInternal) handlePositiveDeltaScreenLines(pager *Pager) {
 			if line == nil {
 				panic(fmt.Errorf("Last line is nil"))
 			}
-			subLines, _ := pager.renderLine(line, 0)
+			subLines, _ := pager.renderLine(line, 0, *si)
 
 			// ... and go to the bottom of that.
 			si.deltaScreenLines = len(subLines) - 1
 			return
 		}
 
-		subLines, _ := pager.renderLine(line, 0)
+		subLines, _ := pager.renderLine(line, 0, *si)
 		if si.deltaScreenLines < len(subLines) {
 			// Sublines are within bounds!
 			return
@@ -165,7 +165,7 @@ func (si *scrollPositionInternal) emptyBottomLinesCount(pager *Pager) int {
 			break
 		}
 
-		subLines, _ := pager.renderLine(line, lineNumberOneBased)
+		subLines, _ := pager.renderLine(line, lineNumberOneBased, *si)
 		unclaimedViewportLines -= len(subLines)
 		if unclaimedViewportLines <= 0 {
 			return 0
@@ -337,7 +337,7 @@ func (p *Pager) isScrolledToEnd() bool {
 	// Last line is on screen, now we need to figure out whether we can see all
 	// of it
 	lastInputLine := p.reader.GetLine(lastInputLineNumberOneBased)
-	lastInputLineRendered, _ := p.renderLine(lastInputLine, lastInputLineNumberOneBased)
+	lastInputLineRendered, _ := p.renderLine(lastInputLine, lastInputLineNumberOneBased, p.scrollPosition.internalDontTouch)
 	lastRenderedSubLine := lastInputLineRendered[len(lastInputLineRendered)-1]
 
 	// If the last visible subline is the same as the last possible subline then
@@ -362,16 +362,20 @@ func (p *Pager) getLastVisiblePosition() *scrollPosition {
 	}
 }
 
-func (p *Pager) numberPrefixLength() int {
+func numberPrefixLength(pager *Pager, scrollPosition scrollPositionInternal) int {
 	// This method used to live in screenLines.go, but I moved it here because
 	// it touches scroll position internals.
-	if !p.ShowLineNumbers {
+
+	if !pager.ShowLineNumbers {
 		return 0
 	}
 
-	_, height := p.screen.Size()
-	contentHeight := height - 1 // Full screen height minus the status bar
-	maxPossibleLineNumber := p.reader.GetLineCount()
+	_, height := pager.screen.Size()
+	contentHeight := height
+	if pager.ShowStatusBar {
+		contentHeight--
+	}
+	maxPossibleLineNumber := pager.reader.GetLineCount()
 
 	// This is an approximation assuming we don't do any wrapping. Finding the
 	// real answer while wrapping requires rendering, which requires the real
@@ -379,8 +383,9 @@ func (p *Pager) numberPrefixLength() int {
 	// recursion.
 	//
 	// Let's improve on demand.
-	maxVisibleLineNumber := (p.scrollPosition.internalDontTouch.lineNumberOneBased +
-		p.scrollPosition.internalDontTouch.deltaScreenLines + contentHeight - 1)
+	maxVisibleLineNumber := (scrollPosition.lineNumberOneBased +
+		scrollPosition.deltaScreenLines +
+		contentHeight - 1)
 	if maxVisibleLineNumber > maxPossibleLineNumber {
 		maxVisibleLineNumber = maxPossibleLineNumber
 	}
