@@ -371,7 +371,10 @@ func numberPrefixLength(pager *Pager, scrollPosition scrollPositionInternal) int
 	}
 
 	_, height := pager.screen.Size()
-	contentHeight := height - 1 // Full screen height minus the status bar
+	contentHeight := height
+	if pager.ShowStatusBar {
+		contentHeight--
+	}
 	maxPossibleLineNumber := pager.reader.GetLineCount()
 
 	// This is an approximation assuming we don't do any wrapping. Finding the
