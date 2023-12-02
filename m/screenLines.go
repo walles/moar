@@ -153,7 +153,7 @@ func (p *Pager) renderLines() ([]renderedLine, string, overflowState) {
 	for lineIndex, line := range inputLines.lines {
 		lineNumber := inputLines.firstLineOneBased + lineIndex
 
-		rendering, lineOverflow := p.renderLine(line, lineNumber)
+		rendering, lineOverflow := p.renderLine(line, lineNumber, p.scrollPosition.internalDontTouch)
 		if lineOverflow == didOverflow {
 			// Everything did not fit
 			screenOverflow = didOverflow
@@ -203,13 +203,13 @@ func (p *Pager) renderLines() ([]renderedLine, string, overflowState) {
 //
 // lineNumber and numberPrefixLength are required for knowing how much to
 // indent, and to (optionally) render the line number.
-func (p *Pager) renderLine(line *Line, lineNumber int) ([]renderedLine, overflowState) {
+func (p *Pager) renderLine(line *Line, lineNumber int, scrollPosition scrollPositionInternal) ([]renderedLine, overflowState) {
 	highlighted := line.HighlightedTokens(p.linePrefix, p.searchPattern, &lineNumber)
 	var wrapped [][]twin.Cell
 	overflow := didFit
 	if p.WrapLongLines {
 		width, _ := p.screen.Size()
-		wrapped = wrapLine(width-p.numberPrefixLength(), highlighted.Cells)
+		wrapped = wrapLine(width-numberPrefixLength(p, scrollPosition), highlighted.Cells)
 	} else {
 		// All on one line
 		wrapped = [][]twin.Cell{highlighted.Cells}
@@ -226,7 +226,7 @@ func (p *Pager) renderLine(line *Line, lineNumber int) ([]renderedLine, overflow
 			visibleLineNumber = nil
 		}
 
-		decorated, localOverflow := p.decorateLine(visibleLineNumber, inputLinePart)
+		decorated, localOverflow := p.decorateLine(visibleLineNumber, inputLinePart, scrollPosition)
 		if localOverflow == didOverflow {
 			overflow = didOverflow
 		}
@@ -251,10 +251,10 @@ func (p *Pager) renderLine(line *Line, lineNumber int) ([]renderedLine, overflow
 // * Line number, or leading whitespace for wrapped lines
 // * Scroll left indicator
 // * Scroll right indicator
-func (p *Pager) decorateLine(lineNumberToShow *int, contents []twin.Cell) ([]twin.Cell, overflowState) {
+func (p *Pager) decorateLine(lineNumberToShow *int, contents []twin.Cell, scrollPosition scrollPositionInternal) ([]twin.Cell, overflowState) {
 	width, _ := p.screen.Size()
 	newLine := make([]twin.Cell, 0, width)
-	numberPrefixLength := p.numberPrefixLength()
+	numberPrefixLength := numberPrefixLength(p, scrollPosition)
 	newLine = append(newLine, createLinePrefix(lineNumberToShow, numberPrefixLength)...)
 	overflow := didFit
 
