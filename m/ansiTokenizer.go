@@ -423,14 +423,17 @@ type _StyledString struct {
 	Style  twin.Style
 }
 
-func splitIntoNumbers(s string) ([]uint, error) {
-	// "5" gives us the best numbers from BenchmarkHighlightedSearch. Higher
-	// gives us larger memory allocations for no extra performance, lower gives
-	// us more memory allocations and lower performance.
-	//
-	// To repro the tuning:
-	//   go test -benchmem -run='^$' -bench=BenchmarkHighlightedSearch . ./...
-	numbers := make([]uint, 0, 5)
+// To avoid allocations, our caller is expected to provide us with a
+// pre-allocated numbersBuffer for storing the result.
+//
+// This function is part of the hot code path while searching, so we want it to
+// be fast.
+//
+// # Benchmarking instructions
+//
+//	go test -benchmem -run='^$' -bench=BenchmarkHighlightedSearch . ./...
+func splitIntoNumbers(s string, numbersBuffer []uint) ([]uint, error) {
+	numbers := numbersBuffer[:0]
 
 	afterLastSeparator := 0
 	for i, char := range s {
@@ -474,22 +477,22 @@ func splitIntoNumbers(s string) ([]uint, error) {
 
 // rawUpdateStyle parses a string of the form "33m" into changes to style. This
 // is what comes after ESC[ in an ANSI SGR sequence.
-func rawUpdateStyle(style twin.Style, escapeSequenceWithoutHeader string) (twin.Style, error) {
+func rawUpdateStyle(style twin.Style, escapeSequenceWithoutHeader string, numbersBuffer []uint) (twin.Style, []uint, error) {
 	if len(escapeSequenceWithoutHeader) == 0 {
-		return style, fmt.Errorf("empty escape sequence, expected at least an ending letter")
+		return style, numbersBuffer, fmt.Errorf("empty escape sequence, expected at least an ending letter")
 	}
 	if escapeSequenceWithoutHeader[len(escapeSequenceWithoutHeader)-1] != 'm' {
-		return style, fmt.Errorf("escape sequence does not end with 'm': %s", escapeSequenceWithoutHeader)
+		return style, numbersBuffer, fmt.Errorf("escape sequence does not end with 'm': %s", escapeSequenceWithoutHeader)
 	}
 
-	numbers, err := splitIntoNumbers(escapeSequenceWithoutHeader[:len(escapeSequenceWithoutHeader)-1])
+	numbersBuffer, err := splitIntoNumbers(escapeSequenceWithoutHeader[:len(escapeSequenceWithoutHeader)-1], numbersBuffer)
 	if err != nil {
-		return style, fmt.Errorf("splitIntoNumbers: %w", err)
+		return style, numbersBuffer, fmt.Errorf("splitIntoNumbers: %w", err)
 	}
 
 	index := 0
-	for index < len(numbers) {
-		number := numbers[index]
+	for index < len(numbersBuffer) {
+		number := numbersBuffer[index]
 		index++
 		switch number {
 		case 0:
@@ -542,9 +545,9 @@ func rawUpdateStyle(style twin.Style, escapeSequenceWithoutHeader string) (twin.
 		case 38:
 			var err error
 			var color *twin.Color
-			index, color, err = consumeCompositeColor(numbers, index-1)
+			index, color, err = consumeCompositeColor(numbersBuffer, index-1)
 			if err != nil {
-				return style, fmt.Errorf("Foreground: %w", err)
+				return style, numbersBuffer, fmt.Errorf("Foreground: %w", err)
 			}
 			style = style.Foreground(*color)
 		case 39:
@@ -570,9 +573,9 @@ func rawUpdateStyle(style twin.Style, escapeSequenceWithoutHeader string) (twin.
 		case 48:
 			var err error
 			var color *twin.Color
-			index, color, err = consumeCompositeColor(numbers, index-1)
+			index, color, err = consumeCompositeColor(numbersBuffer, index-1)
 			if err != nil {
-				return style, fmt.Errorf("Background: %w", err)
+				return style, numbersBuffer, fmt.Errorf("Background: %w", err)
 			}
 			style = style.Background(*color)
 		case 49:
@@ -619,11 +622,11 @@ func rawUpdateStyle(style twin.Style, escapeSequenceWithoutHeader string) (twin.
 			style = style.Background(twin.NewColor16(15))
 
 		default:
-			return style, fmt.Errorf("Unrecognized ANSI SGR code <%d>", number)
+			return style, numbersBuffer, fmt.Errorf("Unrecognized ANSI SGR code <%d>", number)
 		}
 	}
 
-	return style, nil
+	return style, numbersBuffer, nil
 }
 
 func joinUints(ints []uint) string {

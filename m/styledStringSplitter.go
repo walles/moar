@@ -72,6 +72,7 @@ func (s *styledStringSplitter) lastChar() rune {
 }
 
 func (s *styledStringSplitter) run() {
+	var numbersBuffer []uint
 	char := s.nextChar()
 	for {
 		if char == -1 {
@@ -81,7 +82,8 @@ func (s *styledStringSplitter) run() {
 
 		if char == esc {
 			escIndex := s.previousByteIndex
-			err := s.handleEscape()
+			var err error
+			numbersBuffer, err = s.handleEscape(numbersBuffer)
 			if err != nil {
 				header := ""
 				if s.lineNumberOneBased != nil {
@@ -114,17 +116,17 @@ func (s *styledStringSplitter) handleRune(char rune) {
 	s.inProgressString.WriteRune(char)
 }
 
-func (s *styledStringSplitter) handleEscape() error {
+func (s *styledStringSplitter) handleEscape(numbersBuffer []uint) ([]uint, error) {
 	char := s.nextChar()
 	if char == '[' || char == ']' {
 		// Got the start of a CSI or an OSC sequence
-		return s.consumeControlSequence(char)
+		return s.consumeControlSequence(char, numbersBuffer)
 	}
 
-	return fmt.Errorf("Unhandled Fe sequence ESC%c", char)
+	return numbersBuffer, fmt.Errorf("Unhandled Fe sequence ESC%c", char)
 }
 
-func (s *styledStringSplitter) consumeControlSequence(charAfterEsc rune) error {
+func (s *styledStringSplitter) consumeControlSequence(charAfterEsc rune, numbersBuffer []uint) ([]uint, error) {
 	// Points to right after "ESC["
 	startIndex := s.nextByteIndex
 
@@ -132,7 +134,7 @@ func (s *styledStringSplitter) consumeControlSequence(charAfterEsc rune) error {
 	for {
 		char := s.nextChar()
 		if char == -1 {
-			return fmt.Errorf("Line ended in the middle of a control sequence")
+			return numbersBuffer, fmt.Errorf("Line ended in the middle of a control sequence")
 		}
 
 		// Range from here:
@@ -142,7 +144,7 @@ func (s *styledStringSplitter) consumeControlSequence(charAfterEsc rune) error {
 
 			if charAfterEsc == ']' && s.input[startIndex:s.nextByteIndex] == "8;;" {
 				// Special case, here comes the URL
-				return s.handleUrl()
+				return numbersBuffer, s.handleUrl()
 			}
 
 			continue
@@ -150,39 +152,41 @@ func (s *styledStringSplitter) consumeControlSequence(charAfterEsc rune) error {
 
 		// The end, handle what we got
 		endIndexExclusive := s.nextByteIndex
-		return s.handleCompleteControlSequence(charAfterEsc, s.input[startIndex:endIndexExclusive])
+		return s.handleCompleteControlSequence(charAfterEsc, s.input[startIndex:endIndexExclusive], numbersBuffer)
 	}
 }
 
 // If the whole CSI sequence is ESC[33m, you should call this function with just
 // "33m".
-func (s *styledStringSplitter) handleCompleteControlSequence(charAfterEsc rune, sequence string) error {
+func (s *styledStringSplitter) handleCompleteControlSequence(charAfterEsc rune, sequence string, numbersBuffer []uint) ([]uint, error) {
 	if charAfterEsc == ']' {
-		return s.handleOsc(sequence)
+		return numbersBuffer, s.handleOsc(sequence)
 	}
 
 	if charAfterEsc != '[' {
-		return fmt.Errorf("Unexpected charAfterEsc: %c", charAfterEsc)
+		return numbersBuffer, fmt.Errorf("Unexpected charAfterEsc: %c", charAfterEsc)
 	}
 
 	if sequence == "K" || sequence == "0K" {
 		// Clear to end of line
 		s.trailer = s.inProgressStyle
-		return nil
+		return numbersBuffer, nil
 	}
 
 	lastChar := sequence[len(sequence)-1]
 	if lastChar == 'm' {
-		newStyle, err := rawUpdateStyle(s.inProgressStyle, sequence)
+		var newStyle twin.Style
+		var err error
+		newStyle, numbersBuffer, err = rawUpdateStyle(s.inProgressStyle, sequence, numbersBuffer)
 		if err != nil {
-			return err
+			return numbersBuffer, err
 		}
 
 		s.startNewPart(newStyle)
-		return nil
+		return numbersBuffer, nil
 	}
 
-	return fmt.Errorf("Unhandled CSI type %q", lastChar)
+	return numbersBuffer, fmt.Errorf("Unhandled CSI type %q", lastChar)
 }
 
 func (s *styledStringSplitter) handleOsc(sequence string) error {
