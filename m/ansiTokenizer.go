@@ -450,14 +450,14 @@ func splitIntoNumbers(s string, numbersBuffer []uint) ([]uint, error) {
 
 			number, err := strconv.ParseUint(numberString, 10, 64)
 			if err != nil {
-				return nil, err
+				return numbers, err
 			}
 			numbers = append(numbers, uint(number))
 			afterLastSeparator = i + 1
 			continue
 		}
 
-		return nil, fmt.Errorf("Unrecognized character in <%s>: %c", s, char)
+		return numbers, fmt.Errorf("Unrecognized character in <%s>: %c", s, char)
 	}
 
 	// Now we have to handle the last number
@@ -468,7 +468,7 @@ func splitIntoNumbers(s string, numbersBuffer []uint) ([]uint, error) {
 	}
 	number, err := strconv.ParseUint(numberString, 10, 64)
 	if err != nil {
-		return nil, err
+		return numbers, err
 	}
 	numbers = append(numbers, uint(number))
 
