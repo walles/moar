@@ -134,8 +134,8 @@ func withoutFormatting(s string, lineNumberOneBased *int) string {
 	// runes.
 	stripped.Grow(len(s) * 2)
 
-	for _, styledString := range styledStringsFromString(s, lineNumberOneBased).styledStrings {
-		for _, runeValue := range runesFromStyledString(styledString) {
+	styledStringsFromString(s, lineNumberOneBased, func(str string, style twin.Style) {
+		for _, runeValue := range runesFromStyledString(_StyledString{String: str, Style: style}) {
 			switch runeValue {
 
 			case '\x09': // TAB
@@ -173,7 +173,7 @@ func withoutFormatting(s string, lineNumberOneBased *int) string {
 				runeCount++
 			}
 		}
-	}
+	})
 
 	return stripped.String()
 }
@@ -185,16 +185,15 @@ func cellsFromString(s string, lineNumberOneBased *int) cellsWithTrailer {
 	// Specs: https://en.wikipedia.org/wiki/ANSI_escape_code#3-bit_and_4-bit
 	styleUnprintable := twin.StyleDefault.Background(twin.NewColor16(1)).Foreground(twin.NewColor16(7))
 
-	stringsWithTrailer := styledStringsFromString(s, lineNumberOneBased)
-	for _, styledString := range stringsWithTrailer.styledStrings {
-		for _, token := range tokensFromStyledString(styledString) {
+	trailer := styledStringsFromString(s, lineNumberOneBased, func(str string, style twin.Style) {
+		for _, token := range tokensFromStyledString(_StyledString{String: str, Style: style}) {
 			switch token.Rune {
 
 			case '\x09': // TAB
 				for {
 					cells = append(cells, twin.Cell{
 						Rune:  ' ',
-						Style: styledString.Style,
+						Style: style,
 					})
 
 					if (len(cells))%_TabSize == 0 {
@@ -244,11 +243,11 @@ func cellsFromString(s string, lineNumberOneBased *int) cellsWithTrailer {
 				cells = append(cells, token)
 			}
 		}
-	}
+	})
 
 	return cellsWithTrailer{
 		Cells:   cells,
-		Trailer: stringsWithTrailer.trailer,
+		Trailer: trailer,
 	}
 }
 
@@ -411,11 +410,6 @@ func tokensFromStyledString(styledString _StyledString) []twin.Cell {
 	}
 
 	return tokens
-}
-
-type styledStringsWithTrailer struct {
-	styledStrings []_StyledString
-	trailer       twin.Style
 }
 
 type _StyledString struct {

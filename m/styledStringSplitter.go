@@ -22,32 +22,27 @@ type styledStringSplitter struct {
 	inProgressStyle  twin.Style
 	numbersBuffer    []uint
 
-	parts   []_StyledString
 	trailer twin.Style
+
+	callback func(str string, style twin.Style)
 }
 
-func styledStringsFromString(s string, lineNumberOneBased *int) styledStringsWithTrailer {
+// Returns the style of the line's trailer
+func styledStringsFromString(s string, lineNumberOneBased *int, callback func(string, twin.Style)) twin.Style {
 	if !strings.ContainsAny(s, "\x1b") {
 		// This shortcut makes BenchmarkPlainTextSearch() perform a lot better
-		return styledStringsWithTrailer{
-			trailer: twin.StyleDefault,
-			styledStrings: []_StyledString{{
-				String: s,
-				Style:  twin.StyleDefault,
-			}},
-		}
+		callback(s, twin.StyleDefault)
+		return twin.StyleDefault
 	}
 
 	splitter := styledStringSplitter{
 		input:              s,
 		lineNumberOneBased: lineNumberOneBased,
+		callback:           callback,
 	}
 	splitter.run()
 
-	return styledStringsWithTrailer{
-		trailer:       splitter.trailer,
-		styledStrings: splitter.parts,
-	}
+	return splitter.trailer
 }
 
 func (s *styledStringSplitter) nextChar() rune {
@@ -278,8 +273,5 @@ func (s *styledStringSplitter) finalizeCurrentPart() {
 		return
 	}
 
-	s.parts = append(s.parts, _StyledString{
-		String: s.inProgressString.String(),
-		Style:  s.inProgressStyle,
-	})
+	s.callback(s.inProgressString.String(), s.inProgressStyle)
 }

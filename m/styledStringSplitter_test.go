@@ -27,24 +27,32 @@ func TestNextCharLastChar_empty(t *testing.T) {
 	assert.Equal(t, rune(-1), s.lastChar())
 }
 
+func collectStyledStrings(s string) ([]_StyledString, twin.Style) {
+	styledStrings := []_StyledString{}
+	trailer := styledStringsFromString(s, nil, func(str string, style twin.Style) {
+		styledStrings = append(styledStrings, _StyledString{str, style})
+	})
+	return styledStrings, trailer
+}
+
 // We should ignore OSC 133 sequences.
 //
 // Ref:
 // https://gitlab.freedesktop.org/Per_Bothner/specifications/blob/master/proposals/semantic-prompts.md
 func TestIgnorePromptHints(t *testing.T) {
 	// From an e-mail I got titled "moar question: "--RAW-CONTROL-CHARS" equivalent"
-	result := styledStringsFromString("\x1b]133;A\x1b\\hello", nil)
-	assert.Equal(t, twin.StyleDefault, result.trailer)
-	assert.Equal(t, 1, len(result.styledStrings))
-	assert.Equal(t, "hello", result.styledStrings[0].String)
-	assert.Equal(t, twin.StyleDefault, result.styledStrings[0].Style)
+	styledStrings, trailer := collectStyledStrings("\x1b]133;A\x1b\\hello")
+	assert.Equal(t, twin.StyleDefault, trailer)
+	assert.Equal(t, 1, len(styledStrings))
+	assert.Equal(t, "hello", styledStrings[0].String)
+	assert.Equal(t, twin.StyleDefault, styledStrings[0].Style)
 
 	// C rather than A, different end-of-sequence, should also be ignored
-	result = styledStringsFromString("\x1b]133;C\x07hello", nil)
-	assert.Equal(t, twin.StyleDefault, result.trailer)
-	assert.Equal(t, 1, len(result.styledStrings))
-	assert.Equal(t, "hello", result.styledStrings[0].String)
-	assert.Equal(t, twin.StyleDefault, result.styledStrings[0].Style)
+	styledStrings, trailer = collectStyledStrings("\x1b]133;C\x07hello")
+	assert.Equal(t, twin.StyleDefault, trailer)
+	assert.Equal(t, 1, len(styledStrings))
+	assert.Equal(t, "hello", styledStrings[0].String)
+	assert.Equal(t, twin.StyleDefault, styledStrings[0].Style)
 }
 
 // Unsure why colon separated colors exist, but the fact is that a number of
@@ -54,9 +62,9 @@ func TestIgnorePromptHints(t *testing.T) {
 // Johan got an e-mail titled "moar question: "--RAW-CONTROL-CHARS" equivalent"
 // about the sequence we're testing here.
 func TestColonColors(t *testing.T) {
-	result := styledStringsFromString("\x1b[38:5:238mhello", nil)
-	assert.Equal(t, twin.StyleDefault, result.trailer)
-	assert.Equal(t, 1, len(result.styledStrings))
-	assert.Equal(t, "hello", result.styledStrings[0].String)
-	assert.Equal(t, twin.StyleDefault.Foreground(twin.NewColor256(238)), result.styledStrings[0].Style)
+	styledStrings, trailer := collectStyledStrings("\x1b[38:5:238mhello")
+	assert.Equal(t, twin.StyleDefault, trailer)
+	assert.Equal(t, 1, len(styledStrings))
+	assert.Equal(t, "hello", styledStrings[0].String)
+	assert.Equal(t, twin.StyleDefault.Foreground(twin.NewColor256(238)), styledStrings[0].Style)
 }
