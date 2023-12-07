@@ -19,7 +19,7 @@ func testHorizontalCropping(t *testing.T, contents string, firstIndex int, lastI
 	pager.scrollPosition = newScrollPosition("testHorizontalCropping")
 
 	lineContents := NewLine(contents)
-	screenLine, didOverflow := pager.renderLine(&lineContents, 0, pager.scrollPosition.internalDontTouch)
+	screenLine, didOverflow := pager.renderLine(lineContents, 0, pager.scrollPosition.internalDontTouch)
 	assert.Equal(t, rowToString(screenLine[0].cells), expected)
 	assert.Equal(t, didOverflow, expectedOverflow)
 }
@@ -67,15 +67,13 @@ func TestEmpty(t *testing.T) {
 
 // Repro case for a search bug discovered in v1.9.8.
 func TestSearchHighlight(t *testing.T) {
-	line := Line{
-		raw: "x\"\"x",
-	}
+	line := NewLine("x\"\"x")
 	pager := Pager{
 		screen:        twin.NewFakeScreen(100, 10),
 		searchPattern: regexp.MustCompile("\""),
 	}
 
-	rendered, overflow := pager.renderLine(&line, 1, pager.scrollPosition.internalDontTouch)
+	rendered, overflow := pager.renderLine(line, 1, pager.scrollPosition.internalDontTouch)
 	assert.DeepEqual(t, []renderedLine{
 		{
 			inputLineOneBased: 1,

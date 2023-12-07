@@ -199,7 +199,7 @@ func (reader *Reader) readStream(stream io.Reader, originalFileName *string, fro
 			reader.Unlock()
 			break
 		}
-		reader.lines = append(reader.lines, &newLine)
+		reader.lines = append(reader.lines, newLine)
 		reader.Unlock()
 		completeLine = completeLine[:0]
 
@@ -280,7 +280,7 @@ func NewReaderFromText(name string, text string) *Reader {
 	if len(noExternalNewlines) > 0 {
 		for _, lineString := range strings.Split(noExternalNewlines, "\n") {
 			line := NewLine(lineString)
-			lines = append(lines, &line)
+			lines = append(lines, line)
 		}
 	}
 	done := atomic.Bool{}
@@ -583,7 +583,7 @@ func (reader *Reader) setText(text string) {
 	lines := []*Line{}
 	for _, lineString := range strings.Split(text, "\n") {
 		line := NewLine(lineString)
-		lines = append(lines, &line)
+		lines = append(lines, line)
 	}
 
 	if len(lines) > 0 && strings.HasSuffix(text, "\n") {

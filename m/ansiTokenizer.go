@@ -6,6 +6,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"sync"
 
 	"github.com/walles/moar/twin"
 )
@@ -21,8 +22,10 @@ var unprintableStyle UnprintableStyle = UNPRINTABLE_STYLE_HIGHLIGHT
 
 // A Line represents a line of text that can / will be paged
 type Line struct {
-	raw   string
-	plain *string
+	raw string
+
+	plainLock sync.Mutex
+	plain     *string
 }
 
 type cellsWithTrailer struct {
@@ -31,11 +34,22 @@ type cellsWithTrailer struct {
 }
 
 // NewLine creates a new Line from a (potentially ANSI / man page formatted) string
-func NewLine(raw string) Line {
-	return Line{
-		raw:   raw,
-		plain: nil,
+func NewLine(raw string) *Line {
+	line := Line{
+		raw: raw,
 	}
+
+	line.plainLock.Lock()
+	go func() {
+		defer line.plainLock.Unlock()
+
+		// FIXME: Pass in a line number for diagnostics?
+
+		plain := withoutFormatting(raw, nil)
+		line.plain = &plain
+	}()
+
+	return &line
 }
 
 // Returns a representation of the string split into styled tokens. Any regexp
@@ -70,9 +84,11 @@ func (line *Line) HighlightedTokens(linePrefix string, search *regexp.Regexp, li
 
 // Plain returns a plain text representation of the initial string
 func (line *Line) Plain(lineNumberOneBased *int) string {
+	line.plainLock.Lock()
+	defer line.plainLock.Unlock()
+
 	if line.plain == nil {
-		plain := withoutFormatting(line.raw, lineNumberOneBased)
-		line.plain = &plain
+		panic("line.plain not initialized, should have happened in NewLine()")
 	}
 	return *line.plain
 }
