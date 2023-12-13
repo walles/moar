@@ -142,7 +142,9 @@ func (current Style) RenderUpdateFrom(previous Style) string {
 		// Shortcut for the common case
 		return ""
 	}
-	if current == StyleDefault {
+
+	hadHyperlink := previous.hyperlinkUrl != nil && *previous.hyperlinkUrl != ""
+	if current == StyleDefault && !hadHyperlink {
 		return "\x1b[m"
 	}
 

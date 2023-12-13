@@ -197,3 +197,20 @@ func TestRenderLineNonPrintable(t *testing.T) {
 		strings.ReplaceAll(rendered, "", "ESC"),
 		strings.ReplaceAll(reset+white+redBg+bold+"?"+reset+clearToEol, "", "ESC"))
 }
+
+func TestRenderHyperlinkAtEndOfLine(t *testing.T) {
+	url := "https://example.com/"
+	row := []Cell{
+		{
+			Rune:  '*',
+			Style: StyleDefault.WithHyperlink(&url),
+		},
+	}
+
+	rendered, count := renderLine(row)
+	assert.Equal(t, count, 1)
+
+	assert.Equal(t,
+		strings.ReplaceAll(rendered, "", "ESC"),
+		`ESC[mESC]8;;`+url+`ESC\*ESC]8;;ESC\ESC[K`)
+}
