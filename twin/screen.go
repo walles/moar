@@ -107,7 +107,7 @@ func NewScreen() (Screen, error) {
 		return nil, fmt.Errorf("problem setting up TTY: %w", err)
 	}
 	screen.setAlternateScreenMode(true)
-	screen.enableMouseTracking(true)
+	screen.enableMouseTracking(shouldEnableMouseTracking())
 	screen.hideCursor(true)
 
 	go screen.mainLoop()
@@ -161,6 +161,46 @@ func (screen *UnixScreen) hideCursor(hide bool) {
 	} else {
 		screen.write("\x1b[?25h")
 	}
+}
+
+// Some terminals convert mouse events to key events making scrolling better
+// without our built-in mouse support, and some do not.
+//
+// For those that do, we're better off without mouse tracking.
+//
+// See also: https://github.com/walles/moar/issues/53
+func shouldEnableMouseTracking() bool {
+	// Untested:
+	// * Konsole
+	// * https://github.com/gnome-terminator/terminator
+	// * https://gnunn1.github.io/tilix-web/
+	// * The Windows terminal
+
+	// Better off with mouse tracking:
+	// * iTerm2
+	// * Terminal.app
+
+	// Hyper, tested on macOS, December 14th 2023
+	if os.Getenv("TERM_PROGRAM") == "Hyper" {
+		return true
+	}
+
+	// Kitty, tested on macOS, December 14th 2023
+	if os.Getenv("KITTY_WINDOW_ID") != "" {
+		return true
+	}
+
+	// Alacritty, tested on macOS, December 14th 2023
+	if os.Getenv("ALACRITTY_WINDOW_ID") != "" {
+		return true
+	}
+
+	// Warp, tested on macOS, December 14th 2023
+	if os.Getenv("TERM_PROGRAM") == "WarpTerminal" {
+		return true
+	}
+
+	return false
 }
 
 func (screen *UnixScreen) enableMouseTracking(enable bool) {
