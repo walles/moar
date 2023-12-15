@@ -223,6 +223,19 @@ func parseShiftAmount(shiftAmount string) (uint, error) {
 	return uint(value), nil
 }
 
+func parseMouseMode(mouseMode string) (twin.MouseMode, error) {
+	switch mouseMode {
+	case "auto":
+		return twin.MouseModeAuto, nil
+	case "mark":
+		return twin.MouseModeMark, nil
+	case "scroll":
+		return twin.MouseModeScroll, nil
+	}
+
+	return twin.MouseModeAuto, fmt.Errorf("Valid modes are auto, mark and scroll")
+}
+
 func pumpToStdout(inputFilename *string) error {
 	if inputFilename != nil {
 		// If we get both redirected stdin and an input filename, we must prefer
@@ -373,6 +386,13 @@ func main() {
 		twin.NewCell('>', twin.StyleDefault.WithAttr(twin.AttrReverse)),
 		"Shown when view can scroll right. One character with optional ANSI highlighting.", parseScrollHint)
 	shift := flagSetFunc(flagSet, "shift", 16, "Horizontal scroll amount >=1, defaults to 16", parseShiftAmount)
+	mouseMode := flagSetFunc(
+		flagSet,
+		"mousemode",
+		twin.MouseModeAuto,
+		"Mouse mode: auto, mark or scroll: https://github.com/walles/moar/blob/master/MOUSE.md",
+		parseMouseMode,
+	)
 
 	// Combine flags from environment and from command line
 	flags := os.Args[1:]
@@ -462,7 +482,7 @@ func main() {
 		panic("Invariant broken: stdout is not a terminal")
 	}
 
-	screen, err := twin.NewScreen()
+	screen, err := twin.NewScreenWithMouseMode(*mouseMode)
 	if err != nil {
 		// Ref: https://github.com/walles/moar/issues/149
 		log.Debug("Failed to set up screen for paging, pumping to stdout instead: ", err)
