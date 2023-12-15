@@ -12,6 +12,21 @@ import (
 	"golang.org/x/term"
 )
 
+type MouseMode int
+
+const (
+	MouseModeAuto MouseMode = iota
+
+	// Don't capture mouse events. This makes marking with the mouse work. On
+	// some terminals mouse scrolling will work using arrow keys emulation, and
+	// on some not.
+	MouseModeMark
+
+	// Capture mouse events. This makes mouse scrolling work. Special gymnastics
+	// will be required for marking with the mouse to copy text.
+	MouseModeScroll
+)
+
 type Screen interface {
 	// Close() restores terminal to normal state, must be called after you are
 	// done with your screen
@@ -79,9 +94,13 @@ type UnixScreen struct {
 // * "M" marks the end of the mouse event.
 var MOUSE_EVENT_REGEX = regexp.MustCompile("^\x1b\\[<([0-9]+);([0-9]+);([0-9]+)M")
 
+func NewScreen() (Screen, error) {
+	return NewScreenWithMouseMode(MouseModeAuto)
+}
+
 // NewScreen() requires Close() to be called after you are done with your new
 // screen, most likely somewhere in your shutdown code.
-func NewScreen() (Screen, error) {
+func NewScreenWithMouseMode(mouseMode MouseMode) (Screen, error) {
 	if !term.IsTerminal(int(os.Stdout.Fd())) {
 		return nil, fmt.Errorf("stdout (fd=%d) must be a terminal for paging to work", os.Stdout.Fd())
 	}
@@ -107,7 +126,17 @@ func NewScreen() (Screen, error) {
 		return nil, fmt.Errorf("problem setting up TTY: %w", err)
 	}
 	screen.setAlternateScreenMode(true)
-	screen.enableMouseTracking(true)
+
+	if mouseMode == MouseModeAuto {
+		screen.enableMouseTracking(!terminalHasArrowKeysEmulation())
+	} else if mouseMode == MouseModeMark {
+		screen.enableMouseTracking(false)
+	} else if mouseMode == MouseModeScroll {
+		screen.enableMouseTracking(true)
+	} else {
+		panic(fmt.Errorf("unknown mouse mode: %d", mouseMode))
+	}
+
 	screen.hideCursor(true)
 
 	go screen.mainLoop()
@@ -161,6 +190,51 @@ func (screen *UnixScreen) hideCursor(hide bool) {
 	} else {
 		screen.write("\x1b[?25h")
 	}
+}
+
+// Some terminals convert mouse events to key events making scrolling better
+// without our built-in mouse support, and some do not.
+//
+// For those that do, we're better off without mouse tracking.
+//
+// To test your terminal, run with `moar --mousemode=mark` and see if mouse
+// scrolling still works (both down and then back up to the top). If it does,
+// add another check to this function!
+//
+// See also: https://github.com/walles/moar/issues/53
+func terminalHasArrowKeysEmulation() bool {
+	// Untested:
+	// * https://codeberg.org/dnkl/foot
+	// * Konsole
+	// * https://github.com/gnome-terminator/terminator
+	// * https://gnunn1.github.io/tilix-web/
+	// * The Windows terminal
+
+	// Better off with mouse tracking:
+	// * iTerm2
+	// * Terminal.app
+
+	// Hyper, tested on macOS, December 14th 2023
+	if os.Getenv("TERM_PROGRAM") == "Hyper" {
+		return true
+	}
+
+	// Kitty, tested on macOS, December 14th 2023
+	if os.Getenv("KITTY_WINDOW_ID") != "" {
+		return true
+	}
+
+	// Alacritty, tested on macOS, December 14th 2023
+	if os.Getenv("ALACRITTY_WINDOW_ID") != "" {
+		return true
+	}
+
+	// Warp, tested on macOS, December 14th 2023
+	if os.Getenv("TERM_PROGRAM") == "WarpTerminal" {
+		return true
+	}
+
+	return false
 }
 
 func (screen *UnixScreen) enableMouseTracking(enable bool) {
