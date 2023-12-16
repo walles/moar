@@ -38,6 +38,8 @@ Doing the right thing includes:
 - Renders [terminal
   hyperlinks](https://gist.github.com/egmontkob/eb114294efbcd5adb1944c9f3cb5feda)
   properly
+- **Mouse Scrolling** works out of the box (but
+  [look here for tradeoffs](https://github.com/walles/moar/blob/master/MOUSE.md))
 
 [For compatibility reasons](https://github.com/walles/moar/issues/14), `moar`
 uses the formats declared in these environment variables if present:

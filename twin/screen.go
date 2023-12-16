@@ -204,15 +204,11 @@ func (screen *UnixScreen) hideCursor(hide bool) {
 // See also: https://github.com/walles/moar/issues/53
 func terminalHasArrowKeysEmulation() bool {
 	// Untested:
-	// * https://codeberg.org/dnkl/foot
-	// * Konsole
-	// * https://github.com/gnome-terminator/terminator
-	// * https://gnunn1.github.io/tilix-web/
 	// * The Windows terminal
 
 	// Better off with mouse tracking:
-	// * iTerm2
-	// * Terminal.app
+	// * iTerm2 (macOS)
+	// * Terminal.app (macOS)
 
 	// Hyper, tested on macOS, December 14th 2023
 	if os.Getenv("TERM_PROGRAM") == "Hyper" {
@@ -231,6 +227,33 @@ func terminalHasArrowKeysEmulation() bool {
 
 	// Warp, tested on macOS, December 14th 2023
 	if os.Getenv("TERM_PROGRAM") == "WarpTerminal" {
+		return true
+	}
+
+	// GNOME Terminal, tested on Ubuntu 22.04, December 16th 2023
+	if os.Getenv("GNOME_TERMINAL_SCREEN") != "" {
+		return true
+	}
+
+	// Tilix, tested on Ubuntu 22.04, December 16th 2023
+	if os.Getenv("TILIX_ID") != "" {
+		return true
+	}
+
+	// Konsole, tested on Ubuntu 22.04, December 16th 2023
+	if os.Getenv("KONSOLE_VERSION") != "" {
+		return true
+	}
+
+	// Terminator, tested on Ubuntu 22.04, December 16th 2023
+	if os.Getenv("TERMINATOR_UUID") != "" {
+		return true
+	}
+
+	// Foot, tested on Ubuntu 22.04, December 16th 2023
+	if os.Getenv("TERM") == "foot" {
+		// Note that this test isn't very good, somebody could be running Foot
+		// with some other TERM setting. Other suggestions welcome.
 		return true
 	}
 

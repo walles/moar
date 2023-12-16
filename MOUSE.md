@@ -22,6 +22,7 @@ other terminals will send nothing, making scrolling not work.
 ## Text Marking Workarounds in `scroll` Mode
 
 - **Alacritty**: Use use <kbd>shift</kbd> + mouse selection to make it work. Cred to @chrisgrieser for this tip.
+- **Foot**: Use use <kbd>shift</kbd> + mouse selection to make it work. Cred to @postsolar for this tip.
 - **Hyper** on macOS: Set `macOptionSelectionMode: 'force'` in your config file, then hold the Option Key <kbd>⌥</kbd> while marking
 - **iTerm**: Preferences / Profiles / Default / Terminal / uncheck "Report mouse clicks & drags"
 - macOS **Terminal** on a laptop: Hold down the <kbd>fn</kbd> key while marking with the mouse
