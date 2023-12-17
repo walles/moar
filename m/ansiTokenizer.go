@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/alecthomas/chroma/v2"
 	"github.com/walles/moar/twin"
 )
 
@@ -91,11 +92,11 @@ func setStyle(updateMe *twin.Style, envVarName string, fallback *twin.Style) {
 
 // ConsumeLessTermcapEnvs parses LESS_TERMCAP_xx environment variables and
 // adapts the moar output accordingly.
-func ConsumeLessTermcapEnvs() {
+func ConsumeLessTermcapEnvs(chromaStyle *chroma.Style, chromaFormatter *chroma.Formatter) {
 	// Requested here: https://github.com/walles/moar/issues/14
 
-	setStyle(&manPageBold, "LESS_TERMCAP_md")
-	setStyle(&manPageUnderline, "LESS_TERMCAP_us")
+	setStyle(&manPageBold, "LESS_TERMCAP_md", twinStyleFromChroma(chromaStyle, chromaFormatter, chroma.GenericStrong))
+	setStyle(&manPageUnderline, "LESS_TERMCAP_us", twinStyleFromChroma(chromaStyle, chromaFormatter, chroma.GenericUnderline))
 	setStyle(standoutStyle, "LESS_TERMCAP_so", nil)
 }
 

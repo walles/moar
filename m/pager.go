@@ -482,7 +482,7 @@ func (p *Pager) StartPaging(screen twin.Screen) {
 	}()
 
 	unprintableStyle = p.UnprintableStyle
-	ConsumeLessTermcapEnvs()
+	ConsumeLessTermcapEnvs(p.ChromaStyle, p.ChromaFormatter)
 
 	p.screen = screen
 	p.initStyle()
