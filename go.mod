@@ -3,7 +3,7 @@ module github.com/walles/moar
 go 1.20
 
 require (
-	github.com/alecthomas/chroma/v2 v2.9.1
+	github.com/alecthomas/chroma/v2 v2.12.0
 	github.com/google/go-cmp v0.5.9
 	github.com/sirupsen/logrus v1.8.1
 	golang.org/x/sys v0.1.0

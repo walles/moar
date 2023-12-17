@@ -454,12 +454,7 @@ func (p *Pager) initStyle() {
 
 	stringBuilder := strings.Builder{}
 	err := (*p.ChromaFormatter).Format(&stringBuilder, p.ChromaStyle, chroma.Literator(chroma.Token{
-		// FIXME: They Type here should really be None. "Background" is a
-		// workaround until we can bump Chroma to a release with this change in
-		// it:
-		// https://github.com/alecthomas/chroma/pull/869
-		Type: chroma.Background,
-
+		Type:  chroma.None,
 		Value: "XXX",
 	}))
 	if err != nil {
