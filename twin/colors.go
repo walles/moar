@@ -171,12 +171,15 @@ func (color Color) downsampleTo(terminalColorCount ColorType) Color {
 	}
 
 	// Convert existing color to 24 bit
-	var color24bit Color
+	var targetR float64
+	var targetG float64
+	var targetB float64
 	if color.colorType() == ColorType24bit {
-		color24bit = color
+		targetR = float64(color.colorValue()>>16) / 255.0
+		targetG = float64(color.colorValue()>>8&0xff) / 255.0
+		targetB = float64(color.colorValue()&0xff) / 255.0
 	} else {
-		r, g, b := color256ToRGB(uint8(color.colorValue()))
-		color24bit = NewColor24Bit(r, g, b)
+		targetR, targetG, targetB = color256ToRGB(uint8(color.colorValue()))
 	}
 
 	// FIXME: Find the closest match in the terminal color palette
@@ -196,9 +199,9 @@ func (color Color) downsampleTo(terminalColorCount ColorType) Color {
 	bestMatch := 0
 	bestDistance := math.MaxFloat64
 	target := colorful.Color{
-		R: float64(color24bit.colorValue()>>16) / 255.0,
-		G: float64(color24bit.colorValue()>>8&0xff) / 255.0,
-		B: float64(color24bit.colorValue()&0xff) / 255.0,
+		R: targetR,
+		G: targetG,
+		B: targetB,
 	}
 	for i := 0; i <= scanRange; i++ {
 		r, g, b := color256ToRGB(uint8(i))

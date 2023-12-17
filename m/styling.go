@@ -83,9 +83,6 @@ func backgroundStyleFromChroma(chromaStyle *chroma.Style) *twin.Style {
 		returnMe = returnMe.WithAttr(twin.AttrUnderline)
 	}
 
-	// FIXME: For this to work we need to be able to render 24 bit colors on 256
-	// or fewer color terminals.
-
 	return &returnMe
 }
 
