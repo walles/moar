@@ -7,6 +7,8 @@ import (
 	"strconv"
 	"strings"
 
+	log "github.com/sirupsen/logrus"
+
 	"github.com/alecthomas/chroma/v2"
 	"github.com/walles/moar/twin"
 )
@@ -88,6 +90,30 @@ func setStyle(updateMe *twin.Style, envVarName string, fallback *twin.Style) {
 	}
 
 	*updateMe = termcapToStyle(envValue)
+}
+
+func twinStyleFromChroma(chromaStyle *chroma.Style, chromaFormatter *chroma.Formatter, chromaToken chroma.TokenType) *twin.Style {
+	if chromaStyle == nil || chromaFormatter == nil {
+		return nil
+	}
+
+	stringBuilder := strings.Builder{}
+	err := (*chromaFormatter).Format(&stringBuilder, chromaStyle, chroma.Literator(chroma.Token{
+		Type:  chromaToken,
+		Value: "X",
+	}))
+	if err != nil {
+		panic(err)
+	}
+
+	formatted := stringBuilder.String()
+	cells := cellsFromString(formatted, nil).Cells
+	if len(cells) != 1 {
+		log.Warnf("Chroma formatter didn't return exactly one cell: %#v", cells)
+		return nil
+	}
+
+	return &cells[0].Style
 }
 
 // ConsumeLessTermcapEnvs parses LESS_TERMCAP_xx environment variables and
