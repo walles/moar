@@ -77,9 +77,12 @@ func (line *Line) Plain(lineNumberOneBased *int) string {
 	return *line.plain
 }
 
-func setStyleFromEnv(updateMe *twin.Style, envVarName string) {
+func setStyle(updateMe *twin.Style, envVarName string, fallback *twin.Style) {
 	envValue := os.Getenv(envVarName)
 	if envValue == "" {
+		if fallback != nil {
+			*updateMe = *fallback
+		}
 		return
 	}
 
@@ -91,9 +94,9 @@ func setStyleFromEnv(updateMe *twin.Style, envVarName string) {
 func ConsumeLessTermcapEnvs() {
 	// Requested here: https://github.com/walles/moar/issues/14
 
-	setStyleFromEnv(&manPageBold, "LESS_TERMCAP_md")
-	setStyleFromEnv(&manPageUnderline, "LESS_TERMCAP_us")
-	setStyleFromEnv(standoutStyle, "LESS_TERMCAP_so")
+	setStyle(&manPageBold, "LESS_TERMCAP_md")
+	setStyle(&manPageUnderline, "LESS_TERMCAP_us")
+	setStyle(standoutStyle, "LESS_TERMCAP_so", nil)
 }
 
 func termcapToStyle(termcap string) twin.Style {
