@@ -55,6 +55,40 @@ func twinStyleFromChroma(chromaStyle *chroma.Style, chromaFormatter *chroma.Form
 	return &cells[0].Style
 }
 
+func backgroundStyleFromChroma(chromaStyle *chroma.Style) *twin.Style {
+	if chromaStyle == nil {
+		return nil
+	}
+
+	backgroundEntry := chromaStyle.Get(chroma.Background)
+	returnMe := twin.StyleDefault.
+		Background(twin.NewColor24Bit(
+			backgroundEntry.Background.Red(),
+			backgroundEntry.Background.Green(),
+			backgroundEntry.Background.Blue(),
+		)).
+		Foreground(twin.NewColor24Bit(
+			backgroundEntry.Colour.Red(),
+			backgroundEntry.Colour.Green(),
+			backgroundEntry.Colour.Blue(),
+		))
+
+	if backgroundEntry.Bold == chroma.Yes {
+		returnMe = returnMe.WithAttr(twin.AttrBold)
+	}
+	if backgroundEntry.Italic == chroma.Yes {
+		returnMe = returnMe.WithAttr(twin.AttrItalic)
+	}
+	if backgroundEntry.Underline == chroma.Yes {
+		returnMe = returnMe.WithAttr(twin.AttrUnderline)
+	}
+
+	// FIXME: For this to work we need to be able to render 24 bit colors on 256
+	// or fewer color terminals.
+
+	return &returnMe
+}
+
 // consumeLessTermcapEnvs parses LESS_TERMCAP_xx environment variables and
 // adapts the moar output accordingly.
 func consumeLessTermcapEnvs(chromaStyle *chroma.Style, chromaFormatter *chroma.Formatter) {
@@ -81,9 +115,9 @@ func styleUi(chromaStyle *chroma.Style, chromaFormatter *chroma.Formatter, statu
 	if standoutStyle != nil {
 		statusbarStyle = *standoutStyle
 	} else if statusbarOption == STATUSBAR_STYLE_INVERSE {
-		plain := twinStyleFromChroma(chromaStyle, chromaFormatter, chroma.None)
-		if plain != nil {
-			statusbarStyle = plain.WithAttr(twin.AttrReverse)
+		inverse := backgroundStyleFromChroma(chromaStyle)
+		if inverse != nil {
+			statusbarStyle = *inverse
 		} else {
 			statusbarStyle = twin.StyleDefault.WithAttr(twin.AttrReverse)
 		}
