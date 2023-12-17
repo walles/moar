@@ -190,7 +190,7 @@ func parseColorsOption(colorsOption string) (twin.ColorType, error) {
 	return noColor, fmt.Errorf("Valid counts are 8, 16, 256, 16M or auto.")
 }
 
-func parseStatusBarStyle(styleOption string) (m.StatusBarStyle, error) {
+func parseStatusBarStyle(styleOption string) (m.StatusBarOption, error) {
 	if styleOption == "inverse" {
 		return m.STATUSBAR_STYLE_INVERSE, nil
 	}

@@ -21,15 +21,13 @@ const (
 	_GotoLine
 )
 
-type StatusBarStyle int
+type StatusBarOption int
 
 const (
-	STATUSBAR_STYLE_INVERSE StatusBarStyle = iota
+	STATUSBAR_STYLE_INVERSE StatusBarOption = iota
 	STATUSBAR_STYLE_PLAIN
 	STATUSBAR_STYLE_BOLD
 )
-
-var _statusbarStyle = twin.StyleDefault.WithAttr(twin.AttrReverse)
 
 // How do we render unprintable characters?
 type UnprintableStyle int
@@ -38,6 +36,8 @@ const (
 	UNPRINTABLE_STYLE_HIGHLIGHT UnprintableStyle = iota
 	UNPRINTABLE_STYLE_WHITESPACE
 )
+
+var unprintableStyle UnprintableStyle
 
 type eventSpinnerUpdate struct {
 	spinner string
@@ -48,9 +48,6 @@ type eventMoreLinesAvailable struct{}
 // Either reading, highlighting or both are done. Check reader.Done() and
 // reader.HighlightingDone() for details.
 type eventMaybeDone struct{}
-
-// Styling of line numbers
-var _numberStyle = twin.StyleDefault.WithAttr(twin.AttrDim)
 
 // Pager is the main on-screen pager
 type Pager struct {
@@ -74,7 +71,7 @@ type Pager struct {
 	// NewPager shows lines by default, this field can hide them
 	ShowLineNumbers bool
 
-	StatusBarStyle StatusBarStyle
+	StatusBarStyle StatusBarOption
 	ShowStatusBar  bool
 
 	UnprintableStyle UnprintableStyle
@@ -203,12 +200,12 @@ func (p *Pager) setFooter(footer string) {
 
 	pos := 0
 	for _, token := range footer {
-		p.screen.SetCell(pos, height-1, twin.NewCell(token, _statusbarStyle))
+		p.screen.SetCell(pos, height-1, twin.NewCell(token, statusbarStyle))
 		pos++
 	}
 
 	for ; pos < width; pos++ {
-		p.screen.SetCell(pos, height-1, twin.NewCell(' ', _statusbarStyle))
+		p.screen.SetCell(pos, height-1, twin.NewCell(' ', statusbarStyle))
 	}
 }
 

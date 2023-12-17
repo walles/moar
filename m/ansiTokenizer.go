@@ -2,25 +2,16 @@ package m
 
 import (
 	"fmt"
-	"os"
 	"regexp"
 	"strconv"
 	"strings"
 
-	log "github.com/sirupsen/logrus"
-
-	"github.com/alecthomas/chroma/v2"
 	"github.com/walles/moar/twin"
 )
 
 const _TabSize = 4
 
 const BACKSPACE = '\b'
-
-var manPageBold = twin.StyleDefault.WithAttr(twin.AttrBold)
-var manPageUnderline = twin.StyleDefault.WithAttr(twin.AttrUnderline)
-var standoutStyle *twin.Style = nil
-var unprintableStyle UnprintableStyle = UNPRINTABLE_STYLE_HIGHLIGHT
 
 // A Line represents a line of text that can / will be paged
 type Line struct {
@@ -78,84 +69,6 @@ func (line *Line) Plain(lineNumberOneBased *int) string {
 		line.plain = &plain
 	}
 	return *line.plain
-}
-
-func setStyle(updateMe *twin.Style, envVarName string, fallback *twin.Style) {
-	envValue := os.Getenv(envVarName)
-	if envValue == "" {
-		if fallback != nil {
-			*updateMe = *fallback
-		}
-		return
-	}
-
-	*updateMe = termcapToStyle(envValue)
-}
-
-func twinStyleFromChroma(chromaStyle *chroma.Style, chromaFormatter *chroma.Formatter, chromaToken chroma.TokenType) *twin.Style {
-	if chromaStyle == nil || chromaFormatter == nil {
-		return nil
-	}
-
-	stringBuilder := strings.Builder{}
-	err := (*chromaFormatter).Format(&stringBuilder, chromaStyle, chroma.Literator(chroma.Token{
-		Type:  chromaToken,
-		Value: "X",
-	}))
-	if err != nil {
-		panic(err)
-	}
-
-	formatted := stringBuilder.String()
-	cells := cellsFromString(formatted, nil).Cells
-	if len(cells) != 1 {
-		log.Warnf("Chroma formatter didn't return exactly one cell: %#v", cells)
-		return nil
-	}
-
-	return &cells[0].Style
-}
-
-// consumeLessTermcapEnvs parses LESS_TERMCAP_xx environment variables and
-// adapts the moar output accordingly.
-func consumeLessTermcapEnvs(chromaStyle *chroma.Style, chromaFormatter *chroma.Formatter) {
-	// Requested here: https://github.com/walles/moar/issues/14
-
-	setStyle(&manPageBold, "LESS_TERMCAP_md", twinStyleFromChroma(chromaStyle, chromaFormatter, chroma.GenericStrong))
-	setStyle(&manPageUnderline, "LESS_TERMCAP_us", twinStyleFromChroma(chromaStyle, chromaFormatter, chroma.GenericUnderline))
-	setStyle(standoutStyle, "LESS_TERMCAP_so", nil)
-}
-
-func styleUi(chromaStyle *chroma.Style, chromaFormatter *chroma.Formatter, statusbarStyle StatusBarStyle) {
-	if chromaStyle == nil || chromaFormatter == nil {
-		return
-	}
-
-	lineNumberStyle := twinStyleFromChroma(chromaStyle, chromaFormatter, chroma.LineNumbers)
-	if lineNumberStyle != nil {
-		// If somebody can provide an example where not-dimmed line numbers
-		// looks good I'll change this, but until then they will be dimmed no
-		// matter what the theme authors think.
-		_numberStyle = lineNumberStyle.WithAttr(twin.AttrDim)
-	}
-
-	if standoutStyle != nil {
-		_statusbarStyle = *standoutStyle
-	} else if statusbarStyle == STATUSBAR_STYLE_INVERSE {
-		_statusbarStyle = twin.StyleDefault.WithAttr(twin.AttrReverse)
-	} else if statusbarStyle == STATUSBAR_STYLE_PLAIN {
-		_statusbarStyle = twin.StyleDefault
-	} else if statusbarStyle == STATUSBAR_STYLE_BOLD {
-		_statusbarStyle = twin.StyleDefault.WithAttr(twin.AttrBold)
-	} else {
-		panic(fmt.Sprint("Unrecognized status bar style: ", statusbarStyle))
-	}
-}
-
-func termcapToStyle(termcap string) twin.Style {
-	// Add a character to be sure we have one to take the format from
-	cells := cellsFromString(termcap+"x", nil).Cells
-	return cells[len(cells)-1].Style
 }
 
 func isPlain(s string) bool {
