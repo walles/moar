@@ -477,7 +477,8 @@ func (p *Pager) StartPaging(screen twin.Screen, chromaStyle *chroma.Style, chrom
 	}()
 
 	unprintableStyle = p.UnprintableStyle
-	ConsumeLessTermcapEnvs(chromaStyle, chromaFormatter)
+	consumeLessTermcapEnvs(chromaStyle, chromaFormatter)
+	styleUi(chromaStyle, chromaFormatter)
 
 	p.screen = screen
 	p.linePrefix = getLineColorPrefix(chromaStyle, chromaFormatter)
