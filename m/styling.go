@@ -81,11 +81,26 @@ func styleUi(chromaStyle *chroma.Style, chromaFormatter *chroma.Formatter, statu
 	if standoutStyle != nil {
 		statusbarStyle = *standoutStyle
 	} else if statusbarOption == STATUSBAR_STYLE_INVERSE {
-		statusbarStyle = twin.StyleDefault.WithAttr(twin.AttrReverse)
+		plain := twinStyleFromChroma(chromaStyle, chromaFormatter, chroma.None)
+		if plain != nil {
+			statusbarStyle = plain.WithAttr(twin.AttrReverse)
+		} else {
+			statusbarStyle = twin.StyleDefault.WithAttr(twin.AttrReverse)
+		}
 	} else if statusbarOption == STATUSBAR_STYLE_PLAIN {
-		statusbarStyle = twin.StyleDefault
+		plain := twinStyleFromChroma(chromaStyle, chromaFormatter, chroma.None)
+		if plain != nil {
+			statusbarStyle = *plain
+		} else {
+			statusbarStyle = twin.StyleDefault
+		}
 	} else if statusbarOption == STATUSBAR_STYLE_BOLD {
-		statusbarStyle = twin.StyleDefault.WithAttr(twin.AttrBold)
+		bold := twinStyleFromChroma(chromaStyle, chromaFormatter, chroma.GenericStrong)
+		if bold != nil {
+			statusbarStyle = *bold
+		} else {
+			statusbarStyle = twin.StyleDefault.WithAttr(twin.AttrBold)
+		}
 	} else {
 		panic(fmt.Sprint("Unrecognized status bar style: ", statusbarOption))
 	}
