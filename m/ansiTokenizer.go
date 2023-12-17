@@ -7,6 +7,9 @@ import (
 	"strconv"
 	"strings"
 
+	log "github.com/sirupsen/logrus"
+
+	"github.com/alecthomas/chroma/v2"
 	"github.com/walles/moar/twin"
 )
 
@@ -77,28 +80,50 @@ func (line *Line) Plain(lineNumberOneBased *int) string {
 	return *line.plain
 }
 
-func setStyleFromEnv(updateMe *twin.Style, envVarName string) {
+func setStyle(updateMe *twin.Style, envVarName string, fallback *twin.Style) {
 	envValue := os.Getenv(envVarName)
 	if envValue == "" {
+		if fallback != nil {
+			*updateMe = *fallback
+		}
 		return
 	}
 
 	*updateMe = termcapToStyle(envValue)
 }
 
+func twinStyleFromChroma(chromaStyle *chroma.Style, chromaFormatter *chroma.Formatter, chromaToken chroma.TokenType) *twin.Style {
+	if chromaStyle == nil || chromaFormatter == nil {
+		return nil
+	}
+
+	stringBuilder := strings.Builder{}
+	err := (*chromaFormatter).Format(&stringBuilder, chromaStyle, chroma.Literator(chroma.Token{
+		Type:  chromaToken,
+		Value: "X",
+	}))
+	if err != nil {
+		panic(err)
+	}
+
+	formatted := stringBuilder.String()
+	cells := cellsFromString(formatted, nil).Cells
+	if len(cells) != 1 {
+		log.Warnf("Chroma formatter didn't return exactly one cell: %#v", cells)
+		return nil
+	}
+
+	return &cells[0].Style
+}
+
 // ConsumeLessTermcapEnvs parses LESS_TERMCAP_xx environment variables and
 // adapts the moar output accordingly.
-func ConsumeLessTermcapEnvs() {
+func ConsumeLessTermcapEnvs(chromaStyle *chroma.Style, chromaFormatter *chroma.Formatter) {
 	// Requested here: https://github.com/walles/moar/issues/14
 
-	setStyleFromEnv(&manPageBold, "LESS_TERMCAP_md")
-	setStyleFromEnv(&manPageUnderline, "LESS_TERMCAP_us")
-
-	value := os.Getenv("LESS_TERMCAP_so")
-	if value != "" {
-		_standoutStyle := termcapToStyle(value)
-		standoutStyle = &_standoutStyle
-	}
+	setStyle(&manPageBold, "LESS_TERMCAP_md", twinStyleFromChroma(chromaStyle, chromaFormatter, chroma.GenericStrong))
+	setStyle(&manPageUnderline, "LESS_TERMCAP_us", twinStyleFromChroma(chromaStyle, chromaFormatter, chroma.GenericUnderline))
+	setStyle(standoutStyle, "LESS_TERMCAP_so", nil)
 }
 
 func termcapToStyle(termcap string) twin.Style {
