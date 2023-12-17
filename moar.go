@@ -500,7 +500,7 @@ func main() {
 		panic("Invariant broken: stdout is not a terminal")
 	}
 
-	screen, err := twin.NewScreenWithMouseMode(*mouseMode)
+	screen, err := twin.NewScreenWithMouseModeAndColorType(*mouseMode, *terminalColorsCount)
 	if err != nil {
 		// Ref: https://github.com/walles/moar/issues/149
 		log.Debug("Failed to set up screen for paging, pumping to stdout instead: ", err)

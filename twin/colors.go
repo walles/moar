@@ -1,6 +1,8 @@
 package twin
 
-import "fmt"
+import (
+	"fmt"
+)
 
 // Create using NewColor16(), NewColor256 or NewColor24Bit(), or use
 // ColorDefault.
@@ -83,7 +85,8 @@ func (color Color) colorValue() uint32 {
 // Render color into an ANSI string.
 //
 // Ref: https://en.wikipedia.org/wiki/ANSI_escape_code#SGR_(Select_Graphic_Rendition)_parameters
-func (color Color) ansiString(foreground bool) string {
+func (color Color) ansiString(foreground bool, terminalColorCount ColorType) string {
+	// FIXME: Downsample colors to at most terminalColorCount colors as needed.
 	value := color.colorValue()
 
 	fgBgMarker := "3"
@@ -124,14 +127,14 @@ func (color Color) ansiString(foreground bool) string {
 	panic(fmt.Errorf("unhandled color type=%d value=%#x", color.colorType(), value))
 }
 
-func (color Color) ForegroundAnsiString() string {
+func (color Color) ForegroundAnsiString(terminalColorCount ColorType) string {
 	// FIXME: Test this function with all different color types.
-	return color.ansiString(true)
+	return color.ansiString(true, terminalColorCount)
 }
 
-func (color Color) BackgroundAnsiString() string {
+func (color Color) BackgroundAnsiString(terminalColorCount ColorType) string {
 	// FIXME: Test this function with all different color types.
-	return color.ansiString(false)
+	return color.ansiString(false, terminalColorCount)
 }
 
 func (color Color) String() string {

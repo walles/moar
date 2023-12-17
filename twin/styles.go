@@ -137,7 +137,7 @@ func (style Style) Foreground(color Color) Style {
 
 // Emit an ANSI escape sequence switching from a previous style to the current
 // one.
-func (current Style) RenderUpdateFrom(previous Style) string {
+func (current Style) RenderUpdateFrom(previous Style, terminalColorCount ColorType) string {
 	if current == previous {
 		// Shortcut for the common case
 		return ""
@@ -150,11 +150,11 @@ func (current Style) RenderUpdateFrom(previous Style) string {
 
 	var builder strings.Builder
 	if current.fg != previous.fg {
-		builder.WriteString(current.fg.ForegroundAnsiString())
+		builder.WriteString(current.fg.ForegroundAnsiString(terminalColorCount))
 	}
 
 	if current.bg != previous.bg {
-		builder.WriteString(current.bg.BackgroundAnsiString())
+		builder.WriteString(current.bg.BackgroundAnsiString(terminalColorCount))
 	}
 
 	// Handle AttrDim / AttrBold changes
