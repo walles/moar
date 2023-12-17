@@ -166,7 +166,7 @@ func parseStyleOption(styleOption string) (chroma.Style, error) {
 	return *style, nil
 }
 
-func parseColorsOption(colorsOption string) (chroma.Formatter, error) {
+func parseColorsOption(colorsOption string) (twin.ColorType, error) {
 	if strings.ToLower(colorsOption) == "auto" {
 		colorsOption = "16M"
 		if strings.Contains(os.Getenv("TERM"), "256") {
@@ -177,16 +177,17 @@ func parseColorsOption(colorsOption string) (chroma.Formatter, error) {
 
 	switch strings.ToUpper(colorsOption) {
 	case "8":
-		return formatters.TTY8, nil
+		return twin.ColorType8, nil
 	case "16":
-		return formatters.TTY16, nil
+		return twin.ColorType16, nil
 	case "256":
-		return formatters.TTY256, nil
+		return twin.ColorType256, nil
 	case "16M":
-		return formatters.TTY16m, nil
+		return twin.ColorType24bit, nil
 	}
 
-	return nil, fmt.Errorf("Valid counts are 8, 16, 256, 16M or auto.")
+	var noColor twin.ColorType
+	return noColor, fmt.Errorf("Valid counts are 8, 16, 256, 16M or auto.")
 }
 
 func parseStatusBarStyle(styleOption string) (m.StatusBarStyle, error) {
@@ -385,7 +386,7 @@ func main() {
 	if err != nil {
 		panic(fmt.Errorf("Failed parsing default formatter: %w", err))
 	}
-	formatter := flagSetFunc(flagSet,
+	terminalColorsCount := flagSetFunc(flagSet,
 		"colors", defaultFormatter, "Highlighting palette size: 8, 16, 256, 16M, auto", parseColorsOption)
 
 	noLineNumbers := flagSet.Bool("no-linenumbers", false, "Hide line numbers on startup, press left arrow key to show")
@@ -511,13 +512,22 @@ func main() {
 		return
 	}
 
+	formatter := formatters.TTY256
+	if *terminalColorsCount == twin.ColorType8 {
+		formatter = formatters.TTY8
+	} else if *terminalColorsCount == twin.ColorType16 {
+		formatter = formatters.TTY16
+	} else if *terminalColorsCount == twin.ColorType24bit {
+		formatter = formatters.TTY
+	}
+
 	var reader *m.Reader
 	if stdinIsRedirected {
 		// Display input pipe contents
 		reader = m.NewReaderFromStream("", os.Stdin)
 	} else {
 		// Display the input file contents
-		reader, err = m.NewReaderFromFilename(*inputFilename, *style, *formatter)
+		reader, err = m.NewReaderFromFilename(*inputFilename, *style, formatter)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "ERROR: %v\n", err)
 			os.Exit(1)
@@ -535,15 +545,13 @@ func main() {
 	pager.ScrollLeftHint = *scrollLeftHint
 	pager.ScrollRightHint = *scrollRightHint
 	pager.SideScrollAmount = int(*shift)
-	pager.ChromaStyle = style
-	pager.ChromaFormatter = formatter
 
 	pager.TargetLineNumberOneBased = targetLineNumberOneBased
 	if *follow && pager.TargetLineNumberOneBased == 0 {
 		pager.TargetLineNumberOneBased = math.MaxInt
 	}
 
-	startPaging(pager, screen)
+	startPaging(pager, screen, style, &formatter)
 }
 
 // Define a generic flag with specified name, default value, and usage string.
@@ -564,7 +572,7 @@ func flagSetFunc[T any](flagSet *flag.FlagSet, name string, defaultValue T, usag
 	return &parsed
 }
 
-func startPaging(pager *m.Pager, screen twin.Screen) {
+func startPaging(pager *m.Pager, screen twin.Screen, chromaStyle *chroma.Style, chromaFormatter *chroma.Formatter) {
 	defer func() {
 		// Restore screen...
 		screen.Close()
@@ -583,5 +591,5 @@ func startPaging(pager *m.Pager, screen twin.Screen) {
 		}
 	}()
 
-	pager.StartPaging(screen)
+	pager.StartPaging(screen, chromaStyle, chromaFormatter)
 }

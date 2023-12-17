@@ -96,12 +96,6 @@ type Pager struct {
 	// clear the last line, and show the cursor.
 	DeInit bool
 
-	// Render the UI using this style
-	ChromaStyle *chroma.Style
-
-	// Render the UI using this formatter
-	ChromaFormatter *chroma.Formatter
-
 	// Optional ANSI to prefix each text line with. Initialised using
 	// ChromaStyle and ChromaFormatter.
 	linePrefix string
@@ -444,16 +438,17 @@ func (p *Pager) onRune(char rune) {
 	}
 }
 
-func (p *Pager) initStyle() {
-	if p.ChromaStyle == nil && p.ChromaFormatter == nil {
-		return
+// Return an ANSI SGR sequence to use for plain text. Can be "".
+func getLineColorPrefix(chromaStyle *chroma.Style, chromaFormatter *chroma.Formatter) string {
+	if chromaStyle == nil && chromaFormatter == nil {
+		return ""
 	}
-	if p.ChromaStyle == nil || p.ChromaFormatter == nil {
+	if chromaStyle == nil || chromaFormatter == nil {
 		panic("Both ChromaStyle and ChromaFormatter should be set or neither")
 	}
 
 	stringBuilder := strings.Builder{}
-	err := (*p.ChromaFormatter).Format(&stringBuilder, p.ChromaStyle, chroma.Literator(chroma.Token{
+	err := (*chromaFormatter).Format(&stringBuilder, chromaStyle, chroma.Literator(chroma.Token{
 		Type:  chroma.None,
 		Value: "XXX",
 	}))
@@ -467,11 +462,11 @@ func (p *Pager) initStyle() {
 		panic("XXX not found in " + formatted)
 	}
 
-	p.linePrefix = formatted[:cutoff]
+	return formatted[:cutoff]
 }
 
 // StartPaging brings up the pager on screen
-func (p *Pager) StartPaging(screen twin.Screen) {
+func (p *Pager) StartPaging(screen twin.Screen, chromaStyle *chroma.Style, chromaFormatter *chroma.Formatter) {
 	log.Trace("Pager starting")
 	defer log.Trace("Pager done")
 
@@ -482,10 +477,10 @@ func (p *Pager) StartPaging(screen twin.Screen) {
 	}()
 
 	unprintableStyle = p.UnprintableStyle
-	ConsumeLessTermcapEnvs(p.ChromaStyle, p.ChromaFormatter)
+	ConsumeLessTermcapEnvs(chromaStyle, chromaFormatter)
 
 	p.screen = screen
-	p.initStyle()
+	p.linePrefix = getLineColorPrefix(chromaStyle, chromaFormatter)
 
 	go func() {
 		for range p.reader.moreLinesAdded {

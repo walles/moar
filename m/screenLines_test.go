@@ -160,7 +160,7 @@ func TestWrapping(t *testing.T) {
 	pager.Quit()
 
 	// Get contents onto our fake screen
-	pager.StartPaging(screen)
+	pager.StartPaging(screen, nil, nil)
 	pager.redraw("")
 
 	actual := strings.Join([]string{

@@ -12,7 +12,7 @@ func (p *Pager) Page() error {
 		return e
 	}
 
-	p.StartPaging(screen)
+	p.StartPaging(screen, nil, nil)
 	screen.Close()
 	if p.DeInit {
 		return nil

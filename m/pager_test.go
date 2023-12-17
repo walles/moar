@@ -106,7 +106,7 @@ func startPaging(t *testing.T, reader *Reader) *twin.FakeScreen {
 	pager.Quit()
 
 	// Except for just quitting, this also associates our FakeScreen with the Pager
-	pager.StartPaging(screen)
+	pager.StartPaging(screen, nil, nil)
 
 	// This makes sure at least one frame gets rendered
 	pager.redraw("")
@@ -341,7 +341,7 @@ func TestScrollToBottomWrapNextToLastLine(t *testing.T) {
 	pager.Quit()
 
 	// Get contents onto our fake screen
-	pager.StartPaging(screen)
+	pager.StartPaging(screen, nil, nil)
 	pager.redraw("")
 
 	actual := strings.Join([]string{
@@ -372,7 +372,7 @@ func TestScrollToEndLongInput(t *testing.T) {
 	// Connect the pager with a screen
 	const screenHeight = 10
 	screen := twin.NewFakeScreen(20, screenHeight)
-	pager.StartPaging(screen)
+	pager.StartPaging(screen, nil, nil)
 
 	// This is what we're really testing
 	pager.scrollToEnd()
@@ -507,7 +507,7 @@ func TestPageSamples(t *testing.T) {
 		pager.Quit()
 
 		// Get contents onto our fake screen
-		pager.StartPaging(screen)
+		pager.StartPaging(screen, nil, nil)
 		pager.redraw("")
 
 		firstReaderLine := myReader.GetLine(0)
@@ -563,7 +563,7 @@ func TestClearToEndOfLine_ClearFromStartScrolledRight(t *testing.T) {
 
 	// Except for just quitting, this also associates a FakeScreen with the Pager
 	screen := twin.NewFakeScreen(3, 10)
-	pager.StartPaging(screen)
+	pager.StartPaging(screen, nil, nil)
 
 	// Scroll right, this is what we're testing
 	pager.leftColumnZeroBased = 44
@@ -583,22 +583,19 @@ func TestClearToEndOfLine_ClearFromStartScrolledRight(t *testing.T) {
 	assert.DeepEqual(t, actual, expected, cmp.AllowUnexported(twin.Style{}))
 }
 
-func TestInitStyle(t *testing.T) {
-	testMe := Pager{
-		ChromaStyle:     styles.Registry["gruvbox"],
-		ChromaFormatter: &formatters.TTY16m,
-	}
-	testMe.initStyle()
-	assert.Equal(t, testMe.linePrefix, "\x1b[38;2;235;219;178m")
+func TestGetLineColorPrefix(t *testing.T) {
+	assert.Equal(t,
+		getLineColorPrefix(styles.Registry["gruvbox"], &formatters.TTY16m),
+		"\x1b[38;2;235;219;178m",
+	)
 }
 
 func TestInitStyle256(t *testing.T) {
-	testMe := Pager{
-		ChromaStyle:     styles.Registry["catppuccin-macchiato"],
-		ChromaFormatter: &formatters.TTY256,
-	}
-	testMe.initStyle()
-	assert.Equal(t, testMe.linePrefix, "\x1b[38;5;189m")
+	assert.Equal(t,
+		getLineColorPrefix(
+			styles.Registry["catppuccin-macchiato"],
+			&formatters.TTY256), "\x1b[38;5;189m",
+	)
 }
 
 func benchmarkSearch(b *testing.B, highlighted bool) {
