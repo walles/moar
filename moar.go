@@ -25,6 +25,19 @@ import (
 
 var versionString = "Should be set when building, please use build.sh to build"
 
+func printUsageEnvVar(output io.Writer, envVarName string, description string) {
+	value := os.Getenv(envVarName)
+	if len(value) == 0 {
+		return
+	}
+
+	_, _ = fmt.Fprintf(output, "  %s (%s): %s\n",
+		envVarName,
+		description,
+		strings.ReplaceAll(value, "\x1b", "ESC"),
+	)
+}
+
 func printUsage(output io.Writer, flagSet *flag.FlagSet, printCommandline bool) {
 	// This controls where PrintDefaults() prints, see below
 	flagSet.SetOutput(output)
@@ -57,6 +70,10 @@ func printUsage(output io.Writer, flagSet *flag.FlagSet, printCommandline bool) 
 		_, _ = fmt.Fprintln(output, "  Additional options are read from the MOAR environment variable.")
 		_, _ = fmt.Fprintf(output, "  Current setting: MOAR=\"%s\"\n", moarEnv)
 	}
+
+	printUsageEnvVar(output, "LESS_TERMCAP_md", "man page bold style")
+	printUsageEnvVar(output, "LESS_TERMCAP_us", "man page underline style")
+	printUsageEnvVar(output, "LESS_TERMCAP_so", "search hits and footer style")
 
 	absMoarPath, err := absLookPath(os.Args[0])
 	if err == nil {
