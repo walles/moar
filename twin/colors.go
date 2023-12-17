@@ -2,6 +2,9 @@ package twin
 
 import (
 	"fmt"
+	"math"
+
+	"github.com/lucasb-eyer/go-colorful"
 )
 
 // Create using NewColor16(), NewColor256 or NewColor24Bit(), or use
@@ -86,8 +89,7 @@ func (color Color) colorValue() uint32 {
 //
 // Ref: https://en.wikipedia.org/wiki/ANSI_escape_code#SGR_(Select_Graphic_Rendition)_parameters
 func (color Color) ansiString(foreground bool, terminalColorCount ColorType) string {
-	// FIXME: Downsample colors to at most terminalColorCount colors as needed.
-	value := color.colorValue()
+	value := color.downsampleTo(terminalColorCount).colorValue()
 
 	fgBgMarker := "3"
 	if !foreground {
@@ -156,4 +158,66 @@ func (color Color) String() string {
 	}
 
 	panic(fmt.Errorf("unhandled color type %d", color.colorType()))
+}
+
+func (color Color) downsampleTo(terminalColorCount ColorType) Color {
+	if color.colorType() == colorTypeDefault || terminalColorCount == colorTypeDefault {
+		panic(fmt.Errorf("downsampling to or from default color not supported, %#v -> %#v", color, terminalColorCount))
+	}
+
+	if color.colorType() <= terminalColorCount {
+		// Already low enough
+		return color
+	}
+
+	// Convert existing color to 24 bit
+	var color24bit Color
+	if color.colorType() == ColorType24bit {
+		color24bit = color
+	} else {
+		r, g, b := color256ToRGB(uint8(color.colorValue()))
+		color24bit = NewColor24Bit(r, g, b)
+	}
+
+	// FIXME: Find the closest match in the terminal color palette
+	scanRange := 255
+	switch terminalColorCount {
+	case ColorType8:
+		scanRange = 7
+	case ColorType16:
+		scanRange = 15
+	case ColorType256:
+		scanRange = 255
+	default:
+		panic(fmt.Errorf("unhandled terminal color count %#v", terminalColorCount))
+	}
+
+	// Iterate over the scan range and find the best matching index
+	bestMatch := 0
+	bestDistance := math.MaxFloat64
+	target := colorful.Color{
+		R: float64(color24bit.colorValue()>>16) / 255.0,
+		G: float64(color24bit.colorValue()>>8&0xff) / 255.0,
+		B: float64(color24bit.colorValue()&0xff) / 255.0,
+	}
+	for i := 0; i <= scanRange; i++ {
+		r, g, b := color256ToRGB(uint8(i))
+		candidate := colorful.Color{
+			R: float64(r) / 255.0,
+			G: float64(g) / 255.0,
+			B: float64(b) / 255.0,
+		}
+
+		distance := target.DistanceLab(candidate)
+		if distance < bestDistance {
+			bestDistance = distance
+			bestMatch = i
+		}
+	}
+
+	if bestMatch <= 15 {
+		return NewColor16(bestMatch)
+	} else {
+		return NewColor256(uint8(bestMatch))
+	}
 }
