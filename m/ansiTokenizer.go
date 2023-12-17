@@ -126,7 +126,7 @@ func consumeLessTermcapEnvs(chromaStyle *chroma.Style, chromaFormatter *chroma.F
 	setStyle(standoutStyle, "LESS_TERMCAP_so", nil)
 }
 
-func styleUi(chromaStyle *chroma.Style, chromaFormatter *chroma.Formatter) {
+func styleUi(chromaStyle *chroma.Style, chromaFormatter *chroma.Formatter, statusbarStyle StatusBarStyle) {
 	if chromaStyle == nil || chromaFormatter == nil {
 		return
 	}
@@ -137,6 +137,18 @@ func styleUi(chromaStyle *chroma.Style, chromaFormatter *chroma.Formatter) {
 		// looks good I'll change this, but until then they will be dimmed no
 		// matter what the theme authors think.
 		_numberStyle = lineNumberStyle.WithAttr(twin.AttrDim)
+	}
+
+	if standoutStyle != nil {
+		_statusbarStyle = *standoutStyle
+	} else if statusbarStyle == STATUSBAR_STYLE_INVERSE {
+		_statusbarStyle = twin.StyleDefault.WithAttr(twin.AttrReverse)
+	} else if statusbarStyle == STATUSBAR_STYLE_PLAIN {
+		_statusbarStyle = twin.StyleDefault
+	} else if statusbarStyle == STATUSBAR_STYLE_BOLD {
+		_statusbarStyle = twin.StyleDefault.WithAttr(twin.AttrBold)
+	} else {
+		panic(fmt.Sprint("Unrecognized status bar style: ", statusbarStyle))
 	}
 }
 

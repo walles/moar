@@ -29,6 +29,8 @@ const (
 	STATUSBAR_STYLE_BOLD
 )
 
+var _statusbarStyle = twin.StyleDefault.WithAttr(twin.AttrReverse)
+
 // How do we render unprintable characters?
 type UnprintableStyle int
 
@@ -97,7 +99,8 @@ type Pager struct {
 	DeInit bool
 
 	// Optional ANSI to prefix each text line with. Initialised using
-	// ChromaStyle and ChromaFormatter.
+	// ChromaStyle and ChromaFormatter. Used for coloring unstyled text lines
+	// based on the Chroma style.
 	linePrefix string
 }
 
@@ -199,25 +202,13 @@ func (p *Pager) setFooter(footer string) {
 	width, height := p.screen.Size()
 
 	pos := 0
-	var footerStyle twin.Style
-	if standoutStyle != nil {
-		footerStyle = *standoutStyle
-	} else if p.StatusBarStyle == STATUSBAR_STYLE_INVERSE {
-		footerStyle = twin.StyleDefault.WithAttr(twin.AttrReverse)
-	} else if p.StatusBarStyle == STATUSBAR_STYLE_PLAIN {
-		footerStyle = twin.StyleDefault
-	} else if p.StatusBarStyle == STATUSBAR_STYLE_BOLD {
-		footerStyle = twin.StyleDefault.WithAttr(twin.AttrBold)
-	} else {
-		panic(fmt.Sprint("Unrecognized footer style: ", footerStyle))
-	}
 	for _, token := range footer {
-		p.screen.SetCell(pos, height-1, twin.NewCell(token, footerStyle))
+		p.screen.SetCell(pos, height-1, twin.NewCell(token, _statusbarStyle))
 		pos++
 	}
 
 	for ; pos < width; pos++ {
-		p.screen.SetCell(pos, height-1, twin.NewCell(' ', footerStyle))
+		p.screen.SetCell(pos, height-1, twin.NewCell(' ', _statusbarStyle))
 	}
 }
 
@@ -478,7 +469,7 @@ func (p *Pager) StartPaging(screen twin.Screen, chromaStyle *chroma.Style, chrom
 
 	unprintableStyle = p.UnprintableStyle
 	consumeLessTermcapEnvs(chromaStyle, chromaFormatter)
-	styleUi(chromaStyle, chromaFormatter)
+	styleUi(chromaStyle, chromaFormatter, p.StatusBarStyle)
 
 	p.screen = screen
 	p.linePrefix = getLineColorPrefix(chromaStyle, chromaFormatter)
