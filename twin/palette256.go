@@ -25,23 +25,24 @@ func color256ToRGB(color256 uint8) (r, g, b float64) {
 	return r, g, b
 }
 
-// This table modified to match the VGA colors documented here:
+// Source, the 256 colors table from here:
 // https://en.wikipedia.org/wiki/ANSI_escape_code#3-bit_and_4-bit
 var standardAnsiColors = [16][3]uint8{
-	{0, 0, 0},       // Black
-	{170, 0, 0},     // Red
-	{0, 170, 0},     // Green
-	{170, 85, 0},    // Yellow
-	{0, 0, 170},     // Blue
-	{170, 0, 170},   // Magenta
-	{0, 170, 170},   // Cyan
-	{170, 170, 170}, // White
-	{85, 85, 85},    // Bright Black
-	{255, 85, 85},   // Bright Red
-	{85, 255, 85},   // Bright Green
-	{255, 255, 85},  // Bright Yellow
-	{85, 85, 255},   // Bright Blue
-	{255, 85, 255},  // Bright Magenta
-	{85, 255, 255},  // Bright Cyan
-	{255, 255, 255}, // Bright White
+	{0x00, 0x00, 0x00}, // Black
+	{0x80, 0x00, 0x00}, // Red
+	{0x00, 0x80, 0x00}, // Green
+	{0x80, 0x80, 0x00}, // Yellow
+	{0x00, 0x00, 0x80}, // Blue
+	{0x80, 0x00, 0x80}, // Magenta
+	{0x00, 0x80, 0x80}, // Cyan
+	{0x80, 0x80, 0x80}, // White
+
+	{0x80, 0x80, 0x80}, // Bright Black
+	{0xff, 0x00, 0x00}, // Bright Red
+	{0x00, 0xff, 0x00}, // Bright Green
+	{0xff, 0xff, 0x00}, // Bright Yellow
+	{0x00, 0x00, 0xff}, // Bright Blue
+	{0xff, 0x00, 0xff}, // Bright Magenta
+	{0x00, 0xff, 0xff}, // Bright Cyan
+	{0xff, 0xff, 0xff}, // Bright White
 }

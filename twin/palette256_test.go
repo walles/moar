@@ -6,6 +6,14 @@ import (
 	"gotest.tools/v3/assert"
 )
 
+func TestColorRgbFirst16(t *testing.T) {
+	r, g, b := color256ToRGB(5)
+
+	assert.Equal(t, r, float64(0x80)/255.0)
+	assert.Equal(t, g, float64(0x00)/255.0)
+	assert.Equal(t, b, float64(0x80)/255.0)
+}
+
 func TestColorToRgbInTheGrey(t *testing.T) {
 	r, g, b := color256ToRGB(252)
 

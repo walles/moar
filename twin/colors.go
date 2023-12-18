@@ -206,9 +206,9 @@ func (color Color) downsampleTo(terminalColorCount ColorType) Color {
 	for i := 0; i <= scanRange; i++ {
 		r, g, b := color256ToRGB(uint8(i))
 		candidate := colorful.Color{
-			R: float64(r) / 255.0,
-			G: float64(g) / 255.0,
-			B: float64(b) / 255.0,
+			R: r,
+			G: g,
+			B: b,
 		}
 
 		distance := target.DistanceLab(candidate)
