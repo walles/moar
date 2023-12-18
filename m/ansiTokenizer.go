@@ -116,14 +116,21 @@ func twinStyleFromChroma(chromaStyle *chroma.Style, chromaFormatter *chroma.Form
 	return &cells[0].Style
 }
 
-// ConsumeLessTermcapEnvs parses LESS_TERMCAP_xx environment variables and
+// consumeLessTermcapEnvs parses LESS_TERMCAP_xx environment variables and
 // adapts the moar output accordingly.
-func ConsumeLessTermcapEnvs(chromaStyle *chroma.Style, chromaFormatter *chroma.Formatter) {
+func consumeLessTermcapEnvs(chromaStyle *chroma.Style, chromaFormatter *chroma.Formatter) {
 	// Requested here: https://github.com/walles/moar/issues/14
 
 	setStyle(&manPageBold, "LESS_TERMCAP_md", twinStyleFromChroma(chromaStyle, chromaFormatter, chroma.GenericStrong))
 	setStyle(&manPageUnderline, "LESS_TERMCAP_us", twinStyleFromChroma(chromaStyle, chromaFormatter, chroma.GenericUnderline))
-	setStyle(standoutStyle, "LESS_TERMCAP_so", nil)
+
+	// Special treat this because standoutStyle defaults to nil, and should be
+	// set only if there is a style defined through the environment.
+	envValue := os.Getenv("LESS_TERMCAP_so")
+	if envValue != "" {
+		style := termcapToStyle(envValue)
+		standoutStyle = &style
+	}
 }
 
 func termcapToStyle(termcap string) twin.Style {
