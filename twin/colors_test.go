@@ -33,3 +33,10 @@ func TestAnsiStringWithDownSampling(t *testing.T) {
 		"\x1b[38;5;252m",
 	)
 }
+
+func TestAnsiStringDefault(t *testing.T) {
+	assert.Equal(t,
+		ColorDefault.ansiString(true, ColorType16),
+		"\x1b[39m",
+	)
+}

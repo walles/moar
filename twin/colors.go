@@ -89,12 +89,16 @@ func (color Color) colorValue() uint32 {
 //
 // Ref: https://en.wikipedia.org/wiki/ANSI_escape_code#SGR_(Select_Graphic_Rendition)_parameters
 func (color Color) ansiString(foreground bool, terminalColorCount ColorType) string {
-	color = color.downsampleTo(terminalColorCount)
-
 	fgBgMarker := "3"
 	if !foreground {
 		fgBgMarker = "4"
 	}
+
+	if color.colorType() == colorTypeDefault {
+		return fmt.Sprint("\x1b[", fgBgMarker, "9m")
+	}
+
+	color = color.downsampleTo(terminalColorCount)
 
 	if color.colorType() == ColorType16 {
 		value := color.colorValue()
@@ -123,10 +127,6 @@ func (color Color) ansiString(foreground bool, terminalColorCount ColorType) str
 		blue := value & 0xff
 
 		return fmt.Sprint("\x1b[", fgBgMarker, "8;2;", red, ";", green, ";", blue, "m")
-	}
-
-	if color.colorType() == colorTypeDefault {
-		return fmt.Sprint("\x1b[", fgBgMarker, "9m")
 	}
 
 	panic(fmt.Errorf("unhandled color type=%d %s", color.colorType(), color.String()))
@@ -165,7 +165,7 @@ func (color Color) String() string {
 
 func (color Color) downsampleTo(terminalColorCount ColorType) Color {
 	if color.colorType() == colorTypeDefault || terminalColorCount == colorTypeDefault {
-		panic(fmt.Errorf("downsampling to or from default color not supported, %#v -> %#v", color, terminalColorCount))
+		panic(fmt.Errorf("downsampling to or from default color not supported, %s -> %#v", color.String(), terminalColorCount))
 	}
 
 	if color.colorType() <= terminalColorCount {
