@@ -251,7 +251,7 @@ func terminalHasArrowKeysEmulation() bool {
 	}
 
 	// Foot, tested on Ubuntu 22.04, December 16th 2023
-	if os.Getenv("TERM") == "foot" {
+	if os.Getenv("TERM") == "foot" || strings.HasPrefix(os.Getenv("TERM"), "foot-") {
 		// Note that this test isn't very good, somebody could be running Foot
 		// with some other TERM setting. Other suggestions welcome.
 		return true
