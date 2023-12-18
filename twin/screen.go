@@ -222,6 +222,7 @@ func terminalHasArrowKeysEmulation() bool {
 	// Better off with mouse tracking:
 	// * iTerm2 (macOS)
 	// * Terminal.app (macOS)
+	// * Contour, thanks to @postsolar (GitHub username) for testing, 2023-12-18
 
 	// Hyper, tested on macOS, December 14th 2023
 	if os.Getenv("TERM_PROGRAM") == "Hyper" {
@@ -264,7 +265,7 @@ func terminalHasArrowKeysEmulation() bool {
 	}
 
 	// Foot, tested on Ubuntu 22.04, December 16th 2023
-	if os.Getenv("TERM") == "foot" {
+	if os.Getenv("TERM") == "foot" || strings.HasPrefix(os.Getenv("TERM"), "foot-") {
 		// Note that this test isn't very good, somebody could be running Foot
 		// with some other TERM setting. Other suggestions welcome.
 		return true

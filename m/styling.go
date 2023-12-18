@@ -93,7 +93,14 @@ func consumeLessTermcapEnvs(chromaStyle *chroma.Style, chromaFormatter *chroma.F
 
 	setStyle(&manPageBold, "LESS_TERMCAP_md", twinStyleFromChroma(chromaStyle, chromaFormatter, chroma.GenericStrong))
 	setStyle(&manPageUnderline, "LESS_TERMCAP_us", twinStyleFromChroma(chromaStyle, chromaFormatter, chroma.GenericUnderline))
-	setStyle(standoutStyle, "LESS_TERMCAP_so", nil)
+
+	// Special treat this because standoutStyle defaults to nil, and should be
+	// set only if there is a style defined through the environment.
+	envValue := os.Getenv("LESS_TERMCAP_so")
+	if envValue != "" {
+		style := termcapToStyle(envValue)
+		standoutStyle = &style
+	}
 }
 
 func styleUi(chromaStyle *chroma.Style, chromaFormatter *chroma.Formatter, statusbarOption StatusBarOption) {
