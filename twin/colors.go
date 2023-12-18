@@ -89,7 +89,7 @@ func (color Color) colorValue() uint32 {
 //
 // Ref: https://en.wikipedia.org/wiki/ANSI_escape_code#SGR_(Select_Graphic_Rendition)_parameters
 func (color Color) ansiString(foreground bool, terminalColorCount ColorType) string {
-	value := color.downsampleTo(terminalColorCount).colorValue()
+	color = color.downsampleTo(terminalColorCount)
 
 	fgBgMarker := "3"
 	if !foreground {
@@ -97,6 +97,7 @@ func (color Color) ansiString(foreground bool, terminalColorCount ColorType) str
 	}
 
 	if color.colorType() == ColorType16 {
+		value := color.colorValue()
 		if value < 8 {
 			return fmt.Sprint("\x1b[", fgBgMarker, value, "m")
 		} else if value <= 15 {
@@ -109,12 +110,14 @@ func (color Color) ansiString(foreground bool, terminalColorCount ColorType) str
 	}
 
 	if color.colorType() == ColorType256 {
+		value := color.colorValue()
 		if value <= 255 {
 			return fmt.Sprint("\x1b[", fgBgMarker, "8;5;", value, "m")
 		}
 	}
 
 	if color.colorType() == ColorType24bit {
+		value := color.colorValue()
 		red := (value & 0xff0000) >> 16
 		green := (value & 0xff00) >> 8
 		blue := value & 0xff
@@ -126,7 +129,7 @@ func (color Color) ansiString(foreground bool, terminalColorCount ColorType) str
 		return fmt.Sprint("\x1b[", fgBgMarker, "9m")
 	}
 
-	panic(fmt.Errorf("unhandled color type=%d value=%#x", color.colorType(), value))
+	panic(fmt.Errorf("unhandled color type=%d %s", color.colorType(), color.String()))
 }
 
 func (color Color) ForegroundAnsiString(terminalColorCount ColorType) string {

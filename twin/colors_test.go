@@ -26,3 +26,10 @@ func TestRealWorldDownsampling(t *testing.T) {
 		NewColor256(252), // From https://jonasjacek.github.io/colors/
 	)
 }
+
+func TestAnsiStringWithDownSampling(t *testing.T) {
+	assert.Equal(t,
+		NewColor24Bit(0xd0, 0xd0, 0xd0).ansiString(true, ColorType256),
+		"\x1b[38;5;252m",
+	)
+}
