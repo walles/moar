@@ -209,6 +209,7 @@ func terminalHasArrowKeysEmulation() bool {
 	// Better off with mouse tracking:
 	// * iTerm2 (macOS)
 	// * Terminal.app (macOS)
+	// * Contour, thanks to @postsolar (GitHub username) for testing, 2023-12-18
 
 	// Hyper, tested on macOS, December 14th 2023
 	if os.Getenv("TERM_PROGRAM") == "Hyper" {
