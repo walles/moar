@@ -17,10 +17,10 @@ type MouseMode int
 const (
 	MouseModeAuto MouseMode = iota
 
-	// Don't capture mouse events. This makes marking with the mouse work. On
+	// Don't capture mouse events. This makes selecting with the mouse work. On
 	// some terminals mouse scrolling will work using arrow keys emulation, and
 	// on some not.
-	MouseModeMark
+	MouseModeSelect
 
 	// Capture mouse events. This makes mouse scrolling work. Special gymnastics
 	// will be required for marking with the mouse to copy text.
@@ -142,7 +142,7 @@ func NewScreenWithMouseModeAndColorType(mouseMode MouseMode, terminalColorCount 
 
 	if mouseMode == MouseModeAuto {
 		screen.enableMouseTracking(!terminalHasArrowKeysEmulation())
-	} else if mouseMode == MouseModeMark {
+	} else if mouseMode == MouseModeSelect {
 		screen.enableMouseTracking(false)
 	} else if mouseMode == MouseModeScroll {
 		screen.enableMouseTracking(true)

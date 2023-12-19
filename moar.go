@@ -245,13 +245,13 @@ func parseMouseMode(mouseMode string) (twin.MouseMode, error) {
 	switch mouseMode {
 	case "auto":
 		return twin.MouseModeAuto, nil
-	case "mark":
-		return twin.MouseModeMark, nil
+	case "select", "mark":
+		return twin.MouseModeSelect, nil
 	case "scroll":
 		return twin.MouseModeScroll, nil
 	}
 
-	return twin.MouseModeAuto, fmt.Errorf("Valid modes are auto, mark and scroll")
+	return twin.MouseModeAuto, fmt.Errorf("Valid modes are auto, select and scroll")
 }
 
 func pumpToStdout(inputFilename *string) error {
@@ -408,7 +408,7 @@ func main() {
 		flagSet,
 		"mousemode",
 		twin.MouseModeAuto,
-		"Mouse mode: auto, mark or scroll: https://github.com/walles/moar/blob/master/MOUSE.md",
+		"Mouse mode: auto, select or scroll: https://github.com/walles/moar/blob/master/MOUSE.md",
 		parseMouseMode,
 	)
 

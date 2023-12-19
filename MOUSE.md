@@ -5,8 +5,8 @@
 - `scroll` makes `moar` process mouse events from your terminal, thus enabling mouse scrolling work,
 but disabling the ability to select text with mouse in the usual way. Selecting text will require using your terminal's capability to bypass mouse protocol.
 Most terminals support this capability, see [Selection workarounds for `scroll` mode](#mouse-selection-workarounds-for-scroll-mode) for details.
-- `mark` makes `moar` not process mouse events. This makes selecting and copying text work, but scrolling might not be possible, depending on your terminal and its configuration.
-- `auto` uses `mark` on terminals where we know it won't break scrolling, and
+- `select` makes `moar` not process mouse events. This makes selecting and copying text work, but scrolling might not be possible, depending on your terminal and its configuration.
+- `auto` uses `select` on terminals where we know it won't break scrolling, and
   `scroll` on all others. [The white list lives in the
   `mouseTrackingRecommended()` function in
   `screen.go`](https://github.com/walles/moar/blob/master/twin/screen.go).
@@ -15,9 +15,9 @@ The reason these tradeoffs exist is that if `moar` requests mouse events from th
 it should process _all_ mouse events, including attempts to select text. This is the case with every console application.
 
 However, some terminals can send "fake" arrow key presses to applications which _do not_ request processing mouse events.
-This means that on those terminals, you will be better off using `--mousemode mark` option, given that you also have this feature enabled (it's usually on by default).
+This means that on those terminals, you will be better off using `--mousemode select` option, given that you also have this feature enabled (it's usually on by default).
 With this setup, both scrolling and text selecting in the usual way will work.
-To check whether this could work, simply run `moar` with option `--mousemode mark` and see if scrolling still works.
+To check whether this could work, simply run `moar` with option `--mousemode select` and see if scrolling still works.
 
 ## Mouse Selection Workarounds for `scroll` Mode
 
