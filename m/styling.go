@@ -77,8 +77,13 @@ func styleUi(chromaStyle *chroma.Style, chromaFormatter *chroma.Formatter, statu
 		return
 	}
 
-	// FIXME: Get this from the Chroma style
-	lineNumbersStyle = twin.StyleDefault.WithAttr(twin.AttrDim)
+	chromaLineNumbers := twinStyleFromChroma(chromaStyle, chromaFormatter, chroma.LineNumbers)
+	if chromaLineNumbers != nil {
+		// If somebody can provide an example where not-dimmed line numbers
+		// looks good I'll change this, but until then they will be dimmed no
+		// matter what the theme authors think.
+		lineNumbersStyle = chromaLineNumbers.WithAttr(twin.AttrDim)
+	}
 
 	if standoutStyle != nil {
 		statusbarStyle = *standoutStyle
