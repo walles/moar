@@ -318,7 +318,7 @@ func createLinePrefix(fileLineNumber *int, numberPrefixLength int) []twin.Cell {
 			break
 		}
 
-		lineNumberPrefix = append(lineNumberPrefix, twin.NewCell(digit, _numberStyle))
+		lineNumberPrefix = append(lineNumberPrefix, twin.NewCell(digit, lineNumbersStyle))
 	}
 
 	return lineNumberPrefix

@@ -61,7 +61,7 @@ func TestRenderLine(t *testing.T) {
 		},
 	}
 
-	rendered, count := renderLine(row)
+	rendered, count := renderLine(row, ColorType16)
 	assert.Equal(t, count, 2)
 	reset := "[m"
 	reversed := "[7m"
@@ -76,7 +76,7 @@ func TestRenderLine(t *testing.T) {
 func TestRenderLineEmpty(t *testing.T) {
 	row := []Cell{}
 
-	rendered, count := renderLine(row)
+	rendered, count := renderLine(row, ColorType16)
 	assert.Equal(t, count, 0)
 
 	// All lines are expected to stand on their own, so we always need to clear
@@ -92,7 +92,7 @@ func TestRenderLineLastReversed(t *testing.T) {
 		},
 	}
 
-	rendered, count := renderLine(row)
+	rendered, count := renderLine(row, ColorType16)
 	assert.Equal(t, count, 1)
 	reset := "[m"
 	reversed := "[7m"
@@ -110,7 +110,7 @@ func TestRenderLineLastNonSpace(t *testing.T) {
 		},
 	}
 
-	rendered, count := renderLine(row)
+	rendered, count := renderLine(row, ColorType16)
 	assert.Equal(t, count, 1)
 	reset := "[m"
 	clearToEol := "[K"
@@ -131,7 +131,7 @@ func TestRenderLineLastReversedPlusTrailingSpace(t *testing.T) {
 		},
 	}
 
-	rendered, count := renderLine(row)
+	rendered, count := renderLine(row, ColorType16)
 	assert.Equal(t, count, 1)
 	reset := "[m"
 	reversed := "[7m"
@@ -153,7 +153,7 @@ func TestRenderLineOnlyTrailingSpaces(t *testing.T) {
 		},
 	}
 
-	rendered, count := renderLine(row)
+	rendered, count := renderLine(row, ColorType16)
 	assert.Equal(t, count, 0)
 
 	// All lines are expected to stand on their own, so we always need to clear
@@ -169,7 +169,7 @@ func TestRenderLineLastReversedSpaces(t *testing.T) {
 		},
 	}
 
-	rendered, count := renderLine(row)
+	rendered, count := renderLine(row, ColorType16)
 	assert.Equal(t, count, 1)
 	reset := "[m"
 	reversed := "[7m"
@@ -186,7 +186,7 @@ func TestRenderLineNonPrintable(t *testing.T) {
 		},
 	}
 
-	rendered, count := renderLine(row)
+	rendered, count := renderLine(row, ColorType16)
 	assert.Equal(t, count, 1)
 	reset := "[m"
 	white := "[37m"
@@ -207,7 +207,7 @@ func TestRenderHyperlinkAtEndOfLine(t *testing.T) {
 		},
 	}
 
-	rendered, count := renderLine(row)
+	rendered, count := renderLine(row, ColorType16)
 	assert.Equal(t, count, 1)
 
 	assert.Equal(t,
@@ -232,7 +232,7 @@ func TestMultiCharHyperlink(t *testing.T) {
 		},
 	}
 
-	rendered, count := renderLine(row)
+	rendered, count := renderLine(row, ColorType16)
 	assert.Equal(t, count, 3)
 
 	assert.Equal(t,

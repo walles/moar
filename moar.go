@@ -190,7 +190,7 @@ func parseColorsOption(colorsOption string) (twin.ColorType, error) {
 	return noColor, fmt.Errorf("Valid counts are 8, 16, 256, 16M or auto.")
 }
 
-func parseStatusBarStyle(styleOption string) (m.StatusBarStyle, error) {
+func parseStatusBarStyle(styleOption string) (m.StatusBarOption, error) {
 	if styleOption == "inverse" {
 		return m.STATUSBAR_STYLE_INVERSE, nil
 	}
@@ -500,7 +500,7 @@ func main() {
 		panic("Invariant broken: stdout is not a terminal")
 	}
 
-	screen, err := twin.NewScreenWithMouseMode(*mouseMode)
+	screen, err := twin.NewScreenWithMouseModeAndColorType(*mouseMode, *terminalColorsCount)
 	if err != nil {
 		// Ref: https://github.com/walles/moar/issues/149
 		log.Debug("Failed to set up screen for paging, pumping to stdout instead: ", err)

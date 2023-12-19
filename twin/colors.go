@@ -1,6 +1,11 @@
 package twin
 
-import "fmt"
+import (
+	"fmt"
+	"math"
+
+	"github.com/lucasb-eyer/go-colorful"
+)
 
 // Create using NewColor16(), NewColor256 or NewColor24Bit(), or use
 // ColorDefault.
@@ -83,15 +88,20 @@ func (color Color) colorValue() uint32 {
 // Render color into an ANSI string.
 //
 // Ref: https://en.wikipedia.org/wiki/ANSI_escape_code#SGR_(Select_Graphic_Rendition)_parameters
-func (color Color) ansiString(foreground bool) string {
-	value := color.colorValue()
-
+func (color Color) ansiString(foreground bool, terminalColorCount ColorType) string {
 	fgBgMarker := "3"
 	if !foreground {
 		fgBgMarker = "4"
 	}
 
+	if color.colorType() == colorTypeDefault {
+		return fmt.Sprint("\x1b[", fgBgMarker, "9m")
+	}
+
+	color = color.downsampleTo(terminalColorCount)
+
 	if color.colorType() == ColorType16 {
+		value := color.colorValue()
 		if value < 8 {
 			return fmt.Sprint("\x1b[", fgBgMarker, value, "m")
 		} else if value <= 15 {
@@ -104,12 +114,14 @@ func (color Color) ansiString(foreground bool) string {
 	}
 
 	if color.colorType() == ColorType256 {
+		value := color.colorValue()
 		if value <= 255 {
 			return fmt.Sprint("\x1b[", fgBgMarker, "8;5;", value, "m")
 		}
 	}
 
 	if color.colorType() == ColorType24bit {
+		value := color.colorValue()
 		red := (value & 0xff0000) >> 16
 		green := (value & 0xff00) >> 8
 		blue := value & 0xff
@@ -117,21 +129,17 @@ func (color Color) ansiString(foreground bool) string {
 		return fmt.Sprint("\x1b[", fgBgMarker, "8;2;", red, ";", green, ";", blue, "m")
 	}
 
-	if color.colorType() == colorTypeDefault {
-		return fmt.Sprint("\x1b[", fgBgMarker, "9m")
-	}
-
-	panic(fmt.Errorf("unhandled color type=%d value=%#x", color.colorType(), value))
+	panic(fmt.Errorf("unhandled color type=%d %s", color.colorType(), color.String()))
 }
 
-func (color Color) ForegroundAnsiString() string {
+func (color Color) ForegroundAnsiString(terminalColorCount ColorType) string {
 	// FIXME: Test this function with all different color types.
-	return color.ansiString(true)
+	return color.ansiString(true, terminalColorCount)
 }
 
-func (color Color) BackgroundAnsiString() string {
+func (color Color) BackgroundAnsiString(terminalColorCount ColorType) string {
 	// FIXME: Test this function with all different color types.
-	return color.ansiString(false)
+	return color.ansiString(false, terminalColorCount)
 }
 
 func (color Color) String() string {
@@ -153,4 +161,69 @@ func (color Color) String() string {
 	}
 
 	panic(fmt.Errorf("unhandled color type %d", color.colorType()))
+}
+
+func (color Color) downsampleTo(terminalColorCount ColorType) Color {
+	if color.colorType() == colorTypeDefault || terminalColorCount == colorTypeDefault {
+		panic(fmt.Errorf("downsampling to or from default color not supported, %s -> %#v", color.String(), terminalColorCount))
+	}
+
+	if color.colorType() <= terminalColorCount {
+		// Already low enough
+		return color
+	}
+
+	// Convert existing color to 24 bit
+	var targetR float64
+	var targetG float64
+	var targetB float64
+	if color.colorType() == ColorType24bit {
+		targetR = float64(color.colorValue()>>16) / 255.0
+		targetG = float64(color.colorValue()>>8&0xff) / 255.0
+		targetB = float64(color.colorValue()&0xff) / 255.0
+	} else {
+		targetR, targetG, targetB = color256ToRGB(uint8(color.colorValue()))
+	}
+
+	// Find the closest match in the terminal color palette
+	scanRange := 255
+	switch terminalColorCount {
+	case ColorType8:
+		scanRange = 7
+	case ColorType16:
+		scanRange = 15
+	case ColorType256:
+		scanRange = 255
+	default:
+		panic(fmt.Errorf("unhandled terminal color count %#v", terminalColorCount))
+	}
+
+	// Iterate over the scan range and find the best matching index
+	bestMatch := 0
+	bestDistance := math.MaxFloat64
+	target := colorful.Color{
+		R: targetR,
+		G: targetG,
+		B: targetB,
+	}
+	for i := 0; i <= scanRange; i++ {
+		r, g, b := color256ToRGB(uint8(i))
+		candidate := colorful.Color{
+			R: r,
+			G: g,
+			B: b,
+		}
+
+		distance := target.DistanceLab(candidate)
+		if distance < bestDistance {
+			bestDistance = distance
+			bestMatch = i
+		}
+	}
+
+	if bestMatch <= 15 {
+		return NewColor16(bestMatch)
+	} else {
+		return NewColor256(uint8(bestMatch))
+	}
 }

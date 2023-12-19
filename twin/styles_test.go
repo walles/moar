@@ -12,6 +12,6 @@ func TestHyperlinkToNormal(t *testing.T) {
 
 	style := StyleDefault.WithHyperlink(&url)
 	assert.Equal(t,
-		strings.ReplaceAll(StyleDefault.RenderUpdateFrom(style), "", "ESC"),
+		strings.ReplaceAll(StyleDefault.RenderUpdateFrom(style, ColorType16), "", "ESC"),
 		"ESC]8;;ESC\\")
 }

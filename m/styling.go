@@ -1,0 +1,111 @@
+package m
+
+import (
+	"fmt"
+	"os"
+	"strings"
+
+	"github.com/alecthomas/chroma/v2"
+	log "github.com/sirupsen/logrus"
+	"github.com/walles/moar/twin"
+)
+
+// From LESS_TERMCAP_so, overrides statusbarStyle from the Chroma style if set
+var standoutStyle *twin.Style = nil
+
+var manPageBold = twin.StyleDefault.WithAttr(twin.AttrBold)
+var manPageUnderline = twin.StyleDefault.WithAttr(twin.AttrUnderline)
+
+var lineNumbersStyle = twin.StyleDefault.WithAttr(twin.AttrDim)
+var statusbarStyle = twin.StyleDefault.WithAttr(twin.AttrReverse)
+
+func setStyle(updateMe *twin.Style, envVarName string, fallback *twin.Style) {
+	envValue := os.Getenv(envVarName)
+	if envValue == "" {
+		if fallback != nil {
+			*updateMe = *fallback
+		}
+		return
+	}
+
+	*updateMe = termcapToStyle(envValue)
+}
+
+func twinStyleFromChroma(chromaStyle *chroma.Style, chromaFormatter *chroma.Formatter, chromaToken chroma.TokenType) *twin.Style {
+	if chromaStyle == nil || chromaFormatter == nil {
+		return nil
+	}
+
+	stringBuilder := strings.Builder{}
+	err := (*chromaFormatter).Format(&stringBuilder, chromaStyle, chroma.Literator(chroma.Token{
+		Type:  chromaToken,
+		Value: "X",
+	}))
+	if err != nil {
+		panic(err)
+	}
+
+	formatted := stringBuilder.String()
+	cells := cellsFromString(formatted, nil).Cells
+	if len(cells) != 1 {
+		log.Warnf("Chroma formatter didn't return exactly one cell: %#v", cells)
+		return nil
+	}
+
+	return &cells[0].Style
+}
+
+// consumeLessTermcapEnvs parses LESS_TERMCAP_xx environment variables and
+// adapts the moar output accordingly.
+func consumeLessTermcapEnvs(chromaStyle *chroma.Style, chromaFormatter *chroma.Formatter) {
+	// Requested here: https://github.com/walles/moar/issues/14
+
+	setStyle(&manPageBold, "LESS_TERMCAP_md", twinStyleFromChroma(chromaStyle, chromaFormatter, chroma.GenericStrong))
+	setStyle(&manPageUnderline, "LESS_TERMCAP_us", twinStyleFromChroma(chromaStyle, chromaFormatter, chroma.GenericUnderline))
+
+	// Special treat this because standoutStyle defaults to nil, and should be
+	// set only if there is a style defined through the environment.
+	envValue := os.Getenv("LESS_TERMCAP_so")
+	if envValue != "" {
+		style := termcapToStyle(envValue)
+		standoutStyle = &style
+	}
+}
+
+func styleUi(chromaStyle *chroma.Style, chromaFormatter *chroma.Formatter, statusbarOption StatusBarOption) {
+	if chromaStyle == nil || chromaFormatter == nil {
+		return
+	}
+
+	// FIXME: Get this from the Chroma style
+	lineNumbersStyle = twin.StyleDefault.WithAttr(twin.AttrDim)
+
+	if standoutStyle != nil {
+		statusbarStyle = *standoutStyle
+	} else if statusbarOption == STATUSBAR_STYLE_INVERSE {
+		// FIXME: Get this from the Chroma style
+		statusbarStyle = twin.StyleDefault.WithAttr(twin.AttrReverse)
+	} else if statusbarOption == STATUSBAR_STYLE_PLAIN {
+		plain := twinStyleFromChroma(chromaStyle, chromaFormatter, chroma.None)
+		if plain != nil {
+			statusbarStyle = *plain
+		} else {
+			statusbarStyle = twin.StyleDefault
+		}
+	} else if statusbarOption == STATUSBAR_STYLE_BOLD {
+		bold := twinStyleFromChroma(chromaStyle, chromaFormatter, chroma.GenericStrong)
+		if bold != nil {
+			statusbarStyle = *bold
+		} else {
+			statusbarStyle = twin.StyleDefault.WithAttr(twin.AttrBold)
+		}
+	} else {
+		panic(fmt.Sprint("Unrecognized status bar style: ", statusbarOption))
+	}
+}
+
+func termcapToStyle(termcap string) twin.Style {
+	// Add a character to be sure we have one to take the format from
+	cells := cellsFromString(termcap+"x", nil).Cells
+	return cells[len(cells)-1].Style
+}

@@ -5,6 +5,7 @@ go 1.20
 require (
 	github.com/alecthomas/chroma/v2 v2.12.0
 	github.com/google/go-cmp v0.5.9
+	github.com/lucasb-eyer/go-colorful v1.2.0
 	github.com/sirupsen/logrus v1.8.1
 	golang.org/x/sys v0.1.0
 	golang.org/x/term v0.0.0-20210503060354-a79de5458b56

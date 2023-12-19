@@ -77,6 +77,8 @@ type UnixScreen struct {
 
 	ttyOut        *os.File
 	oldTtyOutMode uint32 //nolint Windows only
+
+	terminalColorCount ColorType
 }
 
 // Example event: "\x1b[<65;127;41M"
@@ -94,18 +96,29 @@ type UnixScreen struct {
 // * "M" marks the end of the mouse event.
 var MOUSE_EVENT_REGEX = regexp.MustCompile("^\x1b\\[<([0-9]+);([0-9]+);([0-9]+)M")
 
+// NewScreen() requires Close() to be called after you are done with your new
+// screen, most likely somewhere in your shutdown code.
 func NewScreen() (Screen, error) {
 	return NewScreenWithMouseMode(MouseModeAuto)
 }
 
-// NewScreen() requires Close() to be called after you are done with your new
-// screen, most likely somewhere in your shutdown code.
 func NewScreenWithMouseMode(mouseMode MouseMode) (Screen, error) {
+	terminalColorCount := ColorType24bit
+	if strings.Contains(os.Getenv("TERM"), "256") {
+		// Covers "xterm-256color" as used by the macOS Terminal
+		terminalColorCount = ColorType256
+	}
+	return NewScreenWithMouseModeAndColorType(mouseMode, terminalColorCount)
+}
+
+func NewScreenWithMouseModeAndColorType(mouseMode MouseMode, terminalColorCount ColorType) (Screen, error) {
 	if !term.IsTerminal(int(os.Stdout.Fd())) {
 		return nil, fmt.Errorf("stdout (fd=%d) must be a terminal for paging to work", os.Stdout.Fd())
 	}
 
-	screen := UnixScreen{}
+	screen := UnixScreen{
+		terminalColorCount: terminalColorCount,
+	}
 
 	// The number "80" here is from manual testing on my MacBook:
 	//
@@ -506,7 +519,7 @@ func (screen *UnixScreen) Clear() {
 
 // Returns the rendered line, plus how many information carrying cells went into
 // it
-func renderLine(row []Cell) (string, int) {
+func renderLine(row []Cell, terminalColorCount ColorType) (string, int) {
 	// Strip trailing whitespace
 	lastSignificantCellIndex := len(row) - 1
 	for ; lastSignificantCellIndex >= 0; lastSignificantCellIndex-- {
@@ -539,7 +552,7 @@ func renderLine(row []Cell) (string, int) {
 		}
 
 		if style != lastStyle {
-			builder.WriteString(style.RenderUpdateFrom(lastStyle))
+			builder.WriteString(style.RenderUpdateFrom(lastStyle, terminalColorCount))
 			lastStyle = style
 		}
 
@@ -548,7 +561,7 @@ func renderLine(row []Cell) (string, int) {
 
 	// Clear to end of line
 	// https://en.wikipedia.org/wiki/ANSI_escape_code#CSI_(Control_Sequence_Introducer)_sequences
-	builder.WriteString(StyleDefault.RenderUpdateFrom(lastStyle))
+	builder.WriteString(StyleDefault.RenderUpdateFrom(lastStyle, terminalColorCount))
 	builder.WriteString("\x1b[K")
 
 	return builder.String(), len(row)
@@ -573,7 +586,7 @@ func (screen *UnixScreen) showNLines(height int, clearFirst bool) {
 	}
 
 	for row := 0; row < height; row++ {
-		rendered, lineLength := renderLine(screen.cells[row])
+		rendered, lineLength := renderLine(screen.cells[row], screen.terminalColorCount)
 		builder.WriteString(rendered)
 
 		wasLastLine := row == (height - 1)
