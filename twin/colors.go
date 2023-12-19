@@ -185,7 +185,7 @@ func (color Color) downsampleTo(terminalColorCount ColorType) Color {
 		targetR, targetG, targetB = color256ToRGB(uint8(color.colorValue()))
 	}
 
-	// FIXME: Find the closest match in the terminal color palette
+	// Find the closest match in the terminal color palette
 	scanRange := 255
 	switch terminalColorCount {
 	case ColorType8:
