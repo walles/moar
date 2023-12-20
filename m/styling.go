@@ -61,17 +61,26 @@ func backgroundStyleFromChroma(chromaStyle *chroma.Style) *twin.Style {
 	}
 
 	backgroundEntry := chromaStyle.Get(chroma.Background)
-	returnMe := twin.StyleDefault.
-		Background(twin.NewColor24Bit(
-			backgroundEntry.Background.Red(),
-			backgroundEntry.Background.Green(),
-			backgroundEntry.Background.Blue(),
-		)).
-		Foreground(twin.NewColor24Bit(
+
+	if !backgroundEntry.Background.IsSet() {
+		panic(fmt.Sprint("Background color not set in style: ", chromaStyle))
+	}
+	backgroundColor := twin.NewColor24Bit(
+		backgroundEntry.Background.Red(),
+		backgroundEntry.Background.Green(),
+		backgroundEntry.Background.Blue())
+
+	foregroundColor := twin.ColorDefault
+	if backgroundEntry.Colour.IsSet() {
+		foregroundColor = twin.NewColor24Bit(
 			backgroundEntry.Colour.Red(),
 			backgroundEntry.Colour.Green(),
-			backgroundEntry.Colour.Blue(),
-		))
+			backgroundEntry.Colour.Blue())
+	}
+
+	returnMe := twin.StyleDefault.
+		Background(backgroundColor).
+		Foreground(foregroundColor)
 
 	if backgroundEntry.Bold == chroma.Yes {
 		returnMe = returnMe.WithAttr(twin.AttrBold)
@@ -119,9 +128,9 @@ func styleUi(chromaStyle *chroma.Style, chromaFormatter *chroma.Formatter, statu
 	if standoutStyle != nil {
 		statusbarStyle = *standoutStyle
 	} else if statusbarOption == STATUSBAR_STYLE_INVERSE {
-		inverse := backgroundStyleFromChroma(chromaStyle)
-		if inverse != nil {
-			statusbarStyle = *inverse
+		styleBackground := backgroundStyleFromChroma(chromaStyle)
+		if styleBackground != nil {
+			statusbarStyle = styleBackground.WithAttr(twin.AttrReverse)
 		} else {
 			statusbarStyle = twin.StyleDefault.WithAttr(twin.AttrReverse)
 		}
