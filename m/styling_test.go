@@ -15,9 +15,16 @@ func TestBackgroundStyleFromChromaGithub(t *testing.T) {
 }
 
 func TestBackgroundStyleFromChromaAverage(t *testing.T) {
-	// Verify we get the right values out of a theme with both Text and Background.
+	// Verify we get the right values out of a style with both Text and Background.
 	style := backgroundStyleFromChroma(*styles.Get("average"))
 	assert.Equal(t, style.String(), "#757575 on #000000")
+}
+
+func TestBackgroundStyleFromChromaNative(t *testing.T) {
+	// Verify we get the right values out of a style where Background comes with
+	// both foreground and background.
+	style := backgroundStyleFromChroma(*styles.Get("native"))
+	assert.Equal(t, style.String(), "#d0d0d0 on #202020")
 }
 
 // Loop over all styles and check that the contrast we get in
