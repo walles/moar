@@ -5,7 +5,6 @@ import (
 	"math"
 
 	"github.com/alecthomas/chroma/v2"
-	"github.com/lucasb-eyer/go-colorful"
 )
 
 // Create using NewColor16(), NewColor256 or NewColor24Bit(), or use
@@ -164,6 +163,19 @@ func (color Color) String() string {
 	panic(fmt.Errorf("unhandled color type %d", color.ColorType()))
 }
 
+func (color Color) to24Bit() Color {
+	if color.ColorType() == ColorType24bit {
+		return color
+	}
+
+	if color.ColorType() == ColorType8 || color.ColorType() == ColorType16 || color.ColorType() == ColorType256 {
+		r0, g0, b0 := color256ToRGB(uint8(color.colorValue()))
+		return NewColor24Bit(r0, g0, b0)
+	}
+
+	panic(fmt.Errorf("unhandled color type %d", color.ColorType()))
+}
+
 func (color Color) downsampleTo(terminalColorCount ColorType) Color {
 	if color.ColorType() == ColorTypeDefault || terminalColorCount == ColorTypeDefault {
 		panic(fmt.Errorf("downsampling to or from default color not supported, %s -> %#v", color.String(), terminalColorCount))
@@ -174,17 +186,7 @@ func (color Color) downsampleTo(terminalColorCount ColorType) Color {
 		return color
 	}
 
-	// Convert existing color to 24 bit
-	var targetR float64
-	var targetG float64
-	var targetB float64
-	if color.ColorType() == ColorType24bit {
-		targetR = float64(color.colorValue()>>16) / 255.0
-		targetG = float64(color.colorValue()>>8&0xff) / 255.0
-		targetB = float64(color.colorValue()&0xff) / 255.0
-	} else {
-		targetR, targetG, targetB = color256ToRGB(uint8(color.colorValue()))
-	}
+	target := color.to24Bit()
 
 	// Find the closest match in the terminal color palette
 	scanRange := 255
@@ -202,20 +204,11 @@ func (color Color) downsampleTo(terminalColorCount ColorType) Color {
 	// Iterate over the scan range and find the best matching index
 	bestMatch := 0
 	bestDistance := math.MaxFloat64
-	target := colorful.Color{
-		R: targetR,
-		G: targetG,
-		B: targetB,
-	}
 	for i := 0; i <= scanRange; i++ {
 		r, g, b := color256ToRGB(uint8(i))
-		candidate := colorful.Color{
-			R: r,
-			G: g,
-			B: b,
-		}
+		candidate := NewColor24Bit(r, g, b)
 
-		distance := target.DistanceLab(candidate)
+		distance := target.Distance(candidate)
 		if distance < bestDistance {
 			bestDistance = distance
 			bestMatch = i

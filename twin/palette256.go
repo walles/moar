@@ -1,17 +1,17 @@
 package twin
 
-func color256ToRGB(color256 uint8) (r, g, b float64) {
+func color256ToRGB(color256 uint8) (r, g, b uint8) {
 	if color256 < 16 {
 		// Standard ANSI colors
-		r := float64(standardAnsiColors[color256][0]) / 255.0
-		g := float64(standardAnsiColors[color256][1]) / 255.0
-		b := float64(standardAnsiColors[color256][2]) / 255.0
+		r := standardAnsiColors[color256][0]
+		g := standardAnsiColors[color256][1]
+		b := standardAnsiColors[color256][2]
 		return r, g, b
 	}
 
 	if color256 >= 232 {
 		// Grayscale. Colors 232-255 map to components 0x08 to 0xee
-		gray := float64((color256-232)*0x0a+0x08) / 255.0
+		gray := (color256-232)*0x0a + 0x08
 		return gray, gray, gray
 	}
 
@@ -19,9 +19,9 @@ func color256ToRGB(color256 uint8) (r, g, b float64) {
 	color0_to_215 := color256 - 16
 
 	components := []uint8{0x00, 0x5f, 0x87, 0xaf, 0xd7, 0xff}
-	r = float64(components[(color0_to_215/36)%6]) / 255.0
-	g = float64(components[(color0_to_215/6)%6]) / 255.0
-	b = float64(components[(color0_to_215/1)%6]) / 255.0
+	r = components[(color0_to_215/36)%6]
+	g = components[(color0_to_215/6)%6]
+	b = components[(color0_to_215/1)%6]
 	return r, g, b
 }
 
