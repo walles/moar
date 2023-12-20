@@ -58,13 +58,13 @@ func twinStyleFromChroma(chromaStyle *chroma.Style, chromaFormatter *chroma.Form
 func backgroundStyleFromChroma(chromaStyle chroma.Style) twin.Style {
 	backgroundEntry := chromaStyle.Get(chroma.Background)
 
-	if !backgroundEntry.Background.IsSet() {
-		panic(fmt.Sprint("Background color not set in style: ", chromaStyle))
+	backgroundColor := twin.ColorDefault
+	if backgroundEntry.Background.IsSet() {
+		backgroundColor = twin.NewColor24Bit(
+			backgroundEntry.Background.Red(),
+			backgroundEntry.Background.Green(),
+			backgroundEntry.Background.Blue())
 	}
-	backgroundColor := twin.NewColor24Bit(
-		backgroundEntry.Background.Red(),
-		backgroundEntry.Background.Green(),
-		backgroundEntry.Background.Blue())
 
 	foregroundColor := twin.ColorDefault
 	if backgroundEntry.Colour.IsSet() {
