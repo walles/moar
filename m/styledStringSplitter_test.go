@@ -66,5 +66,5 @@ func TestColonColors(t *testing.T) {
 	assert.Equal(t, twin.StyleDefault, trailer)
 	assert.Equal(t, 1, len(styledStrings))
 	assert.Equal(t, "hello", styledStrings[0].String)
-	assert.Equal(t, twin.StyleDefault.Foreground(twin.NewColor256(238)), styledStrings[0].Style)
+	assert.Equal(t, twin.StyleDefault.WithForeground(twin.NewColor256(238)), styledStrings[0].Style)
 }

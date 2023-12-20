@@ -79,8 +79,8 @@ func backgroundStyleFromChroma(chromaStyle *chroma.Style) *twin.Style {
 	}
 
 	returnMe := twin.StyleDefault.
-		Background(backgroundColor).
-		Foreground(foregroundColor)
+		WithBackground(backgroundColor).
+		WithForeground(foregroundColor)
 
 	if backgroundEntry.Bold == chroma.Yes {
 		returnMe = returnMe.WithAttr(twin.AttrBold)

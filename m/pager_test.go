@@ -46,14 +46,14 @@ func TestFgColorRendering(t *testing.T) {
 		"\x1b[30ma\x1b[31mb\x1b[32mc\x1b[33md\x1b[34me\x1b[35mf\x1b[36mg\x1b[37mh\x1b[0mi"))
 
 	var answers = []twin.Cell{
-		twin.NewCell('a', twin.StyleDefault.Foreground(twin.NewColor16(0))),
-		twin.NewCell('b', twin.StyleDefault.Foreground(twin.NewColor16(1))),
-		twin.NewCell('c', twin.StyleDefault.Foreground(twin.NewColor16(2))),
-		twin.NewCell('d', twin.StyleDefault.Foreground(twin.NewColor16(3))),
-		twin.NewCell('e', twin.StyleDefault.Foreground(twin.NewColor16(4))),
-		twin.NewCell('f', twin.StyleDefault.Foreground(twin.NewColor16(5))),
-		twin.NewCell('g', twin.StyleDefault.Foreground(twin.NewColor16(6))),
-		twin.NewCell('h', twin.StyleDefault.Foreground(twin.NewColor16(7))),
+		twin.NewCell('a', twin.StyleDefault.WithForeground(twin.NewColor16(0))),
+		twin.NewCell('b', twin.StyleDefault.WithForeground(twin.NewColor16(1))),
+		twin.NewCell('c', twin.StyleDefault.WithForeground(twin.NewColor16(2))),
+		twin.NewCell('d', twin.StyleDefault.WithForeground(twin.NewColor16(3))),
+		twin.NewCell('e', twin.StyleDefault.WithForeground(twin.NewColor16(4))),
+		twin.NewCell('f', twin.StyleDefault.WithForeground(twin.NewColor16(5))),
+		twin.NewCell('g', twin.StyleDefault.WithForeground(twin.NewColor16(6))),
+		twin.NewCell('h', twin.StyleDefault.WithForeground(twin.NewColor16(7))),
 		twin.NewCell('i', twin.StyleDefault),
 	}
 
@@ -80,7 +80,7 @@ func TestBrokenUtf8(t *testing.T) {
 		twin.NewCell('a', twin.StyleDefault),
 		twin.NewCell('b', twin.StyleDefault),
 		twin.NewCell('c', twin.StyleDefault),
-		twin.NewCell('?', twin.StyleDefault.Foreground(twin.NewColor16(7)).Background(twin.NewColor16(1))),
+		twin.NewCell('?', twin.StyleDefault.WithForeground(twin.NewColor16(7)).WithBackground(twin.NewColor16(1))),
 		twin.NewCell('d', twin.StyleDefault),
 		twin.NewCell('e', twin.StyleDefault),
 		twin.NewCell('f', twin.StyleDefault),
@@ -168,8 +168,8 @@ func TestCodeHighlighting(t *testing.T) {
 		panic(err)
 	}
 
-	packageKeywordStyle := twin.StyleDefault.WithAttr(twin.AttrBold).Foreground(twin.NewColorHex(0x6AB825))
-	packageNameStyle := twin.StyleDefault.Foreground(twin.NewColorHex(0xD0D0D0))
+	packageKeywordStyle := twin.StyleDefault.WithAttr(twin.AttrBold).WithForeground(twin.NewColorHex(0x6AB825))
+	packageNameStyle := twin.StyleDefault.WithForeground(twin.NewColorHex(0xD0D0D0))
 	var answers = []twin.Cell{
 		twin.NewCell('p', packageKeywordStyle),
 		twin.NewCell('a', packageKeywordStyle),
@@ -234,7 +234,7 @@ func TestManPageFormatting(t *testing.T) {
 	testManPageFormatting(t, "_\x08x", twin.NewCell('x', twin.StyleDefault.WithAttr(twin.AttrUnderline)))
 
 	// Corner cases
-	testManPageFormatting(t, "\x08", twin.NewCell('<', twin.StyleDefault.Foreground(twin.NewColor16(7)).Background(twin.NewColor16(1))))
+	testManPageFormatting(t, "\x08", twin.NewCell('<', twin.StyleDefault.WithForeground(twin.NewColor16(7)).WithBackground(twin.NewColor16(1))))
 
 	// FIXME: Test two consecutive backspaces
 
@@ -527,7 +527,7 @@ func TestClearToEndOfLine_ClearFromStart(t *testing.T) {
 	var expected []twin.Cell
 	for len(expected) < screenWidth {
 		expected = append(expected,
-			twin.NewCell(' ', twin.StyleDefault.Background(twin.NewColor16(4))),
+			twin.NewCell(' ', twin.StyleDefault.WithBackground(twin.NewColor16(4))),
 		)
 	}
 
@@ -545,7 +545,7 @@ func TestClearToEndOfLine_ClearFromNotStart(t *testing.T) {
 	}
 	for len(expected) < screenWidth {
 		expected = append(expected,
-			twin.NewCell(' ', twin.StyleDefault.Background(twin.NewColor16(4))),
+			twin.NewCell(' ', twin.StyleDefault.WithBackground(twin.NewColor16(4))),
 		)
 	}
 
@@ -575,7 +575,7 @@ func TestClearToEndOfLine_ClearFromStartScrolledRight(t *testing.T) {
 	var expected []twin.Cell
 	for len(expected) < screenWidth {
 		expected = append(expected,
-			twin.NewCell(' ', twin.StyleDefault.Background(twin.NewColor16(4))),
+			twin.NewCell(' ', twin.StyleDefault.WithBackground(twin.NewColor16(4))),
 		)
 	}
 

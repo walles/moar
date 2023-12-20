@@ -147,7 +147,7 @@ func cellsFromString(s string, lineNumberOneBased *int) cellsWithTrailer {
 	var cells []twin.Cell
 
 	// Specs: https://en.wikipedia.org/wiki/ANSI_escape_code#3-bit_and_4-bit
-	styleUnprintable := twin.StyleDefault.Background(twin.NewColor16(1)).Foreground(twin.NewColor16(7))
+	styleUnprintable := twin.StyleDefault.WithBackground(twin.NewColor16(1)).WithForeground(twin.NewColor16(7))
 
 	trailer := styledStringsFromString(s, lineNumberOneBased, func(str string, style twin.Style) {
 		for _, token := range tokensFromStyledString(_StyledString{String: str, Style: style}) {
@@ -485,21 +485,21 @@ func rawUpdateStyle(style twin.Style, escapeSequenceWithoutHeader string, number
 
 		// Foreground colors, https://pkg.go.dev/github.com/gdamore/tcell#Color
 		case 30:
-			style = style.Foreground(twin.NewColor16(0))
+			style = style.WithForeground(twin.NewColor16(0))
 		case 31:
-			style = style.Foreground(twin.NewColor16(1))
+			style = style.WithForeground(twin.NewColor16(1))
 		case 32:
-			style = style.Foreground(twin.NewColor16(2))
+			style = style.WithForeground(twin.NewColor16(2))
 		case 33:
-			style = style.Foreground(twin.NewColor16(3))
+			style = style.WithForeground(twin.NewColor16(3))
 		case 34:
-			style = style.Foreground(twin.NewColor16(4))
+			style = style.WithForeground(twin.NewColor16(4))
 		case 35:
-			style = style.Foreground(twin.NewColor16(5))
+			style = style.WithForeground(twin.NewColor16(5))
 		case 36:
-			style = style.Foreground(twin.NewColor16(6))
+			style = style.WithForeground(twin.NewColor16(6))
 		case 37:
-			style = style.Foreground(twin.NewColor16(7))
+			style = style.WithForeground(twin.NewColor16(7))
 		case 38:
 			var err error
 			var color *twin.Color
@@ -507,27 +507,27 @@ func rawUpdateStyle(style twin.Style, escapeSequenceWithoutHeader string, number
 			if err != nil {
 				return style, numbersBuffer, fmt.Errorf("Foreground: %w", err)
 			}
-			style = style.Foreground(*color)
+			style = style.WithForeground(*color)
 		case 39:
-			style = style.Foreground(twin.ColorDefault)
+			style = style.WithForeground(twin.ColorDefault)
 
 		// Background colors, see https://pkg.go.dev/github.com/gdamore/Color
 		case 40:
-			style = style.Background(twin.NewColor16(0))
+			style = style.WithBackground(twin.NewColor16(0))
 		case 41:
-			style = style.Background(twin.NewColor16(1))
+			style = style.WithBackground(twin.NewColor16(1))
 		case 42:
-			style = style.Background(twin.NewColor16(2))
+			style = style.WithBackground(twin.NewColor16(2))
 		case 43:
-			style = style.Background(twin.NewColor16(3))
+			style = style.WithBackground(twin.NewColor16(3))
 		case 44:
-			style = style.Background(twin.NewColor16(4))
+			style = style.WithBackground(twin.NewColor16(4))
 		case 45:
-			style = style.Background(twin.NewColor16(5))
+			style = style.WithBackground(twin.NewColor16(5))
 		case 46:
-			style = style.Background(twin.NewColor16(6))
+			style = style.WithBackground(twin.NewColor16(6))
 		case 47:
-			style = style.Background(twin.NewColor16(7))
+			style = style.WithBackground(twin.NewColor16(7))
 		case 48:
 			var err error
 			var color *twin.Color
@@ -535,9 +535,9 @@ func rawUpdateStyle(style twin.Style, escapeSequenceWithoutHeader string, number
 			if err != nil {
 				return style, numbersBuffer, fmt.Errorf("Background: %w", err)
 			}
-			style = style.Background(*color)
+			style = style.WithBackground(*color)
 		case 49:
-			style = style.Background(twin.ColorDefault)
+			style = style.WithBackground(twin.ColorDefault)
 
 		// Bright foreground colors: see https://pkg.go.dev/github.com/gdamore/Color
 		//
@@ -546,38 +546,38 @@ func rawUpdateStyle(style twin.Style, escapeSequenceWithoutHeader string, number
 		// * TERM=xterm-256color
 		// * TERM=screen-256color
 		case 90:
-			style = style.Foreground(twin.NewColor16(8))
+			style = style.WithForeground(twin.NewColor16(8))
 		case 91:
-			style = style.Foreground(twin.NewColor16(9))
+			style = style.WithForeground(twin.NewColor16(9))
 		case 92:
-			style = style.Foreground(twin.NewColor16(10))
+			style = style.WithForeground(twin.NewColor16(10))
 		case 93:
-			style = style.Foreground(twin.NewColor16(11))
+			style = style.WithForeground(twin.NewColor16(11))
 		case 94:
-			style = style.Foreground(twin.NewColor16(12))
+			style = style.WithForeground(twin.NewColor16(12))
 		case 95:
-			style = style.Foreground(twin.NewColor16(13))
+			style = style.WithForeground(twin.NewColor16(13))
 		case 96:
-			style = style.Foreground(twin.NewColor16(14))
+			style = style.WithForeground(twin.NewColor16(14))
 		case 97:
-			style = style.Foreground(twin.NewColor16(15))
+			style = style.WithForeground(twin.NewColor16(15))
 
 		case 100:
-			style = style.Background(twin.NewColor16(8))
+			style = style.WithBackground(twin.NewColor16(8))
 		case 101:
-			style = style.Background(twin.NewColor16(9))
+			style = style.WithBackground(twin.NewColor16(9))
 		case 102:
-			style = style.Background(twin.NewColor16(10))
+			style = style.WithBackground(twin.NewColor16(10))
 		case 103:
-			style = style.Background(twin.NewColor16(11))
+			style = style.WithBackground(twin.NewColor16(11))
 		case 104:
-			style = style.Background(twin.NewColor16(12))
+			style = style.WithBackground(twin.NewColor16(12))
 		case 105:
-			style = style.Background(twin.NewColor16(13))
+			style = style.WithBackground(twin.NewColor16(13))
 		case 106:
-			style = style.Background(twin.NewColor16(14))
+			style = style.WithBackground(twin.NewColor16(14))
 		case 107:
-			style = style.Background(twin.NewColor16(15))
+			style = style.WithBackground(twin.NewColor16(15))
 
 		default:
 			return style, numbersBuffer, fmt.Errorf("Unrecognized ANSI SGR code <%d>", number)
