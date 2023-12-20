@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"math"
 
-	"github.com/lucasb-eyer/go-colorful"
+	"github.com/alecthomas/chroma/v2"
 )
 
 // Create using NewColor16(), NewColor256 or NewColor24Bit(), or use
@@ -163,6 +163,19 @@ func (color Color) String() string {
 	panic(fmt.Errorf("unhandled color type %d", color.colorType()))
 }
 
+func (color Color) to24Bit() Color {
+	if color.colorType() == ColorType24bit {
+		return color
+	}
+
+	if color.colorType() == ColorType8 || color.colorType() == ColorType16 || color.colorType() == ColorType256 {
+		r0, g0, b0 := color256ToRGB(uint8(color.colorValue()))
+		return NewColor24Bit(r0, g0, b0)
+	}
+
+	panic(fmt.Errorf("unhandled color type %d", color.colorType()))
+}
+
 func (color Color) downsampleTo(terminalColorCount ColorType) Color {
 	if color.colorType() == colorTypeDefault || terminalColorCount == colorTypeDefault {
 		panic(fmt.Errorf("downsampling to or from default color not supported, %s -> %#v", color.String(), terminalColorCount))
@@ -173,17 +186,7 @@ func (color Color) downsampleTo(terminalColorCount ColorType) Color {
 		return color
 	}
 
-	// Convert existing color to 24 bit
-	var targetR float64
-	var targetG float64
-	var targetB float64
-	if color.colorType() == ColorType24bit {
-		targetR = float64(color.colorValue()>>16) / 255.0
-		targetG = float64(color.colorValue()>>8&0xff) / 255.0
-		targetB = float64(color.colorValue()&0xff) / 255.0
-	} else {
-		targetR, targetG, targetB = color256ToRGB(uint8(color.colorValue()))
-	}
+	target := color.to24Bit()
 
 	// Find the closest match in the terminal color palette
 	scanRange := 255
@@ -201,20 +204,11 @@ func (color Color) downsampleTo(terminalColorCount ColorType) Color {
 	// Iterate over the scan range and find the best matching index
 	bestMatch := 0
 	bestDistance := math.MaxFloat64
-	target := colorful.Color{
-		R: targetR,
-		G: targetG,
-		B: targetB,
-	}
 	for i := 0; i <= scanRange; i++ {
 		r, g, b := color256ToRGB(uint8(i))
-		candidate := colorful.Color{
-			R: r,
-			G: g,
-			B: b,
-		}
+		candidate := NewColor24Bit(r, g, b)
 
-		distance := target.DistanceLab(candidate)
+		distance := target.Distance(candidate)
 		if distance < bestDistance {
 			bestDistance = distance
 			bestMatch = i
@@ -226,4 +220,32 @@ func (color Color) downsampleTo(terminalColorCount ColorType) Color {
 	} else {
 		return NewColor256(uint8(bestMatch))
 	}
+}
+
+// Wrapper for Chroma's color distance function.
+//
+// That one says it uses this formula: https://www.compuphase.com/cmetric.htm
+//
+// The result from this function has been scaled to 0.0-1.0, where 1.0 is the
+// distance between black and white.
+func (c Color) Distance(other Color) float64 {
+	if c.colorType() != ColorType24bit {
+		panic(fmt.Errorf("contrast only supported for 24 bit colors, got %s vs %s", c.String(), other.String()))
+	}
+
+	baseColor := chroma.NewColour(
+		uint8(c.colorValue()>>16&0xff),
+		uint8(c.colorValue()>>8&0xff),
+		uint8(c.colorValue()&0xff),
+	)
+
+	otherColor := chroma.NewColour(
+		uint8(other.colorValue()>>16&0xff),
+		uint8(other.colorValue()>>8&0xff),
+		uint8(other.colorValue()&0xff),
+	)
+
+	// Magic constant comes from testing
+	maxDistance := 764.8333151739665
+	return baseColor.Distance(otherColor) / maxDistance
 }

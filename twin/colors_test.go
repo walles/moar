@@ -40,3 +40,17 @@ func TestAnsiStringDefault(t *testing.T) {
 		"\x1b[39m",
 	)
 }
+
+func TestDistance(t *testing.T) {
+	// Black -> white
+	assert.Equal(t,
+		NewColor24Bit(0, 0, 0).Distance(NewColor24Bit(255, 255, 255)),
+		1.0,
+	)
+
+	// White -> black
+	assert.Equal(t,
+		NewColor24Bit(255, 255, 255).Distance(NewColor24Bit(0, 0, 0)),
+		1.0,
+	)
+}
