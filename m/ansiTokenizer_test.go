@@ -194,7 +194,7 @@ func TestConsumeCompositeColorIncomplete24Bit(t *testing.T) {
 func TestRawUpdateStyle(t *testing.T) {
 	numberColored, _, err := rawUpdateStyle(twin.StyleDefault, "33m", make([]uint, 0))
 	assert.NilError(t, err)
-	assert.Equal(t, numberColored, twin.StyleDefault.Foreground(twin.NewColor16(3)))
+	assert.Equal(t, numberColored, twin.StyleDefault.WithForeground(twin.NewColor16(3)))
 }
 
 // Test with the recommended terminator ESC-backslash.

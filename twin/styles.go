@@ -117,7 +117,7 @@ func (attr AttrMask) has(attrs AttrMask) bool {
 	return attr&attrs != 0
 }
 
-func (style Style) Background(color Color) Style {
+func (style Style) WithBackground(color Color) Style {
 	return Style{
 		fg:           style.fg,
 		bg:           color,
@@ -126,7 +126,7 @@ func (style Style) Background(color Color) Style {
 	}
 }
 
-func (style Style) Foreground(color Color) Style {
+func (style Style) WithForeground(color Color) Style {
 	return Style{
 		fg:           color,
 		bg:           style.bg,
