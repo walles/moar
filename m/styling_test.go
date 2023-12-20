@@ -46,6 +46,8 @@ func TestBackgroundStyleContrast(t *testing.T) {
 
 			// 0.4 feels low, but as of Chroma v2.12.0 this is the distance we
 			// get for some styles (solarized-dark, solarized-light, average).
+			//
+			// Let's at least verify it doesn't get worse than this.
 			assert.Check(t, distance > 0.4, "distance=%f", distance)
 		})
 	}
