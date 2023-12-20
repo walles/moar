@@ -117,6 +117,14 @@ func (attr AttrMask) has(attrs AttrMask) bool {
 	return attr&attrs != 0
 }
 
+func (style Style) Background() Color {
+	return style.bg
+}
+
+func (style Style) Foreground() Color {
+	return style.fg
+}
+
 func (style Style) WithBackground(color Color) Style {
 	return Style{
 		fg:           style.fg,
