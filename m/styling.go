@@ -55,11 +55,7 @@ func twinStyleFromChroma(chromaStyle *chroma.Style, chromaFormatter *chroma.Form
 	return &cells[0].Style
 }
 
-func backgroundStyleFromChroma(chromaStyle *chroma.Style) *twin.Style {
-	if chromaStyle == nil {
-		return nil
-	}
-
+func backgroundStyleFromChroma(chromaStyle chroma.Style) twin.Style {
 	backgroundEntry := chromaStyle.Get(chroma.Background)
 
 	if !backgroundEntry.Background.IsSet() {
@@ -92,7 +88,7 @@ func backgroundStyleFromChroma(chromaStyle *chroma.Style) *twin.Style {
 		returnMe = returnMe.WithAttr(twin.AttrUnderline)
 	}
 
-	return &returnMe
+	return returnMe
 }
 
 // consumeLessTermcapEnvs parses LESS_TERMCAP_xx environment variables and
@@ -128,9 +124,8 @@ func styleUi(chromaStyle *chroma.Style, chromaFormatter *chroma.Formatter, statu
 	if standoutStyle != nil {
 		statusbarStyle = *standoutStyle
 	} else if statusbarOption == STATUSBAR_STYLE_INVERSE {
-		styleBackground := backgroundStyleFromChroma(chromaStyle)
-		if styleBackground != nil {
-			statusbarStyle = styleBackground.WithAttr(twin.AttrReverse)
+		if chromaStyle != nil {
+			statusbarStyle = backgroundStyleFromChroma(*chromaStyle).WithAttr(twin.AttrReverse)
 		} else {
 			statusbarStyle = twin.StyleDefault.WithAttr(twin.AttrReverse)
 		}
