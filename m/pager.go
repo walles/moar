@@ -99,6 +99,9 @@ type Pager struct {
 	// ChromaStyle and ChromaFormatter. Used for coloring unstyled text lines
 	// based on the Chroma style.
 	linePrefix string
+
+	// Length of the longest line displayed. This is used for limiting scrolling to the right.
+	longestLineLength int
 }
 
 type _PreHelpState struct {
@@ -242,6 +245,12 @@ func (p *Pager) moveRight(delta int) {
 		p.leftColumnZeroBased = 0
 	} else {
 		p.leftColumnZeroBased = result
+	}
+
+	// If we try to move past the characters when moving right, stop scrolling to
+	// avoid moving infinitely into the void.
+	if p.leftColumnZeroBased > p.longestLineLength {
+		p.leftColumnZeroBased = p.longestLineLength
 	}
 }
 

@@ -33,6 +33,7 @@ type renderedLine struct {
 // the bottom
 func (p *Pager) redraw(spinner string) overflowState {
 	p.screen.Clear()
+	p.longestLineLength = 0
 
 	lastUpdatedScreenLineNumber := -1
 	var renderedScreenLines [][]twin.Cell
@@ -147,6 +148,7 @@ func (p *Pager) renderLines() ([]renderedLine, string, overflowState) {
 
 	allLines := make([]renderedLine, 0)
 	for lineIndex, line := range inputLines.lines {
+
 		lineNumber := inputLines.firstLineOneBased + lineIndex
 
 		rendering, lineOverflow := p.renderLine(line, lineNumber, p.scrollPosition.internalDontTouch)
@@ -154,6 +156,26 @@ func (p *Pager) renderLines() ([]renderedLine, string, overflowState) {
 			// Everything did not fit
 			screenOverflow = didOverflow
 		}
+
+		var onScreenLength int
+		for i := 0; i < len(rendering); i++ {
+			trimmedLen := len(twin.TrimSpaceRight(rendering[i].cells))
+			if trimmedLen > onScreenLength {
+				onScreenLength = trimmedLen
+			}
+		}
+
+		// We're trying to find the max length of readable characters to limit
+		// the scrolling to right, so we don't go over into the vast emptiness for no reason.
+		//
+		// The -1 fixed an issue that seemed like an off-by-one where sometimes, when first
+		// scrolling completely to the right, the first left scroll did not show the text again.
+		displayLength := p.leftColumnZeroBased + onScreenLength - 1
+
+		if displayLength >= p.longestLineLength {
+			p.longestLineLength = displayLength
+		}
+
 		allLines = append(allLines, rendering...)
 	}
 
@@ -260,6 +282,7 @@ func (p *Pager) decorateLine(lineNumberToShow *int, contents []twin.Cell, scroll
 		if endColumn > len(contents) {
 			endColumn = len(contents)
 		}
+
 		newLine = append(newLine, contents[startColumn:endColumn]...)
 	}
 
