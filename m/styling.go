@@ -63,8 +63,11 @@ func consumeLessTermcapEnvs(chromaStyle *chroma.Style, chromaFormatter *chroma.F
 	setStyle(&manPageBold, "LESS_TERMCAP_md", twinStyleFromChroma(chromaStyle, chromaFormatter, chroma.GenericStrong))
 	setStyle(&manPageUnderline, "LESS_TERMCAP_us", twinStyleFromChroma(chromaStyle, chromaFormatter, chroma.GenericUnderline))
 
-	// Special treat this because standoutStyle defaults to nil, and should be
-	// set only if there is a style defined through the environment.
+	// Since standoutStyle defaults to nil we can't just pass it to setStyle().
+	// Instead we give it special treatment here and set it only if its
+	// environment variable is set.
+	//
+	// Ref: https://github.com/walles/moar/issues/171
 	envValue := os.Getenv("LESS_TERMCAP_so")
 	if envValue != "" {
 		style := termcapToStyle(envValue)
