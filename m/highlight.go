@@ -2,13 +2,10 @@ package m
 
 import (
 	"bytes"
-	"os"
 	"strings"
 
 	"github.com/alecthomas/chroma/v2"
 	"github.com/alecthomas/chroma/v2/lexers"
-
-	log "github.com/sirupsen/logrus"
 )
 
 // Files larger than this won't be highlighted
@@ -18,24 +15,13 @@ const MAX_HIGHLIGHT_SIZE int64 = 1024 * 1024
 
 // Read and highlight a file using Chroma: https://github.com/alecthomas/chroma
 //
-// If force is true, file will always be highlighted. If force is false, files
-// larger than MAX_HIGHLIGHT_SIZE will not be highlighted.
+// The format can be a filename, a MIME type (e.g. "text/html"), a file name
+// extension or an alias like "zsh". Ref:
+// https://pkg.go.dev/github.com/alecthomas/chroma/v2#LexerRegistry.Get
 //
 // Returns nil with no error if highlighting would be a no-op.
-func highlight(filename string, force bool, style chroma.Style, formatter chroma.Formatter) (*string, error) {
-	// Highlight input file using Chroma:
-	// https://github.com/alecthomas/chroma
-	fileInfo, err := os.Stat(filename)
-	if err != nil {
-		return nil, err
-	}
-	if fileInfo.Size() > MAX_HIGHLIGHT_SIZE && !force {
-		log.Debugf("Not highlighting %s because it is %d bytes large, which is larger than moar's built-in highlighting limit of %d bytes",
-			filename, fileInfo.Size(), MAX_HIGHLIGHT_SIZE)
-		return nil, nil
-	}
-
-	lexer := lexers.Match(filename)
+func highlight(text string, format string, style chroma.Style, formatter chroma.Formatter) (*string, error) {
+	lexer := pickLexer(format)
 	if lexer == nil {
 		// No highlighter available for this file type
 		return nil, nil
@@ -55,12 +41,7 @@ func highlight(filename string, force bool, style chroma.Style, formatter chroma
 	// with and without.
 	lexer = chroma.Coalesce(lexer)
 
-	contents, err := os.ReadFile(filename)
-	if err != nil {
-		return nil, err
-	}
-
-	iterator, err := lexer.Tokenise(nil, string(contents))
+	iterator, err := lexer.Tokenise(nil, text)
 	if err != nil {
 		return nil, err
 	}
@@ -80,4 +61,24 @@ func highlight(filename string, force bool, style chroma.Style, formatter chroma
 	trimmed := strings.TrimSuffix(highlighted, sgrReset)
 
 	return &trimmed, nil
+}
+
+// Pick a lexer for the given filename and format.
+//
+// The format can be a filename, a MIME type (e.g. "text/html"), a file name
+// extension or an alias like "zsh". Ref:
+// https://pkg.go.dev/github.com/alecthomas/chroma/v2#LexerRegistry.Get
+func pickLexer(format string) chroma.Lexer {
+	byFileName := lexers.Match(format)
+	if byFileName != nil {
+		return byFileName
+	}
+
+	byMimeType := lexers.MatchMimeType(format)
+	if byMimeType != nil {
+		return byMimeType
+	}
+
+	// Use Chroma's built-in lexer picker
+	return lexers.Get(format)
 }
