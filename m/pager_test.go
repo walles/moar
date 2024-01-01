@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/alecthomas/chroma/v2/formatters"
+	"github.com/alecthomas/chroma/v2/lexers"
 	"github.com/alecthomas/chroma/v2/styles"
 	"github.com/google/go-cmp/cmp"
 	"github.com/walles/moar/twin"
@@ -615,7 +616,7 @@ func benchmarkSearch(b *testing.B, highlighted bool) {
 
 	// Read one copy of the example input
 	if highlighted {
-		highlightedSourceCode, err := highlight(fileContents, sourceFilename, *styles.Get("native"), formatters.TTY16m)
+		highlightedSourceCode, err := highlight(fileContents, *styles.Get("native"), formatters.TTY16m, lexers.Get("go"))
 		if err != nil {
 			panic(err)
 		}
