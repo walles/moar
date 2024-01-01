@@ -513,6 +513,8 @@ func (reader *Reader) GetLine(lineNumberOneBased int) *Line {
 //
 // Overflow state will be didFit if we returned all lines we currently have, or
 // didOverflow otherwise.
+//
+//revive:disable-next-line:unexported-return
 func (reader *Reader) GetLines(firstLineOneBased int, wantedLineCount int) (*InputLines, overflowState) {
 	reader.Lock()
 	defer reader.Unlock()

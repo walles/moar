@@ -82,6 +82,8 @@ func (sp scrollPosition) NextLine(scrollDistance int) scrollPosition {
 }
 
 // Create a new position, scrolled to the given line number
+//
+//revive:disable-next-line:unexported-return
 func NewScrollPositionFromLineNumberOneBased(lineNumberOneBased int, source string) scrollPosition {
 	return scrollPosition{
 		internalDontTouch: scrollPositionInternal{
