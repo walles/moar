@@ -34,6 +34,8 @@ func NewLine(raw string) Line {
 
 // Returns a representation of the string split into styled tokens. Any regexp
 // matches are highlighted. A nil regexp means no highlighting.
+//
+//revive:disable-next-line:unexported-return
 func (line *Line) HighlightedTokens(linePrefix string, search *regexp.Regexp, lineNumberOneBased *int) cellsWithTrailer {
 	plain := line.Plain(lineNumberOneBased)
 	matchRanges := getMatchRanges(&plain, search)

@@ -8,6 +8,8 @@ import (
 )
 
 // From: https://www.compart.com/en/unicode/U+00A0
+//
+//revive:disable-next-line:var-naming
 const NO_BREAK_SPACE = '\xa0'
 
 func getWrapWidth(line []twin.Cell, maxWrapWidth int) int {

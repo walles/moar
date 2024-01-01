@@ -15,6 +15,8 @@ import (
 	"gotest.tools/v3/assert"
 )
 
+//revive:disable:empty-block
+
 func testGetLineCount(t *testing.T, reader *Reader) {
 	if strings.Contains(*reader.name, "compressed") {
 		// We are no good at counting lines of compressed files, never mind
@@ -139,8 +141,10 @@ func getTestFiles() []string {
 // Wait for reader to finish reading and highlighting. Used by tests.
 func (r *Reader) _wait() error {
 	// Wait for our goroutine to finish
+	//revive:disable-next-line:empty-block
 	for !r.done.Load() {
 	}
+	//revive:disable-next-line:empty-block
 	for !r.highlightingDone.Load() {
 	}
 
@@ -213,7 +217,7 @@ func testHighlightingLineCount(t *testing.T, filenameWithPath string) {
 	}
 	rawLinesCount := rawLinefeedsCount
 	if !rawFileEndsWithNewline {
-		rawLinesCount += 1
+		rawLinesCount++
 	}
 
 	// Then load the same file using one of our Readers
@@ -329,15 +333,15 @@ func TestCompressedFiles(t *testing.T) {
 }
 
 func TestFilterNotInstalled(t *testing.T) {
-	// FIXME: Test what happens if we try to use a filter that is not installed
+	t.Skip("FIXME: Test what happens if we try to use a filter that is not installed")
 }
 
 func TestFilterFailure(t *testing.T) {
-	// FIXME: Test what happens if the filter command fails because of bad command line options
+	t.Skip("FIXME: Test what happens if the filter command fails because of bad command line options")
 }
 
 func TestFilterPermissionDenied(t *testing.T) {
-	// FIXME: Test what happens if the filter command fails because it can't access the requested file
+	t.Skip("FIXME: Test what happens if the filter command fails because it can't access the requested file")
 }
 
 func TestFilterFileNotFound(t *testing.T) {
@@ -357,7 +361,7 @@ func TestFilterFileNotFound(t *testing.T) {
 }
 
 func TestFilterNotAFile(t *testing.T) {
-	// FIXME: Test what happens if the filter command fails because the target is not a file
+	t.Skip("FIXME: Test what happens if the filter command fails because the target is not a file")
 }
 
 // How long does it take to read a file?
@@ -376,6 +380,7 @@ func BenchmarkReaderDone(b *testing.B) {
 		}
 
 		// Wait for the reader to finish
+		//revive:disable-next-line:empty-block
 		for !readMe.done.Load() {
 		}
 		if readMe.err != nil {
@@ -390,8 +395,8 @@ func BenchmarkReadLargeFile(b *testing.B) {
 	const largeSizeBytes = 35_000_000
 
 	// First, create it from something...
-	input_filename := getSamplesDir() + "/../m/pager.go"
-	contents, err := os.ReadFile(input_filename)
+	inputFilename := getSamplesDir() + "/../m/pager.go"
+	contents, err := os.ReadFile(inputFilename)
 	if err != nil {
 		panic(err)
 	}
@@ -436,8 +441,8 @@ func BenchmarkReadLargeFile(b *testing.B) {
 // Count lines in pager.go
 func BenchmarkCountLines(b *testing.B) {
 	// First, get some sample lines...
-	input_filename := getSamplesDir() + "/../m/pager.go"
-	contents, err := os.ReadFile(input_filename)
+	inputFilename := getSamplesDir() + "/../m/pager.go"
+	contents, err := os.ReadFile(inputFilename)
 	if err != nil {
 		panic(err)
 	}

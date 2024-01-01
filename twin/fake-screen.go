@@ -72,7 +72,7 @@ func (screen *FakeScreen) Size() (width int, height int) {
 	return screen.width, screen.height
 }
 
-func (screen *FakeScreen) ShowCursorAt(column int, row int) {
+func (screen *FakeScreen) ShowCursorAt(_ int, _ int) {
 	// This method intentionally left blank
 }
 
