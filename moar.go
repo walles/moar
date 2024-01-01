@@ -160,7 +160,7 @@ func parseStyleOption(styleOption string) (chroma.Style, error) {
 	style, ok := styles.Registry[styleOption]
 	if !ok {
 		return *styles.Fallback, fmt.Errorf(
-			"Pick a style from here: https://xyproto.github.io/splash/docs/longer/all.html\n")
+			"Pick a style from here: https://xyproto.github.io/splash/docs/longer/all.html")
 	}
 
 	return *style, nil
@@ -187,7 +187,7 @@ func parseColorsOption(colorsOption string) (twin.ColorType, error) {
 	}
 
 	var noColor twin.ColorType
-	return noColor, fmt.Errorf("Valid counts are 8, 16, 256, 16M or auto.")
+	return noColor, fmt.Errorf("Valid counts are 8, 16, 256, 16M or auto")
 }
 
 func parseStatusBarStyle(styleOption string) (m.StatusBarOption, error) {
