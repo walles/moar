@@ -13,15 +13,11 @@ import (
 //revive:disable-next-line:var-naming
 const MAX_HIGHLIGHT_SIZE int64 = 1024 * 1024
 
-// Read and highlight a file using Chroma: https://github.com/alecthomas/chroma
-//
-// The format can be a filename, a MIME type (e.g. "text/html"), a file name
-// extension or an alias like "zsh". Ref:
-// https://pkg.go.dev/github.com/alecthomas/chroma/v2#LexerRegistry.Get
+// Read and highlight some text using Chroma:
+// https://github.com/alecthomas/chroma
 //
 // Returns nil with no error if highlighting would be a no-op.
-func highlight(text string, format string, style chroma.Style, formatter chroma.Formatter) (*string, error) {
-	lexer := pickLexer(format)
+func highlight(text string, style chroma.Style, formatter chroma.Formatter, lexer chroma.Lexer) (*string, error) {
 	if lexer == nil {
 		// No highlighter available for this file type
 		return nil, nil
