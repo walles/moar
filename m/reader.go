@@ -18,6 +18,11 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+// Files larger than this won't be highlighted
+//
+//revive:disable-next-line:var-naming
+const MAX_HIGHLIGHT_SIZE int64 = 1024 * 1024
+
 // Reader reads a file into an array of strings.
 //
 // It does the reading in the background, and it returns parts of the read data
@@ -410,7 +415,7 @@ func countLines(filename string) (uint64, error) {
 // The Reader will try to uncompress various compressed file format, and also
 // apply highlighting to the file using Chroma:
 // https://github.com/alecthomas/chroma
-func NewReaderFromFilename(filename string, style chroma.Style, formatter chroma.Formatter) (*Reader, error) {
+func NewReaderFromFilename(filename string, style chroma.Style, formatter chroma.Formatter, lexer chroma.Lexer) (*Reader, error) {
 	fileError := tryOpen(filename)
 	if fileError != nil {
 		return nil, fileError
@@ -436,18 +441,40 @@ func NewReaderFromFilename(filename string, style chroma.Style, formatter chroma
 	returnMe.name = &filename
 	returnMe.Unlock()
 
+	returnMe.StartHighlightingFromFile(filename, style, formatter, lexer)
+
+	return returnMe, nil
+}
+
+func (reader *Reader) StartHighlightingFromFile(filename string, style chroma.Style, formatter chroma.Formatter, lexer chroma.Lexer) {
+	fileInfo, err := os.Stat(*reader.name)
+	if err != nil {
+		log.Warn("Failed to stat file for highlighting: ", err)
+		return
+	}
+	if fileInfo.Size() > MAX_HIGHLIGHT_SIZE {
+		log.Debug("File too large for highlighting: ", fileInfo.Size())
+		return
+	}
+
 	go func() {
 		defer func() {
-			returnMe.highlightingDone.Store(true)
+			reader.highlightingDone.Store(true)
 			select {
-			case returnMe.maybeDone <- true:
+			case reader.maybeDone <- true:
 			default:
 			}
 
 			log.Trace("Highlighting done")
 		}()
 
-		highlighted, err := highlight(filename, false, style, formatter)
+		fileBytes, err := os.ReadFile(*reader.name)
+		if err != nil {
+			log.Warn("Failed to read file for highlighting: ", err)
+			return
+		}
+
+		highlighted, err := highlight(string(fileBytes), style, formatter, lexer)
 		if err != nil {
 			log.Warn("Highlighting failed: ", err)
 			return
@@ -458,10 +485,8 @@ func NewReaderFromFilename(filename string, style chroma.Style, formatter chroma
 			return
 		}
 
-		returnMe.setText(*highlighted)
+		reader.setText(*highlighted)
 	}()
-
-	return returnMe, nil
 }
 
 // createStatusUnlocked() assumes that its caller is holding the lock

@@ -8,11 +8,6 @@ import (
 	"github.com/alecthomas/chroma/v2/lexers"
 )
 
-// Files larger than this won't be highlighted
-//
-//revive:disable-next-line:var-naming
-const MAX_HIGHLIGHT_SIZE int64 = 1024 * 1024
-
 // Read and highlight some text using Chroma:
 // https://github.com/alecthomas/chroma
 //
