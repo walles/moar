@@ -607,10 +607,15 @@ func benchmarkSearch(b *testing.B, highlighted bool) {
 		panic("Getting current filename failed")
 	}
 
+	sourceBytes, err := os.ReadFile(sourceFilename)
+	if err != nil {
+		panic(err)
+	}
+	fileContents := string(sourceBytes)
+
 	// Read one copy of the example input
-	var fileContents string
 	if highlighted {
-		highlightedSourceCode, err := highlight(sourceFilename, true, *styles.Get("native"), formatters.TTY16m)
+		highlightedSourceCode, err := highlight(fileContents, sourceFilename, *styles.Get("native"), formatters.TTY16m)
 		if err != nil {
 			panic(err)
 		}
@@ -618,12 +623,6 @@ func benchmarkSearch(b *testing.B, highlighted bool) {
 			panic("Highlighting didn't want to, returned nil")
 		}
 		fileContents = *highlightedSourceCode
-	} else {
-		sourceBytes, err := os.ReadFile(sourceFilename)
-		if err != nil {
-			panic(err)
-		}
-		fileContents = string(sourceBytes)
 	}
 
 	// Duplicate data N times
