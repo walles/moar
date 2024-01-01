@@ -94,7 +94,7 @@ type UnixScreen struct {
 // * "41" is the row number on screen, "1" is the first row.
 //
 // * "M" marks the end of the mouse event.
-var MOUSE_EVENT_REGEX = regexp.MustCompile("^\x1b\\[<([0-9]+);([0-9]+);([0-9]+)M")
+var mouseEventRegex = regexp.MustCompile("^\x1b\\[<([0-9]+);([0-9]+);([0-9]+)M")
 
 // NewScreen() requires Close() to be called after you are done with your new
 // screen, most likely somewhere in your shutdown code.
@@ -369,7 +369,7 @@ func (screen *UnixScreen) mainLoop() {
 
 // Turn ESC into <0x1b> and other low ASCII characters into <0xXX> for logging
 // purposes.
-func humanizeLowAscii(withLowAsciis string) string {
+func humanizeLowASCII(withLowAsciis string) string {
 	humanized := ""
 	for _, char := range withLowAsciis {
 		if char < ' ' {
@@ -396,7 +396,7 @@ func consumeEncodedEvent(encodedEventSequences string) (*Event, string) {
 		return &event, strings.TrimPrefix(encodedEventSequences, singleKeyCodeSequence)
 	}
 
-	mouseMatch := MOUSE_EVENT_REGEX.FindStringSubmatch(encodedEventSequences)
+	mouseMatch := mouseEventRegex.FindStringSubmatch(encodedEventSequences)
 	if mouseMatch != nil {
 		if mouseMatch[1] == "64" {
 			var event Event = EventMouse{buttons: MouseWheelUp}
@@ -409,7 +409,7 @@ func consumeEncodedEvent(encodedEventSequences string) (*Event, string) {
 
 		log.Debug(
 			"Unhandled multi character mouse escape sequence(s): {",
-			humanizeLowAscii(encodedEventSequences),
+			humanizeLowASCII(encodedEventSequences),
 			"}")
 		return nil, ""
 	}
@@ -426,7 +426,7 @@ func consumeEncodedEvent(encodedEventSequences string) (*Event, string) {
 			// escapeSequenceToKeyCode in keys.go.
 			log.Debug(
 				"Unhandled multi character terminal escape sequence(s): {",
-				humanizeLowAscii(encodedEventSequences),
+				humanizeLowASCII(encodedEventSequences),
 				"}")
 
 			// Mark everything as consumed since we don't know how to proceed otherwise.

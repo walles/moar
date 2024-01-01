@@ -16,12 +16,12 @@ func color256ToRGB(color256 uint8) (r, g, b uint8) {
 	}
 
 	// 6x6 color cube
-	color0_to_215 := color256 - 16
+	color0to215 := color256 - 16
 
 	components := []uint8{0x00, 0x5f, 0x87, 0xaf, 0xd7, 0xff}
-	r = components[(color0_to_215/36)%6]
-	g = components[(color0_to_215/6)%6]
-	b = components[(color0_to_215/1)%6]
+	r = components[(color0to215/36)%6]
+	g = components[(color0to215/6)%6]
+	b = components[(color0to215/1)%6]
 	return r, g, b
 }
 

@@ -23,7 +23,7 @@ type Style struct {
 	bg    Color
 	attrs AttrMask
 
-	// This hyperlinkUrl is a URL for in-terminal hyperlinks.
+	// This hyperlinkURL is a URL for in-terminal hyperlinks.
 	//
 	// Since we don't want to do error handling of broken URLs, we just store
 	// these URLs as strings.
@@ -31,7 +31,7 @@ type Style struct {
 	// Ref:
 	// * https://gist.github.com/egmontkob/eb114294efbcd5adb1944c9f3cb5feda
 	// * https://github.com/walles/moar/issues/131
-	hyperlinkUrl *string
+	hyperlinkURL *string
 }
 
 var StyleDefault Style
@@ -63,8 +63,8 @@ func (style Style) String() string {
 	if style.attrs.has(AttrStrikeThrough) {
 		attrNames = append(attrNames, "strikethrough")
 	}
-	if style.hyperlinkUrl != nil {
-		attrNames = append(attrNames, "\""+*style.hyperlinkUrl+"\"")
+	if style.hyperlinkURL != nil {
+		attrNames = append(attrNames, "\""+*style.hyperlinkURL+"\"")
 	}
 
 	return fmt.Sprint(strings.Join(attrNames, " "), " ", style.fg, " on ", style.bg)
@@ -75,7 +75,7 @@ func (style Style) WithAttr(attr AttrMask) Style {
 		fg:           style.fg,
 		bg:           style.bg,
 		attrs:        style.attrs | attr,
-		hyperlinkUrl: style.hyperlinkUrl,
+		hyperlinkURL: style.hyperlinkURL,
 	}
 
 	// Bold and dim are mutually exclusive
@@ -90,17 +90,17 @@ func (style Style) WithAttr(attr AttrMask) Style {
 }
 
 // Call with nil to remove the link
-func (style Style) WithHyperlink(hyperlinkUrl *string) Style {
-	if hyperlinkUrl != nil && *hyperlinkUrl == "" {
+func (style Style) WithHyperlink(hyperlinkURL *string) Style {
+	if hyperlinkURL != nil && *hyperlinkURL == "" {
 		// Use nil instead of empty string
-		hyperlinkUrl = nil
+		hyperlinkURL = nil
 	}
 
 	return Style{
 		fg:           style.fg,
 		bg:           style.bg,
 		attrs:        style.attrs,
-		hyperlinkUrl: hyperlinkUrl,
+		hyperlinkURL: hyperlinkURL,
 	}
 }
 
@@ -109,7 +109,7 @@ func (style Style) WithoutAttr(attr AttrMask) Style {
 		fg:           style.fg,
 		bg:           style.bg,
 		attrs:        style.attrs & ^attr,
-		hyperlinkUrl: style.hyperlinkUrl,
+		hyperlinkURL: style.hyperlinkURL,
 	}
 }
 
@@ -122,7 +122,7 @@ func (style Style) WithBackground(color Color) Style {
 		fg:           style.fg,
 		bg:           color,
 		attrs:        style.attrs,
-		hyperlinkUrl: style.hyperlinkUrl,
+		hyperlinkURL: style.hyperlinkURL,
 	}
 }
 
@@ -131,19 +131,21 @@ func (style Style) WithForeground(color Color) Style {
 		fg:           color,
 		bg:           style.bg,
 		attrs:        style.attrs,
-		hyperlinkUrl: style.hyperlinkUrl,
+		hyperlinkURL: style.hyperlinkURL,
 	}
 }
 
 // Emit an ANSI escape sequence switching from a previous style to the current
 // one.
+//
+//revive:disable-next-line:receiver-naming
 func (current Style) RenderUpdateFrom(previous Style, terminalColorCount ColorType) string {
 	if current == previous {
 		// Shortcut for the common case
 		return ""
 	}
 
-	hadHyperlink := previous.hyperlinkUrl != nil && *previous.hyperlinkUrl != ""
+	hadHyperlink := previous.hyperlinkURL != nil && *previous.hyperlinkURL != ""
 	if current == StyleDefault && !hadHyperlink {
 		return "\x1b[m"
 	}
@@ -217,20 +219,20 @@ func (current Style) RenderUpdateFrom(previous Style, terminalColorCount ColorTy
 		}
 	}
 
-	if current.hyperlinkUrl != previous.hyperlinkUrl {
-		newUrl := ""
-		if current.hyperlinkUrl != nil {
-			newUrl = *current.hyperlinkUrl
+	if current.hyperlinkURL != previous.hyperlinkURL {
+		newURL := ""
+		if current.hyperlinkURL != nil {
+			newURL = *current.hyperlinkURL
 		}
 
-		previousUrl := ""
-		if previous.hyperlinkUrl != nil {
-			previousUrl = *previous.hyperlinkUrl
+		previousURL := ""
+		if previous.hyperlinkURL != nil {
+			previousURL = *previous.hyperlinkURL
 		}
 
-		if newUrl != previousUrl {
+		if newURL != previousURL {
 			builder.WriteString("\x1b]8;;")
-			builder.WriteString(newUrl)
+			builder.WriteString(newURL)
 			builder.WriteString("\x1b\\")
 		}
 	}

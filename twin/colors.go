@@ -217,9 +217,8 @@ func (color Color) downsampleTo(terminalColorCount ColorType) Color {
 
 	if bestMatch <= 15 {
 		return NewColor16(bestMatch)
-	} else {
-		return NewColor256(uint8(bestMatch))
 	}
+	return NewColor256(uint8(bestMatch))
 }
 
 // Wrapper for Chroma's color distance function.
@@ -228,15 +227,15 @@ func (color Color) downsampleTo(terminalColorCount ColorType) Color {
 //
 // The result from this function has been scaled to 0.0-1.0, where 1.0 is the
 // distance between black and white.
-func (c Color) Distance(other Color) float64 {
-	if c.ColorType() != ColorType24bit {
-		panic(fmt.Errorf("contrast only supported for 24 bit colors, got %s vs %s", c.String(), other.String()))
+func (color Color) Distance(other Color) float64 {
+	if color.ColorType() != ColorType24bit {
+		panic(fmt.Errorf("contrast only supported for 24 bit colors, got %s vs %s", color.String(), other.String()))
 	}
 
 	baseColor := chroma.NewColour(
-		uint8(c.colorValue()>>16&0xff),
-		uint8(c.colorValue()>>8&0xff),
-		uint8(c.colorValue()&0xff),
+		uint8(color.colorValue()>>16&0xff),
+		uint8(color.colorValue()>>8&0xff),
+		uint8(color.colorValue()&0xff),
 	)
 
 	otherColor := chroma.NewColour(
