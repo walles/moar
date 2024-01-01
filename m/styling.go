@@ -11,7 +11,7 @@ import (
 )
 
 // From LESS_TERMCAP_so, overrides statusbarStyle from the Chroma style if set
-var standoutStyle *twin.Style = nil
+var standoutStyle *twin.Style
 
 var manPageBold = twin.StyleDefault.WithAttr(twin.AttrBold)
 var manPageUnderline = twin.StyleDefault.WithAttr(twin.AttrUnderline)
@@ -75,7 +75,7 @@ func consumeLessTermcapEnvs(chromaStyle *chroma.Style, chromaFormatter *chroma.F
 	}
 }
 
-func styleUi(chromaStyle *chroma.Style, chromaFormatter *chroma.Formatter, statusbarOption StatusBarOption) {
+func styleUI(chromaStyle *chroma.Style, chromaFormatter *chroma.Formatter, statusbarOption StatusBarOption) {
 	if chromaStyle == nil || chromaFormatter == nil {
 		return
 	}

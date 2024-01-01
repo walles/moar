@@ -24,8 +24,11 @@ const (
 type StatusBarOption int
 
 const (
+	//revive:disable-next-line:var-naming
 	STATUSBAR_STYLE_INVERSE StatusBarOption = iota
+	//revive:disable-next-line:var-naming
 	STATUSBAR_STYLE_PLAIN
+	//revive:disable-next-line:var-naming
 	STATUSBAR_STYLE_BOLD
 )
 
@@ -33,7 +36,9 @@ const (
 type UnprintableStyle int
 
 const (
+	//revive:disable-next-line:var-naming
 	UNPRINTABLE_STYLE_HIGHLIGHT UnprintableStyle = iota
+	//revive:disable-next-line:var-naming
 	UNPRINTABLE_STYLE_WHITESPACE
 )
 
@@ -475,7 +480,7 @@ func (p *Pager) StartPaging(screen twin.Screen, chromaStyle *chroma.Style, chrom
 
 	unprintableStyle = p.UnprintableStyle
 	consumeLessTermcapEnvs(chromaStyle, chromaFormatter)
-	styleUi(chromaStyle, chromaFormatter, p.StatusBarStyle)
+	styleUI(chromaStyle, chromaFormatter, p.StatusBarStyle)
 
 	p.screen = screen
 	p.linePrefix = getLineColorPrefix(chromaStyle, chromaFormatter)

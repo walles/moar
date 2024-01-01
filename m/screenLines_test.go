@@ -10,6 +10,8 @@ import (
 	"gotest.tools/v3/assert"
 )
 
+//revive:disable:empty-block
+
 func testHorizontalCropping(t *testing.T, contents string, firstIndex int, lastIndex int, expected string, expectedOverflow overflowState) {
 	pager := NewPager(nil)
 	pager.ShowLineNumbers = false

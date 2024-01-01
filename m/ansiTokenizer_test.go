@@ -41,6 +41,7 @@ func TestTokenize(t *testing.T) {
 			}()
 
 			myReader := NewReaderFromStream(fileName, file)
+			//revive:disable-next-line:empty-block
 			for !myReader.done.Load() {
 			}
 

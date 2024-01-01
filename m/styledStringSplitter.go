@@ -138,7 +138,7 @@ func (s *styledStringSplitter) consumeControlSequence(charAfterEsc rune) error {
 
 			if charAfterEsc == ']' && s.input[startIndex:s.nextByteIndex] == "8;;" {
 				// Special case, here comes the URL
-				return s.handleUrl()
+				return s.handleURL()
 			}
 
 			continue
@@ -196,9 +196,9 @@ func (s *styledStringSplitter) handleOsc(sequence string) error {
 		if endMarker == esc {
 			if s.nextChar() == '\\' {
 				return nil
-			} else {
-				return fmt.Errorf("Expected ESC \\ after ESC]133;X, got %q", s.lastChar())
 			}
+
+			return fmt.Errorf("Expected ESC \\ after ESC]133;X, got %q", s.lastChar())
 		}
 	}
 
@@ -206,7 +206,7 @@ func (s *styledStringSplitter) handleOsc(sequence string) error {
 }
 
 // We just got ESC]8; and should now read the URL. URLs end with ASCII 7 BEL or ESC \.
-func (s *styledStringSplitter) handleUrl() error {
+func (s *styledStringSplitter) handleURL() error {
 	// Valid URL characters.
 	// Ref: https://stackoverflow.com/a/1547940/473672
 	const validChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~:/?#[]@!$&'()*+,;="

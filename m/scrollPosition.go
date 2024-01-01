@@ -60,23 +60,23 @@ func canonicalFromPager(pager *Pager) scrollPositionCanonical {
 }
 
 // Create a new position, scrolled towards the end of the file
-func (s scrollPosition) PreviousLine(scrollDistance int) scrollPosition {
+func (sp scrollPosition) PreviousLine(scrollDistance int) scrollPosition {
 	return scrollPosition{
 		internalDontTouch: scrollPositionInternal{
-			name:               s.internalDontTouch.name,
-			lineNumberOneBased: s.internalDontTouch.lineNumberOneBased,
-			deltaScreenLines:   s.internalDontTouch.deltaScreenLines - scrollDistance,
+			name:               sp.internalDontTouch.name,
+			lineNumberOneBased: sp.internalDontTouch.lineNumberOneBased,
+			deltaScreenLines:   sp.internalDontTouch.deltaScreenLines - scrollDistance,
 		},
 	}
 }
 
 // Create a new position, scrolled towards the end of the file
-func (s scrollPosition) NextLine(scrollDistance int) scrollPosition {
+func (sp scrollPosition) NextLine(scrollDistance int) scrollPosition {
 	return scrollPosition{
 		internalDontTouch: scrollPositionInternal{
-			name:               s.internalDontTouch.name,
-			lineNumberOneBased: s.internalDontTouch.lineNumberOneBased,
-			deltaScreenLines:   s.internalDontTouch.deltaScreenLines + scrollDistance,
+			name:               sp.internalDontTouch.name,
+			lineNumberOneBased: sp.internalDontTouch.lineNumberOneBased,
+			deltaScreenLines:   sp.internalDontTouch.deltaScreenLines + scrollDistance,
 		},
 	}
 }
@@ -168,7 +168,7 @@ func (si *scrollPositionInternal) emptyBottomLinesCount(pager *Pager) int {
 		}
 
 		// Move to the next line
-		lineNumberOneBased += 1
+		lineNumberOneBased++
 	}
 
 	return unclaimedViewportLines

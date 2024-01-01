@@ -1,9 +1,5 @@
 linters:
   enable:
     - gofmt
-
-    # I'd really want to use Revive for this but that doesn't work:
-    # https://github.com/golangci/golangci-lint/issues/3653
-    - unparam
-
+    - revive
     - usestdlibvars

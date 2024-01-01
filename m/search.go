@@ -70,9 +70,9 @@ func (p *Pager) findFirstHit(startPosition scrollPosition, backwards bool) *scro
 		}
 
 		if backwards {
-			searchPosition -= 1
+			searchPosition--
 		} else {
-			searchPosition += 1
+			searchPosition++
 		}
 	}
 }
