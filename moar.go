@@ -170,8 +170,7 @@ func parseLexerOption(lexerOption string) (chroma.Lexer, error) {
 	}
 
 	return nil, fmt.Errorf(
-		"Unsupported language %s, look here form inspiration: https://github.com/alecthomas/chroma/tree/master/lexers/embedded",
-		lexerOption,
+		"Look here for inspiration: https://github.com/alecthomas/chroma/tree/master/lexers/embedded",
 	)
 }
 
@@ -220,7 +219,7 @@ func parseStatusBarStyle(styleOption string) (m.StatusBarOption, error) {
 		return m.STATUSBAR_STYLE_BOLD, nil
 	}
 
-	return 0, fmt.Errorf("good ones are inverse, plain and bold")
+	return 0, fmt.Errorf("Good ones are inverse, plain and bold")
 }
 
 func parseUnprintableStyle(styleOption string) (m.UnprintableStyle, error) {
@@ -252,7 +251,7 @@ func parseShiftAmount(shiftAmount string) (uint, error) {
 	}
 
 	if value < 1 {
-		return 0, fmt.Errorf("Shift amount must be at least 1, was %d", value)
+		return 0, fmt.Errorf("Shift amount must be at least 1")
 	}
 
 	// Let's add an upper bound as well if / when requested
