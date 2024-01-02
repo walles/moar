@@ -450,26 +450,30 @@ func NewReaderFromFilename(filename string, style chroma.Style, formatter chroma
 }
 
 func (reader *Reader) StartHighlightingFromFile(filename string, style chroma.Style, formatter chroma.Formatter, lexer chroma.Lexer) {
+	reportDone := func() {
+		reader.highlightingDone.Store(true)
+		select {
+		case reader.maybeDone <- true:
+		default:
+		}
+
+		log.Trace("Highlighting done")
+	}
+
 	fileInfo, err := os.Stat(filename)
 	if err != nil {
 		log.Warn("Failed to stat file for highlighting: ", err)
+		reportDone()
 		return
 	}
 	if fileInfo.Size() > MAX_HIGHLIGHT_SIZE {
 		log.Debug("File too large for highlighting: ", fileInfo.Size())
+		reportDone()
 		return
 	}
 
 	go func() {
-		defer func() {
-			reader.highlightingDone.Store(true)
-			select {
-			case reader.maybeDone <- true:
-			default:
-			}
-
-			log.Trace("Highlighting done")
-		}()
+		defer reportDone()
 
 		fileBytes, err := os.ReadFile(filename)
 		if err != nil {
