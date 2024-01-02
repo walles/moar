@@ -401,7 +401,7 @@ func main() {
 		"Highlighting style from https://xyproto.github.io/splash/docs/longer/all.html", parseStyleOption)
 	lexer := flagSetFunc(flagSet,
 		"lang", nil,
-		"Input file language for highlighting. Mime type or file extension (\"html\"). Defaults to auto detecting by filename.", parseLexerOption)
+		"File contents, used for highlighting. Mime type or file extension (\"html\"). Default is to guess by filename.", parseLexerOption)
 
 	defaultFormatter, err := parseColorsOption("auto")
 	if err != nil {
