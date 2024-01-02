@@ -2,40 +2,18 @@ package m
 
 import (
 	"bytes"
-	"os"
 	"strings"
 
 	"github.com/alecthomas/chroma/v2"
-	"github.com/alecthomas/chroma/v2/lexers"
-
-	log "github.com/sirupsen/logrus"
 )
 
-// Files larger than this won't be highlighted
+// Read and highlight some text using Chroma:
+// https://github.com/alecthomas/chroma
 //
-//revive:disable-next-line:var-naming
-const MAX_HIGHLIGHT_SIZE int64 = 1024 * 1024
-
-// Read and highlight a file using Chroma: https://github.com/alecthomas/chroma
-//
-// If force is true, file will always be highlighted. If force is false, files
-// larger than MAX_HIGHLIGHT_SIZE will not be highlighted.
+// If lexer is nil no highlighting will be performed.
 //
 // Returns nil with no error if highlighting would be a no-op.
-func highlight(filename string, force bool, style chroma.Style, formatter chroma.Formatter) (*string, error) {
-	// Highlight input file using Chroma:
-	// https://github.com/alecthomas/chroma
-	fileInfo, err := os.Stat(filename)
-	if err != nil {
-		return nil, err
-	}
-	if fileInfo.Size() > MAX_HIGHLIGHT_SIZE && !force {
-		log.Debugf("Not highlighting %s because it is %d bytes large, which is larger than moar's built-in highlighting limit of %d bytes",
-			filename, fileInfo.Size(), MAX_HIGHLIGHT_SIZE)
-		return nil, nil
-	}
-
-	lexer := lexers.Match(filename)
+func highlight(text string, style chroma.Style, formatter chroma.Formatter, lexer chroma.Lexer) (*string, error) {
 	if lexer == nil {
 		// No highlighter available for this file type
 		return nil, nil
@@ -55,12 +33,7 @@ func highlight(filename string, force bool, style chroma.Style, formatter chroma
 	// with and without.
 	lexer = chroma.Coalesce(lexer)
 
-	contents, err := os.ReadFile(filename)
-	if err != nil {
-		return nil, err
-	}
-
-	iterator, err := lexer.Tokenise(nil, string(contents))
+	iterator, err := lexer.Tokenise(nil, text)
 	if err != nil {
 		return nil, err
 	}

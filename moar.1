@@ -45,6 +45,12 @@ Print debug logs after exiting, less verbose than
 Scrolls automatically to follow piped input, just like
 .B tail \-f
 .TP
+\fB\-\-lang\fR=string
+Used for highlighting.
+Without this flag highlighting is based on the input file name.
+Valid values are MIME types like \fBtext/x-markdown\fP, file extensions like \fBmd\fP or language names like \fBmarkdown\fP.
+For the source of truth on what is supported exactly, look in https://github.com/alecthomas/chroma/tree/master/lexers/embedded or its parent directory.
+.TP
 \fB\-\-mousemode\fR={\fBauto\fR | \fBselect\fR | \fBscroll\fR}
 Guarantee selecting text with the mouse works but maybe not mouse scrolling.
 Or guarantee mouse scrolling works but selecting text requiring extra effort.

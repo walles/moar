@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/alecthomas/chroma/v2/formatters"
+	"github.com/alecthomas/chroma/v2/lexers"
 	"github.com/alecthomas/chroma/v2/styles"
 	"github.com/google/go-cmp/cmp"
 	"github.com/walles/moar/twin"
@@ -165,7 +166,7 @@ func TestCodeHighlighting(t *testing.T) {
 		panic("Getting current filename failed")
 	}
 
-	reader, err := NewReaderFromFilename(filename, *styles.Get("native"), formatters.TTY16m)
+	reader, err := NewReaderFromFilename(filename, *styles.Get("native"), formatters.TTY16m, nil)
 	if err != nil {
 		panic(err)
 	}
@@ -607,10 +608,15 @@ func benchmarkSearch(b *testing.B, highlighted bool) {
 		panic("Getting current filename failed")
 	}
 
+	sourceBytes, err := os.ReadFile(sourceFilename)
+	if err != nil {
+		panic(err)
+	}
+	fileContents := string(sourceBytes)
+
 	// Read one copy of the example input
-	var fileContents string
 	if highlighted {
-		highlightedSourceCode, err := highlight(sourceFilename, true, *styles.Get("native"), formatters.TTY16m)
+		highlightedSourceCode, err := highlight(fileContents, *styles.Get("native"), formatters.TTY16m, lexers.Get("go"))
 		if err != nil {
 			panic(err)
 		}
@@ -618,12 +624,6 @@ func benchmarkSearch(b *testing.B, highlighted bool) {
 			panic("Highlighting didn't want to, returned nil")
 		}
 		fileContents = *highlightedSourceCode
-	} else {
-		sourceBytes, err := os.ReadFile(sourceFilename)
-		if err != nil {
-			panic(err)
-		}
-		fileContents = string(sourceBytes)
 	}
 
 	// Duplicate data N times
