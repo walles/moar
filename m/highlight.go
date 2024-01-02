@@ -10,6 +10,8 @@ import (
 // Read and highlight some text using Chroma:
 // https://github.com/alecthomas/chroma
 //
+// If lexer is nil no highlighting will be performed.
+//
 // Returns nil with no error if highlighting would be a no-op.
 func highlight(text string, style chroma.Style, formatter chroma.Formatter, lexer chroma.Lexer) (*string, error) {
 	if lexer == nil {

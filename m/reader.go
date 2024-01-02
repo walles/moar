@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/alecthomas/chroma/v2"
+	"github.com/alecthomas/chroma/v2/lexers"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -412,6 +413,8 @@ func countLines(filename string) (uint64, error) {
 
 // NewReaderFromFilename creates a new file reader.
 //
+// If lexer is nil it will be determined from the input file name.
+//
 // The Reader will try to uncompress various compressed file format, and also
 // apply highlighting to the file using Chroma:
 // https://github.com/alecthomas/chroma
@@ -472,6 +475,11 @@ func (reader *Reader) StartHighlightingFromFile(filename string, style chroma.St
 		if err != nil {
 			log.Warn("Failed to read file for highlighting: ", err)
 			return
+		}
+
+		if lexer == nil {
+			// Try auto detecting by filename
+			lexer = lexers.Match(*reader.name)
 		}
 
 		highlighted, err := highlight(string(fileBytes), style, formatter, lexer)
