@@ -5,7 +5,6 @@ import (
 	"strings"
 
 	"github.com/alecthomas/chroma/v2"
-	"github.com/alecthomas/chroma/v2/lexers"
 )
 
 // Read and highlight some text using Chroma:
@@ -52,24 +51,4 @@ func highlight(text string, style chroma.Style, formatter chroma.Formatter, lexe
 	trimmed := strings.TrimSuffix(highlighted, sgrReset)
 
 	return &trimmed, nil
-}
-
-// Pick a lexer for the given filename and format.
-//
-// The format can be a filename, a MIME type (e.g. "text/html"), a file name
-// extension or an alias like "zsh". Ref:
-// https://pkg.go.dev/github.com/alecthomas/chroma/v2#LexerRegistry.Get
-func pickLexer(format string) chroma.Lexer {
-	byFileName := lexers.Match(format)
-	if byFileName != nil {
-		return byFileName
-	}
-
-	byMimeType := lexers.MatchMimeType(format)
-	if byMimeType != nil {
-		return byMimeType
-	}
-
-	// Use Chroma's built-in lexer picker
-	return lexers.Get(format)
 }

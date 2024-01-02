@@ -15,6 +15,7 @@ import (
 
 	"github.com/alecthomas/chroma/v2"
 	"github.com/alecthomas/chroma/v2/formatters"
+	"github.com/alecthomas/chroma/v2/lexers"
 	"github.com/alecthomas/chroma/v2/styles"
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/term"
@@ -154,6 +155,24 @@ func printProblemsHeader() {
 	fmt.Fprintln(os.Stderr, "GOARCH  :", runtime.GOARCH)
 	fmt.Fprintln(os.Stderr, "Compiler:", runtime.Compiler)
 	fmt.Fprintln(os.Stderr, "NumCPU  :", runtime.NumCPU())
+}
+
+func parseLexerOption(lexerOption string) (chroma.Lexer, error) {
+	byMimeType := lexers.MatchMimeType(lexerOption)
+	if byMimeType != nil {
+		return byMimeType, nil
+	}
+
+	// Use Chroma's built-in fuzzy lexer picker
+	lexer := lexers.Get(lexerOption)
+	if lexer != nil {
+		return lexer, nil
+	}
+
+	return nil, fmt.Errorf(
+		"Unsupported language %s, look here form inspiration: https://github.com/alecthomas/chroma/tree/master/lexers/embedded",
+		lexerOption,
+	)
 }
 
 func parseStyleOption(styleOption string) (chroma.Style, error) {
@@ -381,6 +400,9 @@ func main() {
 	style := flagSetFunc(flagSet,
 		"style", *styles.Registry["native"],
 		"Highlighting style from https://xyproto.github.io/splash/docs/longer/all.html", parseStyleOption)
+	lexer := flagSetFunc(flagSet,
+		"lang", nil,
+		"Input file language for highlighting. Mime type or file extension (\"html\"). Defaults to auto detecting by filename.", parseLexerOption)
 
 	defaultFormatter, err := parseColorsOption("auto")
 	if err != nil {
@@ -527,7 +549,7 @@ func main() {
 		reader = m.NewReaderFromStream("", os.Stdin)
 	} else {
 		// Display the input file contents
-		reader, err = m.NewReaderFromFilename(*inputFilename, *style, formatter)
+		reader, err = m.NewReaderFromFilename(*inputFilename, *style, formatter, *lexer)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "ERROR: %v\n", err)
 			os.Exit(1)
