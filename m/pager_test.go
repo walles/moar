@@ -166,7 +166,7 @@ func TestCodeHighlighting(t *testing.T) {
 		panic("Getting current filename failed")
 	}
 
-	reader, err := NewReaderFromFilename(filename, *styles.Get("native"), formatters.TTY16m)
+	reader, err := NewReaderFromFilename(filename, *styles.Get("native"), formatters.TTY16m, nil)
 	if err != nil {
 		panic(err)
 	}

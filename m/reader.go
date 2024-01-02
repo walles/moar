@@ -450,7 +450,7 @@ func NewReaderFromFilename(filename string, style chroma.Style, formatter chroma
 }
 
 func (reader *Reader) StartHighlightingFromFile(filename string, style chroma.Style, formatter chroma.Formatter, lexer chroma.Lexer) {
-	fileInfo, err := os.Stat(*reader.name)
+	fileInfo, err := os.Stat(filename)
 	if err != nil {
 		log.Warn("Failed to stat file for highlighting: ", err)
 		return
@@ -471,7 +471,7 @@ func (reader *Reader) StartHighlightingFromFile(filename string, style chroma.St
 			log.Trace("Highlighting done")
 		}()
 
-		fileBytes, err := os.ReadFile(*reader.name)
+		fileBytes, err := os.ReadFile(filename)
 		if err != nil {
 			log.Warn("Failed to read file for highlighting: ", err)
 			return
@@ -479,7 +479,7 @@ func (reader *Reader) StartHighlightingFromFile(filename string, style chroma.St
 
 		if lexer == nil {
 			// Try auto detecting by filename
-			lexer = lexers.Match(*reader.name)
+			lexer = lexers.Match(filename)
 		}
 
 		highlighted, err := highlight(string(fileBytes), style, formatter, lexer)
