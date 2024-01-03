@@ -42,7 +42,7 @@ type Reader struct {
 	replaced bool
 
 	done             *atomic.Bool
-	highlightingDone *atomic.Bool // FIXME: Do we really need this?
+	highlightingDone *atomic.Bool
 
 	// For telling the UI it should recheck the --quit-if-one-screen conditions.
 	// Signalled when either highlighting is done or reading is done.
