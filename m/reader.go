@@ -467,13 +467,12 @@ func NewReaderFromFilename(filename string, style chroma.Style, formatter chroma
 	returnMe.name = &filename
 	returnMe.Unlock()
 
-	returnMe.StartHighlightingFromFile(filename, style, formatter, lexer)
+	startHighlightingFromFile(returnMe, filename, style, formatter, lexer)
 
 	return returnMe, nil
 }
 
-// FIXME: This should be a private function, just line highlightFromMemory()
-func (reader *Reader) StartHighlightingFromFile(filename string, style chroma.Style, formatter chroma.Formatter, lexer chroma.Lexer) {
+func startHighlightingFromFile(reader *Reader, filename string, style chroma.Style, formatter chroma.Formatter, lexer chroma.Lexer) {
 	reportDone := func() {
 		reader.highlightingDone.Store(true)
 		select {
