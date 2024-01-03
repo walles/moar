@@ -641,14 +641,6 @@ func benchmarkSearch(b *testing.B, highlighted bool) {
 	// we're searching through this very file.
 	pager.searchPattern = regexp.MustCompile("This won'[t] match anything")
 
-	// Wait for reader to finish reading...
-	for !reader.done.Load() {
-	}
-
-	// ... and wait for highlighting to finish
-	for !reader.highlightingDone.Load() {
-	}
-
 	// I hope forcing a GC here will make numbers more predictable
 	runtime.GC()
 
