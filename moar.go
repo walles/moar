@@ -545,7 +545,7 @@ func main() {
 	var reader *m.Reader
 	if stdinIsRedirected {
 		// Display input pipe contents
-		reader = m.NewReaderFromStream("", os.Stdin)
+		reader = m.NewReaderFromStream("", os.Stdin, *style, formatter, *lexer)
 	} else {
 		// Display the input file contents
 		reader, err = m.NewReaderFromFilename(*inputFilename, *style, formatter, *lexer)
