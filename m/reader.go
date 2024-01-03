@@ -311,10 +311,12 @@ func NewReaderFromText(name string, text string) *Reader {
 	highlightingDone := atomic.Bool{}
 	highlightingDone.Store(true) // No highlighting to do = nothing left = Done!
 	returnMe := &Reader{
-		name:             &name,
 		lines:            lines,
 		done:             &done,
 		highlightingDone: &highlightingDone,
+	}
+	if name != "" {
+		returnMe.name = &name
 	}
 
 	return returnMe

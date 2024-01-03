@@ -7,6 +7,7 @@ import (
 	"testing"
 	"unicode/utf8"
 
+	"github.com/alecthomas/chroma/v2"
 	"github.com/google/go-cmp/cmp"
 	log "github.com/sirupsen/logrus"
 
@@ -40,7 +41,7 @@ func TestTokenize(t *testing.T) {
 				}
 			}()
 
-			myReader := NewReaderFromStream(fileName, file)
+			myReader := NewReaderFromStream(fileName, file, chroma.Style{}, nil, nil)
 			//revive:disable-next-line:empty-block
 			for !myReader.done.Load() {
 			}
