@@ -152,7 +152,7 @@ func (reader *Reader) preAllocLines(originalFileName string) {
 }
 
 // This function will be update the Reader struct in the background.
-func (reader *Reader) readStream(stream io.Reader, originalFileName *string, fromFilter *exec.Cmd) {
+func (reader *Reader) readStream(stream io.Reader, originalFileName *string, fromFilter *exec.Cmd, onDone func()) {
 	defer reader.cleanupFilter(fromFilter)
 
 	if originalFileName != nil {
@@ -218,6 +218,10 @@ func (reader *Reader) readStream(stream io.Reader, originalFileName *string, fro
 		}
 	}
 
+	if onDone != nil {
+		onDone()
+	}
+
 	t1 := time.Now().UnixNano()
 	dtNanos := t1 - t0
 	log.Debug("Stream read in ", dtNanos/1_000_000, "ms")
@@ -229,9 +233,8 @@ func (reader *Reader) readStream(stream io.Reader, originalFileName *string, fro
 //
 // If non-empty, the name will be displayed by the pager in the bottom left
 // corner to help the user keep track of what is being paged.
-func NewReaderFromStream(name string, reader io.Reader) *Reader {
-	mReader := newReaderFromStream(reader, nil, nil)
-	mReader.highlightingDone.Store(true) // No highlighting of streams = nothing left to do = Done!
+func NewReaderFromStream(name string, reader io.Reader, style chroma.Style, formatter chroma.Formatter, lexer chroma.Lexer) *Reader {
+	mReader := newReaderFromStream(reader, nil, nil, style, formatter, lexer)
 
 	if len(name) > 0 {
 		mReader.Lock()
@@ -251,7 +254,9 @@ func NewReaderFromStream(name string, reader io.Reader) *Reader {
 //
 // If fromFilter is not nil this method will wait() for it, and effectively
 // takes over ownership for it.
-func newReaderFromStream(reader io.Reader, originalFileName *string, fromFilter *exec.Cmd) *Reader {
+//
+// If lexer is not nil, the file will be highlighted after being fully read.
+func newReaderFromStream(reader io.Reader, originalFileName *string, fromFilter *exec.Cmd, style chroma.Style, formatter chroma.Formatter, lexer chroma.Lexer) *Reader {
 	done := atomic.Bool{}
 	done.Store(false)
 	highlightingDone := atomic.Bool{}
@@ -268,7 +273,19 @@ func newReaderFromStream(reader io.Reader, originalFileName *string, fromFilter 
 
 	// FIXME: Make sure that if we panic somewhere inside of this goroutine,
 	// the main program terminates and prints our panic stack trace.
-	go returnMe.readStream(reader, originalFileName, fromFilter)
+	go returnMe.readStream(reader, originalFileName, fromFilter, func() {
+		if lexer == nil {
+			return
+		}
+
+		highlightFromMemory(&returnMe, style, formatter, lexer)
+
+		returnMe.highlightingDone.Store(true)
+		select {
+		case returnMe.maybeDone <- true:
+		default:
+		}
+	})
 
 	return &returnMe
 }
@@ -294,10 +311,12 @@ func NewReaderFromText(name string, text string) *Reader {
 	highlightingDone := atomic.Bool{}
 	highlightingDone.Store(true) // No highlighting to do = nothing left = Done!
 	returnMe := &Reader{
-		name:             &name,
 		lines:            lines,
 		done:             &done,
 		highlightingDone: &highlightingDone,
+	}
+	if name != "" {
+		returnMe.name = &name
 	}
 
 	return returnMe
@@ -325,7 +344,7 @@ func newReaderFromCommand(filename string, filterCommand ...string) (*Reader, er
 		return nil, err
 	}
 
-	reader := newReaderFromStream(filterOut, nil, filter)
+	reader := newReaderFromStream(filterOut, nil, filter, chroma.Style{}, nil, nil)
 	reader.highlightingDone.Store(true) // No highlighting to do == nothing left == Done!
 	reader.Lock()
 	reader.name = &filename
@@ -439,7 +458,11 @@ func NewReaderFromFilename(filename string, style chroma.Style, formatter chroma
 		return nil, err
 	}
 
-	returnMe := newReaderFromStream(stream, &filename, nil)
+	// Set lexer to nil in this call since we want to do our own highlighting in
+	// parallel with the stream being read. See the call to
+	// StartHighlightingFromFile() below.
+	returnMe := newReaderFromStream(stream, &filename, nil, chroma.Style{}, nil, nil)
+
 	returnMe.Lock()
 	returnMe.name = &filename
 	returnMe.Unlock()
@@ -449,6 +472,7 @@ func NewReaderFromFilename(filename string, style chroma.Style, formatter chroma
 	return returnMe, nil
 }
 
+// FIXME: This should be a private function, just line highlightFromMemory()
 func (reader *Reader) StartHighlightingFromFile(filename string, style chroma.Style, formatter chroma.Formatter, lexer chroma.Lexer) {
 	reportDone := func() {
 		reader.highlightingDone.Store(true)
@@ -499,6 +523,53 @@ func (reader *Reader) StartHighlightingFromFile(filename string, style chroma.St
 
 		reader.setText(*highlighted)
 	}()
+}
+
+func highlightFromMemory(reader *Reader, style chroma.Style, formatter chroma.Formatter, lexer chroma.Lexer) {
+	defer func() {
+		reader.highlightingDone.Store(true)
+		select {
+		case reader.maybeDone <- true:
+		default:
+		}
+	}()
+
+	if lexer == nil {
+		return
+	}
+
+	var byteCount int64
+	reader.Lock()
+	for _, line := range reader.lines {
+		byteCount += int64(len(line.raw))
+	}
+	reader.Unlock()
+
+	if byteCount > MAX_HIGHLIGHT_SIZE {
+		log.Debug("File too large for highlighting: ", byteCount)
+		return
+	}
+
+	textBuilder := strings.Builder{}
+	reader.Lock()
+	for _, line := range reader.lines {
+		textBuilder.WriteString(line.raw)
+		textBuilder.WriteString("\n")
+	}
+	reader.Unlock()
+
+	highlighted, err := highlight(textBuilder.String(), style, formatter, lexer)
+	if err != nil {
+		log.Warn("Highlighting failed: ", err)
+		return
+	}
+
+	if highlighted == nil {
+		// No highlighting would be done, never mind
+		return
+	}
+
+	reader.setText(*highlighted)
 }
 
 // createStatusUnlocked() assumes that its caller is holding the lock

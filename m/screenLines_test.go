@@ -139,8 +139,8 @@ func TestOverflowUp(t *testing.T) {
 }
 
 func TestWrapping(t *testing.T) {
-	reader := NewReaderFromStream("",
-		strings.NewReader("first line\nline two will be wrapped\nhere's the last line"))
+	reader := NewReaderFromText("",
+		"first line\nline two will be wrapped\nhere's the last line")
 	pager := NewPager(reader)
 	pager.screen = twin.NewFakeScreen(40, 40)
 

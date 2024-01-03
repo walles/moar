@@ -8,6 +8,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/alecthomas/chroma/v2"
 	"github.com/alecthomas/chroma/v2/formatters"
 	"github.com/alecthomas/chroma/v2/lexers"
 	"github.com/alecthomas/chroma/v2/styles"
@@ -22,7 +23,7 @@ const blueBackgroundClearToEol0 = "\x1b[44m\x1b[0K" // With 0 before the K, shou
 const blueBackgroundClearToEol = "\x1b[44m\x1b[K"   // No 0 before the K, should also clear to EOL
 
 func TestUnicodeRendering(t *testing.T) {
-	reader := NewReaderFromStream("", strings.NewReader("åäö"))
+	reader := NewReaderFromText("", "åäö")
 
 	var answers = []twin.Cell{
 		twin.NewCell('å', twin.StyleDefault),
@@ -45,8 +46,8 @@ func assertCellsEqual(t *testing.T, expected twin.Cell, actual twin.Cell) {
 }
 
 func TestFgColorRendering(t *testing.T) {
-	reader := NewReaderFromStream("", strings.NewReader(
-		"\x1b[30ma\x1b[31mb\x1b[32mc\x1b[33md\x1b[34me\x1b[35mf\x1b[36mg\x1b[37mh\x1b[0mi"))
+	reader := NewReaderFromText("",
+		"\x1b[30ma\x1b[31mb\x1b[32mc\x1b[33md\x1b[34me\x1b[35mf\x1b[36mg\x1b[37mh\x1b[0mi")
 
 	var answers = []twin.Cell{
 		twin.NewCell('a', twin.StyleDefault.WithForeground(twin.NewColor16(0))),
@@ -67,7 +68,7 @@ func TestFgColorRendering(t *testing.T) {
 }
 
 func TestPageEmpty(t *testing.T) {
-	reader := NewReaderFromStream("", strings.NewReader(""))
+	reader := NewReaderFromText("", "")
 
 	firstRowCells := startPaging(t, reader).GetRow(0)
 
@@ -77,7 +78,7 @@ func TestPageEmpty(t *testing.T) {
 
 func TestBrokenUtf8(t *testing.T) {
 	// The broken UTF8 character in the middle is based on "©" = 0xc2a9
-	reader := NewReaderFromStream("", strings.NewReader("abc\xc2def"))
+	reader := NewReaderFromText("", "abc\xc2def")
 
 	var answers = []twin.Cell{
 		twin.NewCell('a', twin.StyleDefault),
@@ -119,7 +120,7 @@ func startPaging(t *testing.T, reader *Reader) *twin.FakeScreen {
 
 // assertIndexOfFirstX verifies the (zero-based) index of the first 'x'
 func assertIndexOfFirstX(t *testing.T, s string, expectedIndex int) {
-	reader := NewReaderFromStream("", strings.NewReader(s))
+	reader := NewReaderFromText("", s)
 
 	contents := startPaging(t, reader).GetRow(0)
 	for pos, cell := range contents {
@@ -212,7 +213,7 @@ func resetManPageFormat() {
 }
 
 func testManPageFormatting(t *testing.T, input string, expected twin.Cell) {
-	reader := NewReaderFromStream("", strings.NewReader(input))
+	reader := NewReaderFromText("", input)
 
 	// Without these lines the man page tests will fail if either of these
 	// environment variables are set when the tests are run.
@@ -265,7 +266,7 @@ func TestToPattern(t *testing.T) {
 }
 
 func TestFindFirstHitSimple(t *testing.T) {
-	reader := NewReaderFromStream("TestFindFirstHitSimple", strings.NewReader("AB"))
+	reader := NewReaderFromText("TestFindFirstHitSimple", "AB")
 	pager := NewPager(reader)
 	pager.screen = twin.NewFakeScreen(40, 10)
 
@@ -281,7 +282,7 @@ func TestFindFirstHitSimple(t *testing.T) {
 }
 
 func TestFindFirstHitAnsi(t *testing.T) {
-	reader := NewReaderFromStream("", strings.NewReader("A\x1b[30mB"))
+	reader := NewReaderFromText("", "A\x1b[30mB")
 	pager := NewPager(reader)
 	pager.screen = twin.NewFakeScreen(40, 10)
 
@@ -297,7 +298,7 @@ func TestFindFirstHitAnsi(t *testing.T) {
 }
 
 func TestFindFirstHitNoMatch(t *testing.T) {
-	reader := NewReaderFromStream("TestFindFirstHitSimple", strings.NewReader("AB"))
+	reader := NewReaderFromText("TestFindFirstHitSimple", "AB")
 	pager := NewPager(reader)
 	pager.screen = twin.NewFakeScreen(40, 10)
 
@@ -322,8 +323,8 @@ func rowToString(row []twin.Cell) string {
 }
 
 func TestScrollToBottomWrapNextToLastLine(t *testing.T) {
-	reader := NewReaderFromStream("",
-		strings.NewReader("first line\nline two will be wrapped\nhere's the last line"))
+	reader := NewReaderFromText("",
+		"first line\nline two will be wrapped\nhere's the last line")
 
 	// Heigh 3 = two lines of contents + one footer
 	screen := twin.NewFakeScreen(10, 3)
@@ -495,7 +496,7 @@ func TestPageSamples(t *testing.T) {
 			}
 		}()
 
-		myReader := NewReaderFromStream(fileName, file)
+		myReader := NewReaderFromStream(fileName, file, chroma.Style{}, nil, nil)
 		for !myReader.done.Load() {
 		}
 
@@ -639,14 +640,6 @@ func benchmarkSearch(b *testing.B, highlighted bool) {
 	// The [] around the 't' is there to make sure it doesn't match, remember
 	// we're searching through this very file.
 	pager.searchPattern = regexp.MustCompile("This won'[t] match anything")
-
-	// Wait for reader to finish reading...
-	for !reader.done.Load() {
-	}
-
-	// ... and wait for highlighting to finish
-	for !reader.highlightingDone.Load() {
-	}
 
 	// I hope forcing a GC here will make numbers more predictable
 	runtime.GC()
