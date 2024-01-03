@@ -271,6 +271,11 @@ func terminalHasArrowKeysEmulation() bool {
 		return true
 	}
 
+	// Wezterm, tested on MacOS 12.6, January 3rd, 2024
+	if os.Getenv("TERM_PROGRAM") == "WezTerm" {
+		return true
+	}
+
 	return false
 }
 
