@@ -13,7 +13,7 @@ import (
 	"github.com/alecthomas/chroma/v2/lexers"
 	"github.com/alecthomas/chroma/v2/styles"
 	"github.com/google/go-cmp/cmp"
-	"github.com/walles/moar/textstyles"
+	"github.com/walles/moar/m/textstyles"
 	"github.com/walles/moar/twin"
 	"gotest.tools/v3/assert"
 )

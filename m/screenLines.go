@@ -3,7 +3,7 @@ package m
 import (
 	"fmt"
 
-	"github.com/walles/moar/textstyles"
+	"github.com/walles/moar/m/textstyles"
 	"github.com/walles/moar/twin"
 )
 

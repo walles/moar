@@ -5,7 +5,6 @@ import (
 	"os"
 	"os/exec"
 	"path"
-	"runtime"
 	"strconv"
 	"strings"
 	"testing"
@@ -16,6 +15,8 @@ import (
 )
 
 //revive:disable:empty-block
+
+const samplesDir = "../sample-files"
 
 func testGetLineCount(t *testing.T, reader *Reader) {
 	if strings.Contains(*reader.name, "compressed") {
@@ -114,25 +115,15 @@ func testGetLines(t *testing.T, reader *Reader) {
 	}
 }
 
-func getSamplesDir() string {
-	// From: https://coderwall.com/p/_fmbug/go-get-path-to-current-file
-	_, filename, _, ok := runtime.Caller(0)
-	if !ok {
-		panic("Getting current filename failed")
-	}
-
-	return path.Join(path.Dir(filename), "../sample-files")
-}
-
 func getTestFiles() []string {
-	files, err := os.ReadDir(getSamplesDir())
+	files, err := os.ReadDir(samplesDir)
 	if err != nil {
 		panic(err)
 	}
 
 	var filenames []string
 	for _, file := range files {
-		filenames = append(filenames, "../sample-files/"+file.Name())
+		filenames = append(filenames, path.Join(samplesDir, file.Name()))
 	}
 
 	return filenames
@@ -281,7 +272,7 @@ func TestStatusText(t *testing.T) {
 	testStatusText(t, 1, 1, 1, "1 line  100%")
 
 	// Test with filename
-	testMe, err := NewReaderFromFilename(getSamplesDir()+"/empty", *styles.Get("native"), formatters.TTY16m, nil)
+	testMe, err := NewReaderFromFilename(samplesDir+"/empty", *styles.Get("native"), formatters.TTY16m, nil)
 	if err != nil {
 		panic(err)
 	}
@@ -295,7 +286,7 @@ func TestStatusText(t *testing.T) {
 }
 
 func testCompressedFile(t *testing.T, filename string) {
-	filenameWithPath := getSamplesDir() + "/" + filename
+	filenameWithPath := path.Join(samplesDir, filename)
 	reader, e := NewReaderFromFilename(filenameWithPath, *styles.Get("native"), formatters.TTY16m, nil)
 	if e != nil {
 		t.Errorf("Error opening file <%s>: %s", filenameWithPath, e.Error())
@@ -365,7 +356,7 @@ func TestFilterNotAFile(t *testing.T) {
 //
 // Run with: go test -run='^$' -bench=. . ./...
 func BenchmarkReaderDone(b *testing.B) {
-	filename := getSamplesDir() + "/../m/pager.go" // This is our longest .go file
+	filename := "pager.go" // This is our longest .go file
 	b.ResetTimer()
 	for n := 0; n < b.N; n++ {
 		// This is our longest .go file
@@ -390,7 +381,7 @@ func BenchmarkReadLargeFile(b *testing.B) {
 	const largeSizeBytes = 35_000_000
 
 	// First, create it from something...
-	inputFilename := getSamplesDir() + "/../m/pager.go"
+	inputFilename := "pager.go"
 	contents, err := os.ReadFile(inputFilename)
 	if err != nil {
 		panic(err)
@@ -436,7 +427,7 @@ func BenchmarkReadLargeFile(b *testing.B) {
 // Count lines in pager.go
 func BenchmarkCountLines(b *testing.B) {
 	// First, get some sample lines...
-	inputFilename := getSamplesDir() + "/../m/pager.go"
+	inputFilename := "pager.go"
 	contents, err := os.ReadFile(inputFilename)
 	if err != nil {
 		panic(err)

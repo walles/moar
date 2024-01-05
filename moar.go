@@ -21,7 +21,7 @@ import (
 	"golang.org/x/term"
 
 	"github.com/walles/moar/m"
-	"github.com/walles/moar/textstyles"
+	"github.com/walles/moar/m/textstyles"
 	"github.com/walles/moar/twin"
 )
 

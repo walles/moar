@@ -9,7 +9,7 @@ import (
 
 	"github.com/alecthomas/chroma/v2"
 	log "github.com/sirupsen/logrus"
-	"github.com/walles/moar/textstyles"
+	"github.com/walles/moar/m/textstyles"
 	"github.com/walles/moar/twin"
 )
 

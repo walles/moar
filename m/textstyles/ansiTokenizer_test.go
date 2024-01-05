@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 	"path"
-	"runtime"
 	"strings"
 	"testing"
 	"unicode/utf8"
@@ -17,6 +16,8 @@ import (
 	"gotest.tools/v3/assert"
 )
 
+const samplesDir = "../../sample-files"
+
 // Convert a cells array to a plain string
 func cellsToPlainString(cells []twin.Cell) string {
 	returnMe := ""
@@ -27,25 +28,15 @@ func cellsToPlainString(cells []twin.Cell) string {
 	return returnMe
 }
 
-func getSamplesDir() string {
-	// From: https://coderwall.com/p/_fmbug/go-get-path-to-current-file
-	_, filename, _, ok := runtime.Caller(0)
-	if !ok {
-		panic("Getting current filename failed")
-	}
-
-	return path.Join(path.Dir(filename), "../sample-files")
-}
-
 func getTestFiles() []string {
-	files, err := os.ReadDir(getSamplesDir())
+	files, err := os.ReadDir(samplesDir)
 	if err != nil {
 		panic(err)
 	}
 
 	var filenames []string
 	for _, file := range files {
-		filenames = append(filenames, "../sample-files/"+file.Name())
+		filenames = append(filenames, path.Join(samplesDir, file.Name()))
 	}
 
 	return filenames
