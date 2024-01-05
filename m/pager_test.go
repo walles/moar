@@ -13,6 +13,7 @@ import (
 	"github.com/alecthomas/chroma/v2/lexers"
 	"github.com/alecthomas/chroma/v2/styles"
 	"github.com/google/go-cmp/cmp"
+	"github.com/walles/moar/textstyles"
 	"github.com/walles/moar/twin"
 	"gotest.tools/v3/assert"
 )
@@ -208,8 +209,8 @@ func TestUnicodePrivateUse(t *testing.T) {
 }
 
 func resetManPageFormat() {
-	manPageBold = twin.StyleDefault.WithAttr(twin.AttrBold)
-	manPageUnderline = twin.StyleDefault.WithAttr(twin.AttrUnderline)
+	textstyles.ManPageBold = twin.StyleDefault.WithAttr(twin.AttrBold)
+	textstyles.ManPageUnderline = twin.StyleDefault.WithAttr(twin.AttrUnderline)
 }
 
 func testManPageFormatting(t *testing.T, input string, expected twin.Cell) {

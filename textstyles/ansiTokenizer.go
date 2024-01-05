@@ -1,76 +1,35 @@
-package m
+package textstyles
 
 import (
 	"fmt"
-	"regexp"
 	"strconv"
 	"strings"
 
 	"github.com/walles/moar/twin"
 )
 
+// How do we render unprintable characters?
+type UnprintableStyleT int
+
+const (
+	//revive:disable-next-line:var-naming
+	UNPRINTABLE_STYLE_HIGHLIGHT UnprintableStyleT = iota
+	//revive:disable-next-line:var-naming
+	UNPRINTABLE_STYLE_WHITESPACE
+)
+
+var UnprintableStyle UnprintableStyleT
+
+var ManPageBold = twin.StyleDefault.WithAttr(twin.AttrBold)
+var ManPageUnderline = twin.StyleDefault.WithAttr(twin.AttrUnderline)
+
 const _TabSize = 4
 
 const BACKSPACE = '\b'
 
-// A Line represents a line of text that can / will be paged
-type Line struct {
-	raw   string
-	plain *string
-}
-
-type cellsWithTrailer struct {
+type CellsWithTrailer struct {
 	Cells   []twin.Cell
 	Trailer twin.Style
-}
-
-// NewLine creates a new Line from a (potentially ANSI / man page formatted) string
-func NewLine(raw string) Line {
-	return Line{
-		raw:   raw,
-		plain: nil,
-	}
-}
-
-// Returns a representation of the string split into styled tokens. Any regexp
-// matches are highlighted. A nil regexp means no highlighting.
-//
-//revive:disable-next-line:unexported-return
-func (line *Line) HighlightedTokens(linePrefix string, search *regexp.Regexp, lineNumberOneBased *int) cellsWithTrailer {
-	plain := line.Plain(lineNumberOneBased)
-	matchRanges := getMatchRanges(&plain, search)
-
-	fromString := cellsFromString(linePrefix+line.raw, lineNumberOneBased)
-	returnCells := make([]twin.Cell, 0, len(fromString.Cells))
-	for _, token := range fromString.Cells {
-		style := token.Style
-		if matchRanges.InRange(len(returnCells)) {
-			if standoutStyle != nil {
-				style = *standoutStyle
-			} else {
-				style = style.WithAttr(twin.AttrReverse)
-			}
-		}
-
-		returnCells = append(returnCells, twin.Cell{
-			Rune:  token.Rune,
-			Style: style,
-		})
-	}
-
-	return cellsWithTrailer{
-		Cells:   returnCells,
-		Trailer: fromString.Trailer,
-	}
-}
-
-// Plain returns a plain text representation of the initial string
-func (line *Line) Plain(lineNumberOneBased *int) string {
-	if line.plain == nil {
-		plain := withoutFormatting(line.raw, lineNumberOneBased)
-		line.plain = &plain
-	}
-	return *line.plain
 }
 
 func isPlain(s string) bool {
@@ -87,7 +46,7 @@ func isPlain(s string) bool {
 	return true
 }
 
-func withoutFormatting(s string, lineNumberOneBased *int) string {
+func WithoutFormatting(s string, lineNumberOneBased *int) string {
 	if isPlain(s) {
 		return s
 	}
@@ -116,12 +75,12 @@ func withoutFormatting(s string, lineNumberOneBased *int) string {
 				}
 
 			case '�': // Go's broken-UTF8 marker
-				if unprintableStyle == UNPRINTABLE_STYLE_HIGHLIGHT {
+				if UnprintableStyle == UNPRINTABLE_STYLE_HIGHLIGHT {
 					stripped.WriteRune('?')
-				} else if unprintableStyle == UNPRINTABLE_STYLE_WHITESPACE {
+				} else if UnprintableStyle == UNPRINTABLE_STYLE_WHITESPACE {
 					stripped.WriteRune(' ')
 				} else {
-					panic(fmt.Errorf("Unsupported unprintable-style: %#v", unprintableStyle))
+					panic(fmt.Errorf("Unsupported unprintable-style: %#v", UnprintableStyle))
 				}
 				runeCount++
 
@@ -145,7 +104,7 @@ func withoutFormatting(s string, lineNumberOneBased *int) string {
 }
 
 // Turn a (formatted) string into a series of screen cells
-func cellsFromString(s string, lineNumberOneBased *int) cellsWithTrailer {
+func CellsFromString(s string, lineNumberOneBased *int) CellsWithTrailer {
 	var cells []twin.Cell
 
 	// Specs: https://en.wikipedia.org/wiki/ANSI_escape_code#3-bit_and_4-bit
@@ -169,18 +128,18 @@ func cellsFromString(s string, lineNumberOneBased *int) cellsWithTrailer {
 				}
 
 			case '�': // Go's broken-UTF8 marker
-				if unprintableStyle == UNPRINTABLE_STYLE_HIGHLIGHT {
+				if UnprintableStyle == UNPRINTABLE_STYLE_HIGHLIGHT {
 					cells = append(cells, twin.Cell{
 						Rune:  '?',
 						Style: styleUnprintable,
 					})
-				} else if unprintableStyle == UNPRINTABLE_STYLE_WHITESPACE {
+				} else if UnprintableStyle == UNPRINTABLE_STYLE_WHITESPACE {
 					cells = append(cells, twin.Cell{
 						Rune:  '?',
 						Style: twin.StyleDefault,
 					})
 				} else {
-					panic(fmt.Errorf("Unsupported unprintable-style: %#v", unprintableStyle))
+					panic(fmt.Errorf("Unsupported unprintable-style: %#v", UnprintableStyle))
 				}
 
 			case BACKSPACE:
@@ -191,18 +150,18 @@ func cellsFromString(s string, lineNumberOneBased *int) cellsWithTrailer {
 
 			default:
 				if !twin.Printable(token.Rune) {
-					if unprintableStyle == UNPRINTABLE_STYLE_HIGHLIGHT {
+					if UnprintableStyle == UNPRINTABLE_STYLE_HIGHLIGHT {
 						cells = append(cells, twin.Cell{
 							Rune:  '?',
 							Style: styleUnprintable,
 						})
-					} else if unprintableStyle == UNPRINTABLE_STYLE_WHITESPACE {
+					} else if UnprintableStyle == UNPRINTABLE_STYLE_WHITESPACE {
 						cells = append(cells, twin.Cell{
 							Rune:  ' ',
 							Style: twin.StyleDefault,
 						})
 					} else {
-						panic(fmt.Errorf("Unsupported unprintable-style: %#v", unprintableStyle))
+						panic(fmt.Errorf("Unsupported unprintable-style: %#v", UnprintableStyle))
 					}
 					continue
 				}
@@ -211,7 +170,7 @@ func cellsFromString(s string, lineNumberOneBased *int) cellsWithTrailer {
 		}
 	})
 
-	return cellsWithTrailer{
+	return CellsWithTrailer{
 		Cells:   cells,
 		Trailer: trailer,
 	}
@@ -237,7 +196,7 @@ func consumeBold(runes []rune, index int) (int, *twin.Cell) {
 	// We have a match!
 	return index + 3, &twin.Cell{
 		Rune:  runes[index],
-		Style: manPageBold,
+		Style: ManPageBold,
 	}
 }
 
@@ -261,7 +220,7 @@ func consumeUnderline(runes []rune, index int) (int, *twin.Cell) {
 	// We have a match!
 	return index + 3, &twin.Cell{
 		Rune:  runes[index+2],
-		Style: manPageUnderline,
+		Style: ManPageUnderline,
 	}
 }
 

@@ -9,6 +9,7 @@ import (
 
 	"github.com/alecthomas/chroma/v2"
 	log "github.com/sirupsen/logrus"
+	"github.com/walles/moar/textstyles"
 	"github.com/walles/moar/twin"
 )
 
@@ -31,18 +32,6 @@ const (
 	//revive:disable-next-line:var-naming
 	STATUSBAR_STYLE_BOLD
 )
-
-// How do we render unprintable characters?
-type UnprintableStyle int
-
-const (
-	//revive:disable-next-line:var-naming
-	UNPRINTABLE_STYLE_HIGHLIGHT UnprintableStyle = iota
-	//revive:disable-next-line:var-naming
-	UNPRINTABLE_STYLE_WHITESPACE
-)
-
-var unprintableStyle UnprintableStyle
 
 type eventSpinnerUpdate struct {
 	spinner string
@@ -79,7 +68,7 @@ type Pager struct {
 	StatusBarStyle StatusBarOption
 	ShowStatusBar  bool
 
-	UnprintableStyle UnprintableStyle
+	UnprintableStyle textstyles.UnprintableStyleT
 
 	WrapLongLines bool
 
@@ -478,7 +467,7 @@ func (p *Pager) StartPaging(screen twin.Screen, chromaStyle *chroma.Style, chrom
 		}
 	}()
 
-	unprintableStyle = p.UnprintableStyle
+	textstyles.UnprintableStyle = p.UnprintableStyle
 	consumeLessTermcapEnvs(chromaStyle, chromaFormatter)
 	styleUI(chromaStyle, chromaFormatter, p.StatusBarStyle)
 

@@ -1,4 +1,4 @@
-package m
+package textstyles
 
 import (
 	"fmt"
