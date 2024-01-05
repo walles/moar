@@ -27,7 +27,7 @@ const _TabSize = 4
 
 const BACKSPACE = '\b'
 
-type cellsWithTrailer struct {
+type CellsWithTrailer struct {
 	Cells   []twin.Cell
 	Trailer twin.Style
 }
@@ -46,7 +46,7 @@ func isPlain(s string) bool {
 	return true
 }
 
-func withoutFormatting(s string, lineNumberOneBased *int) string {
+func WithoutFormatting(s string, lineNumberOneBased *int) string {
 	if isPlain(s) {
 		return s
 	}
@@ -104,7 +104,7 @@ func withoutFormatting(s string, lineNumberOneBased *int) string {
 }
 
 // Turn a (formatted) string into a series of screen cells
-func cellsFromString(s string, lineNumberOneBased *int) cellsWithTrailer {
+func CellsFromString(s string, lineNumberOneBased *int) CellsWithTrailer {
 	var cells []twin.Cell
 
 	// Specs: https://en.wikipedia.org/wiki/ANSI_escape_code#3-bit_and_4-bit
@@ -170,7 +170,7 @@ func cellsFromString(s string, lineNumberOneBased *int) cellsWithTrailer {
 		}
 	})
 
-	return cellsWithTrailer{
+	return CellsWithTrailer{
 		Cells:   cells,
 		Trailer: trailer,
 	}

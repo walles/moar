@@ -3,6 +3,7 @@ package m
 import (
 	"regexp"
 
+	"github.com/walles/moar/textstyles"
 	"github.com/walles/moar/twin"
 )
 
@@ -24,11 +25,11 @@ func NewLine(raw string) Line {
 // matches are highlighted. A nil regexp means no highlighting.
 //
 //revive:disable-next-line:unexported-return
-func (line *Line) HighlightedTokens(linePrefix string, search *regexp.Regexp, lineNumberOneBased *int) cellsWithTrailer {
+func (line *Line) HighlightedTokens(linePrefix string, search *regexp.Regexp, lineNumberOneBased *int) textstyles.CellsWithTrailer {
 	plain := line.Plain(lineNumberOneBased)
 	matchRanges := getMatchRanges(&plain, search)
 
-	fromString := cellsFromString(linePrefix+line.raw, lineNumberOneBased)
+	fromString := textstyles.CellsFromString(linePrefix+line.raw, lineNumberOneBased)
 	returnCells := make([]twin.Cell, 0, len(fromString.Cells))
 	for _, token := range fromString.Cells {
 		style := token.Style
@@ -46,7 +47,7 @@ func (line *Line) HighlightedTokens(linePrefix string, search *regexp.Regexp, li
 		})
 	}
 
-	return cellsWithTrailer{
+	return textstyles.CellsWithTrailer{
 		Cells:   returnCells,
 		Trailer: fromString.Trailer,
 	}
@@ -55,7 +56,7 @@ func (line *Line) HighlightedTokens(linePrefix string, search *regexp.Regexp, li
 // Plain returns a plain text representation of the initial string
 func (line *Line) Plain(lineNumberOneBased *int) string {
 	if line.plain == nil {
-		plain := withoutFormatting(line.raw, lineNumberOneBased)
+		plain := textstyles.WithoutFormatting(line.raw, lineNumberOneBased)
 		line.plain = &plain
 	}
 	return *line.plain
