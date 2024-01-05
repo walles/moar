@@ -1,3 +1,6 @@
+// This package handles styled strings. It can strip styling from strings and it
+// can turn a styled string into a series of screen cells. Some global variables
+// can be used to configure how various things are rendered.
 package textstyles
 
 import (
@@ -12,10 +15,8 @@ import (
 type UnprintableStyleT int
 
 const (
-	//revive:disable-next-line:var-naming
-	UNPRINTABLE_STYLE_HIGHLIGHT UnprintableStyleT = iota
-	//revive:disable-next-line:var-naming
-	UNPRINTABLE_STYLE_WHITESPACE
+	UnprintableStyleHighlight UnprintableStyleT = iota
+	UnprintableStyleWhitespace
 )
 
 var UnprintableStyle UnprintableStyleT
@@ -75,9 +76,9 @@ func WithoutFormatting(s string, lineNumberOneBased *int) string {
 				}
 
 			case '�': // Go's broken-UTF8 marker
-				if UnprintableStyle == UNPRINTABLE_STYLE_HIGHLIGHT {
+				if UnprintableStyle == UnprintableStyleHighlight {
 					stripped.WriteRune('?')
-				} else if UnprintableStyle == UNPRINTABLE_STYLE_WHITESPACE {
+				} else if UnprintableStyle == UnprintableStyleWhitespace {
 					stripped.WriteRune(' ')
 				} else {
 					panic(fmt.Errorf("Unsupported unprintable-style: %#v", UnprintableStyle))
@@ -128,12 +129,12 @@ func CellsFromString(s string, lineNumberOneBased *int) CellsWithTrailer {
 				}
 
 			case '�': // Go's broken-UTF8 marker
-				if UnprintableStyle == UNPRINTABLE_STYLE_HIGHLIGHT {
+				if UnprintableStyle == UnprintableStyleHighlight {
 					cells = append(cells, twin.Cell{
 						Rune:  '?',
 						Style: styleUnprintable,
 					})
-				} else if UnprintableStyle == UNPRINTABLE_STYLE_WHITESPACE {
+				} else if UnprintableStyle == UnprintableStyleWhitespace {
 					cells = append(cells, twin.Cell{
 						Rune:  '?',
 						Style: twin.StyleDefault,
@@ -150,12 +151,12 @@ func CellsFromString(s string, lineNumberOneBased *int) CellsWithTrailer {
 
 			default:
 				if !twin.Printable(token.Rune) {
-					if UnprintableStyle == UNPRINTABLE_STYLE_HIGHLIGHT {
+					if UnprintableStyle == UnprintableStyleHighlight {
 						cells = append(cells, twin.Cell{
 							Rune:  '?',
 							Style: styleUnprintable,
 						})
-					} else if UnprintableStyle == UNPRINTABLE_STYLE_WHITESPACE {
+					} else if UnprintableStyle == UnprintableStyleWhitespace {
 						cells = append(cells, twin.Cell{
 							Rune:  ' ',
 							Style: twin.StyleDefault,
