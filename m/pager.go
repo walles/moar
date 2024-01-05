@@ -9,6 +9,7 @@ import (
 
 	"github.com/alecthomas/chroma/v2"
 	log "github.com/sirupsen/logrus"
+	"github.com/walles/moar/textstyles"
 	"github.com/walles/moar/twin"
 )
 
@@ -67,7 +68,7 @@ type Pager struct {
 	StatusBarStyle StatusBarOption
 	ShowStatusBar  bool
 
-	UnprintableStyle UnprintableStyle
+	UnprintableStyle textstyles.UnprintableStyleT
 
 	WrapLongLines bool
 
@@ -466,7 +467,7 @@ func (p *Pager) StartPaging(screen twin.Screen, chromaStyle *chroma.Style, chrom
 		}
 	}()
 
-	unprintableStyle = p.UnprintableStyle
+	textstyles.UnprintableStyle = p.UnprintableStyle
 	consumeLessTermcapEnvs(chromaStyle, chromaFormatter)
 	styleUI(chromaStyle, chromaFormatter, p.StatusBarStyle)
 

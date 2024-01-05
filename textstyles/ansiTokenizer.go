@@ -9,16 +9,16 @@ import (
 )
 
 // How do we render unprintable characters?
-type UnprintableStyle int
+type UnprintableStyleT int
 
 const (
 	//revive:disable-next-line:var-naming
-	UNPRINTABLE_STYLE_HIGHLIGHT UnprintableStyle = iota
+	UNPRINTABLE_STYLE_HIGHLIGHT UnprintableStyleT = iota
 	//revive:disable-next-line:var-naming
 	UNPRINTABLE_STYLE_WHITESPACE
 )
 
-var unprintableStyle UnprintableStyle
+var UnprintableStyle UnprintableStyleT
 
 var manPageBold = twin.StyleDefault.WithAttr(twin.AttrBold)
 var manPageUnderline = twin.StyleDefault.WithAttr(twin.AttrUnderline)
@@ -75,12 +75,12 @@ func WithoutFormatting(s string, lineNumberOneBased *int) string {
 				}
 
 			case '�': // Go's broken-UTF8 marker
-				if unprintableStyle == UNPRINTABLE_STYLE_HIGHLIGHT {
+				if UnprintableStyle == UNPRINTABLE_STYLE_HIGHLIGHT {
 					stripped.WriteRune('?')
-				} else if unprintableStyle == UNPRINTABLE_STYLE_WHITESPACE {
+				} else if UnprintableStyle == UNPRINTABLE_STYLE_WHITESPACE {
 					stripped.WriteRune(' ')
 				} else {
-					panic(fmt.Errorf("Unsupported unprintable-style: %#v", unprintableStyle))
+					panic(fmt.Errorf("Unsupported unprintable-style: %#v", UnprintableStyle))
 				}
 				runeCount++
 
@@ -128,18 +128,18 @@ func CellsFromString(s string, lineNumberOneBased *int) CellsWithTrailer {
 				}
 
 			case '�': // Go's broken-UTF8 marker
-				if unprintableStyle == UNPRINTABLE_STYLE_HIGHLIGHT {
+				if UnprintableStyle == UNPRINTABLE_STYLE_HIGHLIGHT {
 					cells = append(cells, twin.Cell{
 						Rune:  '?',
 						Style: styleUnprintable,
 					})
-				} else if unprintableStyle == UNPRINTABLE_STYLE_WHITESPACE {
+				} else if UnprintableStyle == UNPRINTABLE_STYLE_WHITESPACE {
 					cells = append(cells, twin.Cell{
 						Rune:  '?',
 						Style: twin.StyleDefault,
 					})
 				} else {
-					panic(fmt.Errorf("Unsupported unprintable-style: %#v", unprintableStyle))
+					panic(fmt.Errorf("Unsupported unprintable-style: %#v", UnprintableStyle))
 				}
 
 			case BACKSPACE:
@@ -150,18 +150,18 @@ func CellsFromString(s string, lineNumberOneBased *int) CellsWithTrailer {
 
 			default:
 				if !twin.Printable(token.Rune) {
-					if unprintableStyle == UNPRINTABLE_STYLE_HIGHLIGHT {
+					if UnprintableStyle == UNPRINTABLE_STYLE_HIGHLIGHT {
 						cells = append(cells, twin.Cell{
 							Rune:  '?',
 							Style: styleUnprintable,
 						})
-					} else if unprintableStyle == UNPRINTABLE_STYLE_WHITESPACE {
+					} else if UnprintableStyle == UNPRINTABLE_STYLE_WHITESPACE {
 						cells = append(cells, twin.Cell{
 							Rune:  ' ',
 							Style: twin.StyleDefault,
 						})
 					} else {
-						panic(fmt.Errorf("Unsupported unprintable-style: %#v", unprintableStyle))
+						panic(fmt.Errorf("Unsupported unprintable-style: %#v", UnprintableStyle))
 					}
 					continue
 				}
