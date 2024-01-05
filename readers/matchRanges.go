@@ -1,4 +1,4 @@
-package m
+package readers
 
 import "regexp"
 

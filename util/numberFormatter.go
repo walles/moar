@@ -1,4 +1,4 @@
-package m
+package util
 
 import "fmt"
 
@@ -7,7 +7,7 @@ import "fmt"
 //
 // Regarding the >= 10_000 exception:
 // https://en.wikipedia.org/wiki/Decimal_separator#Exceptions_to_digit_grouping
-func formatNumber(number uint) string {
+func FormatNumber(number uint) string {
 	if number < 10_000 {
 		return fmt.Sprint(number)
 	}

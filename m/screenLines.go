@@ -7,13 +7,6 @@ import (
 	"github.com/walles/moar/twin"
 )
 
-type overflowState bool
-
-const (
-	didFit      overflowState = false
-	didOverflow overflowState = true
-)
-
 type renderedLine struct {
 	inputLineOneBased int
 

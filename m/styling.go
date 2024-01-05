@@ -11,7 +11,8 @@ import (
 	"github.com/walles/moar/twin"
 )
 
-// From LESS_TERMCAP_so, overrides statusbarStyle from the Chroma style if set
+// From LESS_TERMCAP_so, overrides statusbarStyle from the Chroma style if set.
+// Used for overriding statusbarStyle.
 var standoutStyle *twin.Style
 
 var lineNumbersStyle = twin.StyleDefault.WithAttr(twin.AttrDim)

@@ -1,4 +1,4 @@
-package m
+package readers
 
 import (
 	"bufio"
@@ -17,12 +17,20 @@ import (
 	"github.com/alecthomas/chroma/v2"
 	"github.com/alecthomas/chroma/v2/lexers"
 	log "github.com/sirupsen/logrus"
+	"github.com/walles/moar/util"
 )
 
 // Files larger than this won't be highlighted
 //
 //revive:disable-next-line:var-naming
 const MAX_HIGHLIGHT_SIZE int64 = 1024 * 1024
+
+type OverflowState bool
+
+const (
+	didFit      OverflowState = false
+	didOverflow OverflowState = true
+)
 
 // Reader reads a file into an array of strings.
 //
@@ -590,7 +598,7 @@ func (reader *Reader) createStatusUnlocked(lastLineOneBased int) string {
 
 	return fmt.Sprintf("%s%s lines  %d%%",
 		prefix,
-		formatNumber(uint(len(reader.lines))),
+		util.FormatNumber(uint(len(reader.lines))),
 		percent)
 }
 
@@ -620,9 +628,7 @@ func (reader *Reader) GetLine(lineNumberOneBased int) *Line {
 //
 // Overflow state will be didFit if we returned all lines we currently have, or
 // didOverflow otherwise.
-//
-//revive:disable-next-line:unexported-return
-func (reader *Reader) GetLines(firstLineOneBased int, wantedLineCount int) (*InputLines, overflowState) {
+func (reader *Reader) GetLines(firstLineOneBased int, wantedLineCount int) (*InputLines, OverflowState) {
 	reader.Lock()
 	defer reader.Unlock()
 	return reader.getLinesUnlocked(firstLineOneBased, wantedLineCount)
@@ -640,7 +646,7 @@ func nonWrappingAdd(a int, b int) int {
 	return a + b
 }
 
-func (reader *Reader) getLinesUnlocked(firstLineOneBased int, wantedLineCount int) (*InputLines, overflowState) {
+func (reader *Reader) getLinesUnlocked(firstLineOneBased int, wantedLineCount int) (*InputLines, OverflowState) {
 	if firstLineOneBased < 1 {
 		firstLineOneBased = 1
 	}

@@ -1,4 +1,4 @@
-package m
+package readers
 
 import (
 	"regexp"
@@ -6,6 +6,8 @@ import (
 	"github.com/walles/moar/m/textstyles"
 	"github.com/walles/moar/twin"
 )
+
+var SearchHitStyle *twin.Style
 
 // A Line represents a line of text that can / will be paged
 type Line struct {
@@ -32,8 +34,8 @@ func (line *Line) HighlightedTokens(linePrefix string, search *regexp.Regexp, li
 	for _, token := range fromString.Cells {
 		style := token.Style
 		if matchRanges.InRange(len(returnCells)) {
-			if standoutStyle != nil {
-				style = *standoutStyle
+			if SearchHitStyle != nil {
+				style = *SearchHitStyle
 			} else {
 				style = style.WithAttr(twin.AttrReverse)
 			}
