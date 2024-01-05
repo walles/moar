@@ -21,6 +21,7 @@ import (
 	"golang.org/x/term"
 
 	"github.com/walles/moar/m"
+	"github.com/walles/moar/textstyles"
 	"github.com/walles/moar/twin"
 )
 
@@ -222,12 +223,12 @@ func parseStatusBarStyle(styleOption string) (m.StatusBarOption, error) {
 	return 0, fmt.Errorf("Good ones are inverse, plain and bold")
 }
 
-func parseUnprintableStyle(styleOption string) (m.UnprintableStyle, error) {
+func parseUnprintableStyle(styleOption string) (textstyles.UnprintableStyleT, error) {
 	if styleOption == "highlight" {
-		return m.UNPRINTABLE_STYLE_HIGHLIGHT, nil
+		return textstyles.UNPRINTABLE_STYLE_HIGHLIGHT, nil
 	}
 	if styleOption == "whitespace" {
-		return m.UNPRINTABLE_STYLE_WHITESPACE, nil
+		return textstyles.UNPRINTABLE_STYLE_WHITESPACE, nil
 	}
 
 	return 0, fmt.Errorf("Good ones are highlight or whitespace")
@@ -416,7 +417,7 @@ func main() {
 	noClearOnExit := flagSet.Bool("no-clear-on-exit", false, "Retain screen contents when exiting moar")
 	statusBarStyle := flagSetFunc(flagSet, "statusbar", m.STATUSBAR_STYLE_INVERSE,
 		"Status bar style: inverse, plain or bold", parseStatusBarStyle)
-	unprintableStyle := flagSetFunc(flagSet, "render-unprintable", m.UNPRINTABLE_STYLE_HIGHLIGHT,
+	unprintableStyle := flagSetFunc(flagSet, "render-unprintable", textstyles.UNPRINTABLE_STYLE_HIGHLIGHT,
 		"How unprintable characters are rendered: highlight or whitespace", parseUnprintableStyle)
 	scrollLeftHint := flagSetFunc(flagSet, "scroll-left-hint",
 		twin.NewCell('<', twin.StyleDefault.WithAttr(twin.AttrReverse)),
