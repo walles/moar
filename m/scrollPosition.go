@@ -3,6 +3,8 @@ package m
 import (
 	"fmt"
 	"math"
+
+	"github.com/walles/moar/util"
 )
 
 // Please create using newScrollPosition(name)
@@ -384,7 +386,7 @@ func numberPrefixLength(pager *Pager, scrollPosition scrollPositionInternal) int
 	}
 
 	// Count the length of the last line number
-	numberPrefixLength := len(formatNumber(uint(maxVisibleLineNumber))) + 1
+	numberPrefixLength := len(util.FormatNumber(uint(maxVisibleLineNumber))) + 1
 	if numberPrefixLength < 4 {
 		// 4 = space for 3 digits followed by one whitespace
 		//

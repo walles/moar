@@ -19,37 +19,37 @@ import (
 const samplesDir = "../sample-files"
 
 func testGetLineCount(t *testing.T, reader *Reader) {
-	if strings.Contains(*reader.name, "compressed") {
+	if strings.Contains(*reader.Name, "compressed") {
 		// We are no good at counting lines of compressed files, never mind
 		return
 	}
 
-	cmd := exec.Command("wc", "-l", *reader.name)
+	cmd := exec.Command("wc", "-l", *reader.Name)
 	output, err := cmd.CombinedOutput()
 	if err != nil {
-		t.Error("Error calling wc -l to count lines of", *reader.name, err)
+		t.Error("Error calling wc -l to count lines of", *reader.Name, err)
 	}
 
 	wcNumberString := strings.Split(strings.TrimSpace(string(output)), " ")[0]
 	wcLineCount, err := strconv.Atoi(wcNumberString)
 	if err != nil {
-		t.Error("Error counting lines of", *reader.name, err)
+		t.Error("Error counting lines of", *reader.Name, err)
 	}
 
-	if strings.HasSuffix(*reader.name, "/line-without-newline.txt") {
+	if strings.HasSuffix(*reader.Name, "/line-without-newline.txt") {
 		// "wc -l" thinks this file contains zero lines
 		wcLineCount = 1
-	} else if strings.HasSuffix(*reader.name, "/two-lines-no-trailing-newline.txt") {
+	} else if strings.HasSuffix(*reader.Name, "/two-lines-no-trailing-newline.txt") {
 		// "wc -l" thinks this file contains one line
 		wcLineCount = 2
 	}
 
 	if reader.GetLineCount() != wcLineCount {
 		t.Errorf("Got %d lines from the reader but %d lines from wc -l: <%s>",
-			reader.GetLineCount(), wcLineCount, *reader.name)
+			reader.GetLineCount(), wcLineCount, *reader.Name)
 	}
 
-	countLinesCount, err := countLines(*reader.name)
+	countLinesCount, err := countLines(*reader.Name)
 	if err != nil {
 		panic(err)
 	}
@@ -60,11 +60,11 @@ func testGetLineCount(t *testing.T, reader *Reader) {
 
 func testGetLines(t *testing.T, reader *Reader) {
 	lines, _ := reader.GetLines(1, 10)
-	if len(lines.lines) > 10 {
-		t.Errorf("Asked for 10 lines, got too many: %d", len(lines.lines))
+	if len(lines.Lines) > 10 {
+		t.Errorf("Asked for 10 lines, got too many: %d", len(lines.Lines))
 	}
 
-	if len(lines.lines) < 10 {
+	if len(lines.Lines) < 10 {
 		// No good plan for how to test short files, more than just
 		// querying them, which we just did
 		return
@@ -72,45 +72,45 @@ func testGetLines(t *testing.T, reader *Reader) {
 
 	// Test clipping at the end
 	lines, _ = reader.GetLines(math.MaxInt32, 10)
-	if len(lines.lines) != 10 {
-		t.Errorf("Asked for 10 lines but got %d", len(lines.lines))
+	if len(lines.Lines) != 10 {
+		t.Errorf("Asked for 10 lines but got %d", len(lines.Lines))
 		return
 	}
 
-	startOfLastSection := lines.firstLineOneBased
+	startOfLastSection := lines.FirstLineOneBased
 	lines, _ = reader.GetLines(startOfLastSection, 10)
-	if lines.firstLineOneBased != startOfLastSection {
+	if lines.FirstLineOneBased != startOfLastSection {
 		t.Errorf("Expected start line %d when asking for the last 10 lines, got %d",
-			startOfLastSection, lines.firstLineOneBased)
+			startOfLastSection, lines.FirstLineOneBased)
 		return
 	}
-	if len(lines.lines) != 10 {
+	if len(lines.Lines) != 10 {
 		t.Errorf("Expected 10 lines when asking for the last 10 lines, got %d",
-			len(lines.lines))
+			len(lines.Lines))
 		return
 	}
 
 	lines, _ = reader.GetLines(startOfLastSection+1, 10)
-	if lines.firstLineOneBased != startOfLastSection {
+	if lines.FirstLineOneBased != startOfLastSection {
 		t.Errorf("Expected start line %d when asking for the last+1 10 lines, got %d",
-			startOfLastSection, lines.firstLineOneBased)
+			startOfLastSection, lines.FirstLineOneBased)
 		return
 	}
-	if len(lines.lines) != 10 {
+	if len(lines.Lines) != 10 {
 		t.Errorf("Expected 10 lines when asking for the last+1 10 lines, got %d",
-			len(lines.lines))
+			len(lines.Lines))
 		return
 	}
 
 	lines, _ = reader.GetLines(startOfLastSection-1, 10)
-	if lines.firstLineOneBased != startOfLastSection-1 {
+	if lines.FirstLineOneBased != startOfLastSection-1 {
 		t.Errorf("Expected start line %d when asking for the last-1 10 lines, got %d",
-			startOfLastSection, lines.firstLineOneBased)
+			startOfLastSection, lines.FirstLineOneBased)
 		return
 	}
-	if len(lines.lines) != 10 {
+	if len(lines.Lines) != 10 {
 		t.Errorf("Expected 10 lines when asking for the last-1 10 lines, got %d",
-			len(lines.lines))
+			len(lines.Lines))
 		return
 	}
 }
@@ -141,7 +141,7 @@ func (r *Reader) _wait() error {
 
 	r.Lock()
 	defer r.Unlock()
-	return r.err
+	return r.Err
 }
 
 func TestGetLines(t *testing.T) {
@@ -236,15 +236,15 @@ func TestGetLongLine(t *testing.T) {
 	}
 
 	lines, overflow := reader.GetLines(1, 5)
-	assert.Equal(t, lines.firstLineOneBased, 1)
-	assert.Equal(t, len(lines.lines), 1)
+	assert.Equal(t, lines.FirstLineOneBased, 1)
+	assert.Equal(t, len(lines.Lines), 1)
 
 	// This fits because we got all (one) input lines. Given the line length the
 	// line is unlikely to fit on screen, but that's not what this didFit is
 	// about.
-	assert.Equal(t, overflow, didFit)
+	assert.Equal(t, overflow, DidFit)
 
-	line := lines.lines[0]
+	line := lines.Lines[0]
 	assert.Assert(t, strings.HasPrefix(line.Plain(nil), "1 2 3 4"), "<%s>", line)
 	assert.Assert(t, strings.HasSuffix(line.Plain(nil), "0123456789"), line)
 
@@ -259,7 +259,7 @@ func testStatusText(t *testing.T, fromLine int, toLine int, totalLines int, expe
 	testMe := getReaderWithLineCount(totalLines)
 	linesRequested := toLine - fromLine + 1
 	lines, _ := testMe.GetLines(fromLine, linesRequested)
-	statusText := lines.statusText
+	statusText := lines.StatusText
 	assert.Equal(t, statusText, expected)
 }
 
@@ -281,8 +281,8 @@ func TestStatusText(t *testing.T) {
 	}
 
 	line, overflow := testMe.GetLines(0, 0)
-	assert.Equal(t, line.statusText, "empty: <empty>")
-	assert.Equal(t, overflow, didFit) // Empty always fits
+	assert.Equal(t, line.StatusText, "empty: <empty>")
+	assert.Equal(t, overflow, DidFit) // Empty always fits
 }
 
 func testCompressedFile(t *testing.T, filename string) {
@@ -297,7 +297,7 @@ func testCompressedFile(t *testing.T, filename string) {
 	}
 
 	lines, _ := reader.GetLines(1, 5)
-	assert.Equal(t, lines.lines[0].Plain(nil), "This is a compressed file", "%s", filename)
+	assert.Equal(t, lines.Lines[0].Plain(nil), "This is a compressed file", "%s", filename)
 }
 
 func TestCompressedFiles(t *testing.T) {
@@ -369,8 +369,8 @@ func BenchmarkReaderDone(b *testing.B) {
 		//revive:disable-next-line:empty-block
 		for !readMe.done.Load() {
 		}
-		if readMe.err != nil {
-			panic(readMe.err)
+		if readMe.Err != nil {
+			panic(readMe.Err)
 		}
 	}
 }
@@ -418,8 +418,8 @@ func BenchmarkReadLargeFile(b *testing.B) {
 		// Wait for the reader to finish
 		for !readMe.done.Load() {
 		}
-		if readMe.err != nil {
-			panic(readMe.err)
+		if readMe.Err != nil {
+			panic(readMe.Err)
 		}
 	}
 }

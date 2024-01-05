@@ -28,8 +28,8 @@ const MAX_HIGHLIGHT_SIZE int64 = 1024 * 1024
 type OverflowState bool
 
 const (
-	didFit      OverflowState = false
-	didOverflow OverflowState = true
+	DidFit      OverflowState = false
+	DidOverflow OverflowState = true
 )
 
 // Reader reads a file into an array of strings.
@@ -42,8 +42,8 @@ type Reader struct {
 	sync.Mutex
 
 	lines   []*Line
-	name    *string
-	err     error
+	Name    *string
+	Err     error
 	_stderr io.Reader
 
 	// Have we had our contents replaced using setText()?
@@ -61,13 +61,13 @@ type Reader struct {
 
 // InputLines contains a number of lines from the reader, plus metadata
 type InputLines struct {
-	lines []*Line
+	Lines []*Line
 
 	// One-based line number of the first line returned
-	firstLineOneBased int
+	FirstLineOneBased int
 
 	// "monkey.txt: 1-23/45 51%"
-	statusText string
+	StatusText string
 }
 
 // Shut down the filter (if any) after we're done reading the file.
@@ -114,10 +114,10 @@ func (reader *Reader) cleanupFilter(fromFilter *exec.Cmd) {
 	timer.Stop()
 
 	// Don't overwrite any existing problem report
-	if reader.err == nil {
-		reader.err = err
+	if reader.Err == nil {
+		reader.Err = err
 		if err != nil && stderrText != "" {
-			reader.err = fmt.Errorf("%s: %w", stderrText, err)
+			reader.Err = fmt.Errorf("%s: %w", stderrText, err)
 		}
 	}
 
@@ -185,9 +185,9 @@ func (reader *Reader) readStream(stream io.Reader, originalFileName *string, fro
 				}
 
 				reader.Lock()
-				if reader.err == nil {
+				if reader.Err == nil {
 					// Store the error unless it overwrites one we already have
-					reader.err = fmt.Errorf("error reading line from input stream: %w", err)
+					reader.Err = fmt.Errorf("error reading line from input stream: %w", err)
 				}
 				reader.Unlock()
 				break
@@ -200,7 +200,7 @@ func (reader *Reader) readStream(stream io.Reader, originalFileName *string, fro
 			break
 		}
 
-		if reader.err != nil {
+		if reader.Err != nil {
 			break
 		}
 
@@ -246,7 +246,7 @@ func NewReaderFromStream(name string, reader io.Reader, style chroma.Style, form
 
 	if len(name) > 0 {
 		mReader.Lock()
-		mReader.name = &name
+		mReader.Name = &name
 		mReader.Unlock()
 	}
 
@@ -324,7 +324,7 @@ func NewReaderFromText(name string, text string) *Reader {
 		highlightingDone: &highlightingDone,
 	}
 	if name != "" {
-		returnMe.name = &name
+		returnMe.Name = &name
 	}
 
 	return returnMe
@@ -355,7 +355,7 @@ func newReaderFromCommand(filename string, filterCommand ...string) (*Reader, er
 	reader := newReaderFromStream(filterOut, nil, filter, chroma.Style{}, nil, nil)
 	reader.highlightingDone.Store(true) // No highlighting to do == nothing left == Done!
 	reader.Lock()
-	reader.name = &filename
+	reader.Name = &filename
 	reader._stderr = filterErr
 	reader.Unlock()
 	return reader, nil
@@ -472,7 +472,7 @@ func NewReaderFromFilename(filename string, style chroma.Style, formatter chroma
 	returnMe := newReaderFromStream(stream, &filename, nil, chroma.Style{}, nil, nil)
 
 	returnMe.Lock()
-	returnMe.name = &filename
+	returnMe.Name = &filename
 	returnMe.Unlock()
 
 	startHighlightingFromFile(returnMe, filename, style, formatter, lexer)
@@ -582,8 +582,8 @@ func highlightFromMemory(reader *Reader, style chroma.Style, formatter chroma.Fo
 // createStatusUnlocked() assumes that its caller is holding the lock
 func (reader *Reader) createStatusUnlocked(lastLineOneBased int) string {
 	prefix := ""
-	if reader.name != nil {
-		prefix = path.Base(*reader.name) + ": "
+	if reader.Name != nil {
+		prefix = path.Base(*reader.Name) + ": "
 	}
 
 	if len(reader.lines) == 0 {
@@ -653,11 +653,11 @@ func (reader *Reader) getLinesUnlocked(firstLineOneBased int, wantedLineCount in
 
 	if len(reader.lines) == 0 || wantedLineCount == 0 {
 		return &InputLines{
-				lines:             nil,
-				firstLineOneBased: firstLineOneBased,
-				statusText:        reader.createStatusUnlocked(firstLineOneBased),
+				Lines:             nil,
+				FirstLineOneBased: firstLineOneBased,
+				StatusText:        reader.createStatusUnlocked(firstLineOneBased),
 			},
-			didFit // Empty files always fit
+			DidFit // Empty files always fit
 	}
 
 	firstLineZeroBased := firstLineOneBased - 1
@@ -680,15 +680,15 @@ func (reader *Reader) getLinesUnlocked(firstLineOneBased int, wantedLineCount in
 	}
 
 	returnLines := reader.lines[firstLineZeroBased : lastLineZeroBased+1]
-	overflow := didFit
+	overflow := DidFit
 	if len(returnLines) != len(reader.lines) {
-		overflow = didOverflow // We're not returning all available lines
+		overflow = DidOverflow // We're not returning all available lines
 	}
 
 	return &InputLines{
-			lines:             returnLines,
-			firstLineOneBased: firstLineOneBased,
-			statusText:        reader.createStatusUnlocked(lastLineZeroBased + 1),
+			Lines:             returnLines,
+			FirstLineOneBased: firstLineOneBased,
+			StatusText:        reader.createStatusUnlocked(lastLineZeroBased + 1),
 		},
 		overflow
 }

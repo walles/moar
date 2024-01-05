@@ -10,6 +10,7 @@ import (
 	"github.com/alecthomas/chroma/v2"
 	log "github.com/sirupsen/logrus"
 	"github.com/walles/moar/m/textstyles"
+	"github.com/walles/moar/readers"
 	"github.com/walles/moar/twin"
 )
 
@@ -45,7 +46,7 @@ type eventMaybeDone struct{}
 
 // Pager is the main on-screen pager
 type Pager struct {
-	reader              *Reader
+	reader              *readers.Reader
 	screen              twin.Screen
 	quit                bool
 	scrollPosition      scrollPosition
@@ -99,7 +100,7 @@ type Pager struct {
 }
 
 type _PreHelpState struct {
-	reader                   *Reader
+	reader                   *readers.Reader
 	scrollPosition           scrollPosition
 	leftColumnZeroBased      int
 	targetLineNumberOneBased int
@@ -107,7 +108,7 @@ type _PreHelpState struct {
 
 const _EofMarkerFormat = "\x1b[7m" // Reverse video
 
-var _HelpReader = NewReaderFromText("Help", `
+var _HelpReader = readers.NewReaderFromText("Help", `
 Welcome to Moar, the nice pager!
 
 Miscellaneous
@@ -162,12 +163,12 @@ func (pm _PagerMode) isViewing() bool {
 }
 
 // NewPager creates a new Pager with default settings
-func NewPager(r *Reader) *Pager {
+func NewPager(r *readers.Reader) *Pager {
 	var name string
-	if r == nil || r.name == nil || len(*r.name) == 0 {
+	if r == nil || r.Name == nil || len(*r.Name) == 0 {
 		name = "Pager"
 	} else {
-		name = "Pager " + *r.name
+		name = "Pager " + *r.Name
 	}
 	return &Pager{
 		reader:           r,
@@ -462,8 +463,8 @@ func (p *Pager) StartPaging(screen twin.Screen, chromaStyle *chroma.Style, chrom
 	defer log.Trace("Pager done")
 
 	defer func() {
-		if p.reader.err != nil {
-			log.Warnf("Reader reported an error: %s", p.reader.err.Error())
+		if p.reader.Err != nil {
+			log.Warnf("Reader reported an error: %s", p.reader.Err.Error())
 		}
 	}()
 
@@ -526,7 +527,7 @@ func (p *Pager) StartPaging(screen twin.Screen, chromaStyle *chroma.Style, chrom
 
 			// Ref:
 			// https://github.com/gwsw/less/blob/ff8869aa0485f7188d942723c9fb50afb1892e62/command.c#L828-L831
-			if p.QuitIfOneScreen && overflow == didFit && !p.isShowingHelp {
+			if p.QuitIfOneScreen && overflow == readers.DidFit && !p.isShowingHelp {
 				// Do the slow (atomic) checks only if the fast ones (no locking
 				// required) passed
 				if p.reader.done.Load() && p.reader.highlightingDone.Load() {

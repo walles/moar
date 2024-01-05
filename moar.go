@@ -22,6 +22,7 @@ import (
 
 	"github.com/walles/moar/m"
 	"github.com/walles/moar/m/textstyles"
+	"github.com/walles/moar/readers"
 	"github.com/walles/moar/twin"
 )
 
@@ -236,7 +237,7 @@ func parseUnprintableStyle(styleOption string) (textstyles.UnprintableStyleT, er
 
 func parseScrollHint(scrollHint string) (twin.Cell, error) {
 	scrollHint = strings.ReplaceAll(scrollHint, "ESC", "\x1b")
-	hintAsLine := m.NewLine(scrollHint)
+	hintAsLine := readers.NewLine(scrollHint)
 	parsedTokens := hintAsLine.HighlightedTokens("", nil, nil).Cells
 	if len(parsedTokens) == 1 {
 		return parsedTokens[0], nil
@@ -543,13 +544,13 @@ func main() {
 		formatter = formatters.TTY
 	}
 
-	var reader *m.Reader
+	var reader *readers.Reader
 	if stdinIsRedirected {
 		// Display input pipe contents
-		reader = m.NewReaderFromStream("", os.Stdin, *style, formatter, *lexer)
+		reader = readers.NewReaderFromStream("", os.Stdin, *style, formatter, *lexer)
 	} else {
 		// Display the input file contents
-		reader, err = m.NewReaderFromFilename(*inputFilename, *style, formatter, *lexer)
+		reader, err = readers.NewReaderFromFilename(*inputFilename, *style, formatter, *lexer)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "ERROR: %v\n", err)
 			os.Exit(1)
