@@ -13,9 +13,6 @@ import (
 // From LESS_TERMCAP_so, overrides statusbarStyle from the Chroma style if set
 var standoutStyle *twin.Style
 
-var manPageBold = twin.StyleDefault.WithAttr(twin.AttrBold)
-var manPageUnderline = twin.StyleDefault.WithAttr(twin.AttrUnderline)
-
 var lineNumbersStyle = twin.StyleDefault.WithAttr(twin.AttrDim)
 var statusbarStyle = twin.StyleDefault.WithAttr(twin.AttrReverse)
 

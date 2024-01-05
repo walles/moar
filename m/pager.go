@@ -32,18 +32,6 @@ const (
 	STATUSBAR_STYLE_BOLD
 )
 
-// How do we render unprintable characters?
-type UnprintableStyle int
-
-const (
-	//revive:disable-next-line:var-naming
-	UNPRINTABLE_STYLE_HIGHLIGHT UnprintableStyle = iota
-	//revive:disable-next-line:var-naming
-	UNPRINTABLE_STYLE_WHITESPACE
-)
-
-var unprintableStyle UnprintableStyle
-
 type eventSpinnerUpdate struct {
 	spinner string
 }

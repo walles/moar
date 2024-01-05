@@ -1,13 +1,15 @@
-package m
+package textstyles
 
 import (
+	"bufio"
 	"fmt"
 	"os"
+	"path"
+	"runtime"
 	"strings"
 	"testing"
 	"unicode/utf8"
 
-	"github.com/alecthomas/chroma/v2"
 	"github.com/google/go-cmp/cmp"
 	log "github.com/sirupsen/logrus"
 
@@ -23,6 +25,30 @@ func cellsToPlainString(cells []twin.Cell) string {
 	}
 
 	return returnMe
+}
+
+func getSamplesDir() string {
+	// From: https://coderwall.com/p/_fmbug/go-get-path-to-current-file
+	_, filename, _, ok := runtime.Caller(0)
+	if !ok {
+		panic("Getting current filename failed")
+	}
+
+	return path.Join(path.Dir(filename), "../sample-files")
+}
+
+func getTestFiles() []string {
+	files, err := os.ReadDir(getSamplesDir())
+	if err != nil {
+		panic(err)
+	}
+
+	var filenames []string
+	for _, file := range files {
+		filenames = append(filenames, "../sample-files/"+file.Name())
+	}
+
+	return filenames
 }
 
 // Verify that we can tokenize all lines in ../sample-files/*
@@ -41,24 +67,26 @@ func TestTokenize(t *testing.T) {
 				}
 			}()
 
-			myReader := NewReaderFromStream(fileName, file, chroma.Style{}, nil, nil)
-			//revive:disable-next-line:empty-block
-			for !myReader.done.Load() {
+			fileReader, err := os.Open(fileName)
+			if err != nil {
+				panic(err)
 			}
 
-			for lineNumber := 1; lineNumber <= myReader.GetLineCount(); lineNumber++ {
-				line := myReader.GetLine(lineNumber)
+			fileScanner := bufio.NewScanner(fileReader)
+			lineNumber := 1
+			for fileScanner.Scan() {
+				line := fileScanner.Text()
 				lineNumber++
 
 				var loglines strings.Builder
 				log.SetOutput(&loglines)
 
-				tokens := cellsFromString(line.raw, &lineNumber).Cells
-				plainString := withoutFormatting(line.raw, &lineNumber)
+				tokens := cellsFromString(line, &lineNumber).Cells
+				plainString := withoutFormatting(line, &lineNumber)
 				if len(tokens) != utf8.RuneCountInString(plainString) {
 					t.Errorf("%s:%d: len(tokens)=%d, len(plainString)=%d for: <%s>",
 						fileName, lineNumber,
-						len(tokens), utf8.RuneCountInString(plainString), line.raw)
+						len(tokens), utf8.RuneCountInString(plainString), line)
 					continue
 				}
 

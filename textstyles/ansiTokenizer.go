@@ -1,76 +1,35 @@
-package m
+package textstyles
 
 import (
 	"fmt"
-	"regexp"
 	"strconv"
 	"strings"
 
 	"github.com/walles/moar/twin"
 )
 
+// How do we render unprintable characters?
+type UnprintableStyle int
+
+const (
+	//revive:disable-next-line:var-naming
+	UNPRINTABLE_STYLE_HIGHLIGHT UnprintableStyle = iota
+	//revive:disable-next-line:var-naming
+	UNPRINTABLE_STYLE_WHITESPACE
+)
+
+var unprintableStyle UnprintableStyle
+
+var manPageBold = twin.StyleDefault.WithAttr(twin.AttrBold)
+var manPageUnderline = twin.StyleDefault.WithAttr(twin.AttrUnderline)
+
 const _TabSize = 4
 
 const BACKSPACE = '\b'
 
-// A Line represents a line of text that can / will be paged
-type Line struct {
-	raw   string
-	plain *string
-}
-
 type cellsWithTrailer struct {
 	Cells   []twin.Cell
 	Trailer twin.Style
-}
-
-// NewLine creates a new Line from a (potentially ANSI / man page formatted) string
-func NewLine(raw string) Line {
-	return Line{
-		raw:   raw,
-		plain: nil,
-	}
-}
-
-// Returns a representation of the string split into styled tokens. Any regexp
-// matches are highlighted. A nil regexp means no highlighting.
-//
-//revive:disable-next-line:unexported-return
-func (line *Line) HighlightedTokens(linePrefix string, search *regexp.Regexp, lineNumberOneBased *int) cellsWithTrailer {
-	plain := line.Plain(lineNumberOneBased)
-	matchRanges := getMatchRanges(&plain, search)
-
-	fromString := cellsFromString(linePrefix+line.raw, lineNumberOneBased)
-	returnCells := make([]twin.Cell, 0, len(fromString.Cells))
-	for _, token := range fromString.Cells {
-		style := token.Style
-		if matchRanges.InRange(len(returnCells)) {
-			if standoutStyle != nil {
-				style = *standoutStyle
-			} else {
-				style = style.WithAttr(twin.AttrReverse)
-			}
-		}
-
-		returnCells = append(returnCells, twin.Cell{
-			Rune:  token.Rune,
-			Style: style,
-		})
-	}
-
-	return cellsWithTrailer{
-		Cells:   returnCells,
-		Trailer: fromString.Trailer,
-	}
-}
-
-// Plain returns a plain text representation of the initial string
-func (line *Line) Plain(lineNumberOneBased *int) string {
-	if line.plain == nil {
-		plain := withoutFormatting(line.raw, lineNumberOneBased)
-		line.plain = &plain
-	}
-	return *line.plain
 }
 
 func isPlain(s string) bool {
