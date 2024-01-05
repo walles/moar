@@ -7,6 +7,7 @@ import (
 
 	"github.com/alecthomas/chroma/v2"
 	log "github.com/sirupsen/logrus"
+	"github.com/walles/moar/textstyles"
 	"github.com/walles/moar/twin"
 )
 
@@ -43,7 +44,7 @@ func twinStyleFromChroma(chromaStyle *chroma.Style, chromaFormatter *chroma.Form
 	}
 
 	formatted := stringBuilder.String()
-	cells := cellsFromString(formatted, nil).Cells
+	cells := textstyles.CellsFromString(formatted, nil).Cells
 	if len(cells) != 1 {
 		log.Warnf("Chroma formatter didn't return exactly one cell: %#v", cells)
 		return nil
@@ -57,8 +58,8 @@ func twinStyleFromChroma(chromaStyle *chroma.Style, chromaFormatter *chroma.Form
 func consumeLessTermcapEnvs(chromaStyle *chroma.Style, chromaFormatter *chroma.Formatter) {
 	// Requested here: https://github.com/walles/moar/issues/14
 
-	setStyle(&manPageBold, "LESS_TERMCAP_md", twinStyleFromChroma(chromaStyle, chromaFormatter, chroma.GenericStrong))
-	setStyle(&manPageUnderline, "LESS_TERMCAP_us", twinStyleFromChroma(chromaStyle, chromaFormatter, chroma.GenericUnderline))
+	setStyle(&textstyles.ManPageBold, "LESS_TERMCAP_md", twinStyleFromChroma(chromaStyle, chromaFormatter, chroma.GenericStrong))
+	setStyle(&textstyles.ManPageUnderline, "LESS_TERMCAP_us", twinStyleFromChroma(chromaStyle, chromaFormatter, chroma.GenericUnderline))
 
 	// Since standoutStyle defaults to nil we can't just pass it to setStyle().
 	// Instead we give it special treatment here and set it only if its
@@ -111,6 +112,6 @@ func styleUI(chromaStyle *chroma.Style, chromaFormatter *chroma.Formatter, statu
 
 func termcapToStyle(termcap string) twin.Style {
 	// Add a character to be sure we have one to take the format from
-	cells := cellsFromString(termcap+"x", nil).Cells
+	cells := textstyles.CellsFromString(termcap+"x", nil).Cells
 	return cells[len(cells)-1].Style
 }

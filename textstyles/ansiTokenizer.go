@@ -20,8 +20,8 @@ const (
 
 var UnprintableStyle UnprintableStyleT
 
-var manPageBold = twin.StyleDefault.WithAttr(twin.AttrBold)
-var manPageUnderline = twin.StyleDefault.WithAttr(twin.AttrUnderline)
+var ManPageBold = twin.StyleDefault.WithAttr(twin.AttrBold)
+var ManPageUnderline = twin.StyleDefault.WithAttr(twin.AttrUnderline)
 
 const _TabSize = 4
 
@@ -196,7 +196,7 @@ func consumeBold(runes []rune, index int) (int, *twin.Cell) {
 	// We have a match!
 	return index + 3, &twin.Cell{
 		Rune:  runes[index],
-		Style: manPageBold,
+		Style: ManPageBold,
 	}
 }
 
@@ -220,7 +220,7 @@ func consumeUnderline(runes []rune, index int) (int, *twin.Cell) {
 	// We have a match!
 	return index + 3, &twin.Cell{
 		Rune:  runes[index+2],
-		Style: manPageUnderline,
+		Style: ManPageUnderline,
 	}
 }
 
