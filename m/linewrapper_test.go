@@ -4,11 +4,12 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/walles/moar/readers"
 	"github.com/walles/moar/twin"
 )
 
 func tokenize(input string) []twin.Cell {
-	line := NewLine(input)
+	line := readers.NewLine(input)
 	return line.HighlightedTokens("", nil, nil).Cells
 }
 

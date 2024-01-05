@@ -5,6 +5,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/walles/moar/readers"
 	"github.com/walles/moar/twin"
 	"gotest.tools/v3/assert"
 )
@@ -15,7 +16,7 @@ const screenHeight = 60
 func testCanonicalize1000(t *testing.T, withStatusBar bool, currentStartLine int, lastVisibleLine int) {
 	pager := Pager{}
 	pager.screen = twin.NewFakeScreen(100, screenHeight)
-	pager.reader = NewReaderFromText("test", strings.Repeat("a\n", 2000))
+	pager.reader = readers.NewReaderFromText("test", strings.Repeat("a\n", 2000))
 	pager.ShowLineNumbers = true
 	pager.ShowStatusBar = withStatusBar
 	pager.scrollPosition = scrollPosition{

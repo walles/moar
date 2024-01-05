@@ -14,6 +14,7 @@ import (
 	"github.com/alecthomas/chroma/v2/styles"
 	"github.com/google/go-cmp/cmp"
 	"github.com/walles/moar/m/textstyles"
+	"github.com/walles/moar/readers"
 	"github.com/walles/moar/twin"
 	"gotest.tools/v3/assert"
 )
@@ -24,7 +25,7 @@ const blueBackgroundClearToEol0 = "\x1b[44m\x1b[0K" // With 0 before the K, shou
 const blueBackgroundClearToEol = "\x1b[44m\x1b[K"   // No 0 before the K, should also clear to EOL
 
 func TestUnicodeRendering(t *testing.T) {
-	reader := NewReaderFromText("", "åäö")
+	reader := readers.NewReaderFromText("", "åäö")
 
 	var answers = []twin.Cell{
 		twin.NewCell('å', twin.StyleDefault),
@@ -47,7 +48,7 @@ func assertCellsEqual(t *testing.T, expected twin.Cell, actual twin.Cell) {
 }
 
 func TestFgColorRendering(t *testing.T) {
-	reader := NewReaderFromText("",
+	reader := readers.NewReaderFromText("",
 		"\x1b[30ma\x1b[31mb\x1b[32mc\x1b[33md\x1b[34me\x1b[35mf\x1b[36mg\x1b[37mh\x1b[0mi")
 
 	var answers = []twin.Cell{
@@ -69,7 +70,7 @@ func TestFgColorRendering(t *testing.T) {
 }
 
 func TestPageEmpty(t *testing.T) {
-	reader := NewReaderFromText("", "")
+	reader := readers.NewReaderFromText("", "")
 
 	firstRowCells := startPaging(t, reader).GetRow(0)
 
@@ -79,7 +80,7 @@ func TestPageEmpty(t *testing.T) {
 
 func TestBrokenUtf8(t *testing.T) {
 	// The broken UTF8 character in the middle is based on "©" = 0xc2a9
-	reader := NewReaderFromText("", "abc\xc2def")
+	reader := readers.NewReaderFromText("", "abc\xc2def")
 
 	var answers = []twin.Cell{
 		twin.NewCell('a', twin.StyleDefault),
@@ -97,7 +98,7 @@ func TestBrokenUtf8(t *testing.T) {
 	}
 }
 
-func startPaging(t *testing.T, reader *Reader) *twin.FakeScreen {
+func startPaging(t *testing.T, reader *readers.Reader) *twin.FakeScreen {
 	err := reader._wait()
 	if err != nil {
 		t.Fatalf("Failed waiting for reader: %v", err)
@@ -121,7 +122,7 @@ func startPaging(t *testing.T, reader *Reader) *twin.FakeScreen {
 
 // assertIndexOfFirstX verifies the (zero-based) index of the first 'x'
 func assertIndexOfFirstX(t *testing.T, s string, expectedIndex int) {
-	reader := NewReaderFromText("", s)
+	reader := readers.NewReaderFromText("", s)
 
 	contents := startPaging(t, reader).GetRow(0)
 	for pos, cell := range contents {
@@ -168,7 +169,7 @@ func TestCodeHighlighting(t *testing.T) {
 		panic("Getting current filename failed")
 	}
 
-	reader, err := NewReaderFromFilename(filename, *styles.Get("native"), formatters.TTY16m, nil)
+	reader, err := readers.NewReaderFromFilename(filename, *styles.Get("native"), formatters.TTY16m, nil)
 	if err != nil {
 		panic(err)
 	}
@@ -201,7 +202,7 @@ func TestUnicodePrivateUse(t *testing.T) {
 	// https://fontawesome.com/v4/icon/battery-empty
 	char := '\uf244'
 
-	reader := NewReaderFromText("hello", string(char))
+	reader := readers.NewReaderFromText("hello", string(char))
 	renderedCell := startPaging(t, reader).GetRow(0)[0]
 
 	// Make sure we display this character unmodified
@@ -214,7 +215,7 @@ func resetManPageFormat() {
 }
 
 func testManPageFormatting(t *testing.T, input string, expected twin.Cell) {
-	reader := NewReaderFromText("", input)
+	reader := readers.NewReaderFromText("", input)
 
 	// Without these lines the man page tests will fail if either of these
 	// environment variables are set when the tests are run.
@@ -267,7 +268,7 @@ func TestToPattern(t *testing.T) {
 }
 
 func TestFindFirstHitSimple(t *testing.T) {
-	reader := NewReaderFromText("TestFindFirstHitSimple", "AB")
+	reader := readers.NewReaderFromText("TestFindFirstHitSimple", "AB")
 	pager := NewPager(reader)
 	pager.screen = twin.NewFakeScreen(40, 10)
 
@@ -283,7 +284,7 @@ func TestFindFirstHitSimple(t *testing.T) {
 }
 
 func TestFindFirstHitAnsi(t *testing.T) {
-	reader := NewReaderFromText("", "A\x1b[30mB")
+	reader := readers.NewReaderFromText("", "A\x1b[30mB")
 	pager := NewPager(reader)
 	pager.screen = twin.NewFakeScreen(40, 10)
 
@@ -299,7 +300,7 @@ func TestFindFirstHitAnsi(t *testing.T) {
 }
 
 func TestFindFirstHitNoMatch(t *testing.T) {
-	reader := NewReaderFromText("TestFindFirstHitSimple", "AB")
+	reader := readers.NewReaderFromText("TestFindFirstHitSimple", "AB")
 	pager := NewPager(reader)
 	pager.screen = twin.NewFakeScreen(40, 10)
 
@@ -324,7 +325,7 @@ func rowToString(row []twin.Cell) string {
 }
 
 func TestScrollToBottomWrapNextToLastLine(t *testing.T) {
-	reader := NewReaderFromText("",
+	reader := readers.NewReaderFromText("",
 		"first line\nline two will be wrapped\nhere's the last line")
 
 	// Heigh 3 = two lines of contents + one footer
@@ -367,7 +368,7 @@ func TestScrollToEndLongInput(t *testing.T) {
 	const lineCount = 10100 // At least five digits
 
 	// "X" marks the spot
-	reader := NewReaderFromText("test", strings.Repeat(".\n", lineCount-1)+"X")
+	reader := readers.NewReaderFromText("test", strings.Repeat(".\n", lineCount-1)+"X")
 	pager := NewPager(reader)
 	pager.ShowLineNumbers = true
 
@@ -394,7 +395,7 @@ func TestScrollToEndLongInput(t *testing.T) {
 
 func TestIsScrolledToEnd_LongFile(t *testing.T) {
 	// Six lines of contents
-	reader := NewReaderFromText("Testing", "a\nb\nc\nd\ne\nf\n")
+	reader := readers.NewReaderFromText("Testing", "a\nb\nc\nd\ne\nf\n")
 
 	// Three lines screen
 	screen := twin.NewFakeScreen(20, 3)
@@ -411,7 +412,7 @@ func TestIsScrolledToEnd_LongFile(t *testing.T) {
 
 func TestIsScrolledToEnd_ShortFile(t *testing.T) {
 	// Three lines of contents
-	reader := NewReaderFromText("Testing", "a\nb\nc")
+	reader := readers.NewReaderFromText("Testing", "a\nb\nc")
 
 	// Six lines screen
 	screen := twin.NewFakeScreen(20, 6)
@@ -428,7 +429,7 @@ func TestIsScrolledToEnd_ShortFile(t *testing.T) {
 
 func TestIsScrolledToEnd_ExactFile(t *testing.T) {
 	// Three lines of contents
-	reader := NewReaderFromText("Testing", "a\nb\nc")
+	reader := readers.NewReaderFromText("Testing", "a\nb\nc")
 
 	// Three lines screen
 	screen := twin.NewFakeScreen(20, 3)
@@ -446,7 +447,7 @@ func TestIsScrolledToEnd_ExactFile(t *testing.T) {
 
 func TestIsScrolledToEnd_WrappedLastLine(t *testing.T) {
 	// Three lines of contents
-	reader := NewReaderFromText("Testing", "a\nb\nc d e f g h i j k l m n")
+	reader := readers.NewReaderFromText("Testing", "a\nb\nc d e f g h i j k l m n")
 
 	// Three lines screen
 	screen := twin.NewFakeScreen(5, 3)
@@ -468,7 +469,7 @@ func TestIsScrolledToEnd_WrappedLastLine(t *testing.T) {
 
 func TestIsScrolledToEnd_EmptyFile(t *testing.T) {
 	// No contents
-	reader := NewReaderFromText("Testing", "")
+	reader := readers.NewReaderFromText("Testing", "")
 
 	// Three lines screen
 	screen := twin.NewFakeScreen(20, 3)
@@ -497,7 +498,7 @@ func TestPageSamples(t *testing.T) {
 			}
 		}()
 
-		myReader := NewReaderFromStream(fileName, file, chroma.Style{}, nil, nil)
+		myReader := readers.NewReaderFromStream(fileName, file, chroma.Style{}, nil, nil)
 		for !myReader.done.Load() {
 		}
 
@@ -526,7 +527,7 @@ func TestPageSamples(t *testing.T) {
 
 // Validate rendering of https://en.wikipedia.org/wiki/ANSI_escape_code#EL
 func TestClearToEndOfLine_ClearFromStart(t *testing.T) {
-	screen := startPaging(t, NewReaderFromText("TestClearToEol", blueBackgroundClearToEol))
+	screen := startPaging(t, readers.NewReaderFromText("TestClearToEol", blueBackgroundClearToEol))
 
 	screenWidth, _ := screen.Size()
 	var expected []twin.Cell
@@ -542,7 +543,7 @@ func TestClearToEndOfLine_ClearFromStart(t *testing.T) {
 
 // Validate rendering of https://en.wikipedia.org/wiki/ANSI_escape_code#EL
 func TestClearToEndOfLine_ClearFromNotStart(t *testing.T) {
-	screen := startPaging(t, NewReaderFromText("TestClearToEol", "a"+blueBackgroundClearToEol))
+	screen := startPaging(t, readers.NewReaderFromText("TestClearToEol", "a"+blueBackgroundClearToEol))
 
 	screenWidth, _ := screen.Size()
 	expected := []twin.Cell{
@@ -560,7 +561,7 @@ func TestClearToEndOfLine_ClearFromNotStart(t *testing.T) {
 
 // Validate rendering of https://en.wikipedia.org/wiki/ANSI_escape_code#EL
 func TestClearToEndOfLine_ClearFromStartScrolledRight(t *testing.T) {
-	pager := NewPager(NewReaderFromText("TestClearToEol", blueBackgroundClearToEol0))
+	pager := NewPager(readers.NewReaderFromText("TestClearToEol", blueBackgroundClearToEol0))
 	pager.ShowLineNumbers = false
 
 	// Tell our Pager to quit immediately
@@ -634,7 +635,7 @@ func benchmarkSearch(b *testing.B, highlighted bool) {
 		testString += fileContents
 	}
 
-	reader := NewReaderFromText("hello", testString)
+	reader := readers.NewReaderFromText("hello", testString)
 	pager := NewPager(reader)
 	pager.screen = twin.NewFakeScreen(40, 10)
 
