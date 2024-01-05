@@ -3,6 +3,7 @@ package m
 import (
 	"fmt"
 
+	"github.com/walles/moar/textstyles"
 	"github.com/walles/moar/twin"
 )
 
@@ -52,7 +53,7 @@ func (p *Pager) redraw(spinner string) overflowState {
 		// This happens when we're done
 		eofSpinner = "---"
 	}
-	spinnerLine := cellsFromString(_EofMarkerFormat+eofSpinner, nil).Cells
+	spinnerLine := textstyles.CellsFromString(_EofMarkerFormat+eofSpinner, nil).Cells
 	for column, cell := range spinnerLine {
 		p.screen.SetCell(column, lastUpdatedScreenLineNumber+1, cell)
 	}
