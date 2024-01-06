@@ -12,6 +12,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	log "github.com/sirupsen/logrus"
 
+	"github.com/walles/moar/m/linenumbers"
 	"github.com/walles/moar/twin"
 	"gotest.tools/v3/assert"
 )
@@ -64,19 +65,24 @@ func TestTokenize(t *testing.T) {
 			}
 
 			fileScanner := bufio.NewScanner(fileReader)
-			lineNumber := 1
+			var lineNumber *linenumbers.LineNumber
 			for fileScanner.Scan() {
 				line := fileScanner.Text()
-				lineNumber++
+				if lineNumber == nil {
+					lineNumber = &linenumbers.LineNumber{}
+				} else {
+					next := lineNumber.NonWrappingAdd(1)
+					lineNumber = &next
+				}
 
 				var loglines strings.Builder
 				log.SetOutput(&loglines)
 
-				tokens := CellsFromString(line, &lineNumber).Cells
-				plainString := WithoutFormatting(line, &lineNumber)
+				tokens := CellsFromString(line, lineNumber).Cells
+				plainString := WithoutFormatting(line, lineNumber)
 				if len(tokens) != utf8.RuneCountInString(plainString) {
-					t.Errorf("%s:%d: len(tokens)=%d, len(plainString)=%d for: <%s>",
-						fileName, lineNumber,
+					t.Errorf("%s:%s: len(tokens)=%d, len(plainString)=%d for: <%s>",
+						fileName, lineNumber.Format(),
 						len(tokens), utf8.RuneCountInString(plainString), line)
 					continue
 				}
