@@ -5,7 +5,6 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"math"
 	"os"
 	"os/exec"
 	"path"
@@ -13,6 +12,8 @@ import (
 	"sync"
 	"sync/atomic"
 	"time"
+
+	"github.com/walles/moar/m/linenumbers"
 
 	"github.com/alecthomas/chroma/v2"
 	"github.com/alecthomas/chroma/v2/lexers"
@@ -56,7 +57,7 @@ type InputLines struct {
 	lines []*Line
 
 	// One-based line number of the first line returned
-	firstLineOneBased int
+	firstLine linenumbers.LineNumber
 
 	// "monkey.txt: 1-23/45 51%"
 	statusText string
@@ -572,7 +573,7 @@ func highlightFromMemory(reader *Reader, style chroma.Style, formatter chroma.Fo
 }
 
 // createStatusUnlocked() assumes that its caller is holding the lock
-func (reader *Reader) createStatusUnlocked(lastLineOneBased int) string {
+func (reader *Reader) createStatusUnlocked(lastLine linenumbers.LineNumber) string {
 	prefix := ""
 	if reader.name != nil {
 		prefix = path.Base(*reader.name) + ": "
@@ -586,11 +587,11 @@ func (reader *Reader) createStatusUnlocked(lastLineOneBased int) string {
 		return prefix + "1 line  100%"
 	}
 
-	percent := int(100 * float64(lastLineOneBased) / float64(len(reader.lines)))
+	percent := int(100 * float64(lastLine.AsOneBased()) / float64(len(reader.lines)))
 
 	return fmt.Sprintf("%s%s lines  %d%%",
 		prefix,
-		formatNumber(uint(len(reader.lines))),
+		linenumbers.LineNumberFromLength(len(reader.lines)).Format(),
 		percent)
 }
 
@@ -622,67 +623,47 @@ func (reader *Reader) GetLine(lineNumberOneBased int) *Line {
 // didOverflow otherwise.
 //
 //revive:disable-next-line:unexported-return
-func (reader *Reader) GetLines(firstLineOneBased int, wantedLineCount int) (*InputLines, overflowState) {
+func (reader *Reader) GetLines(firstLine linenumbers.LineNumber, wantedLineCount int) (*InputLines, overflowState) {
 	reader.Lock()
 	defer reader.Unlock()
-	return reader.getLinesUnlocked(firstLineOneBased, wantedLineCount)
+	return reader.getLinesUnlocked(firstLine, wantedLineCount)
 }
 
-func nonWrappingAdd(a int, b int) int {
-	if b < 0 {
-		panic(fmt.Sprintf("b must be >= 0, was: %d", b))
-	}
-
-	if a > math.MaxInt-b {
-		return math.MaxInt
-	}
-
-	return a + b
-}
-
-func (reader *Reader) getLinesUnlocked(firstLineOneBased int, wantedLineCount int) (*InputLines, overflowState) {
-	if firstLineOneBased < 1 {
-		firstLineOneBased = 1
-	}
-
+func (reader *Reader) getLinesUnlocked(firstLine linenumbers.LineNumber, wantedLineCount int) (*InputLines, overflowState) {
 	if len(reader.lines) == 0 || wantedLineCount == 0 {
 		return &InputLines{
-				lines:             nil,
-				firstLineOneBased: firstLineOneBased,
-				statusText:        reader.createStatusUnlocked(firstLineOneBased),
+				lines:      nil,
+				firstLine:  firstLine,
+				statusText: reader.createStatusUnlocked(firstLine),
 			},
 			didFit // Empty files always fit
 	}
 
-	firstLineZeroBased := firstLineOneBased - 1
-	lastLineZeroBased := nonWrappingAdd(firstLineZeroBased, wantedLineCount-1)
+	lastLine := firstLine.NonWrappingAdd(wantedLineCount - 1)
 
-	if lastLineZeroBased >= len(reader.lines) {
-		lastLineZeroBased = len(reader.lines) - 1
+	if lastLine.AsZeroBased() >= len(reader.lines) {
+		lastLine = linenumbers.LineNumberFromLength(len(reader.lines))
 	}
 
 	// Prevent reading past the end of the available lines
-	actualLineCount := lastLineZeroBased - firstLineZeroBased + 1
-	if actualLineCount < wantedLineCount && firstLineOneBased > 1 {
-		overshoot := wantedLineCount - actualLineCount
-		firstLineOneBased -= overshoot
-		if firstLineOneBased < 1 {
-			firstLineOneBased = 1
-		}
+	if firstLine.CountLinesTo(lastLine) < wantedLineCount && !firstLine.IsZero() {
+		// 5 would mean we've gone 5 lines too far
+		overshoot := wantedLineCount - firstLine.CountLinesTo(lastLine)
+		firstLine = firstLine.NonWrappingAdd(-overshoot)
 
-		return reader.getLinesUnlocked(firstLineOneBased, wantedLineCount)
+		return reader.getLinesUnlocked(firstLine, wantedLineCount)
 	}
 
-	returnLines := reader.lines[firstLineZeroBased : lastLineZeroBased+1]
+	returnLines := reader.lines[firstLine.AsZeroBased() : lastLine.AsZeroBased()+1]
 	overflow := didFit
 	if len(returnLines) != len(reader.lines) {
 		overflow = didOverflow // We're not returning all available lines
 	}
 
 	return &InputLines{
-			lines:             returnLines,
-			firstLineOneBased: firstLineOneBased,
-			statusText:        reader.createStatusUnlocked(lastLineZeroBased + 1),
+			lines:      returnLines,
+			firstLine:  firstLine,
+			statusText: reader.createStatusUnlocked(lastLine),
 		},
 		overflow
 }

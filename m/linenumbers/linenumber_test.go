@@ -34,3 +34,8 @@ func TestLineNumberFormatting(t *testing.T) {
 	assert.Equal(t, "1_000_000", LineNumberFromOneBased(1000000).Format())
 	assert.Equal(t, "10_000_000", LineNumberFromOneBased(10000000).Format())
 }
+
+func TestLineNumberFromLength(t *testing.T) {
+	// If the file has one line then the last zero based line number is 0.
+	assert.Equal(t, LineNumberFromLength(1), LineNumberFromZeroBased(0))
+}

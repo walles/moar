@@ -22,11 +22,23 @@ func (l LineNumber) AsZeroBased() int {
 }
 
 func LineNumberFromOneBased(oneBased int) LineNumber {
+	if oneBased < 1 {
+		panic(fmt.Errorf("one-based line numbers must be at least 1, got %d", oneBased))
+	}
 	return LineNumber{number: oneBased - 1}
 }
 
 func LineNumberFromZeroBased(zeroBased int) LineNumber {
+	if zeroBased < 0 {
+		panic(fmt.Errorf("zero-based line numbers must be at least 0, got %d", zeroBased))
+	}
 	return LineNumber{number: zeroBased}
+}
+
+// Set the line number to the last line of a file with the given number of lines
+// in it.
+func LineNumberFromLength(length int) LineNumber {
+	return LineNumber{number: length - 1}
 }
 
 func (l LineNumber) NonWrappingAdd(offset int) LineNumber {
@@ -67,4 +79,18 @@ func (l LineNumber) Format() string {
 	}
 
 	return result
+}
+
+// If both lines are the same this method will return 1.
+func (l LineNumber) CountLinesTo(next LineNumber) int {
+	if l.number > next.number {
+		panic(fmt.Errorf("line numbers must be ordered, got %d-%d", l.number, next.number))
+	}
+
+	return 1 + next.AsZeroBased() - l.AsZeroBased()
+}
+
+// Is this the lowest possible line number?
+func (l LineNumber) IsZero() bool {
+	return l.AsZeroBased() == 0
 }
