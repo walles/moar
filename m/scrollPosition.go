@@ -3,6 +3,8 @@ package m
 import (
 	"fmt"
 	"math"
+
+	"github.com/walles/moar/m/linenumbers"
 )
 
 // Please create using newScrollPosition(name)
@@ -23,7 +25,7 @@ func newScrollPosition(name string) scrollPosition {
 
 type scrollPositionInternal struct {
 	// Line number in the input stream
-	lineNumberOneBased int
+	lineNumber linenumbers.LineNumber
 
 	// Scroll this many screen lines before rendering. Can be negative.
 	deltaScreenLines int
@@ -41,8 +43,8 @@ type scrollPositionCanonical struct {
 	showStatusBar   bool // From pager
 	wrapLongLines   bool // From pager
 
-	lineNumberOneBased int // From scrollPositionInternal
-	deltaScreenLines   int // From scrollPositionInternal
+	lineNumber       linenumbers.LineNumber // From scrollPositionInternal
+	deltaScreenLines int                    // From scrollPositionInternal
 }
 
 func canonicalFromPager(pager *Pager) scrollPositionCanonical {
@@ -54,8 +56,8 @@ func canonicalFromPager(pager *Pager) scrollPositionCanonical {
 		showStatusBar:   pager.ShowStatusBar,
 		wrapLongLines:   pager.WrapLongLines,
 
-		lineNumberOneBased: pager.scrollPosition.internalDontTouch.lineNumberOneBased,
-		deltaScreenLines:   pager.scrollPosition.internalDontTouch.deltaScreenLines,
+		lineNumber:       pager.scrollPosition.internalDontTouch.lineNumber,
+		deltaScreenLines: pager.scrollPosition.internalDontTouch.deltaScreenLines,
 	}
 }
 
@@ -63,9 +65,9 @@ func canonicalFromPager(pager *Pager) scrollPositionCanonical {
 func (sp scrollPosition) PreviousLine(scrollDistance int) scrollPosition {
 	return scrollPosition{
 		internalDontTouch: scrollPositionInternal{
-			name:               sp.internalDontTouch.name,
-			lineNumberOneBased: sp.internalDontTouch.lineNumberOneBased,
-			deltaScreenLines:   sp.internalDontTouch.deltaScreenLines - scrollDistance,
+			name:             sp.internalDontTouch.name,
+			lineNumber:       sp.internalDontTouch.lineNumber,
+			deltaScreenLines: sp.internalDontTouch.deltaScreenLines - scrollDistance,
 		},
 	}
 }
@@ -74,9 +76,9 @@ func (sp scrollPosition) PreviousLine(scrollDistance int) scrollPosition {
 func (sp scrollPosition) NextLine(scrollDistance int) scrollPosition {
 	return scrollPosition{
 		internalDontTouch: scrollPositionInternal{
-			name:               sp.internalDontTouch.name,
-			lineNumberOneBased: sp.internalDontTouch.lineNumberOneBased,
-			deltaScreenLines:   sp.internalDontTouch.deltaScreenLines + scrollDistance,
+			name:             sp.internalDontTouch.name,
+			lineNumber:       sp.internalDontTouch.lineNumber,
+			deltaScreenLines: sp.internalDontTouch.deltaScreenLines + scrollDistance,
 		},
 	}
 }
@@ -84,33 +86,28 @@ func (sp scrollPosition) NextLine(scrollDistance int) scrollPosition {
 // Create a new position, scrolled to the given line number
 //
 //revive:disable-next-line:unexported-return
-func NewScrollPositionFromLineNumberOneBased(lineNumberOneBased int, source string) scrollPosition {
+func NewScrollPositionFromLineNumber(lineNumber linenumbers.LineNumber, source string) scrollPosition {
 	return scrollPosition{
 		internalDontTouch: scrollPositionInternal{
-			name:               source,
-			lineNumberOneBased: lineNumberOneBased,
-			deltaScreenLines:   0,
+			name:             source,
+			lineNumber:       lineNumber,
+			deltaScreenLines: 0,
 		},
 	}
 }
 
 // Move towards the top until deltaScreenLines is not negative any more
 func (si *scrollPositionInternal) handleNegativeDeltaScreenLines(pager *Pager) {
-	for si.lineNumberOneBased > 1 && si.deltaScreenLines < 0 {
+	for !si.lineNumber.IsZero() && si.deltaScreenLines < 0 {
 		// Render the previous line
-		previousLine := pager.reader.GetLine(si.lineNumberOneBased - 1)
-		previousSubLines, _ := pager.renderLine(previousLine, 0, *si)
+		previousLineNumber := si.lineNumber.NonWrappingAdd(-1)
+		previousLine := pager.reader.GetLine(previousLineNumber)
+		previousSubLines, _ := pager.renderLine(previousLine, previousLineNumber, *si)
 
 		// Adjust lineNumberOneBased and deltaScreenLines to move up into the
 		// previous screen line
-		si.lineNumberOneBased--
+		si.lineNumber = previousLineNumber
 		si.deltaScreenLines += len(previousSubLines)
-	}
-
-	if si.lineNumberOneBased <= 1 && si.deltaScreenLines <= 0 {
-		// Don't go above the top line
-		si.lineNumberOneBased = 1
-		si.deltaScreenLines = 0
 	}
 }
 
@@ -121,11 +118,11 @@ func (si *scrollPositionInternal) handleNegativeDeltaScreenLines(pager *Pager) {
 // the position is too far down to display after this returns.
 func (si *scrollPositionInternal) handlePositiveDeltaScreenLines(pager *Pager) {
 	for {
-		line := pager.reader.GetLine(si.lineNumberOneBased)
+		line := pager.reader.GetLine(si.lineNumber)
 		if line == nil {
 			// Out of bounds downwards, get the last line...
-			si.lineNumberOneBased = pager.reader.GetLineCount()
-			line = pager.reader.GetLine(si.lineNumberOneBased)
+			si.lineNumber = linenumbers.LineNumberFromLength(pager.reader.GetLineCount())
+			line = pager.reader.GetLine(si.lineNumber)
 			if line == nil {
 				panic(fmt.Errorf("Last line is nil"))
 			}
@@ -142,7 +139,7 @@ func (si *scrollPositionInternal) handlePositiveDeltaScreenLines(pager *Pager) {
 			return
 		}
 
-		si.lineNumberOneBased++
+		si.lineNumber = si.lineNumber.NonWrappingAdd(1)
 		si.deltaScreenLines -= len(subLines)
 	}
 }
@@ -154,23 +151,23 @@ func (si *scrollPositionInternal) emptyBottomLinesCount(pager *Pager) int {
 	// Start counting where the current input line begins
 	unclaimedViewportLines += si.deltaScreenLines
 
-	lineNumberOneBased := si.lineNumberOneBased
+	lineNumber := si.lineNumber
 
 	for {
-		line := pager.reader.GetLine(lineNumberOneBased)
+		line := pager.reader.GetLine(lineNumber)
 		if line == nil {
 			// No more lines!
 			break
 		}
 
-		subLines, _ := pager.renderLine(line, lineNumberOneBased, *si)
+		subLines, _ := pager.renderLine(line, lineNumber, *si)
 		unclaimedViewportLines -= len(subLines)
 		if unclaimedViewportLines <= 0 {
 			return 0
 		}
 
 		// Move to the next line
-		lineNumberOneBased++
+		lineNumber = lineNumber.NonWrappingAdd(1)
 	}
 
 	return unclaimedViewportLines
@@ -353,9 +350,9 @@ func (p *Pager) getLastVisiblePosition() *scrollPosition {
 	lastRenderedLine := renderedLines[len(renderedLines)-1]
 	return &scrollPosition{
 		internalDontTouch: scrollPositionInternal{
-			name:               "Last Visible Position",
-			lineNumberOneBased: lastRenderedLine.inputLineOneBased,
-			deltaScreenLines:   lastRenderedLine.wrapIndex,
+			name:             "Last Visible Position",
+			lineNumber:       lastRenderedLine.inputLineOneBased,
+			deltaScreenLines: lastRenderedLine.wrapIndex,
 		},
 	}
 }

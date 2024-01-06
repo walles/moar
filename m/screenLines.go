@@ -3,6 +3,7 @@ package m
 import (
 	"fmt"
 
+	"github.com/walles/moar/m/linenumbers"
 	"github.com/walles/moar/m/textstyles"
 	"github.com/walles/moar/twin"
 )
@@ -15,7 +16,7 @@ const (
 )
 
 type renderedLine struct {
-	inputLineOneBased int
+	inputLine linenumbers.LineNumber
 
 	// If an input line has been wrapped into two, the part on the second line
 	// will have a wrapIndex of 1.
@@ -222,7 +223,7 @@ func (p *Pager) renderLines() ([]renderedLine, string, overflowState) {
 //
 // lineNumber and numberPrefixLength are required for knowing how much to
 // indent, and to (optionally) render the line number.
-func (p *Pager) renderLine(line *Line, lineNumber int, scrollPosition scrollPositionInternal) ([]renderedLine, overflowState) {
+func (p *Pager) renderLine(line *Line, lineNumber linenumbers.LineNumber, scrollPosition scrollPositionInternal) ([]renderedLine, overflowState) {
 	highlighted := line.HighlightedTokens(p.linePrefix, p.searchPattern, &lineNumber)
 	var wrapped [][]twin.Cell
 	overflow := didFit

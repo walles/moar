@@ -604,17 +604,14 @@ func (reader *Reader) GetLineCount() int {
 }
 
 // GetLine gets a line. If the requested line number is out of bounds, nil is returned.
-func (reader *Reader) GetLine(lineNumberOneBased int) *Line {
+func (reader *Reader) GetLine(lineNumber linenumbers.LineNumber) *Line {
 	reader.Lock()
 	defer reader.Unlock()
 
-	if lineNumberOneBased < 1 {
+	if lineNumber.AsOneBased() > len(reader.lines) {
 		return nil
 	}
-	if lineNumberOneBased > len(reader.lines) {
-		return nil
-	}
-	return reader.lines[lineNumberOneBased-1]
+	return reader.lines[lineNumber.AsZeroBased()]
 }
 
 // GetLines gets the indicated lines from the input
