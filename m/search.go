@@ -56,7 +56,7 @@ func (p *Pager) findFirstHit(startPosition scrollPosition, backwards bool) *scro
 	// NOTE: When we search, we do that by looping over the *input lines*, not
 	// the screen lines. That's why we're using an int rather than a
 	// scrollPosition for searching.
-	searchPosition := startPosition.lineNumberOneBased(p)
+	searchPosition := *startPosition.lineNumber(p)
 	for {
 		line := p.reader.GetLine(searchPosition)
 		if line == nil {
@@ -70,9 +70,9 @@ func (p *Pager) findFirstHit(startPosition scrollPosition, backwards bool) *scro
 		}
 
 		if backwards {
-			searchPosition--
+			searchPosition = searchPosition.NonWrappingAdd(-1)
 		} else {
-			searchPosition++
+			searchPosition = searchPosition.NonWrappingAdd(1)
 		}
 	}
 }

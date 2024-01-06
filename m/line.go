@@ -3,6 +3,7 @@ package m
 import (
 	"regexp"
 
+	"github.com/walles/moar/m/linenumbers"
 	"github.com/walles/moar/m/textstyles"
 	"github.com/walles/moar/twin"
 )
@@ -52,9 +53,9 @@ func (line *Line) HighlightedTokens(linePrefix string, search *regexp.Regexp, li
 }
 
 // Plain returns a plain text representation of the initial string
-func (line *Line) Plain(lineNumberOneBased *int) string {
+func (line *Line) Plain(lineNumber *linenumbers.LineNumber) string {
 	if line.plain == nil {
-		plain := textstyles.WithoutFormatting(line.raw, lineNumberOneBased)
+		plain := textstyles.WithoutFormatting(line.raw, lineNumber)
 		line.plain = &plain
 	}
 	return *line.plain
