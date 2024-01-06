@@ -639,7 +639,7 @@ func (reader *Reader) getLinesUnlocked(firstLine linenumbers.LineNumber, wantedL
 	lastLine := firstLine.NonWrappingAdd(wantedLineCount - 1)
 
 	if lastLine.AsZeroBased() >= len(reader.lines) {
-		lastLine = linenumbers.LineNumberFromLength(len(reader.lines))
+		lastLine = *linenumbers.LineNumberFromLength(len(reader.lines))
 	}
 
 	// Prevent reading past the end of the available lines

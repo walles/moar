@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/walles/moar/m/linenumbers"
 	"github.com/walles/moar/twin"
 )
 
@@ -47,7 +48,7 @@ func isPlain(s string) bool {
 	return true
 }
 
-func WithoutFormatting(s string, lineNumberOneBased *int) string {
+func WithoutFormatting(s string, lineNumber *linenumbers.LineNumber) string {
 	if isPlain(s) {
 		return s
 	}
@@ -60,7 +61,7 @@ func WithoutFormatting(s string, lineNumberOneBased *int) string {
 	// runes.
 	stripped.Grow(len(s) * 2)
 
-	styledStringsFromString(s, lineNumberOneBased, func(str string, style twin.Style) {
+	styledStringsFromString(s, lineNumber, func(str string, style twin.Style) {
 		for _, runeValue := range runesFromStyledString(_StyledString{String: str, Style: style}) {
 			switch runeValue {
 
@@ -105,13 +106,13 @@ func WithoutFormatting(s string, lineNumberOneBased *int) string {
 }
 
 // Turn a (formatted) string into a series of screen cells
-func CellsFromString(s string, lineNumberOneBased *int) CellsWithTrailer {
+func CellsFromString(s string, lineNumber *linenumbers.LineNumber) CellsWithTrailer {
 	var cells []twin.Cell
 
 	// Specs: https://en.wikipedia.org/wiki/ANSI_escape_code#3-bit_and_4-bit
 	styleUnprintable := twin.StyleDefault.WithBackground(twin.NewColor16(1)).WithForeground(twin.NewColor16(7))
 
-	trailer := styledStringsFromString(s, lineNumberOneBased, func(str string, style twin.Style) {
+	trailer := styledStringsFromString(s, lineNumber, func(str string, style twin.Style) {
 		for _, token := range tokensFromStyledString(_StyledString{String: str, Style: style}) {
 			switch token.Rune {
 
