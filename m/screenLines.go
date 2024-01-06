@@ -133,12 +133,12 @@ func (p *Pager) renderLines() ([]renderedLine, string, overflowState) {
 	wantedLineCount := p.visibleHeight()
 
 	screenOverflow := didFit
-	if p.lineNumberOneBased() > 1 {
+	if !p.lineNumber().IsZero() {
 		// We're scrolled down, meaning everything is not visible on screen
 		screenOverflow = didOverflow
 	}
 
-	inputLines, readerOverflow := p.reader.GetLines(p.lineNumberOneBased(), wantedLineCount)
+	inputLines, readerOverflow := p.reader.GetLines(*p.lineNumber(), wantedLineCount)
 	if inputLines.lines == nil {
 		// Empty input, empty output
 		return []renderedLine{}, inputLines.statusText, didFit
@@ -151,7 +151,7 @@ func (p *Pager) renderLines() ([]renderedLine, string, overflowState) {
 	allLines := make([]renderedLine, 0)
 	for lineIndex, line := range inputLines.lines {
 
-		lineNumber := inputLines.firstLineOneBased + lineIndex
+		lineNumber := inputLines.firstLine.NonWrappingAdd(lineIndex)
 
 		rendering, lineOverflow := p.renderLine(line, lineNumber, p.scrollPosition.internalDontTouch)
 		if lineOverflow == didOverflow {
@@ -185,12 +185,12 @@ func (p *Pager) renderLines() ([]renderedLine, string, overflowState) {
 	// screen
 	firstVisibleIndex := -1 // Not found
 	for index, line := range allLines {
-		if p.lineNumberOneBased() == 0 {
+		if p.lineNumber() == nil {
 			// Expected zero lines but got some anyway, grab the first one!
 			firstVisibleIndex = index
 			break
 		}
-		if line.inputLineOneBased == p.lineNumberOneBased() && line.wrapIndex == p.deltaScreenLines() {
+		if line.inputLine == *p.lineNumber() && line.wrapIndex == p.deltaScreenLines() {
 			firstVisibleIndex = index
 			break
 		}
@@ -252,9 +252,9 @@ func (p *Pager) renderLine(line *Line, lineNumber linenumbers.LineNumber, scroll
 		}
 
 		rendered = append(rendered, renderedLine{
-			inputLineOneBased: lineNumber,
-			wrapIndex:         wrapIndex,
-			cells:             decorated,
+			inputLine: lineNumber,
+			wrapIndex: wrapIndex,
+			cells:     decorated,
 		})
 	}
 
@@ -271,7 +271,7 @@ func (p *Pager) renderLine(line *Line, lineNumber linenumbers.LineNumber, scroll
 // * Line number, or leading whitespace for wrapped lines
 // * Scroll left indicator
 // * Scroll right indicator
-func (p *Pager) decorateLine(lineNumberToShow *int, contents []twin.Cell, scrollPosition scrollPositionInternal) ([]twin.Cell, overflowState) {
+func (p *Pager) decorateLine(lineNumberToShow *linenumbers.LineNumber, contents []twin.Cell, scrollPosition scrollPositionInternal) ([]twin.Cell, overflowState) {
 	width, _ := p.screen.Size()
 	newLine := make([]twin.Cell, 0, width)
 	numberPrefixLength := numberPrefixLength(p, scrollPosition)
@@ -317,21 +317,20 @@ func (p *Pager) decorateLine(lineNumberToShow *int, contents []twin.Cell, scroll
 // Generate a line number prefix of the given length.
 //
 // Can be empty or all-whitespace depending on parameters.
-func createLinePrefix(fileLineNumber *int, numberPrefixLength int) []twin.Cell {
+func createLinePrefix(lineNumber *linenumbers.LineNumber, numberPrefixLength int) []twin.Cell {
 	if numberPrefixLength == 0 {
 		return []twin.Cell{}
 	}
 
 	lineNumberPrefix := make([]twin.Cell, 0, numberPrefixLength)
-	if fileLineNumber == nil {
+	if lineNumber == nil {
 		for len(lineNumberPrefix) < numberPrefixLength {
 			lineNumberPrefix = append(lineNumberPrefix, twin.Cell{Rune: ' '})
 		}
 		return lineNumberPrefix
 	}
 
-	lineNumberString := formatNumber(uint(*fileLineNumber))
-	lineNumberString = fmt.Sprintf("%*s ", numberPrefixLength-1, lineNumberString)
+	lineNumberString := fmt.Sprintf("%*s ", numberPrefixLength-1, lineNumber.Format())
 	if len(lineNumberString) > numberPrefixLength {
 		panic(fmt.Errorf(
 			"lineNumberString <%s> longer than numberPrefixLength %d",
