@@ -36,9 +36,15 @@ func LineNumberFromZeroBased(zeroBased int) LineNumber {
 }
 
 // Set the line number to the last line of a file with the given number of lines
-// in it.
-func LineNumberFromLength(length int) LineNumber {
-	return LineNumber{number: length - 1}
+// in it. Or nil if the line count is 0.
+func LineNumberFromLength(length int) *LineNumber {
+	if length == 0 {
+		return nil
+	}
+	if length < 0 {
+		panic(fmt.Errorf("line count must be at least 0, got %d", length))
+	}
+	return &LineNumber{number: length - 1}
 }
 
 func (l LineNumber) NonWrappingAdd(offset int) LineNumber {
@@ -93,4 +99,12 @@ func (l LineNumber) CountLinesTo(next LineNumber) int {
 // Is this the lowest possible line number?
 func (l LineNumber) IsZero() bool {
 	return l.AsZeroBased() == 0
+}
+
+func (l LineNumber) IsBefore(other LineNumber) bool {
+	return l.AsZeroBased() < other.AsZeroBased()
+}
+
+func (l LineNumber) IsAfter(other LineNumber) bool {
+	return l.AsZeroBased() > other.AsZeroBased()
 }

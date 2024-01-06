@@ -39,3 +39,8 @@ func TestLineNumberFromLength(t *testing.T) {
 	// If the file has one line then the last zero based line number is 0.
 	assert.Equal(t, LineNumberFromLength(1), LineNumberFromZeroBased(0))
 }
+
+func TestLineNumberEquality(t *testing.T) {
+	assert.Equal(t, LineNumberFromZeroBased(1), LineNumberFromOneBased(2),
+		"Two different ways of representing the same line number should be equal")
+}
