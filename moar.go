@@ -568,9 +568,9 @@ func main() {
 	pager.ScrollRightHint = *scrollRightHint
 	pager.SideScrollAmount = int(*shift)
 
-	pager.TargetLineNumberOneBased = targetLineNumberOneBased
-	if *follow && pager.TargetLineNumberOneBased == 0 {
-		pager.TargetLineNumberOneBased = math.MaxInt
+	pager.TargetLineNumber = targetLineNumberOneBased
+	if *follow && pager.TargetLineNumber == 0 {
+		pager.TargetLineNumber = math.MaxInt
 	}
 
 	startPaging(pager, screen, style, &formatter)

@@ -305,12 +305,12 @@ func (p *Pager) scrollToEnd() {
 	// lines than the number of characters it contains.
 	p.scrollPosition.internalDontTouch.deltaScreenLines = len(lastInputLine.raw)
 
-	if p.TargetLineNumberOneBased == 0 {
+	if p.TargetLineNumber == 0 {
 		// Start following the end of the file
 		//
 		// Otherwise, if we're already aiming for some place, don't overwrite
 		// that.
-		p.TargetLineNumberOneBased = math.MaxInt
+		p.TargetLineNumber = math.MaxInt
 	}
 }
 

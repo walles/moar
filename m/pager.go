@@ -9,6 +9,7 @@ import (
 
 	"github.com/alecthomas/chroma/v2"
 	log "github.com/sirupsen/logrus"
+	"github.com/walles/moar/m/linenumbers"
 	"github.com/walles/moar/m/textstyles"
 	"github.com/walles/moar/twin"
 )
@@ -81,9 +82,9 @@ type Pager struct {
 
 	SideScrollAmount int // Should be positive
 
-	// If non-zero, scroll to this line number as soon as possible. Set to
-	// math.MaxInt to follow the end of the input (tail).
-	TargetLineNumberOneBased int
+	// If non-nil, scroll to this line number as soon as possible. Set this
+	// value to math.MaxInt to follow the end of the input (tail).
+	TargetLineNumber *linenumbers.LineNumber
 
 	// If true, pager will clear the screen on return. If false, pager will
 	// clear the last line, and show the cursor.
@@ -99,10 +100,10 @@ type Pager struct {
 }
 
 type _PreHelpState struct {
-	reader                   *Reader
-	scrollPosition           scrollPosition
-	leftColumnZeroBased      int
-	targetLineNumberOneBased int
+	reader              *Reader
+	scrollPosition      scrollPosition
+	leftColumnZeroBased int
+	targetLineNumber    *linenumbers.LineNumber
 }
 
 const _EofMarkerFormat = "\x1b[7m" // Reverse video
@@ -218,7 +219,7 @@ func (p *Pager) Quit() {
 	p.reader = p.preHelpState.reader
 	p.scrollPosition = p.preHelpState.scrollPosition
 	p.leftColumnZeroBased = p.preHelpState.leftColumnZeroBased
-	p.TargetLineNumberOneBased = p.preHelpState.targetLineNumberOneBased
+	p.TargetLineNumber = p.preHelpState.targetLineNumber
 	p.preHelpState = nil
 }
 
@@ -249,14 +250,15 @@ func (p *Pager) moveRight(delta int) {
 }
 
 func (p *Pager) handleScrolledUp() {
-	p.TargetLineNumberOneBased = 0
+	p.TargetLineNumber = nil
 }
 
 func (p *Pager) handleScrolledDown() {
 	if p.isScrolledToEnd() {
-		p.TargetLineNumberOneBased = math.MaxInt
+		reallyHigh := linenumbers.LineNumberFromZeroBased(math.MaxInt)
+		p.TargetLineNumber = &reallyHigh
 	} else {
-		p.TargetLineNumberOneBased = 0
+		p.TargetLineNumber = &linenumbers.LineNumber{}
 	}
 }
 
@@ -342,15 +344,15 @@ func (p *Pager) onRune(char rune) {
 	case '?':
 		if !p.isShowingHelp {
 			p.preHelpState = &_PreHelpState{
-				reader:                   p.reader,
-				scrollPosition:           p.scrollPosition,
-				leftColumnZeroBased:      p.leftColumnZeroBased,
-				targetLineNumberOneBased: p.TargetLineNumberOneBased,
+				reader:              p.reader,
+				scrollPosition:      p.scrollPosition,
+				leftColumnZeroBased: p.leftColumnZeroBased,
+				targetLineNumber:    p.TargetLineNumber,
 			}
 			p.reader = _HelpReader
 			p.scrollPosition = newScrollPosition("Pager scroll position")
 			p.leftColumnZeroBased = 0
-			p.TargetLineNumberOneBased = 0
+			p.TargetLineNumber = nil
 			p.isShowingHelp = true
 		}
 
@@ -580,11 +582,11 @@ func (p *Pager) StartPaging(screen twin.Screen, chromaStyle *chroma.Style, chrom
 			return
 
 		case eventMoreLinesAvailable:
-			if p.mode.isViewing() && p.TargetLineNumberOneBased > 0 {
+			if p.mode.isViewing() && p.TargetLineNumber > 0 {
 				// The user wants to scroll down to a specific line number
-				if p.reader.GetLineCount() >= p.TargetLineNumberOneBased {
-					p.scrollPosition = NewScrollPositionFromLineNumberOneBased(p.TargetLineNumberOneBased, "goToTargetLineNumber")
-					p.TargetLineNumberOneBased = 0
+				if p.reader.GetLineCount() >= p.TargetLineNumber {
+					p.scrollPosition = NewScrollPositionFromLineNumber(p.TargetLineNumber, "goToTargetLineNumber")
+					p.TargetLineNumber = nil
 				} else {
 					// Not there yet, keep scrolling
 					p.scrollToEnd()
