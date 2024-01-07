@@ -487,41 +487,43 @@ func TestIsScrolledToEnd_EmptyFile(t *testing.T) {
 // Verify that we can page all files in ../sample-files/* without crashing
 func TestPageSamples(t *testing.T) {
 	for _, fileName := range getTestFiles() {
-		file, err := os.Open(fileName)
-		if err != nil {
-			t.Errorf("Error opening file <%s>: %s", fileName, err.Error())
-			continue
-		}
-		defer func() {
-			if err := file.Close(); err != nil {
-				panic(err)
+		t.Run(fileName, func(t *testing.T) {
+			file, err := os.Open(fileName)
+			if err != nil {
+				t.Errorf("Error opening file <%s>: %s", fileName, err.Error())
+				return
 			}
-		}()
+			defer func() {
+				if err := file.Close(); err != nil {
+					panic(err)
+				}
+			}()
 
-		myReader := NewReaderFromStream(fileName, file, chroma.Style{}, nil, nil)
-		for !myReader.done.Load() {
-		}
+			myReader := NewReaderFromStream(fileName, file, chroma.Style{}, nil, nil)
+			for !myReader.done.Load() {
+			}
 
-		pager := NewPager(myReader)
-		pager.WrapLongLines = false
-		pager.ShowLineNumbers = false
+			pager := NewPager(myReader)
+			pager.WrapLongLines = false
+			pager.ShowLineNumbers = false
 
-		// Heigh 3 = two lines of contents + one footer
-		screen := twin.NewFakeScreen(10, 3)
+			// Heigh 3 = two lines of contents + one footer
+			screen := twin.NewFakeScreen(10, 3)
 
-		// Exit immediately
-		pager.Quit()
+			// Exit immediately
+			pager.Quit()
 
-		// Get contents onto our fake screen
-		pager.StartPaging(screen, nil, nil)
-		pager.redraw("")
+			// Get contents onto our fake screen
+			pager.StartPaging(screen, nil, nil)
+			pager.redraw("")
 
-		firstReaderLine := myReader.GetLine(linenumbers.LineNumber{})
-		if firstReaderLine == nil {
-			continue
-		}
-		firstPagerLine := rowToString(screen.GetRow(0))
-		assert.Assert(t, strings.HasPrefix(firstReaderLine.Plain(nil), firstPagerLine))
+			firstReaderLine := myReader.GetLine(linenumbers.LineNumber{})
+			if firstReaderLine == nil {
+				return
+			}
+			firstPagerLine := rowToString(screen.GetRow(0))
+			assert.Assert(t, strings.HasPrefix(firstReaderLine.Plain(nil), firstPagerLine))
+		})
 	}
 }
 
