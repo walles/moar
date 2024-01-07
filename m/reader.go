@@ -638,17 +638,16 @@ func (reader *Reader) getLinesUnlocked(firstLine linenumbers.LineNumber, wantedL
 
 	lastLine := firstLine.NonWrappingAdd(wantedLineCount - 1)
 
-	if lastLine.AsZeroBased() >= len(reader.lines) {
-		lastLine = *linenumbers.LineNumberFromLength(len(reader.lines))
-	}
-
 	// Prevent reading past the end of the available lines
-	if firstLine.CountLinesTo(lastLine) < wantedLineCount && !firstLine.IsZero() {
-		// 5 would mean we've gone 5 lines too far
-		overshoot := wantedLineCount - firstLine.CountLinesTo(lastLine)
-		firstLine = firstLine.NonWrappingAdd(-overshoot)
+	maxLineNumber := *linenumbers.LineNumberFromLength(len(reader.lines))
+	if lastLine.IsAfter(maxLineNumber) {
+		lastLine = maxLineNumber
 
-		return reader.getLinesUnlocked(firstLine, wantedLineCount)
+		// If one line was requested, then first and last should be exactly the
+		// same, and we would get there by adding zero.
+		firstLine = lastLine.NonWrappingAdd(1 - wantedLineCount)
+
+		return reader.getLinesUnlocked(firstLine, firstLine.CountLinesTo(lastLine))
 	}
 
 	returnLines := reader.lines[firstLine.AsZeroBased() : lastLine.AsZeroBased()+1]

@@ -36,7 +36,7 @@ func testCanonicalize1000(t *testing.T, withStatusBar bool, currentStartLine lin
 		},
 	}
 
-	assert.Equal(t, lastVisiblePosition.lineNumber(&pager), lastVisibleLine)
+	assert.Equal(t, *lastVisiblePosition.lineNumber(&pager), lastVisibleLine)
 }
 
 func TestCanonicalize1000WithStatusBar(t *testing.T) {

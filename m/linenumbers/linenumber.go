@@ -96,7 +96,7 @@ func (l LineNumber) Format() string {
 // If both lines are the same this method will return 1.
 func (l LineNumber) CountLinesTo(next LineNumber) int {
 	if l.number > next.number {
-		panic(fmt.Errorf("line numbers must be ordered, got %d-%d", l.number, next.number))
+		panic(fmt.Errorf("line numbers must be ordered, got %s-%s", l.Format(), next.Format()))
 	}
 
 	return 1 + next.AsZeroBased() - l.AsZeroBased()

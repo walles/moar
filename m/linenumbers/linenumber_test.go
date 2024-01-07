@@ -45,3 +45,15 @@ func TestLineNumberEquality(t *testing.T) {
 	assert.Equal(t, LineNumberFromZeroBased(1), LineNumberFromOneBased(2),
 		"Two different ways of representing the same line number should be equal")
 }
+
+func TestLineNumberCountLinesTo(t *testing.T) {
+	assert.Equal(t,
+		LineNumberFromZeroBased(0).CountLinesTo(LineNumberFromZeroBased(0)),
+		1, // Count is inclusive, so countint from 0 to 0 is 1
+	)
+
+	assert.Equal(t,
+		LineNumberFromZeroBased(0).CountLinesTo(LineNumberFromZeroBased(1)),
+		2, // Count is inclusive, so countint from 0 to 1 is 2
+	)
+}
