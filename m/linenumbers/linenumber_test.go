@@ -37,7 +37,8 @@ func TestLineNumberFormatting(t *testing.T) {
 
 func TestLineNumberFromLength(t *testing.T) {
 	// If the file has one line then the last zero based line number is 0.
-	assert.Equal(t, LineNumberFromLength(1), LineNumberFromZeroBased(0))
+	fromLength := LineNumberFromLength(1)
+	assert.Equal(t, *fromLength, LineNumberFromZeroBased(0))
 }
 
 func TestLineNumberEquality(t *testing.T) {
