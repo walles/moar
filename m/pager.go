@@ -2,7 +2,6 @@ package m
 
 import (
 	"fmt"
-	"math"
 	"regexp"
 	"strings"
 	"time"
@@ -58,7 +57,7 @@ type Pager struct {
 	gotoLineString string
 
 	// We used to have a "Following" field here. If you want to follow, set
-	// TargetLineNumberOneBased to math.MaxInt instead, see below.
+	// TargetLineNumber to LineNumberMax() instead, see below.
 
 	isShowingHelp bool
 	preHelpState  *_PreHelpState
@@ -83,7 +82,7 @@ type Pager struct {
 	SideScrollAmount int // Should be positive
 
 	// If non-nil, scroll to this line number as soon as possible. Set this
-	// value to math.MaxInt to follow the end of the input (tail).
+	// value to LineNumberMax() to follow the end of the input (tail).
 	TargetLineNumber *linenumbers.LineNumber
 
 	// If true, pager will clear the screen on return. If false, pager will
@@ -255,7 +254,7 @@ func (p *Pager) handleScrolledUp() {
 
 func (p *Pager) handleScrolledDown() {
 	if p.isScrolledToEnd() {
-		reallyHigh := linenumbers.LineNumberFromZeroBased(math.MaxInt)
+		reallyHigh := linenumbers.LineNumberMax()
 		p.TargetLineNumber = &reallyHigh
 	} else {
 		p.TargetLineNumber = &linenumbers.LineNumber{}

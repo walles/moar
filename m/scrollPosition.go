@@ -2,7 +2,6 @@ package m
 
 import (
 	"fmt"
-	"math"
 
 	"github.com/walles/moar/m/linenumbers"
 )
@@ -305,12 +304,13 @@ func (p *Pager) scrollToEnd() {
 	// lines than the number of characters it contains.
 	p.scrollPosition.internalDontTouch.deltaScreenLines = len(lastInputLine.raw)
 
-	if p.TargetLineNumber == 0 {
+	if p.TargetLineNumber == nil {
 		// Start following the end of the file
 		//
 		// Otherwise, if we're already aiming for some place, don't overwrite
 		// that.
-		p.TargetLineNumber = math.MaxInt
+		maxLineNumber := linenumbers.LineNumberMax()
+		p.TargetLineNumber = &maxLineNumber
 	}
 }
 

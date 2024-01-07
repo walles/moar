@@ -17,6 +17,7 @@ func (l LineNumber) AsOneBased() int {
 	return l.number + 1
 }
 
+// FIXME: Maybe drop this in favor of some array access method(s)?
 func (l LineNumber) AsZeroBased() int {
 	return l.number
 }
@@ -33,6 +34,11 @@ func LineNumberFromZeroBased(zeroBased int) LineNumber {
 		panic(fmt.Errorf("zero-based line numbers must be at least 0, got %d", zeroBased))
 	}
 	return LineNumber{number: zeroBased}
+}
+
+// The highest possible line number
+func LineNumberMax() LineNumber {
+	return LineNumber{number: math.MaxInt}
 }
 
 // Set the line number to the last line of a file with the given number of lines

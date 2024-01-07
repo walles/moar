@@ -4,7 +4,6 @@ import (
 	"flag"
 	"fmt"
 	"io"
-	"math"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -21,6 +20,7 @@ import (
 	"golang.org/x/term"
 
 	"github.com/walles/moar/m"
+	"github.com/walles/moar/m/linenumbers"
 	"github.com/walles/moar/m/textstyles"
 	"github.com/walles/moar/twin"
 )
@@ -570,7 +570,7 @@ func main() {
 
 	pager.TargetLineNumber = targetLineNumberOneBased
 	if *follow && pager.TargetLineNumber == 0 {
-		pager.TargetLineNumber = math.MaxInt
+		pager.TargetLineNumber = linenumbers.LineNumberMax()
 	}
 
 	startPaging(pager, screen, style, &formatter)
