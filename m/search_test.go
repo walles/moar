@@ -67,7 +67,7 @@ func TestScrollToNextSearchHit_WrapAfterNotFound(t *testing.T) {
 	// the top
 	pager.scrollToNextSearchHit()
 	assert.Equal(t, _Viewing, pager.mode)
-	assert.Equal(t, 1, pager.lineNumberOneBased())
+	assert.Assert(t, pager.lineNumber().IsZero())
 }
 
 func TestScrollToNextSearchHit_WrapAfterFound(t *testing.T) {
@@ -87,7 +87,7 @@ func TestScrollToNextSearchHit_WrapAfterFound(t *testing.T) {
 	// back to the bottom again
 	pager.scrollToNextSearchHit()
 	assert.Equal(t, _Viewing, pager.mode)
-	assert.Equal(t, 5, pager.lineNumberOneBased())
+	assert.Equal(t, 5, pager.lineNumber.AsOneBased())
 }
 
 // Ref: https://github.com/walles/moar/issues/152
@@ -107,5 +107,5 @@ func Test152(t *testing.T) {
 	pager.updateSearchPattern()
 
 	assert.Equal(t, _Searching, pager.mode)
-	assert.Equal(t, 3, pager.lineNumberOneBased())
+	assert.Equal(t, 3, pager.lineNumber.AsOneBased())
 }

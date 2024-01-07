@@ -328,8 +328,8 @@ func tryOpen(filename string) error {
 // Parses an argument like "+123" anywhere on the command line into a one-based
 // line number, and returns the remaining args.
 //
-// Returns 0 on no target line number specified.
-func getTargetLineNumberOneBased(args []string) (int, []string) {
+// Returns nil on no target line number specified.
+func getTargetLineNumber(args []string) (*linenumbers.LineNumber, []string) {
 	for i, arg := range args {
 		if !strings.HasPrefix(arg, "+") {
 			continue
@@ -352,10 +352,11 @@ func getTargetLineNumberOneBased(args []string) (int, []string) {
 		remainingArgs = append(remainingArgs, args[:i]...)
 		remainingArgs = append(remainingArgs, args[i+1:]...)
 
-		return int(lineNumber), remainingArgs
+		returnMe := linenumbers.LineNumberFromOneBased(int(lineNumber))
+		return &returnMe, remainingArgs
 	}
 
-	return 0, args
+	return nil, args
 }
 
 func main() {
@@ -443,7 +444,7 @@ func main() {
 		flags = append(strings.Fields(moarEnv), flags...)
 	}
 
-	targetLineNumberOneBased, remainingArgs := getTargetLineNumberOneBased(flags)
+	targetLineNumber, remainingArgs := getTargetLineNumber(flags)
 
 	err = flagSet.Parse(remainingArgs)
 	if err != nil {
@@ -568,9 +569,10 @@ func main() {
 	pager.ScrollRightHint = *scrollRightHint
 	pager.SideScrollAmount = int(*shift)
 
-	pager.TargetLineNumber = targetLineNumberOneBased
-	if *follow && pager.TargetLineNumber == 0 {
-		pager.TargetLineNumber = linenumbers.LineNumberMax()
+	pager.TargetLineNumber = targetLineNumber
+	if *follow && pager.TargetLineNumber == nil {
+		reallyHigh := linenumbers.LineNumberMax()
+		pager.TargetLineNumber = &reallyHigh
 	}
 
 	startPaging(pager, screen, style, &formatter)

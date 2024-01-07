@@ -13,6 +13,7 @@ import (
 	"github.com/alecthomas/chroma/v2/lexers"
 	"github.com/alecthomas/chroma/v2/styles"
 	"github.com/google/go-cmp/cmp"
+	"github.com/walles/moar/m/linenumbers"
 	"github.com/walles/moar/m/textstyles"
 	"github.com/walles/moar/twin"
 	"gotest.tools/v3/assert"
@@ -278,7 +279,7 @@ func TestFindFirstHitSimple(t *testing.T) {
 	pager.searchPattern = toPattern("AB")
 
 	hit := pager.findFirstHit(newScrollPosition("TestFindFirstHitSimple"), false)
-	assert.Equal(t, hit.internalDontTouch.lineNumberOneBased, 1)
+	assert.Assert(t, hit.internalDontTouch.lineNumber.IsZero())
 	assert.Equal(t, hit.internalDontTouch.deltaScreenLines, 0)
 }
 
@@ -294,7 +295,7 @@ func TestFindFirstHitAnsi(t *testing.T) {
 	pager.searchPattern = toPattern("AB")
 
 	hit := pager.findFirstHit(newScrollPosition("TestFindFirstHitSimple"), false)
-	assert.Equal(t, hit.internalDontTouch.lineNumberOneBased, 1)
+	assert.Assert(t, hit.internalDontTouch.lineNumber.IsZero())
 	assert.Equal(t, hit.internalDontTouch.deltaScreenLines, 0)
 }
 
@@ -515,7 +516,7 @@ func TestPageSamples(t *testing.T) {
 		pager.StartPaging(screen, nil, nil)
 		pager.redraw("")
 
-		firstReaderLine := myReader.GetLine(0)
+		firstReaderLine := myReader.GetLine(linenumbers.LineNumber{})
 		if firstReaderLine == nil {
 			continue
 		}
