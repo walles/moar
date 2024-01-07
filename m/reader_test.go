@@ -236,7 +236,7 @@ func TestGetLongLine(t *testing.T) {
 	}
 
 	lines, overflow := reader.GetLines(linenumbers.LineNumber{}, 5)
-	assert.Equal(t, lines.firstLine, 1)
+	assert.Equal(t, lines.firstLine, linenumbers.LineNumber{})
 	assert.Equal(t, len(lines.lines), 1)
 
 	// This fits because we got all (one) input lines. Given the line length the
