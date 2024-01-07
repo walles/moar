@@ -64,7 +64,7 @@ func TestEmpty(t *testing.T) {
 	rendered, statusText, overflow := pager.renderScreenLines()
 	assert.Equal(t, len(rendered), 0)
 	assert.Equal(t, "test: <empty>", statusText)
-	assert.Assert(t, pager.lineNumber().IsZero())
+	assert.Assert(t, pager.lineNumber() == nil)
 	assert.Equal(t, overflow, didFit)
 }
 

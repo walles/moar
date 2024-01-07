@@ -2,6 +2,7 @@ package m
 
 import (
 	"fmt"
+	"path"
 
 	"github.com/walles/moar/m/linenumbers"
 	"github.com/walles/moar/m/textstyles"
@@ -135,8 +136,13 @@ func (p *Pager) renderLines() ([]renderedLine, string, overflowState) {
 	screenOverflow := didFit
 	lineNumber := p.lineNumber()
 	if lineNumber == nil {
-		// This means the pager contains no lines, return empty output
-		return []renderedLine{}, "", didFit
+		// This means the pager contains no lines
+		prefix := ""
+		if p.reader.name != nil {
+			prefix = path.Base(*p.reader.name) + ": "
+		}
+
+		return []renderedLine{}, prefix + "<empty>", didFit
 	}
 	if !lineNumber.IsZero() {
 		// We're scrolled down, meaning everything is not visible on screen
