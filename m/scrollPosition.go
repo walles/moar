@@ -109,6 +109,12 @@ func (si *scrollPositionInternal) handleNegativeDeltaScreenLines(pager *Pager) {
 		si.lineNumber = &previousLineNumber
 		si.deltaScreenLines += len(previousSubLines)
 	}
+
+	if si.lineNumber.IsZero() && si.deltaScreenLines <= 0 {
+		// Can't go any higher
+		si.deltaScreenLines = 0
+		return
+	}
 }
 
 // Move towards the bottom until deltaScreenLines is within range of the
@@ -238,6 +244,11 @@ func (si *scrollPositionInternal) canonicalize(pager *Pager) {
 		si.lineNumber = nil
 		si.deltaScreenLines = 0
 		return
+	}
+
+	if si.lineNumber == nil {
+		// We have lines, but no line number, start at the top
+		si.lineNumber = &linenumbers.LineNumber{}
 	}
 
 	si.handleNegativeDeltaScreenLines(pager)
