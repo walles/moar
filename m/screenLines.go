@@ -133,7 +133,12 @@ func (p *Pager) renderLines() ([]renderedLine, string, overflowState) {
 	wantedLineCount := p.visibleHeight()
 
 	screenOverflow := didFit
-	if !p.lineNumber().IsZero() {
+	lineNumber := p.lineNumber()
+	if lineNumber == nil {
+		// This means the pager contains no lines, return empty output
+		return []renderedLine{}, "", didFit
+	}
+	if !lineNumber.IsZero() {
 		// We're scrolled down, meaning everything is not visible on screen
 		screenOverflow = didOverflow
 	}
