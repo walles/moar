@@ -582,14 +582,14 @@ func (p *Pager) StartPaging(screen twin.Screen, chromaStyle *chroma.Style, chrom
 			return
 
 		case eventMoreLinesAvailable:
-			if p.mode.isViewing() && p.TargetLineNumber > 0 {
+			if p.mode.isViewing() && p.TargetLineNumber != nil {
 				// The user wants to scroll down to a specific line number
-				if p.reader.GetLineCount() >= p.TargetLineNumber {
-					p.scrollPosition = NewScrollPositionFromLineNumber(p.TargetLineNumber, "goToTargetLineNumber")
-					p.TargetLineNumber = nil
-				} else {
+				if linenumbers.LineNumberFromLength(p.reader.GetLineCount()).IsBefore(*p.TargetLineNumber) {
 					// Not there yet, keep scrolling
 					p.scrollToEnd()
+				} else {
+					p.scrollPosition = NewScrollPositionFromLineNumber(*p.TargetLineNumber, "goToTargetLineNumber")
+					p.TargetLineNumber = nil
 				}
 			}
 
