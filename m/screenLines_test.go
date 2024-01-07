@@ -78,11 +78,11 @@ func TestSearchHighlight(t *testing.T) {
 		searchPattern: regexp.MustCompile("\""),
 	}
 
-	rendered, overflow := pager.renderLine(&line, 1, pager.scrollPosition.internalDontTouch)
+	rendered, overflow := pager.renderLine(&line, linenumbers.LineNumber{}, pager.scrollPosition.internalDontTouch)
 	assert.DeepEqual(t, []renderedLine{
 		{
-			inputLineOneBased: 1,
-			wrapIndex:         0,
+			inputLine: linenumbers.LineNumber{},
+			wrapIndex: 0,
 			cells: []twin.Cell{
 				{Rune: 'x', Style: twin.StyleDefault},
 				{Rune: '"', Style: twin.StyleDefault.WithAttr(twin.AttrReverse)},
