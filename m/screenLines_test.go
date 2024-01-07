@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/walles/moar/m/linenumbers"
 	"github.com/walles/moar/twin"
 	"gotest.tools/v3/assert"
 )
@@ -21,7 +22,7 @@ func testHorizontalCropping(t *testing.T, contents string, firstIndex int, lastI
 	pager.scrollPosition = newScrollPosition("testHorizontalCropping")
 
 	lineContents := NewLine(contents)
-	screenLine, didOverflow := pager.renderLine(&lineContents, 0, pager.scrollPosition.internalDontTouch)
+	screenLine, didOverflow := pager.renderLine(&lineContents, linenumbers.LineNumber{}, pager.scrollPosition.internalDontTouch)
 	assert.Equal(t, rowToString(screenLine[0].cells), expected)
 	assert.Equal(t, didOverflow, expectedOverflow)
 }
@@ -63,7 +64,7 @@ func TestEmpty(t *testing.T) {
 	rendered, statusText, overflow := pager.renderScreenLines()
 	assert.Equal(t, len(rendered), 0)
 	assert.Equal(t, "test: <empty>", statusText)
-	assert.Equal(t, pager.lineNumberOneBased(), 0)
+	assert.Assert(t, pager.lineNumber().IsZero())
 	assert.Equal(t, overflow, didFit)
 }
 
@@ -104,14 +105,14 @@ func TestOverflowDown(t *testing.T) {
 		reader: NewReaderFromText("test", "hej"),
 
 		// This value can be anything and should be clipped, that's what we're testing
-		scrollPosition: *scrollPositionFromLineNumber("TestOverflowDown", 42),
+		scrollPosition: *scrollPositionFromLineNumber("TestOverflowDown", linenumbers.LineNumberFromOneBased(42)),
 	}
 
 	rendered, statusText, overflow := pager.renderScreenLines()
 	assert.Equal(t, len(rendered), 1)
 	assert.Equal(t, "hej", rowToString(rendered[0]))
 	assert.Equal(t, "test: 1 line  100%", statusText)
-	assert.Equal(t, pager.lineNumberOneBased(), 1)
+	assert.Assert(t, pager.lineNumber().IsZero())
 	assert.Equal(t, pager.deltaScreenLines(), 0)
 	assert.Equal(t, overflow, didFit)
 }
@@ -133,7 +134,7 @@ func TestOverflowUp(t *testing.T) {
 	assert.Equal(t, len(rendered), 1)
 	assert.Equal(t, "hej", rowToString(rendered[0]))
 	assert.Equal(t, "test: 1 line  100%", statusText)
-	assert.Equal(t, pager.lineNumberOneBased(), 1)
+	assert.Assert(t, pager.lineNumber().IsZero())
 	assert.Equal(t, pager.deltaScreenLines(), 0)
 	assert.Equal(t, overflow, didFit)
 }
