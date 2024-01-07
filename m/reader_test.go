@@ -285,7 +285,9 @@ func TestStatusText(t *testing.T) {
 	}
 
 	line, overflow := testMe.GetLines(linenumbers.LineNumber{}, 0)
-	assert.Equal(t, line.lines, nil)
+	if line.lines != nil {
+		t.Error("line.lines is should have been nil when reading from an empty stream")
+	}
 	assert.Equal(t, line.statusText, "empty: <empty>")
 	assert.Equal(t, overflow, didFit) // Empty always fits
 }
