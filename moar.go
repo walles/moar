@@ -278,7 +278,7 @@ func pumpToStdout(inputFilename *string) error {
 		// If we get both redirected stdin and an input filename, we must prefer
 		// to copy the file, because that's how less works. That's why we go for
 		// the filename first.
-		inputFile, err := os.Open(*inputFilename)
+		inputFile, err := m.ZOpen(*inputFilename)
 		if err != nil {
 			return fmt.Errorf("Failed to open %s: %w", *inputFilename, err)
 		}

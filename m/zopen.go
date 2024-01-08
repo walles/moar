@@ -7,7 +7,7 @@ import (
 	"github.com/mholt/archiver/v4"
 )
 
-func zOpen(filename string) (io.ReadCloser, error) {
+func ZOpen(filename string) (io.ReadCloser, error) {
 	format, _, err := archiver.Identify(filename, nil)
 	if err == archiver.ErrNoMatch {
 		// Not compressed, just open the file
