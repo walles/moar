@@ -68,6 +68,10 @@ echo Testing not crashing with different argument orders...
 ./moar --trace +123 moar.go >/dev/null
 ./moar --trace moar.go +123 >/dev/null
 
+echo Test decompressing while piping
+# Related to https://github.com/walles/moar/issues/177
+./moar sample-files/compressed.txt.gz | grep compressed >/dev/null
+
 echo Test --version...
 ./moar --version >/dev/null # Should exit with code 0
 diff -u <(./moar --version) <(git describe --tags --dirty --always)
