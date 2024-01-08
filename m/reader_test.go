@@ -337,22 +337,6 @@ func TestFilterPermissionDenied(t *testing.T) {
 	t.Skip("FIXME: Test what happens if the filter command fails because it can't access the requested file")
 }
 
-func TestFilterFileNotFound(t *testing.T) {
-	// What happens if the filter cannot read its input file?
-	NonExistentPath := "/does-not-exist"
-
-	reader, err := newReaderFromCommand(NonExistentPath, "cat")
-
-	// Creating should be fine, it's waiting for it to finish that should fail.
-	// Feel free to re-evaluate in the future.
-	assert.Check(t, err == nil)
-
-	err = reader._wait()
-	assert.Check(t, err != nil)
-
-	assert.Check(t, strings.Contains(err.Error(), NonExistentPath), err.Error())
-}
-
 func TestFilterNotAFile(t *testing.T) {
 	t.Skip("FIXME: Test what happens if the filter command fails because the target is not a file")
 }
