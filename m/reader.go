@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"os/exec"
 	"path"
 	"strings"
 	"sync"
@@ -34,10 +33,9 @@ const MAX_HIGHLIGHT_SIZE int64 = 1024 * 1024
 type Reader struct {
 	sync.Mutex
 
-	lines   []*Line
-	name    *string
-	err     error
-	_stderr io.Reader
+	lines []*Line
+	name  *string
+	err   error
 
 	// Have we had our contents replaced using setText()?
 	replaced bool
@@ -61,62 +59,6 @@ type InputLines struct {
 
 	// "monkey.txt: 1-23/45 51%"
 	statusText string
-}
-
-// Shut down the filter (if any) after we're done reading the file.
-func (reader *Reader) cleanupFilter(fromFilter *exec.Cmd) {
-	defer func() {
-		reader.done.Store(true)
-		select {
-		case reader.maybeDone <- true:
-		default:
-		}
-	}()
-
-	// FIXME: Close the stream now that we're done reading it?
-
-	if fromFilter == nil {
-		log.Trace("Reader done, no filter")
-		return
-	}
-
-	reader.Lock()
-	defer reader.Unlock()
-
-	// Give the filter a little time to go away
-	timer := time.AfterFunc(2*time.Second, func() {
-		// FIXME: Regarding error handling, maybe we should log all errors
-		// except for "process doesn't exist"? If the process is not there
-		// it likely means the process finished up by itself without our
-		// help.
-		_ = fromFilter.Process.Kill()
-	})
-
-	stderrText := ""
-	if reader._stderr != nil {
-		// Drain the reader's stderr into a string for possible inclusion in an error message
-		// From: https://stackoverflow.com/a/9650373/473672
-		if buffer, err := io.ReadAll(reader._stderr); err == nil {
-			stderrText = strings.TrimSpace(string(buffer))
-		} else {
-			log.Warn("Draining filter stderr failed: ", err)
-		}
-	}
-
-	err := fromFilter.Wait()
-	timer.Stop()
-
-	// Don't overwrite any existing problem report
-	if reader.err == nil {
-		reader.err = err
-		if err != nil && stderrText != "" {
-			reader.err = fmt.Errorf("%s: %w", stderrText, err)
-		}
-	}
-
-	// FIXME: Report any filter printouts to stderr to the user
-
-	log.Trace("Reader done, filter done")
 }
 
 // Count lines in the original file and preallocate space for them.  Good
@@ -153,8 +95,14 @@ func (reader *Reader) preAllocLines(originalFileName string) {
 }
 
 // This function will be update the Reader struct in the background.
-func (reader *Reader) readStream(stream io.Reader, originalFileName *string, fromFilter *exec.Cmd, onDone func()) {
-	defer reader.cleanupFilter(fromFilter)
+func (reader *Reader) readStream(stream io.Reader, originalFileName *string, onDone func()) {
+	defer func() {
+		reader.done.Store(true)
+		select {
+		case reader.maybeDone <- true:
+		default:
+		}
+	}()
 
 	if originalFileName != nil {
 		reader.preAllocLines(*originalFileName)
@@ -235,7 +183,7 @@ func (reader *Reader) readStream(stream io.Reader, originalFileName *string, fro
 // If non-empty, the name will be displayed by the pager in the bottom left
 // corner to help the user keep track of what is being paged.
 func NewReaderFromStream(name string, reader io.Reader, style chroma.Style, formatter chroma.Formatter, lexer chroma.Lexer) *Reader {
-	mReader := newReaderFromStream(reader, nil, nil, style, formatter, lexer)
+	mReader := newReaderFromStream(reader, nil, style, formatter, lexer)
 
 	if len(name) > 0 {
 		mReader.Lock()
@@ -257,7 +205,7 @@ func NewReaderFromStream(name string, reader io.Reader, style chroma.Style, form
 // takes over ownership for it.
 //
 // If lexer is not nil, the file will be highlighted after being fully read.
-func newReaderFromStream(reader io.Reader, originalFileName *string, fromFilter *exec.Cmd, style chroma.Style, formatter chroma.Formatter, lexer chroma.Lexer) *Reader {
+func newReaderFromStream(reader io.Reader, originalFileName *string, style chroma.Style, formatter chroma.Formatter, lexer chroma.Lexer) *Reader {
 	done := atomic.Bool{}
 	done.Store(false)
 	highlightingDone := atomic.Bool{}
@@ -274,7 +222,7 @@ func newReaderFromStream(reader io.Reader, originalFileName *string, fromFilter 
 
 	// FIXME: Make sure that if we panic somewhere inside of this goroutine,
 	// the main program terminates and prints our panic stack trace.
-	go returnMe.readStream(reader, originalFileName, fromFilter, func() {
+	go returnMe.readStream(reader, originalFileName, func() {
 		if lexer == nil {
 			return
 		}
@@ -323,37 +271,6 @@ func NewReaderFromText(name string, text string) *Reader {
 	return returnMe
 }
 
-// newReaderFromCommand creates a new reader by running a file through a filter
-func newReaderFromCommand(filename string, filterCommand ...string) (*Reader, error) {
-	filterWithFilename := append(filterCommand, filename)
-	filter := exec.Command(filterWithFilename[0], filterWithFilename[1:]...)
-
-	filterOut, err := filter.StdoutPipe()
-	if err != nil {
-		return nil, err
-	}
-
-	filterErr, err := filter.StderrPipe()
-	if err != nil {
-		// The error stream is only used in case of failures, and having it
-		// nil is fine, so just log this and move along.
-		log.Warnf("Stderr not available from %s: %s", filterCommand[0], err.Error())
-	}
-
-	err = filter.Start()
-	if err != nil {
-		return nil, err
-	}
-
-	reader := newReaderFromStream(filterOut, nil, filter, chroma.Style{}, nil, nil)
-	reader.highlightingDone.Store(true) // No highlighting to do == nothing left == Done!
-	reader.Lock()
-	reader.name = &filename
-	reader._stderr = filterErr
-	reader.Unlock()
-	return reader, nil
-}
-
 // Duplicate of moar/moar.go:tryOpen
 func tryOpen(filename string) error {
 	// Try opening the file
@@ -385,7 +302,7 @@ func countLines(filename string) (uint64, error) {
 	const lineBreak = '\n'
 	sliceWithSingleLineBreak := []byte{lineBreak}
 
-	reader, err := os.Open(filename)
+	reader, err := ZOpen(filename)
 	if err != nil {
 		return 0, err
 	}
@@ -444,17 +361,7 @@ func NewReaderFromFilename(filename string, style chroma.Style, formatter chroma
 		return nil, fileError
 	}
 
-	if strings.HasSuffix(filename, ".gz") {
-		return newReaderFromCommand(filename, "gzip", "-d", "-c")
-	}
-	if strings.HasSuffix(filename, ".bz2") {
-		return newReaderFromCommand(filename, "bzip2", "-d", "-c")
-	}
-	if strings.HasSuffix(filename, ".xz") {
-		return newReaderFromCommand(filename, "xz", "-d", "-c")
-	}
-
-	stream, err := os.Open(filename)
+	stream, err := ZOpen(filename)
 	if err != nil {
 		return nil, err
 	}
@@ -462,7 +369,7 @@ func NewReaderFromFilename(filename string, style chroma.Style, formatter chroma
 	// Set lexer to nil in this call since we want to do our own highlighting in
 	// parallel with the stream being read. See the call to
 	// StartHighlightingFromFile() below.
-	returnMe := newReaderFromStream(stream, &filename, nil, chroma.Style{}, nil, nil)
+	returnMe := newReaderFromStream(stream, &filename, chroma.Style{}, nil, nil)
 
 	returnMe.Lock()
 	returnMe.name = &filename
