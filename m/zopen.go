@@ -6,6 +6,8 @@ import (
 	"io"
 	"os"
 	"strings"
+
+	"github.com/ulikunitz/xz"
 )
 
 func ZOpen(filename string) (io.ReadCloser, error) {
@@ -23,6 +25,17 @@ func ZOpen(filename string) (io.ReadCloser, error) {
 			io.Reader
 			io.Closer
 		}{bzip2.NewReader(file), file}, nil
+
+	case strings.HasSuffix(filename, ".xz"):
+		xzReader, err := xz.NewReader(file)
+		if err != nil {
+			return nil, err
+		}
+
+		return struct {
+			io.Reader
+			io.Closer
+		}{xzReader, file}, nil
 	}
 
 	return file, nil
