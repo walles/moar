@@ -90,7 +90,11 @@ func TestSearchHighlight(t *testing.T) {
 				{Rune: 'x', Style: twin.StyleDefault},
 			},
 		},
-	}, rendered, cmp.AllowUnexported(twin.Style{}), cmp.AllowUnexported(renderedLine{}))
+	}, rendered,
+		cmp.AllowUnexported(twin.Style{}),
+		cmp.AllowUnexported(renderedLine{}),
+		cmp.AllowUnexported(linenumbers.LineNumber{}),
+	)
 	assert.Equal(t, overflow, didFit)
 }
 
