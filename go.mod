@@ -13,6 +13,7 @@ require (
 
 require (
 	github.com/dlclark/regexp2 v1.10.0 // indirect
+	github.com/klauspost/compress v1.17.4 // indirect
 	github.com/stretchr/testify v1.7.0 // indirect
 	github.com/ulikunitz/xz v0.5.11 // indirect
 )

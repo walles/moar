@@ -29,7 +29,7 @@ Doing the right thing includes:
 - Supports UTF-8 input and output
 - **Automatic decompression** when viewing [compressed text
   files](https://github.com/walles/moar/issues/97#issuecomment-1191415680)
-  (`.gz`, `.bz2`, `.xz`)
+  (`.gz`, `.bz2`, `.xz`, `.zst`, `.zstd`)
 - The position in the file is always shown
 - Supports **word wrapping** (on actual word boundaries) if requested using
   `--wrap` or by pressing <kbd>w</kbd>

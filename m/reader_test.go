@@ -191,6 +191,12 @@ func testHighlightingLineCount(t *testing.T, filenameWithPath string) {
 	if strings.HasSuffix(filenameWithPath, ".gz") {
 		return
 	}
+	if strings.HasSuffix(filenameWithPath, ".zst") {
+		return
+	}
+	if strings.HasSuffix(filenameWithPath, ".zstd") {
+		return
+	}
 
 	// Load the unformatted file
 	rawBytes, err := os.ReadFile(filenameWithPath)
@@ -222,7 +228,7 @@ func testHighlightingLineCount(t *testing.T, filenameWithPath string) {
 	}
 
 	highlightedLinesCount := reader.GetLineCount()
-	assert.Check(t, rawLinesCount == highlightedLinesCount)
+	assert.Equal(t, rawLinesCount, highlightedLinesCount)
 }
 
 func TestGetLongLine(t *testing.T) {
@@ -309,20 +315,10 @@ func testCompressedFile(t *testing.T, filename string) {
 
 func TestCompressedFiles(t *testing.T) {
 	testCompressedFile(t, "compressed.txt.gz")
-
-	_, err := exec.LookPath("bzip2")
-	if err == nil {
-		testCompressedFile(t, "compressed.txt.bz2")
-	} else {
-		t.Log("WARNING: bzip2 not found in path, not testing automatic bzip2 decompression")
-	}
-
-	_, err = exec.LookPath("xz")
-	if err == nil {
-		testCompressedFile(t, "compressed.txt.xz")
-	} else {
-		t.Log("WARNING: xz not found in path, not testing automatic xz decompression")
-	}
+	testCompressedFile(t, "compressed.txt.bz2")
+	testCompressedFile(t, "compressed.txt.xz")
+	testCompressedFile(t, "compressed.txt.zst")
+	testCompressedFile(t, "compressed.txt.zstd")
 }
 
 func TestFilterNotInstalled(t *testing.T) {

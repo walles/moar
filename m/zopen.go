@@ -7,6 +7,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/klauspost/compress/zstd"
 	"github.com/ulikunitz/xz"
 )
 
@@ -25,6 +26,13 @@ func ZOpen(filename string) (io.ReadCloser, error) {
 			io.Reader
 			io.Closer
 		}{bzip2.NewReader(file), file}, nil
+
+	case strings.HasSuffix(filename, ".zst") || strings.HasSuffix(filename, ".zstd"):
+		decoder, err := zstd.NewReader(file)
+		if err != nil {
+			return nil, err
+		}
+		return decoder.IOReadCloser(), nil
 
 	case strings.HasSuffix(filename, ".xz"):
 		xzReader, err := xz.NewReader(file)
