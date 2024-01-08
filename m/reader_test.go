@@ -1,7 +1,6 @@
 package m
 
 import (
-	"math"
 	"os"
 	"os/exec"
 	"path"
@@ -11,6 +10,7 @@ import (
 
 	"github.com/alecthomas/chroma/v2/formatters"
 	"github.com/alecthomas/chroma/v2/styles"
+	"github.com/walles/moar/m/linenumbers"
 	"gotest.tools/v3/assert"
 )
 
@@ -59,7 +59,7 @@ func testGetLineCount(t *testing.T, reader *Reader) {
 }
 
 func testGetLines(t *testing.T, reader *Reader) {
-	lines, _ := reader.GetLines(1, 10)
+	lines, _ := reader.GetLines(linenumbers.LineNumber{}, 10)
 	if len(lines.lines) > 10 {
 		t.Errorf("Asked for 10 lines, got too many: %d", len(lines.lines))
 	}
@@ -71,17 +71,17 @@ func testGetLines(t *testing.T, reader *Reader) {
 	}
 
 	// Test clipping at the end
-	lines, _ = reader.GetLines(math.MaxInt32, 10)
+	lines, _ = reader.GetLines(linenumbers.LineNumberMax(), 10)
 	if len(lines.lines) != 10 {
 		t.Errorf("Asked for 10 lines but got %d", len(lines.lines))
 		return
 	}
 
-	startOfLastSection := lines.firstLineOneBased
+	startOfLastSection := lines.firstLine
 	lines, _ = reader.GetLines(startOfLastSection, 10)
-	if lines.firstLineOneBased != startOfLastSection {
-		t.Errorf("Expected start line %d when asking for the last 10 lines, got %d",
-			startOfLastSection, lines.firstLineOneBased)
+	if lines.firstLine != startOfLastSection {
+		t.Errorf("Expected start line %d when asking for the last 10 lines, got %s",
+			startOfLastSection, lines.firstLine.Format())
 		return
 	}
 	if len(lines.lines) != 10 {
@@ -90,10 +90,10 @@ func testGetLines(t *testing.T, reader *Reader) {
 		return
 	}
 
-	lines, _ = reader.GetLines(startOfLastSection+1, 10)
-	if lines.firstLineOneBased != startOfLastSection {
-		t.Errorf("Expected start line %d when asking for the last+1 10 lines, got %d",
-			startOfLastSection, lines.firstLineOneBased)
+	lines, _ = reader.GetLines(startOfLastSection.NonWrappingAdd(1), 10)
+	if lines.firstLine != startOfLastSection {
+		t.Errorf("Expected start line %d when asking for the last+1 10 lines, got %s",
+			startOfLastSection, lines.firstLine.Format())
 		return
 	}
 	if len(lines.lines) != 10 {
@@ -102,10 +102,10 @@ func testGetLines(t *testing.T, reader *Reader) {
 		return
 	}
 
-	lines, _ = reader.GetLines(startOfLastSection-1, 10)
-	if lines.firstLineOneBased != startOfLastSection-1 {
-		t.Errorf("Expected start line %d when asking for the last-1 10 lines, got %d",
-			startOfLastSection, lines.firstLineOneBased)
+	lines, _ = reader.GetLines(startOfLastSection.NonWrappingAdd(-1), 10)
+	if lines.firstLine != startOfLastSection.NonWrappingAdd(-1) {
+		t.Errorf("Expected start line %d when asking for the last-1 10 lines, got %s",
+			startOfLastSection, lines.firstLine.Format())
 		return
 	}
 	if len(lines.lines) != 10 {
@@ -235,8 +235,8 @@ func TestGetLongLine(t *testing.T) {
 		panic(err)
 	}
 
-	lines, overflow := reader.GetLines(1, 5)
-	assert.Equal(t, lines.firstLineOneBased, 1)
+	lines, overflow := reader.GetLines(linenumbers.LineNumber{}, 5)
+	assert.Equal(t, lines.firstLine, linenumbers.LineNumber{})
 	assert.Equal(t, len(lines.lines), 1)
 
 	// This fits because we got all (one) input lines. Given the line length the
@@ -255,21 +255,25 @@ func getReaderWithLineCount(totalLines int) *Reader {
 	return NewReaderFromText("", strings.Repeat("x\n", totalLines))
 }
 
-func testStatusText(t *testing.T, fromLine int, toLine int, totalLines int, expected string) {
+func testStatusText(t *testing.T, fromLine linenumbers.LineNumber, toLine linenumbers.LineNumber, totalLines int, expected string) {
 	testMe := getReaderWithLineCount(totalLines)
-	linesRequested := toLine - fromLine + 1
+	linesRequested := fromLine.CountLinesTo(toLine)
 	lines, _ := testMe.GetLines(fromLine, linesRequested)
 	statusText := lines.statusText
 	assert.Equal(t, statusText, expected)
 }
 
 func TestStatusText(t *testing.T) {
-	testStatusText(t, 1, 10, 20, "20 lines  50%")
-	testStatusText(t, 1, 5, 5, "5 lines  100%")
-	testStatusText(t, 998, 999, 1000, "1000 lines  99%")
+	testStatusText(t, linenumbers.LineNumber{}, linenumbers.LineNumberFromOneBased(10), 20, "20 lines  50%")
+	testStatusText(t, linenumbers.LineNumber{}, linenumbers.LineNumberFromOneBased(5), 5, "5 lines  100%")
+	testStatusText(t,
+		linenumbers.LineNumberFromOneBased(998),
+		linenumbers.LineNumberFromOneBased(999),
+		1000,
+		"1000 lines  99%")
 
-	testStatusText(t, 0, 0, 0, "<empty>")
-	testStatusText(t, 1, 1, 1, "1 line  100%")
+	testStatusText(t, linenumbers.LineNumber{}, linenumbers.LineNumber{}, 0, "<empty>")
+	testStatusText(t, linenumbers.LineNumber{}, linenumbers.LineNumber{}, 1, "1 line  100%")
 
 	// Test with filename
 	testMe, err := NewReaderFromFilename(samplesDir+"/empty", *styles.Get("native"), formatters.TTY16m, nil)
@@ -280,7 +284,10 @@ func TestStatusText(t *testing.T) {
 		panic(err)
 	}
 
-	line, overflow := testMe.GetLines(0, 0)
+	line, overflow := testMe.GetLines(linenumbers.LineNumber{}, 0)
+	if line.lines != nil {
+		t.Error("line.lines is should have been nil when reading from an empty stream")
+	}
 	assert.Equal(t, line.statusText, "empty: <empty>")
 	assert.Equal(t, overflow, didFit) // Empty always fits
 }
@@ -296,7 +303,7 @@ func testCompressedFile(t *testing.T, filename string) {
 		panic(err)
 	}
 
-	lines, _ := reader.GetLines(1, 5)
+	lines, _ := reader.GetLines(linenumbers.LineNumber{}, 5)
 	assert.Equal(t, lines.lines[0].Plain(nil), "This is a compressed file", "%s", filename)
 }
 

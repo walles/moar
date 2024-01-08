@@ -6,14 +6,15 @@ import (
 	"unicode/utf8"
 
 	log "github.com/sirupsen/logrus"
+	"github.com/walles/moar/m/linenumbers"
 	"github.com/walles/moar/twin"
 )
 
 const esc = '\x1b'
 
 type styledStringSplitter struct {
-	input              string
-	lineNumberOneBased *int
+	input      string
+	lineNumber *linenumbers.LineNumber
 
 	nextByteIndex     int
 	previousByteIndex int
@@ -28,7 +29,7 @@ type styledStringSplitter struct {
 }
 
 // Returns the style of the line's trailer
-func styledStringsFromString(s string, lineNumberOneBased *int, callback func(string, twin.Style)) twin.Style {
+func styledStringsFromString(s string, lineNumber *linenumbers.LineNumber, callback func(string, twin.Style)) twin.Style {
 	if !strings.ContainsAny(s, "\x1b") {
 		// This shortcut makes BenchmarkPlainTextSearch() perform a lot better
 		callback(s, twin.StyleDefault)
@@ -36,9 +37,9 @@ func styledStringsFromString(s string, lineNumberOneBased *int, callback func(st
 	}
 
 	splitter := styledStringSplitter{
-		input:              s,
-		lineNumberOneBased: lineNumberOneBased,
-		callback:           callback,
+		input:      s,
+		lineNumber: lineNumber,
+		callback:   callback,
 	}
 	splitter.run()
 
@@ -80,8 +81,8 @@ func (s *styledStringSplitter) run() {
 			err := s.handleEscape()
 			if err != nil {
 				header := ""
-				if s.lineNumberOneBased != nil {
-					header = fmt.Sprintf("Line %d: ", *s.lineNumberOneBased)
+				if s.lineNumber != nil {
+					header = fmt.Sprintf("Line %s: ", s.lineNumber.Format())
 				}
 
 				failed := s.input[escIndex:s.nextByteIndex]

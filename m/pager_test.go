@@ -13,6 +13,7 @@ import (
 	"github.com/alecthomas/chroma/v2/lexers"
 	"github.com/alecthomas/chroma/v2/styles"
 	"github.com/google/go-cmp/cmp"
+	"github.com/walles/moar/m/linenumbers"
 	"github.com/walles/moar/m/textstyles"
 	"github.com/walles/moar/twin"
 	"gotest.tools/v3/assert"
@@ -278,7 +279,7 @@ func TestFindFirstHitSimple(t *testing.T) {
 	pager.searchPattern = toPattern("AB")
 
 	hit := pager.findFirstHit(newScrollPosition("TestFindFirstHitSimple"), false)
-	assert.Equal(t, hit.internalDontTouch.lineNumberOneBased, 1)
+	assert.Assert(t, hit.internalDontTouch.lineNumber.IsZero())
 	assert.Equal(t, hit.internalDontTouch.deltaScreenLines, 0)
 }
 
@@ -294,7 +295,7 @@ func TestFindFirstHitAnsi(t *testing.T) {
 	pager.searchPattern = toPattern("AB")
 
 	hit := pager.findFirstHit(newScrollPosition("TestFindFirstHitSimple"), false)
-	assert.Equal(t, hit.internalDontTouch.lineNumberOneBased, 1)
+	assert.Assert(t, hit.internalDontTouch.lineNumber.IsZero())
 	assert.Equal(t, hit.internalDontTouch.deltaScreenLines, 0)
 }
 
@@ -486,41 +487,51 @@ func TestIsScrolledToEnd_EmptyFile(t *testing.T) {
 // Verify that we can page all files in ../sample-files/* without crashing
 func TestPageSamples(t *testing.T) {
 	for _, fileName := range getTestFiles() {
-		file, err := os.Open(fileName)
-		if err != nil {
-			t.Errorf("Error opening file <%s>: %s", fileName, err.Error())
-			continue
-		}
-		defer func() {
-			if err := file.Close(); err != nil {
-				panic(err)
+		t.Run(fileName, func(t *testing.T) {
+			file, err := os.Open(fileName)
+			if err != nil {
+				t.Errorf("Error opening file <%s>: %s", fileName, err.Error())
+				return
 			}
-		}()
+			defer func() {
+				if err := file.Close(); err != nil {
+					panic(err)
+				}
+			}()
 
-		myReader := NewReaderFromStream(fileName, file, chroma.Style{}, nil, nil)
-		for !myReader.done.Load() {
-		}
+			myReader := NewReaderFromStream(fileName, file, chroma.Style{}, nil, nil)
+			for !myReader.done.Load() {
+			}
 
-		pager := NewPager(myReader)
-		pager.WrapLongLines = false
-		pager.ShowLineNumbers = false
+			pager := NewPager(myReader)
+			pager.WrapLongLines = false
+			pager.ShowLineNumbers = false
 
-		// Heigh 3 = two lines of contents + one footer
-		screen := twin.NewFakeScreen(10, 3)
+			// Heigh 3 = two lines of contents + one footer
+			screen := twin.NewFakeScreen(10, 3)
 
-		// Exit immediately
-		pager.Quit()
+			// Exit immediately
+			pager.Quit()
 
-		// Get contents onto our fake screen
-		pager.StartPaging(screen, nil, nil)
-		pager.redraw("")
+			// Get contents onto our fake screen
+			pager.StartPaging(screen, nil, nil)
+			pager.redraw("")
 
-		firstReaderLine := myReader.GetLine(0)
-		if firstReaderLine == nil {
-			continue
-		}
-		firstPagerLine := rowToString(screen.GetRow(0))
-		assert.Assert(t, strings.HasPrefix(firstReaderLine.Plain(nil), firstPagerLine))
+			firstReaderLine := myReader.GetLine(linenumbers.LineNumber{})
+			if firstReaderLine == nil {
+				return
+			}
+			firstPagerLine := rowToString(screen.GetRow(0))
+
+			// Handle the case when first line is chopped off to the right
+			firstPagerLine = strings.TrimSuffix(firstPagerLine, ">")
+
+			assert.Assert(t,
+				strings.HasPrefix(firstReaderLine.Plain(nil), firstPagerLine),
+				"\nreader line = <%s>\npager line  = <%s>",
+				firstReaderLine.Plain(nil), firstPagerLine,
+			)
+		})
 	}
 }
 
