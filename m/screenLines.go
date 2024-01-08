@@ -2,7 +2,6 @@ package m
 
 import (
 	"fmt"
-	"path"
 
 	"github.com/walles/moar/m/linenumbers"
 	"github.com/walles/moar/m/textstyles"
@@ -134,22 +133,23 @@ func (p *Pager) renderLines() ([]renderedLine, string, overflowState) {
 	wantedLineCount := p.visibleHeight()
 
 	screenOverflow := didFit
-	lineNumber := p.lineNumber()
-	if lineNumber == nil {
-		// This means the pager contains no lines
-		prefix := ""
-		if p.reader.name != nil {
-			prefix = path.Base(*p.reader.name) + ": "
-		}
 
-		return []renderedLine{}, prefix + "<empty>", didFit
+	var lineNumber linenumbers.LineNumber
+	if p.lineNumber() != nil {
+		lineNumber = *p.lineNumber()
+	} else {
+		// No lines to show, line number doesn't matter, pick anything. But we
+		// still want one so that we can get the status text from the reader
+		// below.
+		lineNumber = linenumbers.LineNumber{}
 	}
+
 	if !lineNumber.IsZero() {
 		// We're scrolled down, meaning everything is not visible on screen
 		screenOverflow = didOverflow
 	}
 
-	inputLines, readerOverflow := p.reader.GetLines(*p.lineNumber(), wantedLineCount)
+	inputLines, readerOverflow := p.reader.GetLines(lineNumber, wantedLineCount)
 	if inputLines.lines == nil {
 		// Empty input, empty output
 		return []renderedLine{}, inputLines.statusText, didFit
