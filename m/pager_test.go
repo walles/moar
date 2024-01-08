@@ -522,7 +522,15 @@ func TestPageSamples(t *testing.T) {
 				return
 			}
 			firstPagerLine := rowToString(screen.GetRow(0))
-			assert.Assert(t, strings.HasPrefix(firstReaderLine.Plain(nil), firstPagerLine))
+
+			// Handle the case when first line is chopped off to the right
+			firstPagerLine = strings.TrimSuffix(firstPagerLine, ">")
+
+			assert.Assert(t,
+				strings.HasPrefix(firstReaderLine.Plain(nil), firstPagerLine),
+				"\nreader line = <%s>\npager line  = <%s>",
+				firstReaderLine.Plain(nil), firstPagerLine,
+			)
 		})
 	}
 }
