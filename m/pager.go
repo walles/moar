@@ -162,7 +162,8 @@ func NewPager(r *Reader) *Pager {
 	} else {
 		name = "Pager " + *r.name
 	}
-	return &Pager{
+
+	pager := Pager{
 		reader:           r,
 		quit:             false,
 		ShowLineNumbers:  true,
@@ -173,6 +174,10 @@ func NewPager(r *Reader) *Pager {
 		ScrollRightHint:  twin.NewCell('>', twin.StyleDefault.WithAttr(twin.AttrReverse)),
 		scrollPosition:   newScrollPosition(name),
 	}
+
+	pager.mode = PagerModeViewing{pager: &pager}
+
+	return &pager
 }
 
 // How many lines are visible on screen? Depends on screen height and whether or
@@ -299,6 +304,7 @@ func (p *Pager) StartPaging(screen twin.Screen, chromaStyle *chroma.Style, chrom
 
 	p.screen = screen
 	p.linePrefix = getLineColorPrefix(chromaStyle, chromaFormatter)
+	p.mode = PagerModeViewing{pager: p}
 
 	go func() {
 		for range p.reader.moreLinesAdded {
