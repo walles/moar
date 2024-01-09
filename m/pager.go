@@ -48,7 +48,11 @@ type Pager struct {
 	scrollPosition      scrollPosition
 	leftColumnZeroBased int
 
-	mode           PagerMode
+	// Maybe this should be renamed to "controller"? Because it controls the UI?
+	// But since we replace it in a lot of places based on the UI mode, maybe
+	// mode is better?
+	mode PagerMode
+
 	searchString   string
 	searchPattern  *regexp.Regexp
 	gotoLineString string
