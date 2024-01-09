@@ -6,13 +6,13 @@ type PagerModeMark struct {
 	pager *Pager
 }
 
-func (m PagerModeMark) drawFooter(statusText string, spinner string) {
+func (m PagerModeMark) drawFooter(_ string, _ string) {
 	p := m.pager
 
 	_, height := p.screen.Size()
 
 	pos := 0
-	for _, token := range "Press any key to label your mark: " + p.gotoLineString {
+	for _, token := range "Press any key to label your mark: " {
 		p.screen.SetCell(pos, height-1, twin.NewCell(token, twin.StyleDefault))
 		pos++
 	}
@@ -39,5 +39,6 @@ func (m PagerModeMark) onKey(key twin.KeyCode) {
 func (m PagerModeMark) onRune(char rune) {
 	m.pager.marks[char] = m.pager.scrollPosition
 
+	//nolint:gosimple // The linter's advice is just wrong here
 	m.pager.mode = PagerModeViewing{pager: m.pager}
 }
