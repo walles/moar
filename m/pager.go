@@ -129,8 +129,8 @@ Moving around
 * Left / right can be used to hide / show line numbers
 * Home and End for start / end of the document
 * 'g' for going to a specific line number
-* ' (single quote) sets a mark
-* 'm' jumps to the mark
+* 'm' sets a mark, you will be asked for a letter to label it with
+* ' (single quote) jumps to the mark
 * CTRL-p moves to the previous line
 * CTRL-n moves to the next line
 * PageUp / 'b' and PageDown / 'f'
