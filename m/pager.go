@@ -97,6 +97,11 @@ type Pager struct {
 
 	// Length of the longest line displayed. This is used for limiting scrolling to the right.
 	longestLineLength int
+
+	// Bookmarks that you can come back to.
+	//
+	// Ref: https://github.com/walles/moar/issues/175
+	marks map[rune]scrollPosition
 }
 
 type _PreHelpState struct {
