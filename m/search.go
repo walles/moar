@@ -51,6 +51,16 @@ func (p *Pager) findFirstHit(startPosition scrollPosition, backwards bool) *scro
 	}
 }
 
+func (p *Pager) isViewing() bool {
+	_, isViewing := p.mode.(PagerModeViewing)
+	return isViewing
+}
+
+func (p *Pager) isNotFound() bool {
+	_, isNotFound := p.mode.(PagerModeNotFound)
+	return isNotFound
+}
+
 func (p *Pager) scrollToNextSearchHit() {
 	if p.searchPattern == nil {
 		// Nothing to search for, never mind
@@ -62,21 +72,21 @@ func (p *Pager) scrollToNextSearchHit() {
 		return
 	}
 
-	if p.mode == _Viewing && p.isScrolledToEnd() {
-		p.mode = _NotFound
+	if p.isViewing() && p.isScrolledToEnd() {
+		p.mode = PagerModeNotFound{pager: p}
 		return
 	}
 
 	var firstSearchPosition scrollPosition
 
-	switch p.mode {
-	case _Viewing:
+	switch {
+	case p.isViewing():
 		// Start searching on the first line below the bottom of the screen
 		firstSearchPosition = p.getLastVisiblePosition().NextLine(1)
 
-	case _NotFound:
+	case p.isNotFound():
 		// Restart searching from the top
-		p.mode = _Viewing
+		p.mode = PagerModeViewing{pager: p}
 		firstSearchPosition = newScrollPosition("firstSearchPosition")
 
 	default:
@@ -85,7 +95,7 @@ func (p *Pager) scrollToNextSearchHit() {
 
 	firstHitPosition := p.findFirstHit(firstSearchPosition, false)
 	if firstHitPosition == nil {
-		p.mode = _NotFound
+		p.mode = PagerModeNotFound{pager: p}
 		return
 	}
 	p.scrollPosition = *firstHitPosition
@@ -107,14 +117,14 @@ func (p *Pager) scrollToPreviousSearchHit() {
 
 	var firstSearchPosition scrollPosition
 
-	switch p.mode {
-	case _Viewing:
+	switch {
+	case p.isViewing():
 		// Start searching on the first line above the top of the screen
 		firstSearchPosition = p.scrollPosition.PreviousLine(1)
 
-	case _NotFound:
+	case p.isNotFound():
 		// Restart searching from the bottom
-		p.mode = _Viewing
+		p.mode = PagerModeViewing{pager: p}
 		p.scrollToEnd()
 
 	default:
@@ -123,7 +133,7 @@ func (p *Pager) scrollToPreviousSearchHit() {
 
 	firstHitPosition := p.findFirstHit(firstSearchPosition, true)
 	if firstHitPosition == nil {
-		p.mode = _NotFound
+		p.mode = PagerModeNotFound{pager: p}
 		return
 	}
 	p.scrollPosition = *firstHitPosition

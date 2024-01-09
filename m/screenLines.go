@@ -60,13 +60,6 @@ func (p *Pager) redraw(spinner string) overflowState {
 	}
 
 	p.mode.drawFooter(statusText, spinner)
-	switch p.mode {
-	case _NotFound:
-		p.setFooter("Not found: " + p.searchString)
-
-	default:
-		panic(fmt.Sprint("Unsupported pager mode: ", p.mode))
-	}
 
 	p.screen.Show()
 	return overflow
