@@ -184,7 +184,6 @@ func NewPager(r *Reader) *Pager {
 		ScrollLeftHint:   twin.NewCell('<', twin.StyleDefault.WithAttr(twin.AttrReverse)),
 		ScrollRightHint:  twin.NewCell('>', twin.StyleDefault.WithAttr(twin.AttrReverse)),
 		scrollPosition:   newScrollPosition(name),
-		marks:            make(map[rune]scrollPosition),
 	}
 
 	pager.mode = PagerModeViewing{pager: &pager}
