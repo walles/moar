@@ -154,9 +154,11 @@ func (m PagerModeViewing) onRune(char rune) {
 		p.TargetLineNumber = nil
 		p.gotoLineString = ""
 
+	// Should match the pagermode-not-found.go previous-search-hit bindings
 	case 'n':
 		p.scrollToNextSearchHit()
 
+	// Should match the pagermode-not-found.go next-search-hit bindings
 	case 'p', 'N':
 		p.scrollToPreviousSearchHit()
 
