@@ -21,20 +21,17 @@ func (m PagerModeJumpToMark) drawFooter(_ string, _ string) {
 		p.screen.SetCell(pos, height-1, twin.NewCell(token, twin.StyleDefault))
 		pos++
 	}
-
-	// Add a cursor
-	p.screen.SetCell(pos, height-1, twin.NewCell(' ', twin.StyleDefault.WithAttr(twin.AttrReverse)))
 }
 
 func (m PagerModeJumpToMark) getMarkPrompt() string {
 	// Special case having zero, one or multiple marks
 	if len(m.pager.marks) == 0 {
-		return "Press \"m\" to set your first mark!"
+		return "No marks set, press 'm' to set one!"
 	}
 
 	if len(m.pager.marks) == 1 {
 		for key := range m.pager.marks {
-			return "Press \"" + string(key) + "\" to jump to your mark!"
+			return "Jump to your mark: " + string(key)
 		}
 	}
 
@@ -44,7 +41,7 @@ func (m PagerModeJumpToMark) getMarkPrompt() string {
 		return marks[i] < marks[j]
 	})
 
-	prompt := "Press a key to jump to your mark: "
+	prompt := "Jump to one of these marks: "
 	for i, mark := range marks {
 		if i > 0 {
 			prompt += ", "
@@ -71,6 +68,12 @@ func (m PagerModeJumpToMark) onKey(key twin.KeyCode) {
 }
 
 func (m PagerModeJumpToMark) onRune(char rune) {
+	if len(m.pager.marks) == 0 && char == 'm' {
+		//nolint:gosimple // The linter's advice is just wrong here
+		m.pager.mode = PagerModeMark{pager: m.pager}
+		return
+	}
+
 	destination, ok := m.pager.marks[char]
 	if ok {
 		m.pager.scrollPosition = destination

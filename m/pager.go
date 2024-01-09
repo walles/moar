@@ -184,6 +184,7 @@ func NewPager(r *Reader) *Pager {
 		ScrollLeftHint:   twin.NewCell('<', twin.StyleDefault.WithAttr(twin.AttrReverse)),
 		ScrollRightHint:  twin.NewCell('>', twin.StyleDefault.WithAttr(twin.AttrReverse)),
 		scrollPosition:   newScrollPosition(name),
+		marks:            make(map[rune]scrollPosition),
 	}
 
 	pager.mode = PagerModeViewing{pager: &pager}
@@ -316,6 +317,7 @@ func (p *Pager) StartPaging(screen twin.Screen, chromaStyle *chroma.Style, chrom
 	p.screen = screen
 	p.linePrefix = getLineColorPrefix(chromaStyle, chromaFormatter)
 	p.mode = PagerModeViewing{pager: p}
+	p.marks = make(map[rune]scrollPosition)
 
 	go func() {
 		for range p.reader.moreLinesAdded {
