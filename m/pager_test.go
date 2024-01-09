@@ -462,7 +462,7 @@ func TestIsScrolledToEnd_WrappedLastLine(t *testing.T) {
 	pager.scrollToEnd()
 	assert.Equal(t, true, pager.isScrolledToEnd())
 
-	pager.onKey(twin.KeyUp)
+	pager.mode.onKey(twin.KeyUp)
 	pager.redraw("XXX")
 	assert.Equal(t, false, pager.isScrolledToEnd())
 }

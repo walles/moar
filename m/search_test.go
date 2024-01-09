@@ -7,6 +7,21 @@ import (
 	"gotest.tools/v3/assert"
 )
 
+func modeName(pager *Pager) string {
+	switch pager.mode.(type) {
+	case PagerModeViewing:
+		return "Viewing"
+	case PagerModeNotFound:
+		return "NotFound"
+	case PagerModeSearch:
+		return "Search"
+	case PagerModeGotoLine:
+		return "GotoLine"
+	default:
+		panic("Unknown pager mode")
+	}
+}
+
 // Create a pager with three screen lines reading from a six lines stream
 func createThreeLinesPager(t *testing.T) *Pager {
 	reader := NewReaderFromText("", "a\nb\nc\nd\ne\nf\n")
@@ -16,7 +31,7 @@ func createThreeLinesPager(t *testing.T) *Pager {
 
 	pager.screen = screen
 
-	assert.Equal(t, _Viewing, pager.mode, "Initial pager state")
+	assert.Equal(t, "Viewing", modeName(pager), "Initial pager state")
 
 	return pager
 }
@@ -33,7 +48,7 @@ func TestScrollToNextSearchHit_StartAtBottom(t *testing.T) {
 	// Scroll to the next search hit
 	pager.scrollToNextSearchHit()
 
-	assert.Equal(t, _NotFound, pager.mode)
+	assert.Equal(t, "NotFound", modeName(pager))
 }
 
 func TestScrollToNextSearchHit_StartAtTop(t *testing.T) {
@@ -47,7 +62,7 @@ func TestScrollToNextSearchHit_StartAtTop(t *testing.T) {
 	// Scroll to the next search hit
 	pager.scrollToNextSearchHit()
 
-	assert.Equal(t, _NotFound, pager.mode)
+	assert.Equal(t, "NotFound", modeName(pager))
 }
 
 func TestScrollToNextSearchHit_WrapAfterNotFound(t *testing.T) {
@@ -61,12 +76,12 @@ func TestScrollToNextSearchHit_WrapAfterNotFound(t *testing.T) {
 
 	// Scroll to the next search hit, this should take us into _NotFound
 	pager.scrollToNextSearchHit()
-	assert.Equal(t, _NotFound, pager.mode)
+	assert.Equal(t, "NotFound", modeName(pager))
 
 	// Scroll to the next search hit, this should wrap the search and take us to
 	// the top
 	pager.scrollToNextSearchHit()
-	assert.Equal(t, _Viewing, pager.mode)
+	assert.Equal(t, "Viewing", modeName(pager))
 	assert.Assert(t, pager.lineNumber().IsZero())
 }
 
@@ -81,12 +96,12 @@ func TestScrollToNextSearchHit_WrapAfterFound(t *testing.T) {
 
 	// Scroll to the next search hit, this should take us into _NotFound
 	pager.scrollToNextSearchHit()
-	assert.Equal(t, _NotFound, pager.mode)
+	assert.Equal(t, "NotFound", modeName(pager))
 
 	// Scroll to the next search hit, this should wrap the search and take us
 	// back to the bottom again
 	pager.scrollToNextSearchHit()
-	assert.Equal(t, _Viewing, pager.mode)
+	assert.Equal(t, "Viewing", modeName(pager))
 	assert.Equal(t, 5, pager.lineNumber().AsOneBased())
 }
 
@@ -97,15 +112,16 @@ func Test152(t *testing.T) {
 	screen := twin.NewFakeScreen(20, 5)
 	pager := NewPager(reader)
 	pager.screen = screen
-	assert.Equal(t, _Viewing, pager.mode, "Initial pager state")
+	assert.Equal(t, "Viewing", modeName(pager), "Initial pager state")
 
 	// Search for the first not-visible hit
 	pager.searchString = "abcde"
-	pager.mode = _Searching
+	searchMode := PagerModeSearch{pager: pager}
+	pager.mode = searchMode
 
 	// Scroll to the next search hit
-	pager.updateSearchPattern()
+	searchMode.updateSearchPattern()
 
-	assert.Equal(t, _Searching, pager.mode)
+	assert.Equal(t, "Search", modeName(pager))
 	assert.Equal(t, 3, pager.lineNumber().AsOneBased())
 }

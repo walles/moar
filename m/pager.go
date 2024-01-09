@@ -13,14 +13,11 @@ import (
 	"github.com/walles/moar/twin"
 )
 
-type _PagerMode int
-
-const (
-	_Viewing _PagerMode = iota
-	_Searching
-	_NotFound
-	_GotoLine
-)
+type PagerMode interface {
+	onKey(key twin.KeyCode)
+	onRune(char rune)
+	drawFooter(statusText string, spinner string)
+}
 
 type StatusBarOption int
 
@@ -51,7 +48,11 @@ type Pager struct {
 	scrollPosition      scrollPosition
 	leftColumnZeroBased int
 
-	mode           _PagerMode
+	// Maybe this should be renamed to "controller"? Because it controls the UI?
+	// But since we replace it in a lot of places based on the UI mode, maybe
+	// mode is better?
+	mode PagerMode
+
 	searchString   string
 	searchPattern  *regexp.Regexp
 	gotoLineString string
@@ -157,10 +158,6 @@ Source Code
 Available at https://github.com/walles/moar/.
 `)
 
-func (pm _PagerMode) isViewing() bool {
-	return pm == _Viewing || pm == _NotFound
-}
-
 // NewPager creates a new Pager with default settings
 func NewPager(r *Reader) *Pager {
 	var name string
@@ -169,7 +166,8 @@ func NewPager(r *Reader) *Pager {
 	} else {
 		name = "Pager " + *r.name
 	}
-	return &Pager{
+
+	pager := Pager{
 		reader:           r,
 		quit:             false,
 		ShowLineNumbers:  true,
@@ -180,6 +178,10 @@ func NewPager(r *Reader) *Pager {
 		ScrollRightHint:  twin.NewCell('>', twin.StyleDefault.WithAttr(twin.AttrReverse)),
 		scrollPosition:   newScrollPosition(name),
 	}
+
+	pager.mode = PagerModeViewing{pager: &pager}
+
+	return &pager
 }
 
 // How many lines are visible on screen? Depends on screen height and whether or
@@ -192,6 +194,7 @@ func (p *Pager) visibleHeight() int {
 	return height
 }
 
+// Draw the footer string at the bottom using the status bar style
 func (p *Pager) setFooter(footer string) {
 	width, height := p.screen.Size()
 
@@ -261,175 +264,6 @@ func (p *Pager) handleScrolledDown() {
 	}
 }
 
-func (p *Pager) onKey(keyCode twin.KeyCode) {
-	if p.mode == _Searching {
-		p.onSearchKey(keyCode)
-		return
-	}
-	if p.mode == _GotoLine {
-		p.onGotoLineKey(keyCode)
-		return
-	}
-	if p.mode != _Viewing && p.mode != _NotFound {
-		panic(fmt.Sprint("Unhandled mode: ", p.mode))
-	}
-
-	// Reset the not-found marker on non-search keypresses
-	p.mode = _Viewing
-
-	switch keyCode {
-	case twin.KeyEscape:
-		p.Quit()
-
-	case twin.KeyUp:
-		// Clipping is done in _Redraw()
-		p.scrollPosition = p.scrollPosition.PreviousLine(1)
-		p.handleScrolledUp()
-
-	case twin.KeyDown, twin.KeyEnter:
-		// Clipping is done in _Redraw()
-		p.scrollPosition = p.scrollPosition.NextLine(1)
-		p.handleScrolledDown()
-
-	case twin.KeyRight:
-		p.moveRight(p.SideScrollAmount)
-
-	case twin.KeyLeft:
-		p.moveRight(-p.SideScrollAmount)
-
-	case twin.KeyAltRight:
-		p.moveRight(1)
-
-	case twin.KeyAltLeft:
-		p.moveRight(-1)
-
-	case twin.KeyHome:
-		p.scrollPosition = newScrollPosition("Pager scroll position")
-		p.handleScrolledUp()
-
-	case twin.KeyEnd:
-		p.scrollToEnd()
-
-	case twin.KeyPgUp:
-		p.scrollPosition = p.scrollPosition.PreviousLine(p.visibleHeight())
-		p.handleScrolledUp()
-
-	case twin.KeyPgDown:
-		p.scrollPosition = p.scrollPosition.NextLine(p.visibleHeight())
-		p.handleScrolledDown()
-
-	default:
-		log.Debugf("Unhandled key event %v", keyCode)
-	}
-}
-
-func (p *Pager) onRune(char rune) {
-	if p.mode == _Searching {
-		p.onSearchRune(char)
-		return
-	}
-	if p.mode == _GotoLine {
-		p.onGotoLineRune(char)
-		return
-	}
-	if p.mode != _Viewing && p.mode != _NotFound {
-		panic(fmt.Sprint("Unhandled mode: ", p.mode))
-	}
-
-	switch char {
-	case 'q':
-		p.Quit()
-
-	case '?':
-		if !p.isShowingHelp {
-			p.preHelpState = &_PreHelpState{
-				reader:              p.reader,
-				scrollPosition:      p.scrollPosition,
-				leftColumnZeroBased: p.leftColumnZeroBased,
-				targetLineNumber:    p.TargetLineNumber,
-			}
-			p.reader = _HelpReader
-			p.scrollPosition = newScrollPosition("Pager scroll position")
-			p.leftColumnZeroBased = 0
-			p.TargetLineNumber = nil
-			p.isShowingHelp = true
-		}
-
-	case '=':
-		p.ShowStatusBar = !p.ShowStatusBar
-
-	// '\x10' = CTRL-p, should scroll up one line.
-	// Ref: https://github.com/walles/moar/issues/107#issuecomment-1328354080
-	case 'k', 'y', '\x10':
-		// Clipping is done in _Redraw()
-		p.scrollPosition = p.scrollPosition.PreviousLine(1)
-		p.handleScrolledUp()
-
-	// '\x0e' = CTRL-n, should scroll down one line.
-	// Ref: https://github.com/walles/moar/issues/107#issuecomment-1328354080
-	case 'j', 'e', '\x0e':
-		// Clipping is done in _Redraw()
-		p.scrollPosition = p.scrollPosition.NextLine(1)
-		p.handleScrolledDown()
-
-	case 'l':
-		// vim right
-		p.moveRight(p.SideScrollAmount)
-
-	case 'h':
-		// vim left
-		p.moveRight(-p.SideScrollAmount)
-
-	case '<':
-		p.scrollPosition = newScrollPosition("Pager scroll position")
-		p.handleScrolledUp()
-
-	case '>', 'G':
-		p.scrollToEnd()
-
-	case 'f', ' ':
-		p.scrollPosition = p.scrollPosition.NextLine(p.visibleHeight())
-		p.handleScrolledDown()
-
-	case 'b':
-		p.scrollPosition = p.scrollPosition.PreviousLine(p.visibleHeight())
-		p.handleScrolledUp()
-
-	// '\x15' = CTRL-u, should work like just 'u'.
-	// Ref: https://github.com/walles/moar/issues/90
-	case 'u', '\x15':
-		p.scrollPosition = p.scrollPosition.PreviousLine(p.visibleHeight() / 2)
-		p.handleScrolledUp()
-
-	// '\x04' = CTRL-d, should work like just 'd'.
-	// Ref: https://github.com/walles/moar/issues/90
-	case 'd', '\x04':
-		p.scrollPosition = p.scrollPosition.NextLine(p.visibleHeight() / 2)
-		p.handleScrolledDown()
-
-	case '/':
-		p.mode = _Searching
-		p.searchString = ""
-		p.searchPattern = nil
-
-	case 'g':
-		p.mode = _GotoLine
-		p.gotoLineString = ""
-
-	case 'n':
-		p.scrollToNextSearchHit()
-
-	case 'p', 'N':
-		p.scrollToPreviousSearchHit()
-
-	case 'w':
-		p.WrapLongLines = !p.WrapLongLines
-
-	default:
-		log.Debugf("Unhandled rune keypress '%s'/0x%08x", string(char), int32(char))
-	}
-}
-
 // Return an ANSI SGR sequence to use for plain text. Can be "".
 func getLineColorPrefix(chromaStyle *chroma.Style, chromaFormatter *chroma.Formatter) string {
 	if chromaStyle == nil && chromaFormatter == nil {
@@ -474,6 +308,7 @@ func (p *Pager) StartPaging(screen twin.Screen, chromaStyle *chroma.Style, chrom
 
 	p.screen = screen
 	p.linePrefix = getLineColorPrefix(chromaStyle, chromaFormatter)
+	p.mode = PagerModeViewing{pager: p}
 
 	go func() {
 		for range p.reader.moreLinesAdded {
@@ -549,11 +384,11 @@ func (p *Pager) StartPaging(screen twin.Screen, chromaStyle *chroma.Style, chrom
 		switch event := event.(type) {
 		case twin.EventKeyCode:
 			log.Tracef("Handling key event %d...", event.KeyCode())
-			p.onKey(event.KeyCode())
+			p.mode.onKey(event.KeyCode())
 
 		case twin.EventRune:
 			log.Tracef("Handling rune event '%c'/0x%04x...", event.Rune(), event.Rune())
-			p.onRune(event.Rune())
+			p.mode.onRune(event.Rune())
 
 		case twin.EventMouse:
 			log.Tracef("Handling mouse event %d...", event.Buttons())
@@ -581,12 +416,13 @@ func (p *Pager) StartPaging(screen twin.Screen, chromaStyle *chroma.Style, chrom
 			return
 
 		case eventMoreLinesAvailable:
-			if p.mode.isViewing() && p.TargetLineNumber != nil {
+			if p.TargetLineNumber != nil {
 				// The user wants to scroll down to a specific line number
 				if linenumbers.LineNumberFromLength(p.reader.GetLineCount()).IsBefore(*p.TargetLineNumber) {
 					// Not there yet, keep scrolling
 					p.scrollToEnd()
 				} else {
+					// We see the target, scroll to it
 					p.scrollPosition = NewScrollPositionFromLineNumber(*p.TargetLineNumber, "goToTargetLineNumber")
 					p.TargetLineNumber = nil
 				}
