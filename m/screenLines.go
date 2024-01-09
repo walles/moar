@@ -59,23 +59,13 @@ func (p *Pager) redraw(spinner string) overflowState {
 		p.screen.SetCell(column, lastUpdatedScreenLineNumber+1, cell)
 	}
 
-	p.mode.drawFooter()
+	p.mode.drawFooter(statusText, spinner)
 	switch p.mode {
 	case _NotFound:
 		p.setFooter("Not found: " + p.searchString)
 
 	case _GotoLine:
 		p.addGotoLineFooter()
-
-	case _Viewing:
-		helpText := "Press 'ESC' / 'q' to exit, '/' to search, '?' for help"
-		if p.isShowingHelp {
-			helpText = "Press 'ESC' / 'q' to exit help, '/' to search"
-		}
-
-		if p.ShowStatusBar {
-			p.setFooter(statusText + spinner + "  " + helpText)
-		}
 
 	default:
 		panic(fmt.Sprint("Unsupported pager mode: ", p.mode))

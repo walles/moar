@@ -13,7 +13,7 @@ type PagerModeSearch struct {
 	pager *Pager
 }
 
-func (m PagerModeSearch) drawFooter() {
+func (m PagerModeSearch) drawFooter(statusText string, spinner string) {
 	width, height := m.pager.screen.Size()
 
 	pos := 0
@@ -107,7 +107,7 @@ func (m PagerModeSearch) onKey(key twin.KeyCode) {
 
 	case twin.KeyUp, twin.KeyDown, twin.KeyPgUp, twin.KeyPgDown:
 		m.pager.mode = PagerModeViewing{pager: m.pager}
-		m.pager.onKey(key)
+		m.pager.mode.onKey(key)
 
 	default:
 		log.Debugf("Unhandled search key event %v", key)
