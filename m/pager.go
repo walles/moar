@@ -97,6 +97,11 @@ type Pager struct {
 
 	// Length of the longest line displayed. This is used for limiting scrolling to the right.
 	longestLineLength int
+
+	// Bookmarks that you can come back to.
+	//
+	// Ref: https://github.com/walles/moar/issues/175
+	marks map[rune]scrollPosition
 }
 
 type _PreHelpState struct {
@@ -122,12 +127,14 @@ Moving around
 * Arrow keys
 * Alt key plus left / right arrow steps one column at a time
 * Left / right can be used to hide / show line numbers
+* Home and End for start / end of the document
+* 'g' for going to a specific line number
+* 'm' sets a mark, you will be asked for a letter to label it with
+* ' (single quote) jumps to the mark
 * CTRL-p moves to the previous line
 * CTRL-n moves to the next line
-* 'g' for going to a specific line number
 * PageUp / 'b' and PageDown / 'f'
 * SPACE moves down a page
-* Home and End for start / end of the document
 * < / 'gg' to go to the start of the document
 * > / 'G' to go to the end of the document
 * 'h', 'l' for left and right (as in vim)
@@ -309,6 +316,7 @@ func (p *Pager) StartPaging(screen twin.Screen, chromaStyle *chroma.Style, chrom
 	p.screen = screen
 	p.linePrefix = getLineColorPrefix(chromaStyle, chromaFormatter)
 	p.mode = PagerModeViewing{pager: p}
+	p.marks = make(map[rune]scrollPosition)
 
 	go func() {
 		for range p.reader.moreLinesAdded {
