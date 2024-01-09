@@ -6,7 +6,7 @@ type PagerModeNotFound struct {
 	pager *Pager
 }
 
-func (m PagerModeNotFound) drawFooter(statusText string, spinner string) {
+func (m PagerModeNotFound) drawFooter(_ string, _ string) {
 	m.pager.setFooter("Not found: " + m.pager.searchString)
 }
 

@@ -12,7 +12,7 @@ type PagerModeGotoLine struct {
 	pager *Pager
 }
 
-func (m PagerModeGotoLine) drawFooter(statusText string, spinner string) {
+func (m PagerModeGotoLine) drawFooter(_ string, _ string) {
 	p := m.pager
 
 	_, height := p.screen.Size()

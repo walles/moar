@@ -13,7 +13,7 @@ type PagerModeSearch struct {
 	pager *Pager
 }
 
-func (m PagerModeSearch) drawFooter(statusText string, spinner string) {
+func (m PagerModeSearch) drawFooter(_ string, _ string) {
 	width, height := m.pager.screen.Size()
 
 	pos := 0
