@@ -122,12 +122,14 @@ Moving around
 * Arrow keys
 * Alt key plus left / right arrow steps one column at a time
 * Left / right can be used to hide / show line numbers
+* Home and End for start / end of the document
+* 'g' for going to a specific line number
+* ' (single quote) sets a mark
+* 'm' jumps to the mark
 * CTRL-p moves to the previous line
 * CTRL-n moves to the next line
-* 'g' for going to a specific line number
 * PageUp / 'b' and PageDown / 'f'
 * SPACE moves down a page
-* Home and End for start / end of the document
 * < / 'gg' to go to the start of the document
 * > / 'G' to go to the end of the document
 * 'h', 'l' for left and right (as in vim)

@@ -162,6 +162,14 @@ func (m PagerModeViewing) onRune(char rune) {
 	case 'p', 'N':
 		p.scrollToPreviousSearchHit()
 
+	case 'm':
+		p.mode = PagerModeMark{pager: p}
+		p.TargetLineNumber = nil
+
+	case '\'':
+		p.mode = PagerModeJumpToMark{pager: p}
+		p.TargetLineNumber = nil
+
 	case 'w':
 		p.WrapLongLines = !p.WrapLongLines
 
