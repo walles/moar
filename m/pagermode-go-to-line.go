@@ -8,7 +8,13 @@ import (
 	"github.com/walles/moar/twin"
 )
 
-func (p *Pager) addGotoLineFooter() {
+type PagerModeGotoLine struct {
+	pager *Pager
+}
+
+func (m PagerModeGotoLine) drawFooter(statusText string, spinner string) {
+	p := m.pager
+
 	_, height := p.screen.Size()
 
 	pos := 0
@@ -21,7 +27,9 @@ func (p *Pager) addGotoLineFooter() {
 	p.screen.SetCell(pos, height-1, twin.NewCell(' ', twin.StyleDefault.WithAttr(twin.AttrReverse)))
 }
 
-func (p *Pager) onGotoLineKey(key twin.KeyCode) {
+func (m PagerModeGotoLine) onKey(key twin.KeyCode) {
+	p := m.pager
+
 	switch key {
 	case twin.KeyEnter:
 		newLineNumber, err := strconv.Atoi(p.gotoLineString)
@@ -31,10 +39,10 @@ func (p *Pager) onGotoLineKey(key twin.KeyCode) {
 				"onGotoLineKey",
 			)
 		}
-		p.mode = _Viewing
+		p.mode = PagerModeViewing{pager: p}
 
 	case twin.KeyEscape:
-		p.mode = _Viewing
+		p.mode = PagerModeViewing{pager: p}
 
 	case twin.KeyBackspace, twin.KeyDelete:
 		if len(p.gotoLineString) == 0 {
@@ -45,21 +53,23 @@ func (p *Pager) onGotoLineKey(key twin.KeyCode) {
 
 	default:
 		log.Tracef("Unhandled goto key event %v, treating as a viewing key event", key)
-		p.mode = _Viewing
-		p.onKey(key)
+		p.mode = PagerModeViewing{pager: p}
+		p.mode.onKey(key)
 	}
 }
 
-func (p *Pager) onGotoLineRune(char rune) {
+func (m PagerModeGotoLine) onRune(char rune) {
+	p := m.pager
+
 	if char == 'q' {
-		p.mode = _Viewing
+		p.mode = PagerModeViewing{pager: p}
 		return
 	}
 
 	if char == 'g' {
 		p.scrollPosition = newScrollPosition("Pager scroll position")
 		p.handleScrolledUp()
-		p.mode = _Viewing
+		p.mode = PagerModeViewing{pager: p}
 		return
 	}
 

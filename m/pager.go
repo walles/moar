@@ -187,6 +187,7 @@ func (p *Pager) visibleHeight() int {
 	return height
 }
 
+// Draw the footer string at the bottom using the status bar style
 func (p *Pager) setFooter(footer string) {
 	width, height := p.screen.Size()
 

@@ -64,9 +64,6 @@ func (p *Pager) redraw(spinner string) overflowState {
 	case _NotFound:
 		p.setFooter("Not found: " + p.searchString)
 
-	case _GotoLine:
-		p.addGotoLineFooter()
-
 	default:
 		panic(fmt.Sprint("Unsupported pager mode: ", p.mode))
 	}
