@@ -53,9 +53,8 @@ type Pager struct {
 	// mode is better?
 	mode PagerMode
 
-	searchString   string
-	searchPattern  *regexp.Regexp
-	gotoLineString string
+	searchString  string
+	searchPattern *regexp.Regexp
 
 	// We used to have a "Following" field here. If you want to follow, set
 	// TargetLineNumber to LineNumberMax() instead, see below.

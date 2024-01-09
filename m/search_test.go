@@ -15,7 +15,7 @@ func modeName(pager *Pager) string {
 		return "NotFound"
 	case PagerModeSearch:
 		return "Search"
-	case PagerModeGotoLine:
+	case *PagerModeGotoLine:
 		return "GotoLine"
 	default:
 		panic("Unknown pager mode")

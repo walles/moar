@@ -150,9 +150,8 @@ func (m PagerModeViewing) onRune(char rune) {
 		p.searchPattern = nil
 
 	case 'g':
-		p.mode = PagerModeGotoLine{pager: p}
+		p.mode = &PagerModeGotoLine{pager: p}
 		p.TargetLineNumber = nil
-		p.gotoLineString = ""
 
 	// Should match the pagermode-not-found.go previous-search-hit bindings
 	case 'n':
