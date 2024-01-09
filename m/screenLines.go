@@ -59,10 +59,8 @@ func (p *Pager) redraw(spinner string) overflowState {
 		p.screen.SetCell(column, lastUpdatedScreenLineNumber+1, cell)
 	}
 
+	p.mode.drawFooter()
 	switch p.mode {
-	case _Searching:
-		p.addSearchFooter()
-
 	case _NotFound:
 		p.setFooter("Not found: " + p.searchString)
 

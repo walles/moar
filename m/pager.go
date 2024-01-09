@@ -15,12 +15,11 @@ import (
 
 type _PagerMode int
 
-const (
-	_Viewing _PagerMode = iota
-	_Searching
-	_NotFound
-	_GotoLine
-)
+type PagerMode interface {
+	onKey(key twin.KeyCode)
+	onRune(char rune)
+	drawFooter()
+}
 
 type StatusBarOption int
 
@@ -51,7 +50,7 @@ type Pager struct {
 	scrollPosition      scrollPosition
 	leftColumnZeroBased int
 
-	mode           _PagerMode
+	mode           PagerMode
 	searchString   string
 	searchPattern  *regexp.Regexp
 	gotoLineString string
@@ -156,10 +155,6 @@ Source Code
 -----------
 Available at https://github.com/walles/moar/.
 `)
-
-func (pm _PagerMode) isViewing() bool {
-	return pm == _Viewing || pm == _NotFound
-}
 
 // NewPager creates a new Pager with default settings
 func NewPager(r *Reader) *Pager {
@@ -408,7 +403,7 @@ func (p *Pager) onRune(char rune) {
 		p.handleScrolledDown()
 
 	case '/':
-		p.mode = _Searching
+		p.mode = PagerModeSearch{pager: p}
 		p.searchString = ""
 		p.searchPattern = nil
 

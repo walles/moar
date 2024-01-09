@@ -101,11 +101,12 @@ func Test152(t *testing.T) {
 
 	// Search for the first not-visible hit
 	pager.searchString = "abcde"
-	pager.mode = _Searching
+	pager.mode = PagerModeSearch{pager: pager}
 
 	// Scroll to the next search hit
 	pager.updateSearchPattern()
 
-	assert.Equal(t, _Searching, pager.mode)
+	_, ok := pager.mode.(PagerModeSearch)
+	assert.Assert(t, ok, pager.mode)
 	assert.Equal(t, 3, pager.lineNumber().AsOneBased())
 }
