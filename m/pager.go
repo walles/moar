@@ -13,8 +13,6 @@ import (
 	"github.com/walles/moar/twin"
 )
 
-type _PagerMode int
-
 type PagerMode interface {
 	onKey(key twin.KeyCode)
 	onRune(char rune)

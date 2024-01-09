@@ -11,11 +11,13 @@ func (m PagerModeNotFound) drawFooter(_ string, _ string) {
 }
 
 func (m PagerModeNotFound) onKey(key twin.KeyCode) {
+	//nolint:gosimple // The linter's advice is just wrong here
 	m.pager.mode = PagerModeViewing{pager: m.pager}
 	m.pager.mode.onKey(key)
 }
 
 func (m PagerModeNotFound) onRune(r rune) {
+	//nolint:gosimple // The linter's advice is just wrong here
 	m.pager.mode = PagerModeViewing{pager: m.pager}
 	m.pager.mode.onRune(r)
 }
