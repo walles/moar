@@ -122,7 +122,6 @@ func Test152(t *testing.T) {
 	// Scroll to the next search hit
 	searchMode.updateSearchPattern()
 
-	_, ok := pager.mode.(PagerModeSearch)
-	assert.Assert(t, ok, pager.mode)
+	assert.Equal(t, "Search", modeName(pager))
 	assert.Equal(t, 3, pager.lineNumber().AsOneBased())
 }
