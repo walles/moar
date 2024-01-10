@@ -13,6 +13,8 @@ func TestHighlightedTokensWithManPageHeading(t *testing.T) {
 	textstyles.ManPageHeading = twin.StyleDefault.WithForeground(twin.NewColor16(2))
 
 	headingText := "JOHAN"
+
+	// For man page headings, this prefix should be ignored
 	prefix := "X"
 
 	manPageHeading := ""
@@ -23,14 +25,9 @@ func TestHighlightedTokensWithManPageHeading(t *testing.T) {
 	line := NewLine(manPageHeading)
 	highlighted := line.HighlightedTokens(prefix, nil, nil)
 
-	assert.Equal(t, len(highlighted.Cells), len(headingText)+len(prefix))
+	assert.Equal(t, len(highlighted.Cells), len(headingText))
 	for i, cell := range highlighted.Cells {
-		if i < len(prefix) {
-			// Ignore the prefix when checking
-			continue
-		}
-
-		assert.Equal(t, cell.Rune, rune(headingText[i-len(prefix)]))
+		assert.Equal(t, cell.Rune, rune(headingText[i]))
 		assert.Equal(t, cell.Style, textstyles.ManPageHeading)
 	}
 }
