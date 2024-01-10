@@ -40,16 +40,20 @@ func printUsageEnvVar(output io.Writer, envVarName string, description string) {
 	)
 }
 
-func printUsage(output io.Writer, flagSet *flag.FlagSet, printCommandline bool) {
+func printCommandline(output io.Writer) {
+	_, _ = fmt.Fprintln(output, "Commandline: moar", strings.Join(os.Args[1:], " "))
+	_, _ = fmt.Fprintf(output, "Environment: MOAR=\"%v\"\n", os.Getenv("MOAR"))
+	_, _ = fmt.Fprintln(output)
+}
+
+func printUsage(output io.Writer, flagSet *flag.FlagSet, withCommandline bool) {
 	// This controls where PrintDefaults() prints, see below
 	flagSet.SetOutput(output)
 
 	// FIXME: Log if any printouts fail?
-	moarEnv := os.Getenv("MOAR")
-	if printCommandline {
-		_, _ = fmt.Fprintln(output, "Commandline: moar", strings.Join(os.Args[1:], " "))
-		_, _ = fmt.Fprintf(output, "Environment: MOAR=\"%v\"\n", moarEnv)
-		_, _ = fmt.Fprintln(output)
+
+	if withCommandline {
+		printCommandline(output)
 	}
 
 	_, _ = fmt.Fprintln(output, "Usage:")
@@ -65,6 +69,8 @@ func printUsage(output io.Writer, flagSet *flag.FlagSet, printCommandline bool) 
 	_, _ = fmt.Fprintln(output, "  <https://github.com/walles/moar#readme>")
 	_, _ = fmt.Fprintln(output)
 	_, _ = fmt.Fprintln(output, "Environment:")
+
+	moarEnv := os.Getenv("MOAR")
 	if len(moarEnv) == 0 {
 		_, _ = fmt.Fprintln(output, "  Additional options are read from the MOAR environment variable if set.")
 		_, _ = fmt.Fprintln(output, "  But currently, the MOAR environment variable is not set.")
@@ -453,10 +459,18 @@ func main() {
 			return
 		}
 
-		boldErrorMessage := "\x1b[1m" + err.Error() + "\x1b[m"
+		errorText := err.Error()
+		if strings.HasPrefix(errorText, "invalid value") {
+			errorText = strings.Replace(errorText, ": ", "\n\n", 1)
+		}
+		boldErrorMessage := "\x1b[1m" + errorText + "\x1b[m"
 		fmt.Fprintln(os.Stderr, "ERROR:", boldErrorMessage)
 		fmt.Fprintln(os.Stderr)
-		printUsage(os.Stderr, flagSet, true)
+
+		printCommandline(os.Stderr)
+
+		fmt.Fprintln(os.Stderr, "For help, run: \x1b[1mmoar --help\x1b[m")
+
 		os.Exit(1)
 	}
 
