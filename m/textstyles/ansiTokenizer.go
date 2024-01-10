@@ -24,6 +24,7 @@ var UnprintableStyle UnprintableStyleT
 
 var ManPageBold = twin.StyleDefault.WithAttr(twin.AttrBold)
 var ManPageUnderline = twin.StyleDefault.WithAttr(twin.AttrUnderline)
+var ManPageHeading = twin.StyleDefault.WithAttr(twin.AttrBold)
 
 const _TabSize = 4
 

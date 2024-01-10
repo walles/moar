@@ -170,6 +170,37 @@ func TestManPages(t *testing.T) {
 	assert.Equal(t, tokens[2], twin.Cell{Rune: 'b', Style: twin.StyleDefault})
 }
 
+func TestManPageHeadings(t *testing.T) {
+	// Set a marker style we can recognize and test for
+	ManPageHeading = twin.StyleDefault.WithForeground(twin.NewColor16(2))
+
+	manPageHeading := ""
+	for _, char := range "JOHAN HELLO" {
+		manPageHeading += string(char) + "\b" + string(char)
+	}
+
+	notAllCaps := ""
+	for _, char := range "Johan Hello" {
+		notAllCaps += string(char) + "\b" + string(char)
+	}
+
+	// A line with only man page bold caps should be considered a heading
+	for _, token := range CellsFromString(manPageHeading, nil).Cells {
+		assert.Equal(t, token.Style, ManPageHeading)
+	}
+
+	// A line with only non-man-page bold caps should not be considered a heading
+	wrongKindOfBold := "\x1b[1mJOHAN HELLO"
+	for _, token := range CellsFromString(wrongKindOfBold, nil).Cells {
+		assert.Equal(t, token.Style, twin.StyleDefault.WithAttr(twin.AttrBold))
+	}
+
+	// A line with not all caps should not be considered a heading
+	for _, token := range CellsFromString(notAllCaps, nil).Cells {
+		assert.Equal(t, token.Style, twin.StyleDefault.WithAttr(twin.AttrBold))
+	}
+}
+
 func TestConsumeCompositeColorHappy(t *testing.T) {
 	// 8 bit color
 	// Example from: https://github.com/walles/moar/issues/14
