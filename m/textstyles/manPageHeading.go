@@ -2,6 +2,7 @@ package textstyles
 
 import (
 	"unicode"
+	"unicode/utf8"
 
 	"github.com/walles/moar/twin"
 )
@@ -35,6 +36,12 @@ func isManPageHeading(s string) bool {
 	if len(s) < 3 {
 		// We don't want to match empty strings. Also, strings of length 1 and 2
 		// cannot be man page headings since "char+backspace+char" is 3 bytes.
+		return false
+	}
+
+	firstChar, _ := utf8.DecodeRuneInString(s)
+	if unicode.IsSpace(firstChar) {
+		// Headings are not indented
 		return false
 	}
 

@@ -17,4 +17,6 @@ func TestIsManPageHeading(t *testing.T) {
 	assert.Assert(t, !isManPageHeading("a\ba"), "Not ALL CAPS")
 
 	assert.Assert(t, !isManPageHeading("A\bAX"), "Incomplete sequence")
+
+	assert.Assert(t, !isManPageHeading(" \b "), "Headings do not start with space")
 }
