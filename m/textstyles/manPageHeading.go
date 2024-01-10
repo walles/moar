@@ -39,12 +39,6 @@ func isManPageHeading(s string) bool {
 		return false
 	}
 
-	firstChar, _ := utf8.DecodeRuneInString(s)
-	if unicode.IsSpace(firstChar) {
-		// Headings are not indented
-		return false
-	}
-
 	var currentChar rune
 	nextCharNumber := 0
 	for _, char := range s {
@@ -67,6 +61,12 @@ func isManPageHeading(s string) bool {
 		default:
 			panic("Impossible")
 		}
+	}
+
+	firstChar, _ := utf8.DecodeRuneInString(s)
+	if unicode.IsSpace(firstChar) {
+		// Headings are not indented
+		return false
 	}
 
 	return nextCharNumber%3 == 0
