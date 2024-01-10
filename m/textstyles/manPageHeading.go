@@ -13,8 +13,10 @@ func manPageHeadingFromString(s string) *CellsWithTrailer {
 	}
 
 	cells := make([]twin.Cell, 0, len(s)/3)
-	for i, char := range s {
-		if i%3 > 0 {
+	cellIndex := -1
+	for _, char := range s {
+		cellIndex++
+		if cellIndex%3 > 0 {
 			continue
 		}
 
