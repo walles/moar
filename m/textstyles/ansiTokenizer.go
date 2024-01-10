@@ -108,6 +108,11 @@ func WithoutFormatting(s string, lineNumber *linenumbers.LineNumber) string {
 
 // Turn a (formatted) string into a series of screen cells
 func CellsFromString(s string, lineNumber *linenumbers.LineNumber) CellsWithTrailer {
+	manPageHeading := manPageHeadingFromString(s)
+	if manPageHeading != nil {
+		return *manPageHeading
+	}
+
 	var cells []twin.Cell
 
 	// Specs: https://en.wikipedia.org/wiki/ANSI_escape_code#3-bit_and_4-bit
