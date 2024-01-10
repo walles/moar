@@ -62,7 +62,7 @@ func isManPageHeading(s string) bool {
 		}
 	}
 
-	return true
+	return nextCharNumber%3 == 0
 }
 
 // Alphabetic chars must be upper case, all others are fine.
