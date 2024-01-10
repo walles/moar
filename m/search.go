@@ -2,6 +2,8 @@ package m
 
 import (
 	"fmt"
+
+	"github.com/walles/moar/m/linenumbers"
 )
 
 func (p *Pager) scrollToSearchHits() {
@@ -44,6 +46,11 @@ func (p *Pager) findFirstHit(startPosition scrollPosition, backwards bool) *scro
 		}
 
 		if backwards {
+			if (searchPosition == linenumbers.LineNumber{}) {
+				// No match, give up
+				return nil
+			}
+
 			searchPosition = searchPosition.NonWrappingAdd(-1)
 		} else {
 			searchPosition = searchPosition.NonWrappingAdd(1)

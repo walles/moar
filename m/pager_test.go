@@ -314,6 +314,22 @@ func TestFindFirstHitNoMatch(t *testing.T) {
 	assert.Assert(t, hit == nil)
 }
 
+func TestFindFirstHitNoMatchBackwards(t *testing.T) {
+	reader := NewReaderFromText("TestFindFirstHitSimple", "AB")
+	pager := NewPager(reader)
+	pager.screen = twin.NewFakeScreen(40, 10)
+
+	// Wait for reader to finish reading
+	for !reader.done.Load() {
+	}
+
+	pager.searchPattern = toPattern("this pattern should not be found")
+	theEnd := NewScrollPositionFromLineNumber(linenumbers.LineNumberMax(), "TestFindFirstHitSimple")
+
+	hit := pager.findFirstHit(theEnd, true)
+	assert.Assert(t, hit == nil)
+}
+
 // Converts a cell row to a plain string and removes trailing whitespace.
 func rowToString(row []twin.Cell) string {
 	rowString := ""
