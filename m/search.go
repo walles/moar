@@ -12,7 +12,7 @@ func (p *Pager) scrollToSearchHits() {
 		return
 	}
 
-	firstHitPosition := p.findFirstHit(p.scrollPosition, false)
+	firstHitPosition := p.findFirstHit(*p.scrollPosition.lineNumber(p), false)
 	if firstHitPosition == nil {
 		// No match, give up
 		return
@@ -26,13 +26,13 @@ func (p *Pager) scrollToSearchHits() {
 	p.scrollPosition = *firstHitPosition
 }
 
-func (p *Pager) findFirstHit(startPosition scrollPosition, backwards bool) *scrollPosition {
-	// FIXME: We should take startPosition.deltaScreenLines into account as well!
-
-	// NOTE: When we search, we do that by looping over the *input lines*, not
-	// the screen lines. That's why we're using an int rather than a
-	// scrollPosition for searching.
-	searchPosition := *startPosition.lineNumber(p)
+// NOTE: When we search, we do that by looping over the *input lines*, not
+// the screen lines. That's why we're using a line number rather than a
+// scrollPosition for searching.
+//
+// FIXME: We should take startPosition.deltaScreenLines into account as well!
+func (p *Pager) findFirstHit(startPosition linenumbers.LineNumber, backwards bool) *scrollPosition {
+	searchPosition := startPosition
 	for {
 		line := p.reader.GetLine(searchPosition)
 		if line == nil {
@@ -84,17 +84,18 @@ func (p *Pager) scrollToNextSearchHit() {
 		return
 	}
 
-	var firstSearchPosition scrollPosition
+	var firstSearchPosition linenumbers.LineNumber
 
 	switch {
 	case p.isViewing():
 		// Start searching on the first line below the bottom of the screen
-		firstSearchPosition = p.getLastVisiblePosition().NextLine(1)
+		position := p.getLastVisiblePosition().NextLine(1)
+		firstSearchPosition = *position.lineNumber(p)
 
 	case p.isNotFound():
 		// Restart searching from the top
 		p.mode = PagerModeViewing{pager: p}
-		firstSearchPosition = newScrollPosition("firstSearchPosition")
+		firstSearchPosition = linenumbers.LineNumber{}
 
 	default:
 		panic(fmt.Sprint("Unknown search mode when finding next: ", p.mode))
@@ -122,19 +123,22 @@ func (p *Pager) scrollToPreviousSearchHit() {
 		return
 	}
 
-	var firstSearchPosition scrollPosition
+	var firstSearchPosition linenumbers.LineNumber
 
-	if p.isNotFound() {
+	switch {
+	case p.isViewing():
+		// Start searching on the first line above the top of the screen
+		position := p.scrollPosition.PreviousLine(1)
+		firstSearchPosition = *position.lineNumber(p)
+
+	case p.isNotFound():
 		// Restart searching from the bottom
 		p.mode = PagerModeViewing{pager: p}
-		p.scrollToEnd()
-	}
-	if !p.isViewing() && !p.isNotFound() {
+		firstSearchPosition = *linenumbers.LineNumberFromLength(p.reader.GetLineCount())
+
+	default:
 		panic(fmt.Sprint("Unknown search mode when finding previous: ", p.mode))
 	}
-
-	// Start searching on the first line above the top of the screen
-	firstSearchPosition = p.scrollPosition.PreviousLine(1)
 
 	firstHitPosition := p.findFirstHit(firstSearchPosition, true)
 	if firstHitPosition == nil {

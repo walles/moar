@@ -278,7 +278,7 @@ func TestFindFirstHitSimple(t *testing.T) {
 
 	pager.searchPattern = toPattern("AB")
 
-	hit := pager.findFirstHit(newScrollPosition("TestFindFirstHitSimple"), false)
+	hit := pager.findFirstHit(linenumbers.LineNumber{}, false)
 	assert.Assert(t, hit.internalDontTouch.lineNumber.IsZero())
 	assert.Equal(t, hit.internalDontTouch.deltaScreenLines, 0)
 }
@@ -294,7 +294,7 @@ func TestFindFirstHitAnsi(t *testing.T) {
 
 	pager.searchPattern = toPattern("AB")
 
-	hit := pager.findFirstHit(newScrollPosition("TestFindFirstHitSimple"), false)
+	hit := pager.findFirstHit(linenumbers.LineNumber{}, false)
 	assert.Assert(t, hit.internalDontTouch.lineNumber.IsZero())
 	assert.Equal(t, hit.internalDontTouch.deltaScreenLines, 0)
 }
@@ -310,7 +310,7 @@ func TestFindFirstHitNoMatch(t *testing.T) {
 
 	pager.searchPattern = toPattern("this pattern should not be found")
 
-	hit := pager.findFirstHit(newScrollPosition("TestFindFirstHitSimple"), false)
+	hit := pager.findFirstHit(linenumbers.LineNumber{}, false)
 	assert.Assert(t, hit == nil)
 }
 
@@ -324,7 +324,7 @@ func TestFindFirstHitNoMatchBackwards(t *testing.T) {
 	}
 
 	pager.searchPattern = toPattern("this pattern should not be found")
-	theEnd := NewScrollPositionFromLineNumber(linenumbers.LineNumberMax(), "TestFindFirstHitSimple")
+	theEnd := *linenumbers.LineNumberFromLength(reader.GetLineCount())
 
 	hit := pager.findFirstHit(theEnd, true)
 	assert.Assert(t, hit == nil)
@@ -675,7 +675,7 @@ func benchmarkSearch(b *testing.B, highlighted bool) {
 	b.ResetTimer()
 
 	// This test will search through all the N copies we made of our file
-	hit := pager.findFirstHit(newScrollPosition("benchmarkSearch"), false)
+	hit := pager.findFirstHit(linenumbers.LineNumber{}, false)
 
 	if hit != nil {
 		panic(fmt.Errorf("This test is meant to scan the whole file without finding anything"))
