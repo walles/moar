@@ -78,7 +78,7 @@ func TestTokenize(t *testing.T) {
 				var loglines strings.Builder
 				log.SetOutput(&loglines)
 
-				tokens := CellsFromString(line, lineNumber).Cells
+				tokens := CellsFromString("", line, lineNumber).Cells
 				plainString := WithoutFormatting(line, lineNumber)
 				if len(tokens) != utf8.RuneCountInString(plainString) {
 					t.Errorf("%s:%s: len(tokens)=%d, len(plainString)=%d for: <%s>",
@@ -131,7 +131,7 @@ func TestTokenize(t *testing.T) {
 }
 
 func TestUnderline(t *testing.T) {
-	tokens := CellsFromString("a\x1b[4mb\x1b[24mc", nil).Cells
+	tokens := CellsFromString("", "a\x1b[4mb\x1b[24mc", nil).Cells
 	assert.Equal(t, len(tokens), 3)
 	assert.Equal(t, tokens[0], twin.Cell{Rune: 'a', Style: twin.StyleDefault})
 	assert.Equal(t, tokens[1], twin.Cell{Rune: 'b', Style: twin.StyleDefault.WithAttr(twin.AttrUnderline)})
@@ -140,14 +140,14 @@ func TestUnderline(t *testing.T) {
 
 func TestManPages(t *testing.T) {
 	// Bold
-	tokens := CellsFromString("ab\bbc", nil).Cells
+	tokens := CellsFromString("", "ab\bbc", nil).Cells
 	assert.Equal(t, len(tokens), 3)
 	assert.Equal(t, tokens[0], twin.Cell{Rune: 'a', Style: twin.StyleDefault})
 	assert.Equal(t, tokens[1], twin.Cell{Rune: 'b', Style: twin.StyleDefault.WithAttr(twin.AttrBold)})
 	assert.Equal(t, tokens[2], twin.Cell{Rune: 'c', Style: twin.StyleDefault})
 
 	// Underline
-	tokens = CellsFromString("a_\bbc", nil).Cells
+	tokens = CellsFromString("", "a_\bbc", nil).Cells
 	assert.Equal(t, len(tokens), 3)
 	assert.Equal(t, tokens[0], twin.Cell{Rune: 'a', Style: twin.StyleDefault})
 	assert.Equal(t, tokens[1], twin.Cell{Rune: 'b', Style: twin.StyleDefault.WithAttr(twin.AttrUnderline)})
@@ -155,7 +155,7 @@ func TestManPages(t *testing.T) {
 
 	// Bullet point 1, taken from doing this on my macOS system:
 	// env PAGER="hexdump -C" man printf | moar
-	tokens = CellsFromString("a+\b+\bo\bob", nil).Cells
+	tokens = CellsFromString("", "a+\b+\bo\bob", nil).Cells
 	assert.Equal(t, len(tokens), 3)
 	assert.Equal(t, tokens[0], twin.Cell{Rune: 'a', Style: twin.StyleDefault})
 	assert.Equal(t, tokens[1], twin.Cell{Rune: '•', Style: twin.StyleDefault})
@@ -163,11 +163,42 @@ func TestManPages(t *testing.T) {
 
 	// Bullet point 2, taken from doing this using the "fish" shell on my macOS system:
 	// man printf | hexdump -C | moar
-	tokens = CellsFromString("a+\bob", nil).Cells
+	tokens = CellsFromString("", "a+\bob", nil).Cells
 	assert.Equal(t, len(tokens), 3)
 	assert.Equal(t, tokens[0], twin.Cell{Rune: 'a', Style: twin.StyleDefault})
 	assert.Equal(t, tokens[1], twin.Cell{Rune: '•', Style: twin.StyleDefault})
 	assert.Equal(t, tokens[2], twin.Cell{Rune: 'b', Style: twin.StyleDefault})
+}
+
+func TestManPageHeadings(t *testing.T) {
+	// Set a marker style we can recognize and test for
+	ManPageHeading = twin.StyleDefault.WithForeground(twin.NewColor16(2))
+
+	manPageHeading := ""
+	for _, char := range "JOHAN HELLO" {
+		manPageHeading += string(char) + "\b" + string(char)
+	}
+
+	notAllCaps := ""
+	for _, char := range "Johan Hello" {
+		notAllCaps += string(char) + "\b" + string(char)
+	}
+
+	// A line with only man page bold caps should be considered a heading
+	for _, token := range CellsFromString("", manPageHeading, nil).Cells {
+		assert.Equal(t, token.Style, ManPageHeading)
+	}
+
+	// A line with only non-man-page bold caps should not be considered a heading
+	wrongKindOfBold := "\x1b[1mJOHAN HELLO"
+	for _, token := range CellsFromString("", wrongKindOfBold, nil).Cells {
+		assert.Equal(t, token.Style, twin.StyleDefault.WithAttr(twin.AttrBold))
+	}
+
+	// A line with not all caps should not be considered a heading
+	for _, token := range CellsFromString("", notAllCaps, nil).Cells {
+		assert.Equal(t, token.Style, twin.StyleDefault.WithAttr(twin.AttrBold))
+	}
 }
 
 func TestConsumeCompositeColorHappy(t *testing.T) {
@@ -230,7 +261,7 @@ func TestRawUpdateStyle(t *testing.T) {
 func TestHyperlink_escBackslash(t *testing.T) {
 	url := "http://example.com"
 
-	tokens := CellsFromString("a\x1b]8;;"+url+"\x1b\\bc\x1b]8;;\x1b\\d", nil).Cells
+	tokens := CellsFromString("", "a\x1b]8;;"+url+"\x1b\\bc\x1b]8;;\x1b\\d", nil).Cells
 
 	assert.DeepEqual(t, tokens, []twin.Cell{
 		{Rune: 'a', Style: twin.StyleDefault},
@@ -246,7 +277,7 @@ func TestHyperlink_escBackslash(t *testing.T) {
 func TestHyperlink_bell(t *testing.T) {
 	url := "http://example.com"
 
-	tokens := CellsFromString("a\x1b]8;;"+url+"\x07bc\x1b]8;;\x07d", nil).Cells
+	tokens := CellsFromString("", "a\x1b]8;;"+url+"\x07bc\x1b]8;;\x07d", nil).Cells
 
 	assert.DeepEqual(t, tokens, []twin.Cell{
 		{Rune: 'a', Style: twin.StyleDefault},
@@ -259,7 +290,7 @@ func TestHyperlink_bell(t *testing.T) {
 // Test with some other ESC sequence than ESC-backslash
 func TestHyperlink_nonTerminatingEsc(t *testing.T) {
 	complete := "a\x1b]8;;https://example.com\x1bbc"
-	tokens := CellsFromString(complete, nil).Cells
+	tokens := CellsFromString("", complete, nil).Cells
 
 	// This should not be treated as any link
 	for i := 0; i < len(complete); i++ {
@@ -279,7 +310,7 @@ func TestHyperlink_incomplete(t *testing.T) {
 	for l := len(complete) - 1; l >= 0; l-- {
 		incomplete := complete[:l]
 		t.Run(fmt.Sprintf("l=%d incomplete=<%s>", l, strings.ReplaceAll(incomplete, "\x1b", "ESC")), func(t *testing.T) {
-			tokens := CellsFromString(incomplete, nil).Cells
+			tokens := CellsFromString("", incomplete, nil).Cells
 
 			for i := 0; i < l; i++ {
 				if complete[i] == '\x1b' {

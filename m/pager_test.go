@@ -236,7 +236,7 @@ func testManPageFormatting(t *testing.T, input string, expected twin.Cell) {
 }
 
 func TestManPageFormatting(t *testing.T) {
-	testManPageFormatting(t, "N\x08N", twin.NewCell('N', twin.StyleDefault.WithAttr(twin.AttrBold)))
+	testManPageFormatting(t, "n\x08n", twin.NewCell('n', twin.StyleDefault.WithAttr(twin.AttrBold)))
 	testManPageFormatting(t, "_\x08x", twin.NewCell('x', twin.StyleDefault.WithAttr(twin.AttrUnderline)))
 
 	// Corner cases

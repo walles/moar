@@ -28,7 +28,7 @@ func (line *Line) HighlightedTokens(linePrefix string, search *regexp.Regexp, li
 	plain := line.Plain(lineNumber)
 	matchRanges := getMatchRanges(&plain, search)
 
-	fromString := textstyles.CellsFromString(linePrefix+line.raw, lineNumber)
+	fromString := textstyles.CellsFromString(linePrefix, line.raw, lineNumber)
 	returnCells := make([]twin.Cell, 0, len(fromString.Cells))
 	for _, token := range fromString.Cells {
 		style := token.Style

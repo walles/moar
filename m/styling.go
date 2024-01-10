@@ -29,7 +29,10 @@ func setStyle(updateMe *twin.Style, envVarName string, fallback *twin.Style) {
 	*updateMe = termcapToStyle(envValue)
 }
 
-func twinStyleFromChroma(chromaStyle *chroma.Style, chromaFormatter *chroma.Formatter, chromaToken chroma.TokenType) *twin.Style {
+// With exact set, only return a style if the Chroma formatter has an explicit
+// configuration for that style. Otherwise, we might return fallback styles, not
+// exactly matching what you requested.
+func twinStyleFromChroma(chromaStyle *chroma.Style, chromaFormatter *chroma.Formatter, chromaToken chroma.TokenType, exact bool) *twin.Style {
 	if chromaStyle == nil || chromaFormatter == nil {
 		return nil
 	}
@@ -44,13 +47,27 @@ func twinStyleFromChroma(chromaStyle *chroma.Style, chromaFormatter *chroma.Form
 	}
 
 	formatted := stringBuilder.String()
-	cells := textstyles.CellsFromString(formatted, nil).Cells
+	cells := textstyles.CellsFromString("", formatted, nil).Cells
 	if len(cells) != 1 {
 		log.Warnf("Chroma formatter didn't return exactly one cell: %#v", cells)
 		return nil
 	}
 
-	return &cells[0].Style
+	inexactStyle := cells[0].Style
+	if !exact {
+		return &inexactStyle
+	}
+
+	unstyled := twinStyleFromChroma(chromaStyle, chromaFormatter, chroma.None, false)
+	if unstyled == nil {
+		panic("Chroma formatter didn't return a style for chroma.None")
+	}
+	if inexactStyle != *unstyled {
+		// We got something other than the style of None, return it!
+		return &inexactStyle
+	}
+
+	return nil
 }
 
 // consumeLessTermcapEnvs parses LESS_TERMCAP_xx environment variables and
@@ -58,8 +75,20 @@ func twinStyleFromChroma(chromaStyle *chroma.Style, chromaFormatter *chroma.Form
 func consumeLessTermcapEnvs(chromaStyle *chroma.Style, chromaFormatter *chroma.Formatter) {
 	// Requested here: https://github.com/walles/moar/issues/14
 
-	setStyle(&textstyles.ManPageBold, "LESS_TERMCAP_md", twinStyleFromChroma(chromaStyle, chromaFormatter, chroma.GenericStrong))
-	setStyle(&textstyles.ManPageUnderline, "LESS_TERMCAP_us", twinStyleFromChroma(chromaStyle, chromaFormatter, chroma.GenericUnderline))
+	setStyle(
+		&textstyles.ManPageBold,
+		"LESS_TERMCAP_md",
+		twinStyleFromChroma(chromaStyle, chromaFormatter, chroma.GenericStrong, false),
+	)
+	setStyle(&textstyles.ManPageUnderline,
+		"LESS_TERMCAP_us",
+		twinStyleFromChroma(chromaStyle, chromaFormatter, chroma.GenericUnderline, false),
+	)
+
+	headingStyle := twinStyleFromChroma(chromaStyle, chromaFormatter, chroma.GenericHeading, true)
+	if headingStyle != nil {
+		textstyles.ManPageHeading = *headingStyle
+	}
 
 	// Since standoutStyle defaults to nil we can't just pass it to setStyle().
 	// Instead we give it special treatment here and set it only if its
@@ -78,7 +107,7 @@ func styleUI(chromaStyle *chroma.Style, chromaFormatter *chroma.Formatter, statu
 		return
 	}
 
-	chromaLineNumbers := twinStyleFromChroma(chromaStyle, chromaFormatter, chroma.LineNumbers)
+	chromaLineNumbers := twinStyleFromChroma(chromaStyle, chromaFormatter, chroma.LineNumbers, true)
 	if chromaLineNumbers != nil {
 		// If somebody can provide an example where not-dimmed line numbers
 		// looks good I'll change this, but until then they will be dimmed no
@@ -92,14 +121,14 @@ func styleUI(chromaStyle *chroma.Style, chromaFormatter *chroma.Formatter, statu
 		// FIXME: Get this from the Chroma style
 		statusbarStyle = twin.StyleDefault.WithAttr(twin.AttrReverse)
 	} else if statusbarOption == STATUSBAR_STYLE_PLAIN {
-		plain := twinStyleFromChroma(chromaStyle, chromaFormatter, chroma.None)
+		plain := twinStyleFromChroma(chromaStyle, chromaFormatter, chroma.None, false)
 		if plain != nil {
 			statusbarStyle = *plain
 		} else {
 			statusbarStyle = twin.StyleDefault
 		}
 	} else if statusbarOption == STATUSBAR_STYLE_BOLD {
-		bold := twinStyleFromChroma(chromaStyle, chromaFormatter, chroma.GenericStrong)
+		bold := twinStyleFromChroma(chromaStyle, chromaFormatter, chroma.GenericStrong, true)
 		if bold != nil {
 			statusbarStyle = *bold
 		} else {
@@ -112,6 +141,6 @@ func styleUI(chromaStyle *chroma.Style, chromaFormatter *chroma.Formatter, statu
 
 func termcapToStyle(termcap string) twin.Style {
 	// Add a character to be sure we have one to take the format from
-	cells := textstyles.CellsFromString(termcap+"x", nil).Cells
+	cells := textstyles.CellsFromString("", termcap+"x", nil).Cells
 	return cells[len(cells)-1].Style
 }
