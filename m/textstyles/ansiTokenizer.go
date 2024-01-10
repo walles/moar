@@ -107,7 +107,10 @@ func WithoutFormatting(s string, lineNumber *linenumbers.LineNumber) string {
 }
 
 // Turn a (formatted) string into a series of screen cells
-func CellsFromString(s string, lineNumber *linenumbers.LineNumber) CellsWithTrailer {
+//
+// The prefix will be prepended to the string before parsing. The lineNumber is
+// used for error reporting.
+func CellsFromString(prefix string, s string, lineNumber *linenumbers.LineNumber) CellsWithTrailer {
 	manPageHeading := manPageHeadingFromString(s)
 	if manPageHeading != nil {
 		return *manPageHeading
@@ -118,7 +121,7 @@ func CellsFromString(s string, lineNumber *linenumbers.LineNumber) CellsWithTrai
 	// Specs: https://en.wikipedia.org/wiki/ANSI_escape_code#3-bit_and_4-bit
 	styleUnprintable := twin.StyleDefault.WithBackground(twin.NewColor16(1)).WithForeground(twin.NewColor16(7))
 
-	trailer := styledStringsFromString(s, lineNumber, func(str string, style twin.Style) {
+	trailer := styledStringsFromString(prefix+s, lineNumber, func(str string, style twin.Style) {
 		for _, token := range tokensFromStyledString(_StyledString{String: str, Style: style}) {
 			switch token.Rune {
 

@@ -47,7 +47,7 @@ func twinStyleFromChroma(chromaStyle *chroma.Style, chromaFormatter *chroma.Form
 	}
 
 	formatted := stringBuilder.String()
-	cells := textstyles.CellsFromString(formatted, nil).Cells
+	cells := textstyles.CellsFromString("", formatted, nil).Cells
 	if len(cells) != 1 {
 		log.Warnf("Chroma formatter didn't return exactly one cell: %#v", cells)
 		return nil
@@ -141,6 +141,6 @@ func styleUI(chromaStyle *chroma.Style, chromaFormatter *chroma.Formatter, statu
 
 func termcapToStyle(termcap string) twin.Style {
 	// Add a character to be sure we have one to take the format from
-	cells := textstyles.CellsFromString(termcap+"x", nil).Cells
+	cells := textstyles.CellsFromString("", termcap+"x", nil).Cells
 	return cells[len(cells)-1].Style
 }
