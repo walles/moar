@@ -541,7 +541,7 @@ func main() {
 	} else if *terminalColorsCount == twin.ColorType16 {
 		formatter = formatters.TTY16
 	} else if *terminalColorsCount == twin.ColorType24bit {
-		formatter = formatters.TTY
+		formatter = formatters.TTY16m
 	}
 
 	var reader *m.Reader
