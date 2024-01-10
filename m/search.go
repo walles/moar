@@ -124,19 +124,17 @@ func (p *Pager) scrollToPreviousSearchHit() {
 
 	var firstSearchPosition scrollPosition
 
-	switch {
-	case p.isViewing():
-		// Start searching on the first line above the top of the screen
-		firstSearchPosition = p.scrollPosition.PreviousLine(1)
-
-	case p.isNotFound():
+	if p.isNotFound() {
 		// Restart searching from the bottom
 		p.mode = PagerModeViewing{pager: p}
 		p.scrollToEnd()
-
-	default:
+	}
+	if !p.isViewing() && !p.isNotFound() {
 		panic(fmt.Sprint("Unknown search mode when finding previous: ", p.mode))
 	}
+
+	// Start searching on the first line above the top of the screen
+	firstSearchPosition = p.scrollPosition.PreviousLine(1)
 
 	firstHitPosition := p.findFirstHit(firstSearchPosition, true)
 	if firstHitPosition == nil {
