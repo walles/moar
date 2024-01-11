@@ -35,9 +35,9 @@ func TestManPageHeadingFromString_NotBoldSpace(t *testing.T) {
 
 	assert.Assert(t, result != nil)
 	assert.Equal(t, len(result.Cells), 3)
-	assert.Equal(t, result.Cells[0].Rune, twin.Cell{Rune: 'A', Style: ManPageHeading})
-	assert.Equal(t, result.Cells[1].Rune, twin.Cell{Rune: ' ', Style: ManPageHeading})
-	assert.Equal(t, result.Cells[2].Rune, twin.Cell{Rune: 'B', Style: ManPageHeading})
+	assert.Equal(t, result.Cells[0], twin.Cell{Rune: 'A', Style: ManPageHeading})
+	assert.Equal(t, result.Cells[1], twin.Cell{Rune: ' ', Style: ManPageHeading})
+	assert.Equal(t, result.Cells[2], twin.Cell{Rune: 'B', Style: ManPageHeading})
 }
 
 func TestManPageHeadingFromString_WithBoldSpace(t *testing.T) {
@@ -48,7 +48,7 @@ func TestManPageHeadingFromString_WithBoldSpace(t *testing.T) {
 
 	assert.Assert(t, result != nil)
 	assert.Equal(t, len(result.Cells), 3)
-	assert.Equal(t, result.Cells[0].Rune, twin.Cell{Rune: 'A', Style: ManPageHeading})
-	assert.Equal(t, result.Cells[1].Rune, twin.Cell{Rune: ' ', Style: ManPageHeading})
-	assert.Equal(t, result.Cells[2].Rune, twin.Cell{Rune: 'B', Style: ManPageHeading})
+	assert.Equal(t, result.Cells[0], twin.Cell{Rune: 'A', Style: ManPageHeading})
+	assert.Equal(t, result.Cells[1], twin.Cell{Rune: ' ', Style: ManPageHeading})
+	assert.Equal(t, result.Cells[2], twin.Cell{Rune: 'B', Style: ManPageHeading})
 }
