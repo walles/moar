@@ -68,5 +68,11 @@ func Printable(char rune) bool {
 		return true
 	}
 
+	if char == 0xa0 {
+		// 0xa0 is a non-breaking space, which is printable, despite what
+		// unicode.IsPrint() says.
+		return true
+	}
+
 	return false
 }

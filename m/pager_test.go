@@ -239,6 +239,9 @@ func TestManPageFormatting(t *testing.T) {
 	testManPageFormatting(t, "n\x08n", twin.NewCell('n', twin.StyleDefault.WithAttr(twin.AttrBold)))
 	testManPageFormatting(t, "_\x08x", twin.NewCell('x', twin.StyleDefault.WithAttr(twin.AttrUnderline)))
 
+	// Non-breaking space UTF-8 encoded (0xc2a0) should render as a non-breaking unicode space (0xa0)
+	testManPageFormatting(t, string([]byte{0xc2, 0xa0}), twin.NewCell(rune(0xa0), twin.StyleDefault))
+
 	// Corner cases
 	testManPageFormatting(t, "\x08", twin.NewCell('<', twin.StyleDefault.WithForeground(twin.NewColor16(7)).WithBackground(twin.NewColor16(1))))
 
