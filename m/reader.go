@@ -201,9 +201,6 @@ func NewReaderFromStream(name string, reader io.Reader, style chroma.Style, form
 // then used for pre-allocating the lines slice, which improves large file
 // loading performance.
 //
-// If fromFilter is not nil this method will wait() for it, and effectively
-// takes over ownership for it.
-//
 // If lexer is not nil, the file will be highlighted after being fully read.
 func newReaderFromStream(reader io.Reader, originalFileName *string, style chroma.Style, formatter chroma.Formatter, lexer chroma.Lexer) *Reader {
 	done := atomic.Bool{}
@@ -223,10 +220,6 @@ func newReaderFromStream(reader io.Reader, originalFileName *string, style chrom
 	// FIXME: Make sure that if we panic somewhere inside of this goroutine,
 	// the main program terminates and prints our panic stack trace.
 	go returnMe.readStream(reader, originalFileName, func() {
-		if lexer == nil {
-			return
-		}
-
 		highlightFromMemory(&returnMe, style, formatter, lexer)
 
 		returnMe.highlightingDone.Store(true)

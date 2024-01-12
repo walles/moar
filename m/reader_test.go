@@ -312,7 +312,7 @@ func TestReadFileDoneNoHighlighting(t *testing.T) {
 }
 
 func TestReadFileDoneYesHighlighting(t *testing.T) {
-	testMe, err := NewReaderFromFilename(samplesDir+"reader_test.go",
+	testMe, err := NewReaderFromFilename("reader_test.go",
 		*styles.Get("Native"), formatters.TTY, nil)
 	assert.NilError(t, err)
 
