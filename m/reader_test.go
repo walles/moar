@@ -8,7 +8,9 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/alecthomas/chroma/v2"
 	"github.com/alecthomas/chroma/v2/formatters"
+	"github.com/alecthomas/chroma/v2/lexers"
 	"github.com/alecthomas/chroma/v2/styles"
 	"github.com/walles/moar/m/linenumbers"
 	"gotest.tools/v3/assert"
@@ -50,9 +52,7 @@ func testGetLineCount(t *testing.T, reader *Reader) {
 	}
 
 	countLinesCount, err := countLines(*reader.name)
-	if err != nil {
-		panic(err)
-	}
+	assert.NilError(t, err)
 	if countLinesCount != uint64(wcLineCount) {
 		t.Errorf("Got %d lines from wc -l, but %d lines from our countLines() function", wcLineCount, countLinesCount)
 	}
@@ -115,11 +115,9 @@ func testGetLines(t *testing.T, reader *Reader) {
 	}
 }
 
-func getTestFiles() []string {
+func getTestFiles(t *testing.T) []string {
 	files, err := os.ReadDir(samplesDir)
-	if err != nil {
-		panic(err)
-	}
+	assert.NilError(t, err)
 
 	var filenames []string
 	for _, file := range files {
@@ -145,7 +143,7 @@ func (r *Reader) _wait() error {
 }
 
 func TestGetLines(t *testing.T) {
-	for _, file := range getTestFiles() {
+	for _, file := range getTestFiles(t) {
 		if strings.HasSuffix(file, ".xz") {
 			_, err := exec.LookPath("xz")
 			if err != nil {
@@ -200,9 +198,7 @@ func testHighlightingLineCount(t *testing.T, filenameWithPath string) {
 
 	// Load the unformatted file
 	rawBytes, err := os.ReadFile(filenameWithPath)
-	if err != nil {
-		panic(err)
-	}
+	assert.NilError(t, err)
 	rawContents := string(rawBytes)
 
 	// Count its lines
@@ -219,13 +215,9 @@ func testHighlightingLineCount(t *testing.T, filenameWithPath string) {
 
 	// Then load the same file using one of our Readers
 	reader, err := NewReaderFromFilename(filenameWithPath, *styles.Get("native"), formatters.TTY16m, nil)
-	if err != nil {
-		panic(err)
-	}
+	assert.NilError(t, err)
 	err = reader._wait()
-	if err != nil {
-		panic(err)
-	}
+	assert.NilError(t, err)
 
 	highlightedLinesCount := reader.GetLineCount()
 	assert.Equal(t, rawLinesCount, highlightedLinesCount)
@@ -234,12 +226,8 @@ func testHighlightingLineCount(t *testing.T, filenameWithPath string) {
 func TestGetLongLine(t *testing.T) {
 	file := "../sample-files/very-long-line.txt"
 	reader, err := NewReaderFromFilename(file, *styles.Get("native"), formatters.TTY16m, nil)
-	if err != nil {
-		panic(err)
-	}
-	if err := reader._wait(); err != nil {
-		panic(err)
-	}
+	assert.NilError(t, err)
+	assert.NilError(t, reader._wait())
 
 	lines, overflow := reader.GetLines(linenumbers.LineNumber{}, 5)
 	assert.Equal(t, lines.firstLine, linenumbers.LineNumber{})
@@ -283,12 +271,8 @@ func TestStatusText(t *testing.T) {
 
 	// Test with filename
 	testMe, err := NewReaderFromFilename(samplesDir+"/empty", *styles.Get("native"), formatters.TTY16m, nil)
-	if err != nil {
-		panic(err)
-	}
-	if err := testMe._wait(); err != nil {
-		panic(err)
-	}
+	assert.NilError(t, err)
+	assert.NilError(t, testMe._wait())
 
 	line, overflow := testMe.GetLines(linenumbers.LineNumber{}, 0)
 	if line.lines != nil {
@@ -305,9 +289,7 @@ func testCompressedFile(t *testing.T, filename string) {
 		t.Errorf("Error opening file <%s>: %s", filenameWithPath, e.Error())
 		panic(e)
 	}
-	if err := reader._wait(); err != nil {
-		panic(err)
-	}
+	assert.NilError(t, reader._wait())
 
 	lines, _ := reader.GetLines(linenumbers.LineNumber{}, 5)
 	assert.Equal(t, lines.lines[0].Plain(nil), "This is a compressed file", "%s", filename)
@@ -319,6 +301,42 @@ func TestCompressedFiles(t *testing.T) {
 	testCompressedFile(t, "compressed.txt.xz")
 	testCompressedFile(t, "compressed.txt.zst")
 	testCompressedFile(t, "compressed.txt.zstd")
+}
+
+func TestReadFileDoneNoHighlighting(t *testing.T) {
+	testMe, err := NewReaderFromFilename(samplesDir+"/empty",
+		*styles.Get("Native"), formatters.TTY, nil)
+	assert.NilError(t, err)
+
+	assert.NilError(t, testMe._wait())
+}
+
+func TestReadFileDoneYesHighlighting(t *testing.T) {
+	testMe, err := NewReaderFromFilename("reader_test.go",
+		*styles.Get("Native"), formatters.TTY, nil)
+	assert.NilError(t, err)
+
+	assert.NilError(t, testMe._wait())
+}
+
+func TestReadStreamDoneNoHighlighting(t *testing.T) {
+	testMe := NewReaderFromStream("", strings.NewReader("Johan"), chroma.Style{}, nil, nil)
+
+	assert.NilError(t, testMe._wait())
+}
+
+func TestReadStreamDoneYesHighlighting(t *testing.T) {
+	testMe := NewReaderFromStream("",
+		strings.NewReader("Johan"),
+		*styles.Get("Native"), formatters.TTY, lexers.EmacsLisp)
+
+	assert.NilError(t, testMe._wait())
+}
+
+func TestReadTextDone(t *testing.T) {
+	testMe := NewReaderFromText("", "Johan")
+
+	assert.NilError(t, testMe._wait())
 }
 
 func TestFilterNotInstalled(t *testing.T) {
@@ -348,17 +366,10 @@ func BenchmarkReaderDone(b *testing.B) {
 	for n := 0; n < b.N; n++ {
 		// This is our longest .go file
 		readMe, err := NewReaderFromFilename(filename, *styles.Get("native"), formatters.TTY16m, nil)
-		if err != nil {
-			panic(err)
-		}
+		assert.NilError(b, err)
 
-		// Wait for the reader to finish
-		//revive:disable-next-line:empty-block
-		for !readMe.done.Load() {
-		}
-		if readMe.err != nil {
-			panic(readMe.err)
-		}
+		assert.NilError(b, readMe._wait())
+		assert.NilError(b, readMe.err)
 	}
 }
 
@@ -370,44 +381,30 @@ func BenchmarkReadLargeFile(b *testing.B) {
 	// First, create it from something...
 	inputFilename := "pager.go"
 	contents, err := os.ReadFile(inputFilename)
-	if err != nil {
-		panic(err)
-	}
+	assert.NilError(b, err)
 
 	testdir := b.TempDir()
 	largeFileName := testdir + "/large-file"
 	largeFile, err := os.Create(largeFileName)
-	if err != nil {
-		panic(err)
-	}
+	assert.NilError(b, err)
 
 	totalBytesWritten := 0
 	for totalBytesWritten < largeSizeBytes {
 		written, err := largeFile.Write(contents)
-		if err != nil {
-			panic(err)
-		}
+		assert.NilError(b, err)
 
 		totalBytesWritten += written
 	}
 	err = largeFile.Close()
-	if err != nil {
-		panic(err)
-	}
+	assert.NilError(b, err)
 
 	b.ResetTimer()
 	for n := 0; n < b.N; n++ {
 		readMe, err := NewReaderFromFilename(largeFileName, *styles.Get("native"), formatters.TTY16m, nil)
-		if err != nil {
-			panic(err)
-		}
+		assert.NilError(b, err)
 
-		// Wait for the reader to finish
-		for !readMe.done.Load() {
-		}
-		if readMe.err != nil {
-			panic(readMe.err)
-		}
+		assert.NilError(b, readMe._wait())
+		assert.NilError(b, readMe.err)
 	}
 }
 
@@ -416,33 +413,23 @@ func BenchmarkCountLines(b *testing.B) {
 	// First, get some sample lines...
 	inputFilename := "pager.go"
 	contents, err := os.ReadFile(inputFilename)
-	if err != nil {
-		panic(err)
-	}
+	assert.NilError(b, err)
 
 	testdir := b.TempDir()
 	countFileName := testdir + "/count-file"
 	countFile, err := os.Create(countFileName)
-	if err != nil {
-		panic(err)
-	}
+	assert.NilError(b, err)
 
 	// 1000x makes this take about 12ms on my machine right now. Before 1000x
 	// the numbers fluctuated much more.
 	for n := 0; n < b.N*1000; n++ {
 		_, err := countFile.Write(contents)
-		if err != nil {
-			panic(err)
-		}
+		assert.NilError(b, err)
 	}
 	err = countFile.Close()
-	if err != nil {
-		panic(err)
-	}
+	assert.NilError(b, err)
 
 	b.ResetTimer()
 	_, err = countLines(countFileName)
-	if err != nil {
-		panic(err)
-	}
+	assert.NilError(b, err)
 }

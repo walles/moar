@@ -191,6 +191,10 @@ func NewReaderFromStream(name string, reader io.Reader, style chroma.Style, form
 		mReader.Unlock()
 	}
 
+	if lexer == nil {
+		mReader.highlightingDone.Store(true)
+	}
+
 	return mReader
 }
 
@@ -200,9 +204,6 @@ func NewReaderFromStream(name string, reader io.Reader, style chroma.Style, form
 // don't-know (streams) or not countable (compressed files). The line count is
 // then used for pre-allocating the lines slice, which improves large file
 // loading performance.
-//
-// If fromFilter is not nil this method will wait() for it, and effectively
-// takes over ownership for it.
 //
 // If lexer is not nil, the file will be highlighted after being fully read.
 func newReaderFromStream(reader io.Reader, originalFileName *string, style chroma.Style, formatter chroma.Formatter, lexer chroma.Lexer) *Reader {
@@ -223,16 +224,8 @@ func newReaderFromStream(reader io.Reader, originalFileName *string, style chrom
 	// FIXME: Make sure that if we panic somewhere inside of this goroutine,
 	// the main program terminates and prints our panic stack trace.
 	go returnMe.readStream(reader, originalFileName, func() {
-		if lexer == nil {
-			return
-		}
-
-		highlightFromMemory(&returnMe, style, formatter, lexer)
-
-		returnMe.highlightingDone.Store(true)
-		select {
-		case returnMe.maybeDone <- true:
-		default:
+		if lexer != nil {
+			highlightFromMemory(&returnMe, style, formatter, lexer)
 		}
 	})
 
@@ -433,6 +426,10 @@ func startHighlightingFromFile(reader *Reader, filename string, style chroma.Sty
 }
 
 func highlightFromMemory(reader *Reader, style chroma.Style, formatter chroma.Formatter, lexer chroma.Lexer) {
+	if lexer == nil {
+		return
+	}
+
 	defer func() {
 		reader.highlightingDone.Store(true)
 		select {
@@ -440,10 +437,6 @@ func highlightFromMemory(reader *Reader, style chroma.Style, formatter chroma.Fo
 		default:
 		}
 	}()
-
-	if lexer == nil {
-		return
-	}
 
 	var byteCount int64
 	reader.Lock()
