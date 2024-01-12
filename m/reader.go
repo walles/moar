@@ -191,6 +191,10 @@ func NewReaderFromStream(name string, reader io.Reader, style chroma.Style, form
 		mReader.Unlock()
 	}
 
+	if lexer == nil {
+		mReader.highlightingDone.Store(true)
+	}
+
 	return mReader
 }
 
@@ -220,7 +224,9 @@ func newReaderFromStream(reader io.Reader, originalFileName *string, style chrom
 	// FIXME: Make sure that if we panic somewhere inside of this goroutine,
 	// the main program terminates and prints our panic stack trace.
 	go returnMe.readStream(reader, originalFileName, func() {
-		highlightFromMemory(&returnMe, style, formatter, lexer)
+		if lexer != nil {
+			highlightFromMemory(&returnMe, style, formatter, lexer)
+		}
 	})
 
 	return &returnMe
@@ -420,6 +426,10 @@ func startHighlightingFromFile(reader *Reader, filename string, style chroma.Sty
 }
 
 func highlightFromMemory(reader *Reader, style chroma.Style, formatter chroma.Formatter, lexer chroma.Lexer) {
+	if lexer == nil {
+		return
+	}
+
 	defer func() {
 		reader.highlightingDone.Store(true)
 		select {
@@ -427,10 +437,6 @@ func highlightFromMemory(reader *Reader, style chroma.Style, formatter chroma.Fo
 		default:
 		}
 	}()
-
-	if lexer == nil {
-		return
-	}
 
 	var byteCount int64
 	reader.Lock()
