@@ -15,9 +15,7 @@ func TestNotFoundFindPrevious(t *testing.T) {
 	pager := NewPager(reader)
 	pager.screen = twin.NewFakeScreen(40, 2)
 
-	// Wait for reader to finish reading
-	for !reader.done.Load() {
-	}
+	assert.NilError(t, reader._wait())
 
 	// Look for a hit on the second line
 	pager.searchPattern = toPattern("bepa")
@@ -36,9 +34,7 @@ func TestWrapSearchBackwards(t *testing.T) {
 	pager := NewPager(reader)
 	pager.screen = twin.NewFakeScreen(40, 3)
 
-	// Wait for reader to finish reading
-	for !reader.done.Load() {
-	}
+	assert.NilError(t, reader._wait())
 
 	// Looking for this should take us to the last line
 	pager.searchPattern = toPattern("gold")

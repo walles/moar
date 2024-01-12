@@ -152,9 +152,7 @@ func TestWrapping(t *testing.T) {
 	pager.WrapLongLines = true
 	pager.ShowLineNumbers = false
 
-	// Wait for reader to finish reading
-	for !reader.done.Load() {
-	}
+	assert.NilError(t, reader._wait())
 
 	// This is what we're testing really
 	pager.scrollToEnd()

@@ -368,10 +368,7 @@ func BenchmarkReaderDone(b *testing.B) {
 		readMe, err := NewReaderFromFilename(filename, *styles.Get("native"), formatters.TTY16m, nil)
 		assert.NilError(b, err)
 
-		// Wait for the reader to finish
-		//revive:disable-next-line:empty-block
-		for !readMe.done.Load() {
-		}
+		assert.NilError(b, readMe._wait())
 		assert.NilError(b, readMe.err)
 	}
 }
@@ -406,9 +403,7 @@ func BenchmarkReadLargeFile(b *testing.B) {
 		readMe, err := NewReaderFromFilename(largeFileName, *styles.Get("native"), formatters.TTY16m, nil)
 		assert.NilError(b, err)
 
-		// Wait for the reader to finish
-		for !readMe.done.Load() {
-		}
+		assert.NilError(b, readMe._wait())
 		assert.NilError(b, readMe.err)
 	}
 }
