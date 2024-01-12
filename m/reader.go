@@ -221,12 +221,6 @@ func newReaderFromStream(reader io.Reader, originalFileName *string, style chrom
 	// the main program terminates and prints our panic stack trace.
 	go returnMe.readStream(reader, originalFileName, func() {
 		highlightFromMemory(&returnMe, style, formatter, lexer)
-
-		returnMe.highlightingDone.Store(true)
-		select {
-		case returnMe.maybeDone <- true:
-		default:
-		}
 	})
 
 	return &returnMe
