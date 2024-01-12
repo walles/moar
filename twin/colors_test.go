@@ -16,7 +16,9 @@ func TestDownsample24BitsTo16Colors(t *testing.T) {
 func TestDownsample24BitsTo256Colors(t *testing.T) {
 	assert.Equal(t,
 		NewColor24Bit(255, 255, 255).downsampleTo(ColorType256),
-		NewColor16(15),
+
+		// From https://jonasjacek.github.io/colors/
+		NewColor256(231),
 	)
 }
 

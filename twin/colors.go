@@ -189,14 +189,20 @@ func (color Color) downsampleTo(terminalColorCount ColorType) Color {
 	target := color.to24Bit()
 
 	// Find the closest match in the terminal color palette
-	scanRange := 255
+	var scanFirst int
+	var scanLast int
 	switch terminalColorCount {
 	case ColorType8:
-		scanRange = 7
+		scanFirst = 0
+		scanLast = 7
 	case ColorType16:
-		scanRange = 15
+		scanFirst = 0
+		scanLast = 15
 	case ColorType256:
-		scanRange = 255
+		// Colors 0-15 can be customized by the user, so we skip them and use
+		// only the well defined ones
+		scanFirst = 16
+		scanLast = 255
 	default:
 		panic(fmt.Errorf("unhandled terminal color count %#v", terminalColorCount))
 	}
@@ -204,7 +210,7 @@ func (color Color) downsampleTo(terminalColorCount ColorType) Color {
 	// Iterate over the scan range and find the best matching index
 	bestMatch := 0
 	bestDistance := math.MaxFloat64
-	for i := 0; i <= scanRange; i++ {
+	for i := scanFirst; i <= scanLast; i++ {
 		r, g, b := color256ToRGB(uint8(i))
 		candidate := NewColor24Bit(r, g, b)
 
