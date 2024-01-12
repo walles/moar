@@ -171,6 +171,7 @@ func TestCodeHighlighting(t *testing.T) {
 
 	reader, err := NewReaderFromFilename(filename, *styles.Get("native"), formatters.TTY16m, nil)
 	assert.NilError(t, err)
+	assert.NilError(t, reader._wait())
 
 	packageKeywordStyle := twin.StyleDefault.WithAttr(twin.AttrBold).WithForeground(twin.NewColorHex(0x6AB825))
 	packageNameStyle := twin.StyleDefault.WithForeground(twin.NewColorHex(0xD0D0D0))
