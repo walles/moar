@@ -170,9 +170,7 @@ func TestCodeHighlighting(t *testing.T) {
 	}
 
 	reader, err := NewReaderFromFilename(filename, *styles.Get("native"), formatters.TTY16m, nil)
-	if err != nil {
-		panic(err)
-	}
+	assert.NilError(t, err)
 
 	packageKeywordStyle := twin.StyleDefault.WithAttr(twin.AttrBold).WithForeground(twin.NewColorHex(0x6AB825))
 	packageNameStyle := twin.StyleDefault.WithForeground(twin.NewColorHex(0xD0D0D0))
@@ -219,15 +217,9 @@ func testManPageFormatting(t *testing.T, input string, expected twin.Cell) {
 
 	// Without these lines the man page tests will fail if either of these
 	// environment variables are set when the tests are run.
-	if err := os.Setenv("LESS_TERMCAP_md", ""); err != nil {
-		panic(err)
-	}
-	if err := os.Setenv("LESS_TERMCAP_us", ""); err != nil {
-		panic(err)
-	}
-	if err := os.Setenv("LESS_TERMCAP_so", ""); err != nil {
-		panic(err)
-	}
+	assert.NilError(t, os.Setenv("LESS_TERMCAP_md", ""))
+	assert.NilError(t, os.Setenv("LESS_TERMCAP_us", ""))
+	assert.NilError(t, os.Setenv("LESS_TERMCAP_so", ""))
 	resetManPageFormat()
 
 	contents := startPaging(t, reader).GetRow(0)
@@ -505,7 +497,7 @@ func TestIsScrolledToEnd_EmptyFile(t *testing.T) {
 
 // Verify that we can page all files in ../sample-files/* without crashing
 func TestPageSamples(t *testing.T) {
-	for _, fileName := range getTestFiles() {
+	for _, fileName := range getTestFiles(t) {
 		t.Run(fileName, func(t *testing.T) {
 			file, err := os.Open(fileName)
 			if err != nil {
@@ -641,17 +633,13 @@ func benchmarkSearch(b *testing.B, highlighted bool) {
 	}
 
 	sourceBytes, err := os.ReadFile(sourceFilename)
-	if err != nil {
-		panic(err)
-	}
+	assert.NilError(b, err)
 	fileContents := string(sourceBytes)
 
 	// Read one copy of the example input
 	if highlighted {
 		highlightedSourceCode, err := highlight(fileContents, *styles.Get("native"), formatters.TTY16m, lexers.Get("go"))
-		if err != nil {
-			panic(err)
-		}
+		assert.NilError(b, err)
 		if highlightedSourceCode == nil {
 			panic("Highlighting didn't want to, returned nil")
 		}

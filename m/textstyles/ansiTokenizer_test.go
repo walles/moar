@@ -29,11 +29,9 @@ func cellsToPlainString(cells []twin.Cell) string {
 	return returnMe
 }
 
-func getTestFiles() []string {
+func getTestFiles(t *testing.T) []string {
 	files, err := os.ReadDir(samplesDir)
-	if err != nil {
-		panic(err)
-	}
+	assert.NilError(t, err)
 
 	var filenames []string
 	for _, file := range files {
@@ -46,7 +44,7 @@ func getTestFiles() []string {
 // Verify that we can tokenize all lines in ../sample-files/*
 // without logging any errors
 func TestTokenize(t *testing.T) {
-	for _, fileName := range getTestFiles() {
+	for _, fileName := range getTestFiles(t) {
 		t.Run(fileName, func(t *testing.T) {
 			file, err := os.Open(fileName)
 			if err != nil {
@@ -60,9 +58,7 @@ func TestTokenize(t *testing.T) {
 			}()
 
 			fileReader, err := os.Open(fileName)
-			if err != nil {
-				panic(err)
-			}
+			assert.NilError(t, err)
 
 			fileScanner := bufio.NewScanner(fileReader)
 			var lineNumber *linenumbers.LineNumber
