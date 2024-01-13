@@ -537,6 +537,10 @@ func main() {
 		panic("Invariant broken: stdout is not a terminal")
 	}
 
+	// NOTE: Must be done before the screen is set up!
+	style := decodeStyleOption(styleOption)
+
+	// NOTE: Must be done after decodeStyleOption()
 	screen, err := twin.NewScreenWithMouseModeAndColorType(*mouseMode, *terminalColorsCount)
 	if err != nil {
 		// Ref: https://github.com/walles/moar/issues/149
@@ -558,15 +562,13 @@ func main() {
 		formatter = formatters.TTY16m
 	}
 
-	style := decodeStyleOption(styleOption)
-
 	var reader *m.Reader
 	if stdinIsRedirected {
 		// Display input pipe contents
-		reader = m.NewReaderFromStream("", os.Stdin, *style, formatter, *lexer)
+		reader = m.NewReaderFromStream("", os.Stdin, style, formatter, *lexer)
 	} else {
 		// Display the input file contents
-		reader, err = m.NewReaderFromFilename(*inputFilename, *style, formatter, *lexer)
+		reader, err = m.NewReaderFromFilename(*inputFilename, style, formatter, *lexer)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "ERROR: %v\n", err)
 			os.Exit(1)
@@ -591,15 +593,82 @@ func main() {
 		pager.TargetLineNumber = &reallyHigh
 	}
 
-	startPaging(pager, screen, style, &formatter)
+	startPaging(pager, screen, &style, &formatter)
 }
 
-func decodeStyleOption(styleOption **chroma.Style) *chroma.Style {
+func decodeStyleOption(styleOption **chroma.Style) chroma.Style {
 	if *styleOption != nil {
-		return *styleOption
+		return **styleOption
 	}
 
-	return styles.Get("native")
+	// Ref: https://stackoverflow.com/questions/2507337/how-to-determine-a-terminals-background-color
+	fmt.Println("\x1b]11;?\x07")
+
+	// Wait up to 10ms for us to get a response on stdin
+	prefix := "\x1b]11;rgb:"
+	suffix := "\x07"
+	sampleResponse := prefix + "0000/0000/0000" + suffix
+	responseBytes := make([]byte, len(sampleResponse))
+
+	// Since stdin might be redirected, we read from stdout instead. Works fine
+	// on at least macOS, Linux and Windows.
+	n, err := os.Stdout.Read(responseBytes) // FIXME: Time out if we don't get a response quickly enough!
+	if err != nil {
+		panic(fmt.Errorf("Failed reading bg color response from terminal: %w", err))
+	}
+	if n != len(sampleResponse) {
+		log.Debug("Got unexpected length bg color response from terminal: ", string(responseBytes))
+		return *styles.Get("native")
+	}
+
+	response := string(responseBytes)
+	if !strings.HasPrefix(response, prefix) {
+		log.Debug("Got unexpected prefix in bg color response from terminal: ", string(responseBytes))
+		return *styles.Get("native")
+	}
+	response = strings.TrimPrefix(response, prefix)
+
+	if !strings.HasSuffix(response, suffix) {
+		log.Debug("Got unexpected suffix in bg color response from terminal: ", string(responseBytes))
+		return *styles.Get("native")
+	}
+	response = strings.TrimSuffix(response, suffix)
+
+	// response is now "RRRR/GGGG/BBBB"
+	red, err := strconv.ParseUint(response[0:4], 16, 8)
+	if err != nil {
+		log.Debug("Failed parsing red in bg color response from terminal: ", string(responseBytes))
+		return *styles.Get("native")
+	}
+
+	green, err := strconv.ParseUint(response[5:9], 16, 8)
+	if err != nil {
+		log.Debug("Failed parsing green in bg color response from terminal: ", string(responseBytes))
+		return *styles.Get("native")
+	}
+
+	blue, err := strconv.ParseUint(response[10:14], 16, 8)
+	if err != nil {
+		log.Debug("Failed parsing blue in bg color response from terminal: ", string(responseBytes))
+		return *styles.Get("native")
+	}
+
+	color := twin.NewColor24Bit(uint8(red/256), uint8(green/256), uint8(blue/256))
+	distanceToBlack := color.Distance(twin.NewColor24Bit(0, 0, 0))
+	distanceToWhite := color.Distance(twin.NewColor24Bit(255, 255, 255))
+	darkTheme := distanceToBlack < distanceToWhite
+
+	if darkTheme {
+		return *styles.Get("native")
+	}
+
+	// I decided on a light theme by doing this:
+	//
+	//   wc -l ../chroma/styles/*.xml|sort|cut -d/ -f4|grep xml|xargs -I XXX grep -Hi background ../chroma/styles/XXX
+	//
+	// Then I picked tango because it has a lot of lines, a bright background
+	// and I like the looks of it.
+	return *styles.Get("tango")
 }
 
 // Define a generic flag with specified name, default value, and usage string.
