@@ -611,6 +611,8 @@ func decodeStyleOption(styleOption **chroma.Style) chroma.Style {
 		return **styleOption
 	}
 
+	t0 := time.Now()
+
 	// Prep for querying the terminal background color
 	oldTerminalState, err := term.MakeRaw(int(os.Stdout.Fd()))
 	if err != nil {
@@ -675,6 +677,9 @@ func decodeStyleOption(styleOption **chroma.Style) chroma.Style {
 		log.Debug("Failed parsing blue in bg color response from terminal: ", string(responseBytes), ": ", err)
 		return *styles.Get(defaultDarkTheme)
 	}
+
+	t1 := time.Now()
+	log.Debug("Terminal background color detection took ", t1.Sub(t0))
 
 	color := twin.NewColor24Bit(uint8(red/256), uint8(green/256), uint8(blue/256))
 	log.Debug("Terminal background color detected: ", color)
