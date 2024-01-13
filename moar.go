@@ -601,6 +601,19 @@ func decodeStyleOption(styleOption **chroma.Style) chroma.Style {
 		return **styleOption
 	}
 
+	// Prep for querying the terminal background color
+	oldTerminalState, err := term.MakeRaw(int(os.Stdout.Fd()))
+	if err != nil {
+		log.Debug("Failed setting up terminal for bg color detection: ", err)
+		return *styles.Get("native")
+	}
+	defer func() {
+		err := term.Restore(int(os.Stdout.Fd()), oldTerminalState)
+		if err != nil {
+			log.Error("Failed restoring terminal state: ", err)
+		}
+	}()
+
 	// Ref: https://stackoverflow.com/questions/2507337/how-to-determine-a-terminals-background-color
 	fmt.Println("\x1b]11;?\x07")
 
