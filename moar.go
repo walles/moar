@@ -25,6 +25,16 @@ import (
 	"github.com/walles/moar/twin"
 )
 
+const defaultDarkTheme = "native"
+
+// I decided on a light theme by doing this:
+//
+//	wc -l ../chroma/styles/*.xml|sort|cut -d/ -f4|grep xml|xargs -I XXX grep -Hi background ../chroma/styles/XXX
+//
+// Then I picked tango because it has a lot of lines, a bright background
+// and I like the looks of it.
+const defaultLightTheme = "tango"
+
 var versionString = "Should be set when building, please use build.sh to build"
 
 func printUsageEnvVar(output io.Writer, envVarName string, description string) {
@@ -605,7 +615,7 @@ func decodeStyleOption(styleOption **chroma.Style) chroma.Style {
 	oldTerminalState, err := term.MakeRaw(int(os.Stdout.Fd()))
 	if err != nil {
 		log.Debug("Failed setting up terminal for bg color detection: ", err)
-		return *styles.Get("native")
+		return *styles.Get(defaultDarkTheme)
 	}
 	defer func() {
 		err := term.Restore(int(os.Stdout.Fd()), oldTerminalState)
@@ -631,19 +641,19 @@ func decodeStyleOption(styleOption **chroma.Style) chroma.Style {
 	}
 	if n != len(sampleResponse) {
 		log.Debug("Got unexpected length bg color response from terminal: ", string(responseBytes))
-		return *styles.Get("native")
+		return *styles.Get(defaultDarkTheme)
 	}
 
 	response := string(responseBytes)
 	if !strings.HasPrefix(response, prefix) {
 		log.Debug("Got unexpected prefix in bg color response from terminal: ", string(responseBytes))
-		return *styles.Get("native")
+		return *styles.Get(defaultDarkTheme)
 	}
 	response = strings.TrimPrefix(response, prefix)
 
 	if !strings.HasSuffix(response, suffix) {
 		log.Debug("Got unexpected suffix in bg color response from terminal: ", string(responseBytes))
-		return *styles.Get("native")
+		return *styles.Get(defaultDarkTheme)
 	}
 	response = strings.TrimSuffix(response, suffix)
 
@@ -651,19 +661,19 @@ func decodeStyleOption(styleOption **chroma.Style) chroma.Style {
 	red, err := strconv.ParseUint(response[0:4], 16, 16)
 	if err != nil {
 		log.Debug("Failed parsing red in bg color response from terminal: ", string(responseBytes), ": ", err)
-		return *styles.Get("native")
+		return *styles.Get(defaultDarkTheme)
 	}
 
 	green, err := strconv.ParseUint(response[5:9], 16, 16)
 	if err != nil {
 		log.Debug("Failed parsing green in bg color response from terminal: ", string(responseBytes), ": ", err)
-		return *styles.Get("native")
+		return *styles.Get(defaultDarkTheme)
 	}
 
 	blue, err := strconv.ParseUint(response[10:14], 16, 16)
 	if err != nil {
 		log.Debug("Failed parsing blue in bg color response from terminal: ", string(responseBytes), ": ", err)
-		return *styles.Get("native")
+		return *styles.Get(defaultDarkTheme)
 	}
 
 	color := twin.NewColor24Bit(uint8(red/256), uint8(green/256), uint8(blue/256))
@@ -674,16 +684,10 @@ func decodeStyleOption(styleOption **chroma.Style) chroma.Style {
 	darkTheme := distanceToBlack < distanceToWhite
 
 	if darkTheme {
-		return *styles.Get("native")
+		return *styles.Get(defaultDarkTheme)
 	}
 
-	// I decided on a light theme by doing this:
-	//
-	//   wc -l ../chroma/styles/*.xml|sort|cut -d/ -f4|grep xml|xargs -I XXX grep -Hi background ../chroma/styles/XXX
-	//
-	// Then I picked tango because it has a lot of lines, a bright background
-	// and I like the looks of it.
-	return *styles.Get("tango")
+	return *styles.Get(defaultLightTheme)
 }
 
 // Define a generic flag with specified name, default value, and usage string.
