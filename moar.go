@@ -667,6 +667,8 @@ func decodeStyleOption(styleOption **chroma.Style) chroma.Style {
 	}
 
 	color := twin.NewColor24Bit(uint8(red/256), uint8(green/256), uint8(blue/256))
+	log.Debug("Terminal background color detected: ", color)
+
 	distanceToBlack := color.Distance(twin.NewColor24Bit(0, 0, 0))
 	distanceToWhite := color.Distance(twin.NewColor24Bit(255, 255, 255))
 	darkTheme := distanceToBlack < distanceToWhite
