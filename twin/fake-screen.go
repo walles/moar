@@ -72,6 +72,11 @@ func (screen *FakeScreen) Size() (width int, height int) {
 	return screen.width, screen.height
 }
 
+func (screen *FakeScreen) TerminalBackgroundColor() *Color {
+	// THe fake screen has an unknown background color
+	return nil
+}
+
 func (screen *FakeScreen) ShowCursorAt(_ int, _ int) {
 	// This method intentionally left blank
 }

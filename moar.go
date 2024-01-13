@@ -547,10 +547,6 @@ func main() {
 		panic("Invariant broken: stdout is not a terminal")
 	}
 
-	// NOTE: Must be done before the screen is set up!
-	style := decodeStyleOption(styleOption)
-
-	// NOTE: Must be done after decodeStyleOption()
 	screen, err := twin.NewScreenWithMouseModeAndColorType(*mouseMode, *terminalColorsCount)
 	if err != nil {
 		// Ref: https://github.com/walles/moar/issues/149
@@ -570,6 +566,19 @@ func main() {
 		formatter = formatters.TTY16
 	} else if *terminalColorsCount == twin.ColorType24bit {
 		formatter = formatters.TTY16m
+	}
+
+	var style chroma.Style
+	if *styleOption == nil {
+		distanceToBlack := screen.TerminalBackgroundColor().Distance(twin.NewColor24Bit(0, 0, 0))
+		distanceToWhite := screen.TerminalBackgroundColor().Distance(twin.NewColor24Bit(255, 255, 255))
+		if distanceToBlack < distanceToWhite {
+			style = *styles.Get(defaultDarkTheme)
+		} else {
+			style = *styles.Get(defaultLightTheme)
+		}
+	} else {
+		style = **styleOption
 	}
 
 	var reader *m.Reader
@@ -604,95 +613,6 @@ func main() {
 	}
 
 	startPaging(pager, screen, &style, &formatter)
-}
-
-func decodeStyleOption(styleOption **chroma.Style) chroma.Style {
-	if *styleOption != nil {
-		return **styleOption
-	}
-
-	t0 := time.Now()
-
-	// Prep for querying the terminal background color
-	oldTerminalState, err := term.MakeRaw(int(os.Stdout.Fd()))
-	if err != nil {
-		log.Debug("Failed setting up terminal for bg color detection: ", err)
-		return *styles.Get(defaultDarkTheme)
-	}
-	defer func() {
-		err := term.Restore(int(os.Stdout.Fd()), oldTerminalState)
-		if err != nil {
-			log.Error("Failed restoring terminal state: ", err)
-		}
-	}()
-
-	// Ref: https://stackoverflow.com/questions/2507337/how-to-determine-a-terminals-background-color
-	fmt.Println("\x1b]11;?\x07")
-
-	// Wait up to 10ms for us to get a response on stdin
-	prefix := "\x1b]11;rgb:"
-	suffix := "\x07"
-	sampleResponse := prefix + "0000/0000/0000" + suffix
-	responseBytes := make([]byte, len(sampleResponse))
-
-	// Since stdin might be redirected, we read from stdout instead. Works fine
-	// on at least macOS, Linux and Windows.
-	n, err := os.Stdout.Read(responseBytes) // FIXME: Time out if we don't get a response quickly enough!
-	if err != nil {
-		panic(fmt.Errorf("Failed reading bg color response from terminal: %w", err))
-	}
-	if n != len(sampleResponse) {
-		log.Debug("Got unexpected length bg color response from terminal: ", string(responseBytes))
-		return *styles.Get(defaultDarkTheme)
-	}
-
-	response := string(responseBytes)
-	if !strings.HasPrefix(response, prefix) {
-		log.Debug("Got unexpected prefix in bg color response from terminal: ", string(responseBytes))
-		return *styles.Get(defaultDarkTheme)
-	}
-	response = strings.TrimPrefix(response, prefix)
-
-	if !strings.HasSuffix(response, suffix) {
-		log.Debug("Got unexpected suffix in bg color response from terminal: ", string(responseBytes))
-		return *styles.Get(defaultDarkTheme)
-	}
-	response = strings.TrimSuffix(response, suffix)
-
-	// response is now "RRRR/GGGG/BBBB"
-	red, err := strconv.ParseUint(response[0:4], 16, 16)
-	if err != nil {
-		log.Debug("Failed parsing red in bg color response from terminal: ", string(responseBytes), ": ", err)
-		return *styles.Get(defaultDarkTheme)
-	}
-
-	green, err := strconv.ParseUint(response[5:9], 16, 16)
-	if err != nil {
-		log.Debug("Failed parsing green in bg color response from terminal: ", string(responseBytes), ": ", err)
-		return *styles.Get(defaultDarkTheme)
-	}
-
-	blue, err := strconv.ParseUint(response[10:14], 16, 16)
-	if err != nil {
-		log.Debug("Failed parsing blue in bg color response from terminal: ", string(responseBytes), ": ", err)
-		return *styles.Get(defaultDarkTheme)
-	}
-
-	t1 := time.Now()
-	log.Debug("Terminal background color detection took ", t1.Sub(t0))
-
-	color := twin.NewColor24Bit(uint8(red/256), uint8(green/256), uint8(blue/256))
-	log.Debug("Terminal background color detected: ", color)
-
-	distanceToBlack := color.Distance(twin.NewColor24Bit(0, 0, 0))
-	distanceToWhite := color.Distance(twin.NewColor24Bit(255, 255, 255))
-	darkTheme := distanceToBlack < distanceToWhite
-
-	if darkTheme {
-		return *styles.Get(defaultDarkTheme)
-	}
-
-	return *styles.Get(defaultLightTheme)
 }
 
 // Define a generic flag with specified name, default value, and usage string.

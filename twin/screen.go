@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"os"
 	"regexp"
+	"strconv"
 	"strings"
+	"time"
 	"unicode/utf8"
 
 	log "github.com/sirupsen/logrus"
@@ -50,6 +52,9 @@ type Screen interface {
 	// returning the new size instead.
 	Size() (width int, height int)
 
+	// Returns the background color of the terminal window, or nil if unknown.
+	TerminalBackgroundColor() *Color
+
 	// ShowCursorAt() moves the cursor to the given screen position and makes
 	// sure it is visible.
 	//
@@ -78,7 +83,8 @@ type UnixScreen struct {
 	ttyOut        *os.File
 	oldTtyOutMode uint32 //nolint Windows only
 
-	terminalColorCount ColorType
+	terminalColorCount      ColorType
+	terminalBackgroundColor *Color
 }
 
 // Example event: "\x1b[<65;127;41M"
@@ -138,6 +144,9 @@ func NewScreenWithMouseModeAndColorType(mouseMode MouseMode, terminalColorCount 
 	if err != nil {
 		return nil, fmt.Errorf("problem setting up TTY: %w", err)
 	}
+
+	screen.terminalBackgroundColor = detectTerminalBackgroundColor()
+
 	screen.setAlternateScreenMode(true)
 
 	if mouseMode == MouseModeAuto {
@@ -491,6 +500,76 @@ func (screen *UnixScreen) Size() (width int, height int) {
 	screen.cells = newCells
 
 	return screen.widthAccessFromSizeOnly, screen.heightAccessFromSizeOnly
+}
+
+func (screen *UnixScreen) TerminalBackgroundColor() *Color {
+	return screen.terminalBackgroundColor
+}
+
+func detectTerminalBackgroundColor() *Color {
+	t0 := time.Now()
+
+	// Ref: https://stackoverflow.com/questions/2507337/how-to-determine-a-terminals-background-color
+	_, err := fmt.Println("\x1b]11;?\x07")
+	if err != nil {
+		panic(fmt.Errorf("Failed requesting bg color response from terminal: %w", err))
+	}
+
+	prefix := "\x1b]11;rgb:"
+	suffix := "\x07"
+	sampleResponse := prefix + "0000/0000/0000" + suffix
+	responseBytes := make([]byte, len(sampleResponse))
+
+	// Since stdin might be redirected, we read from stdout instead. Works fine
+	// on at least macOS, Linux and Windows.
+	n, err := os.Stdout.Read(responseBytes) // FIXME: Time out if we don't get a response quickly enough!
+	if err != nil {
+		panic(fmt.Errorf("Failed reading bg color response from terminal: %w", err))
+	}
+	if n != len(sampleResponse) {
+		log.Debug("Got unexpected length bg color response from terminal: ", string(responseBytes))
+		return nil
+	}
+
+	response := string(responseBytes)
+	if !strings.HasPrefix(response, prefix) {
+		log.Debug("Got unexpected prefix in bg color response from terminal: ", string(responseBytes))
+		return nil
+	}
+	response = strings.TrimPrefix(response, prefix)
+
+	if !strings.HasSuffix(response, suffix) {
+		log.Debug("Got unexpected suffix in bg color response from terminal: ", string(responseBytes))
+		return nil
+	}
+	response = strings.TrimSuffix(response, suffix)
+
+	// response is now "RRRR/GGGG/BBBB"
+	red, err := strconv.ParseUint(response[0:4], 16, 16)
+	if err != nil {
+		log.Debug("Failed parsing red in bg color response from terminal: ", string(responseBytes), ": ", err)
+		return nil
+	}
+
+	green, err := strconv.ParseUint(response[5:9], 16, 16)
+	if err != nil {
+		log.Debug("Failed parsing green in bg color response from terminal: ", string(responseBytes), ": ", err)
+		return nil
+	}
+
+	blue, err := strconv.ParseUint(response[10:14], 16, 16)
+	if err != nil {
+		log.Debug("Failed parsing blue in bg color response from terminal: ", string(responseBytes), ": ", err)
+		return nil
+	}
+
+	t1 := time.Now()
+	log.Debug("Terminal background color detection took ", t1.Sub(t0))
+
+	color := NewColor24Bit(uint8(red/256), uint8(green/256), uint8(blue/256))
+	log.Debug("Terminal background color detected: ", color)
+
+	return &color
 }
 
 func (screen *UnixScreen) SetCell(column int, row int, cell Cell) {
