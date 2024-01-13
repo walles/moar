@@ -181,14 +181,14 @@ func parseLexerOption(lexerOption string) (chroma.Lexer, error) {
 	)
 }
 
-func parseStyleOption(styleOption string) (chroma.Style, error) {
+func parseStyleOption(styleOption string) (*chroma.Style, error) {
 	style, ok := styles.Registry[styleOption]
 	if !ok {
-		return *styles.Fallback, fmt.Errorf(
+		return &chroma.Style{}, fmt.Errorf(
 			"Pick a style from here: https://xyproto.github.io/splash/docs/longer/all.html")
 	}
 
-	return *style, nil
+	return style, nil
 }
 
 func parseColorsOption(colorsOption string) (twin.ColorType, error) {
@@ -404,8 +404,8 @@ func main() {
 
 	wrap := flagSet.Bool("wrap", false, "Wrap long lines")
 	follow := flagSet.Bool("follow", false, "Follow piped input just like \"tail -f\"")
-	style := flagSetFunc(flagSet,
-		"style", *styles.Registry["native"],
+	styleOption := flagSetFunc(flagSet,
+		"style", nil,
 		"Highlighting style from https://xyproto.github.io/splash/docs/longer/all.html", parseStyleOption)
 	lexer := flagSetFunc(flagSet,
 		"lang", nil,
@@ -558,6 +558,8 @@ func main() {
 		formatter = formatters.TTY16m
 	}
 
+	style := decodeStyleOption(styleOption)
+
 	var reader *m.Reader
 	if stdinIsRedirected {
 		// Display input pipe contents
@@ -590,6 +592,14 @@ func main() {
 	}
 
 	startPaging(pager, screen, style, &formatter)
+}
+
+func decodeStyleOption(styleOption **chroma.Style) *chroma.Style {
+	if *styleOption != nil {
+		return *styleOption
+	}
+
+	return styles.Get("native")
 }
 
 // Define a generic flag with specified name, default value, and usage string.
