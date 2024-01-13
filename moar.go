@@ -570,12 +570,30 @@ func main() {
 
 	var style chroma.Style
 	if *styleOption == nil {
-		distanceToBlack := screen.TerminalBackgroundColor().Distance(twin.NewColor24Bit(0, 0, 0))
-		distanceToWhite := screen.TerminalBackgroundColor().Distance(twin.NewColor24Bit(255, 255, 255))
-		if distanceToBlack < distanceToWhite {
-			style = *styles.Get(defaultDarkTheme)
-		} else {
-			style = *styles.Get(defaultLightTheme)
+		t0 := time.Now()
+		select {
+		case event := <-screen.Events():
+			// Event received, let's see if it's the one we want
+			switch ev := event.(type) {
+
+			case twin.EventTerminalBackgroundDetected:
+				log.Debug("Terminal background color detected as ", ev.Color, " after ", time.Since(t0))
+
+				distanceToBlack := ev.Color.Distance(twin.NewColor24Bit(0, 0, 0))
+				distanceToWhite := ev.Color.Distance(twin.NewColor24Bit(255, 255, 255))
+				if distanceToBlack < distanceToWhite {
+					style = *styles.Get(defaultDarkTheme)
+				} else {
+					style = *styles.Get(defaultLightTheme)
+				}
+
+			default:
+				log.Debug("Expected terminal background color event but got ", ev, " after ", time.Since(t0), " putting back and giving up")
+				screen.Events() <- event
+			}
+
+		case <-time.After(5 * time.Millisecond):
+			log.Debug("Terminal background color still not detected after ", time.Since(t0))
 		}
 	} else {
 		style = **styleOption

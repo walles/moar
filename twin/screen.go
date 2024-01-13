@@ -7,7 +7,6 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
-	"time"
 	"unicode/utf8"
 
 	log "github.com/sirupsen/logrus"
@@ -52,9 +51,6 @@ type Screen interface {
 	// returning the new size instead.
 	Size() (width int, height int)
 
-	// Returns the background color of the terminal window, or nil if unknown.
-	TerminalBackgroundColor() *Color
-
 	// ShowCursorAt() moves the cursor to the given screen position and makes
 	// sure it is visible.
 	//
@@ -83,8 +79,7 @@ type UnixScreen struct {
 	ttyOut        *os.File
 	oldTtyOutMode uint32 //nolint Windows only
 
-	terminalColorCount      ColorType
-	terminalBackgroundColor *Color
+	terminalColorCount ColorType
 }
 
 // Example event: "\x1b[<65;127;41M"
@@ -145,7 +140,12 @@ func NewScreenWithMouseModeAndColorType(mouseMode MouseMode, terminalColorCount 
 		return nil, fmt.Errorf("problem setting up TTY: %w", err)
 	}
 
-	screen.terminalBackgroundColor = detectTerminalBackgroundColor()
+	// Request to get terminal background color. Answer will be handled in our
+	// main loop.
+	//
+	// Ref:
+	// https://stackoverflow.com/questions/2507337/how-to-determine-a-terminals-background-color
+	fmt.Println("\x1b]11;?\x07")
 
 	screen.setAlternateScreenMode(true)
 
@@ -334,6 +334,7 @@ func (screen *UnixScreen) mainLoop() {
 	buffer := make([]byte, 1400)
 
 	maxBytesRead := 0
+	expectingTerminalBackgroundColor := true
 	for {
 		count, err := screen.ttyIn.Read(buffer)
 		if err != nil {
@@ -347,6 +348,27 @@ func (screen *UnixScreen) mainLoop() {
 			screen.events <- event
 			return
 		}
+
+		if expectingTerminalBackgroundColor {
+			// This is the response to our background color request
+			bg := parseTerminalBgColorResponse(buffer[0:count])
+			if bg != nil {
+				select {
+				case screen.events <- EventTerminalBackgroundDetected{Color: *bg}:
+					// Yay
+				default:
+					// If this happens, consider increasing the channel size in
+					// NewScreen()
+					log.Debugf("Unable to post terminal background color detected event")
+				}
+				expectingTerminalBackgroundColor = false
+				continue
+			}
+		}
+
+		// We only expect this on entry, it's requested right before we start
+		// the main loop in NewScreenWithMouseModeAndColorType().
+		expectingTerminalBackgroundColor = false
 
 		if count > maxBytesRead {
 			maxBytesRead = count
@@ -502,32 +524,13 @@ func (screen *UnixScreen) Size() (width int, height int) {
 	return screen.widthAccessFromSizeOnly, screen.heightAccessFromSizeOnly
 }
 
-func (screen *UnixScreen) TerminalBackgroundColor() *Color {
-	return screen.terminalBackgroundColor
-}
-
-func detectTerminalBackgroundColor() *Color {
-	t0 := time.Now()
-
-	// Ref: https://stackoverflow.com/questions/2507337/how-to-determine-a-terminals-background-color
-	_, err := fmt.Println("\x1b]11;?\x07")
-	if err != nil {
-		panic(fmt.Errorf("Failed requesting bg color response from terminal: %w", err))
-	}
-
+func parseTerminalBgColorResponse(responseBytes []byte) *Color {
 	prefix := "\x1b]11;rgb:"
 	suffix := "\x07"
 	sampleResponse := prefix + "0000/0000/0000" + suffix
-	responseBytes := make([]byte, len(sampleResponse))
 
-	// Since stdin might be redirected, we read from stdout instead. Works fine
-	// on at least macOS, Linux and Windows.
-	n, err := os.Stdout.Read(responseBytes) // FIXME: Time out if we don't get a response quickly enough!
-	if err != nil {
-		panic(fmt.Errorf("Failed reading bg color response from terminal: %w", err))
-	}
-	if n != len(sampleResponse) {
-		log.Debug("Got unexpected length bg color response from terminal: ", string(responseBytes))
+	if len(responseBytes) != len(sampleResponse) {
+		// Not a bg color response
 		return nil
 	}
 
@@ -562,9 +565,6 @@ func detectTerminalBackgroundColor() *Color {
 		log.Debug("Failed parsing blue in bg color response from terminal: ", string(responseBytes), ": ", err)
 		return nil
 	}
-
-	t1 := time.Now()
-	log.Debug("Terminal background color detection took ", t1.Sub(t0))
 
 	color := NewColor24Bit(uint8(red/256), uint8(green/256), uint8(blue/256))
 	log.Debug("Terminal background color detected: ", color)
