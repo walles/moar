@@ -648,21 +648,21 @@ func decodeStyleOption(styleOption **chroma.Style) chroma.Style {
 	response = strings.TrimSuffix(response, suffix)
 
 	// response is now "RRRR/GGGG/BBBB"
-	red, err := strconv.ParseUint(response[0:4], 16, 8)
+	red, err := strconv.ParseUint(response[0:4], 16, 16)
 	if err != nil {
-		log.Debug("Failed parsing red in bg color response from terminal: ", string(responseBytes))
+		log.Debug("Failed parsing red in bg color response from terminal: ", string(responseBytes), ": ", err)
 		return *styles.Get("native")
 	}
 
-	green, err := strconv.ParseUint(response[5:9], 16, 8)
+	green, err := strconv.ParseUint(response[5:9], 16, 16)
 	if err != nil {
-		log.Debug("Failed parsing green in bg color response from terminal: ", string(responseBytes))
+		log.Debug("Failed parsing green in bg color response from terminal: ", string(responseBytes), ": ", err)
 		return *styles.Get("native")
 	}
 
-	blue, err := strconv.ParseUint(response[10:14], 16, 8)
+	blue, err := strconv.ParseUint(response[10:14], 16, 16)
 	if err != nil {
-		log.Debug("Failed parsing blue in bg color response from terminal: ", string(responseBytes))
+		log.Debug("Failed parsing blue in bg color response from terminal: ", string(responseBytes), ": ", err)
 		return *styles.Get("native")
 	}
 
