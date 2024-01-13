@@ -171,8 +171,7 @@ func (reader *Reader) readStream(stream io.Reader, originalFileName *string, onD
 		onDone()
 	}
 
-	t1 := time.Now()
-	log.Debug("Stream read in ", t1.Sub(t0))
+	log.Debug("Stream read in ", time.Since(t0))
 }
 
 // NewReaderFromStream creates a new stream reader

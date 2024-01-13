@@ -593,7 +593,7 @@ func main() {
 			}
 
 		case <-time.After(5 * time.Millisecond):
-			log.Debug("Terminal background color still not detected after ", time.Since(t0))
+			log.Debug("Terminal background color still not detected after ", time.Since(t0), ", giving up")
 		}
 	} else {
 		style = **styleOption

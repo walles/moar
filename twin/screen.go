@@ -567,7 +567,6 @@ func parseTerminalBgColorResponse(responseBytes []byte) *Color {
 	}
 
 	color := NewColor24Bit(uint8(red/256), uint8(green/256), uint8(blue/256))
-	log.Debug("Terminal background color detected: ", color)
 
 	return &color
 }
