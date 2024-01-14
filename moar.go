@@ -37,16 +37,33 @@ const defaultLightTheme = "tango"
 
 var versionString = "Should be set when building, please use build.sh to build"
 
-func printUsageEnvVar(output io.Writer, envVarName string, description string) {
+func printUsageEnvVar(envVarName string, description string) {
 	value := os.Getenv(envVarName)
 	if len(value) == 0 {
 		return
 	}
 
-	_, _ = fmt.Fprintf(output, "  %s (%s): %s\n",
+	style, err := m.TermcapToStyle(value)
+	if err != nil {
+		bold := twin.StyleDefault.WithAttr(twin.AttrBold).RenderUpdateFrom(twin.StyleDefault, twin.ColorType256)
+		notBold := twin.StyleDefault.RenderUpdateFrom(twin.StyleDefault.WithAttr(twin.AttrBold), twin.ColorType256)
+		_, _ = fmt.Printf("  %s (%s): %s %s<- Error: %v%s\n",
+			envVarName,
+			description,
+			strings.ReplaceAll(value, "\x1b", "ESC"),
+			bold,
+			err,
+			notBold,
+		)
+		return
+	}
+
+	prefix := style.RenderUpdateFrom(twin.StyleDefault, twin.ColorType256)
+	suffix := twin.StyleDefault.RenderUpdateFrom(style, twin.ColorType256)
+	_, _ = fmt.Printf("  %s (%s): %s\n",
 		envVarName,
 		description,
-		strings.ReplaceAll(value, "\x1b", "ESC"),
+		prefix+strings.ReplaceAll(value, "\x1b", "ESC")+suffix,
 	)
 }
 
@@ -56,42 +73,42 @@ func printCommandline(output io.Writer) {
 	_, _ = fmt.Fprintln(output)
 }
 
-func printUsage(output io.Writer, flagSet *flag.FlagSet, withCommandline bool) {
+func printUsage(flagSet *flag.FlagSet, withCommandline bool) {
 	// This controls where PrintDefaults() prints, see below
-	flagSet.SetOutput(output)
+	flagSet.SetOutput(os.Stdout)
 
 	// FIXME: Log if any printouts fail?
 
 	if withCommandline {
-		printCommandline(output)
+		printCommandline(os.Stdout)
 	}
 
-	_, _ = fmt.Fprintln(output, "Usage:")
-	_, _ = fmt.Fprintln(output, "  moar [options] <file>")
-	_, _ = fmt.Fprintln(output, "  ... | moar")
-	_, _ = fmt.Fprintln(output, "  moar < file")
-	_, _ = fmt.Fprintln(output)
-	_, _ = fmt.Fprintln(output, "Shows file contents. Compressed files will be transparently decompressed.")
-	_, _ = fmt.Fprintln(output, "Input is expected to be (possibly compressed) UTF-8 encoded text. Invalid /")
-	_, _ = fmt.Fprintln(output, "non-printable characters are by default rendered as '?'.")
-	_, _ = fmt.Fprintln(output)
-	_, _ = fmt.Fprintln(output, "More information + source code:")
-	_, _ = fmt.Fprintln(output, "  <https://github.com/walles/moar#readme>")
-	_, _ = fmt.Fprintln(output)
-	_, _ = fmt.Fprintln(output, "Environment:")
+	_, _ = fmt.Println("Usage:")
+	_, _ = fmt.Println("  moar [options] <file>")
+	_, _ = fmt.Println("  ... | moar")
+	_, _ = fmt.Println("  moar < file")
+	_, _ = fmt.Println()
+	_, _ = fmt.Println("Shows file contents. Compressed files will be transparently decompressed.")
+	_, _ = fmt.Println("Input is expected to be (possibly compressed) UTF-8 encoded text. Invalid /")
+	_, _ = fmt.Println("non-printable characters are by default rendered as '?'.")
+	_, _ = fmt.Println()
+	_, _ = fmt.Println("More information + source code:")
+	_, _ = fmt.Println("  <https://github.com/walles/moar#readme>")
+	_, _ = fmt.Println()
+	_, _ = fmt.Println("Environment:")
 
 	moarEnv := os.Getenv("MOAR")
 	if len(moarEnv) == 0 {
-		_, _ = fmt.Fprintln(output, "  Additional options are read from the MOAR environment variable if set.")
-		_, _ = fmt.Fprintln(output, "  But currently, the MOAR environment variable is not set.")
+		_, _ = fmt.Println("  Additional options are read from the MOAR environment variable if set.")
+		_, _ = fmt.Println("  But currently, the MOAR environment variable is not set.")
 	} else {
-		_, _ = fmt.Fprintln(output, "  Additional options are read from the MOAR environment variable.")
-		_, _ = fmt.Fprintf(output, "  Current setting: MOAR=\"%s\"\n", moarEnv)
+		_, _ = fmt.Println("  Additional options are read from the MOAR environment variable.")
+		_, _ = fmt.Printf("  Current setting: MOAR=\"%s\"\n", moarEnv)
 	}
 
-	printUsageEnvVar(output, "LESS_TERMCAP_md", "man page bold style")
-	printUsageEnvVar(output, "LESS_TERMCAP_us", "man page underline style")
-	printUsageEnvVar(output, "LESS_TERMCAP_so", "search hits and footer style")
+	printUsageEnvVar("LESS_TERMCAP_md", "man page bold style")
+	printUsageEnvVar("LESS_TERMCAP_us", "man page underline style")
+	printUsageEnvVar("LESS_TERMCAP_so", "search hits and footer style")
 
 	absMoarPath, err := absLookPath(os.Args[0])
 	if err == nil {
@@ -101,24 +118,24 @@ func printUsage(output io.Writer, flagSet *flag.FlagSet, withCommandline bool) {
 		}
 		if absPagerValue != absMoarPath {
 			// We're not the default pager
-			_, _ = fmt.Fprintln(output)
-			_, _ = fmt.Fprintln(output, "Making moar your default pager:")
-			_, _ = fmt.Fprintln(output, "  Put the following line in your ~/.bashrc, ~/.bash_profile or ~/.zshrc")
-			_, _ = fmt.Fprintln(output, "  and moar will be used as the default pager in all new terminal windows:")
-			_, _ = fmt.Fprintln(output)
-			_, _ = fmt.Fprintf(output, "     export PAGER=%s\n", getMoarPath())
+			_, _ = fmt.Println()
+			_, _ = fmt.Println("Making moar your default pager:")
+			_, _ = fmt.Println("  Put the following line in your ~/.bashrc, ~/.bash_profile or ~/.zshrc")
+			_, _ = fmt.Println("  and moar will be used as the default pager in all new terminal windows:")
+			_, _ = fmt.Println()
+			_, _ = fmt.Printf("     export PAGER=%s\n", getMoarPath())
 		}
 	} else {
 		log.Warn("Unable to find moar binary ", err)
 	}
 
-	_, _ = fmt.Fprintln(output)
-	_, _ = fmt.Fprintln(output, "Options:")
+	_, _ = fmt.Println()
+	_, _ = fmt.Println("Options:")
 
 	flagSet.PrintDefaults()
 
-	_, _ = fmt.Fprintln(output, "  +1234")
-	_, _ = fmt.Fprintln(output, "    \tImmediately scroll to line 1234")
+	_, _ = fmt.Println("  +1234")
+	_, _ = fmt.Println("    \tImmediately scroll to line 1234")
 }
 
 // "moar" if we're in the $PATH, otherwise an absolute path
@@ -465,7 +482,7 @@ func main() {
 	err = flagSet.Parse(remainingArgs)
 	if err != nil {
 		if err == flag.ErrHelp {
-			printUsage(os.Stdout, flagSet, false)
+			printUsage(flagSet, false)
 			return
 		}
 
@@ -473,12 +490,11 @@ func main() {
 		if strings.HasPrefix(errorText, "invalid value") {
 			errorText = strings.Replace(errorText, ": ", "\n\n", 1)
 		}
+
 		boldErrorMessage := "\x1b[1m" + errorText + "\x1b[m"
 		fmt.Fprintln(os.Stderr, "ERROR:", boldErrorMessage)
 		fmt.Fprintln(os.Stderr)
-
 		printCommandline(os.Stderr)
-
 		fmt.Fprintln(os.Stderr, "For help, run: \x1b[1mmoar --help\x1b[m")
 
 		os.Exit(1)
@@ -501,9 +517,10 @@ func main() {
 	})
 
 	if len(flagSet.Args()) > 1 {
-		fmt.Fprintln(os.Stderr, "ERROR: Expected exactly one filename, or data piped from stdin, got:", flagSet.Args())
+		fmt.Fprintln(os.Stderr, "ERROR: Expected exactly one filename, or data piped from stdin")
 		fmt.Fprintln(os.Stderr)
-		printUsage(os.Stderr, flagSet, true)
+		printCommandline(os.Stderr)
+		fmt.Fprintln(os.Stderr, "For help, run: \x1b[1mmoar --help\x1b[m")
 
 		os.Exit(1)
 	}
@@ -527,7 +544,8 @@ func main() {
 	if inputFilename == nil && !stdinIsRedirected {
 		fmt.Fprintln(os.Stderr, "ERROR: Filename or input pipe required")
 		fmt.Fprintln(os.Stderr)
-		printUsage(os.Stderr, flagSet, true)
+		printCommandline(os.Stderr)
+		fmt.Fprintln(os.Stderr, "For help, run: \x1b[1mmoar --help\x1b[m")
 		os.Exit(1)
 	}
 
