@@ -333,7 +333,7 @@ func countLines(filename string) (uint64, error) {
 	if count == 0 {
 		log.Debug("Counted ", count, " lines in ", t1.Sub(t0))
 	} else {
-		log.Debug("Counted ", count, " lines in ", t1.Sub(t0), " at ", (t1.Sub(t0))/time.Duration(count), "/line")
+		log.Debug("Counted ", count, " lines in ", t1.Sub(t0), " at ", t1.Sub(t0)/time.Duration(count), "/line")
 	}
 	return count, nil
 }
