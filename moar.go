@@ -33,10 +33,27 @@ func printUsageEnvVar(output io.Writer, envVarName string, description string) {
 		return
 	}
 
+	style, err := m.TermcapToStyle(value)
+	if err != nil {
+		bold := twin.StyleDefault.WithAttr(twin.AttrBold).RenderUpdateFrom(twin.StyleDefault, twin.ColorType256)
+		notBold := twin.StyleDefault.RenderUpdateFrom(twin.StyleDefault.WithAttr(twin.AttrBold), twin.ColorType256)
+		_, _ = fmt.Fprintf(output, "  %s (%s): %s %s<- Error: %v%s\n",
+			envVarName,
+			description,
+			strings.ReplaceAll(value, "\x1b", "ESC"),
+			bold,
+			err,
+			notBold,
+		)
+		return
+	}
+
+	prefix := style.RenderUpdateFrom(twin.StyleDefault, twin.ColorType256)
+	suffix := twin.StyleDefault.RenderUpdateFrom(style, twin.ColorType256)
 	_, _ = fmt.Fprintf(output, "  %s (%s): %s\n",
 		envVarName,
 		description,
-		strings.ReplaceAll(value, "\x1b", "ESC"),
+		prefix+strings.ReplaceAll(value, "\x1b", "ESC")+suffix,
 	)
 }
 
