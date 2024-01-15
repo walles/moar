@@ -73,15 +73,11 @@ func printCommandline(output io.Writer) {
 	fmt.Fprintln(output)
 }
 
-func printUsage(flagSet *flag.FlagSet, withCommandline bool, colors twin.ColorType) {
+func printUsage(flagSet *flag.FlagSet, colors twin.ColorType) {
 	// This controls where PrintDefaults() prints, see below
 	flagSet.SetOutput(os.Stdout)
 
 	// FIXME: Log if any printouts fail?
-
-	if withCommandline {
-		printCommandline(os.Stdout)
-	}
 
 	fmt.Println("Usage:")
 	fmt.Println("  moar [options] <file>")
@@ -482,7 +478,7 @@ func main() {
 	err = flagSet.Parse(remainingArgs)
 	if err != nil {
 		if err == flag.ErrHelp {
-			printUsage(flagSet, false, *terminalColorsCount)
+			printUsage(flagSet, *terminalColorsCount)
 			return
 		}
 
