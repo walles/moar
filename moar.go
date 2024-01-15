@@ -47,7 +47,7 @@ func printUsageEnvVar(envVarName string, description string) {
 	if err != nil {
 		bold := twin.StyleDefault.WithAttr(twin.AttrBold).RenderUpdateFrom(twin.StyleDefault, twin.ColorType256)
 		notBold := twin.StyleDefault.RenderUpdateFrom(twin.StyleDefault.WithAttr(twin.AttrBold), twin.ColorType256)
-		_, _ = fmt.Printf("  %s (%s): %s %s<- Error: %v%s\n",
+		fmt.Printf("  %s (%s): %s %s<- Error: %v%s\n",
 			envVarName,
 			description,
 			strings.ReplaceAll(value, "\x1b", "ESC"),
@@ -60,7 +60,7 @@ func printUsageEnvVar(envVarName string, description string) {
 
 	prefix := style.RenderUpdateFrom(twin.StyleDefault, twin.ColorType256)
 	suffix := twin.StyleDefault.RenderUpdateFrom(style, twin.ColorType256)
-	_, _ = fmt.Printf("  %s (%s): %s\n",
+	fmt.Printf("  %s (%s): %s\n",
 		envVarName,
 		description,
 		prefix+strings.ReplaceAll(value, "\x1b", "ESC")+suffix,
@@ -68,9 +68,9 @@ func printUsageEnvVar(envVarName string, description string) {
 }
 
 func printCommandline(output io.Writer) {
-	_, _ = fmt.Fprintln(output, "Commandline: moar", strings.Join(os.Args[1:], " "))
-	_, _ = fmt.Fprintf(output, "Environment: MOAR=\"%v\"\n", os.Getenv("MOAR"))
-	_, _ = fmt.Fprintln(output)
+	fmt.Fprintln(output, "Commandline: moar", strings.Join(os.Args[1:], " "))
+	fmt.Fprintf(output, "Environment: MOAR=\"%v\"\n", os.Getenv("MOAR"))
+	fmt.Fprintln(output)
 }
 
 func printUsage(flagSet *flag.FlagSet, withCommandline bool) {
@@ -83,27 +83,27 @@ func printUsage(flagSet *flag.FlagSet, withCommandline bool) {
 		printCommandline(os.Stdout)
 	}
 
-	_, _ = fmt.Println("Usage:")
-	_, _ = fmt.Println("  moar [options] <file>")
-	_, _ = fmt.Println("  ... | moar")
-	_, _ = fmt.Println("  moar < file")
-	_, _ = fmt.Println()
-	_, _ = fmt.Println("Shows file contents. Compressed files will be transparently decompressed.")
-	_, _ = fmt.Println("Input is expected to be (possibly compressed) UTF-8 encoded text. Invalid /")
-	_, _ = fmt.Println("non-printable characters are by default rendered as '?'.")
-	_, _ = fmt.Println()
-	_, _ = fmt.Println("More information + source code:")
-	_, _ = fmt.Println("  <https://github.com/walles/moar#readme>")
-	_, _ = fmt.Println()
-	_, _ = fmt.Println("Environment:")
+	fmt.Println("Usage:")
+	fmt.Println("  moar [options] <file>")
+	fmt.Println("  ... | moar")
+	fmt.Println("  moar < file")
+	fmt.Println()
+	fmt.Println("Shows file contents. Compressed files will be transparently decompressed.")
+	fmt.Println("Input is expected to be (possibly compressed) UTF-8 encoded text. Invalid /")
+	fmt.Println("non-printable characters are by default rendered as '?'.")
+	fmt.Println()
+	fmt.Println("More information + source code:")
+	fmt.Println("  <https://github.com/walles/moar#readme>")
+	fmt.Println()
+	fmt.Println("Environment:")
 
 	moarEnv := os.Getenv("MOAR")
 	if len(moarEnv) == 0 {
-		_, _ = fmt.Println("  Additional options are read from the MOAR environment variable if set.")
-		_, _ = fmt.Println("  But currently, the MOAR environment variable is not set.")
+		fmt.Println("  Additional options are read from the MOAR environment variable if set.")
+		fmt.Println("  But currently, the MOAR environment variable is not set.")
 	} else {
-		_, _ = fmt.Println("  Additional options are read from the MOAR environment variable.")
-		_, _ = fmt.Printf("  Current setting: MOAR=\"%s\"\n", moarEnv)
+		fmt.Println("  Additional options are read from the MOAR environment variable.")
+		fmt.Printf("  Current setting: MOAR=\"%s\"\n", moarEnv)
 	}
 
 	printUsageEnvVar("LESS_TERMCAP_md", "man page bold style")
@@ -118,24 +118,24 @@ func printUsage(flagSet *flag.FlagSet, withCommandline bool) {
 		}
 		if absPagerValue != absMoarPath {
 			// We're not the default pager
-			_, _ = fmt.Println()
-			_, _ = fmt.Println("Making moar your default pager:")
-			_, _ = fmt.Println("  Put the following line in your ~/.bashrc, ~/.bash_profile or ~/.zshrc")
-			_, _ = fmt.Println("  and moar will be used as the default pager in all new terminal windows:")
-			_, _ = fmt.Println()
-			_, _ = fmt.Printf("     export PAGER=%s\n", getMoarPath())
+			fmt.Println()
+			fmt.Println("Making moar your default pager:")
+			fmt.Println("  Put the following line in your ~/.bashrc, ~/.bash_profile or ~/.zshrc")
+			fmt.Println("  and moar will be used as the default pager in all new terminal windows:")
+			fmt.Println()
+			fmt.Printf("     export PAGER=%s\n", getMoarPath())
 		}
 	} else {
 		log.Warn("Unable to find moar binary ", err)
 	}
 
-	_, _ = fmt.Println()
-	_, _ = fmt.Println("Options:")
+	fmt.Println()
+	fmt.Println("Options:")
 
 	flagSet.PrintDefaults()
 
-	_, _ = fmt.Println("  +1234")
-	_, _ = fmt.Println("    \tImmediately scroll to line 1234")
+	fmt.Println("  +1234")
+	fmt.Println("    \tImmediately scroll to line 1234")
 }
 
 // "moar" if we're in the $PATH, otherwise an absolute path
