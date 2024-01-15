@@ -37,7 +37,7 @@ const defaultLightTheme = "tango"
 
 var versionString = "Should be set when building, please use build.sh to build"
 
-func printUsageEnvVar(envVarName string, description string) {
+func printUsageEnvVar(envVarName string, description string, colors twin.ColorType) {
 	value := os.Getenv(envVarName)
 	if len(value) == 0 {
 		return
@@ -45,8 +45,8 @@ func printUsageEnvVar(envVarName string, description string) {
 
 	style, err := m.TermcapToStyle(value)
 	if err != nil {
-		bold := twin.StyleDefault.WithAttr(twin.AttrBold).RenderUpdateFrom(twin.StyleDefault, twin.ColorType256)
-		notBold := twin.StyleDefault.RenderUpdateFrom(twin.StyleDefault.WithAttr(twin.AttrBold), twin.ColorType256)
+		bold := twin.StyleDefault.WithAttr(twin.AttrBold).RenderUpdateFrom(twin.StyleDefault, colors)
+		notBold := twin.StyleDefault.RenderUpdateFrom(twin.StyleDefault.WithAttr(twin.AttrBold), colors)
 		fmt.Printf("  %s (%s): %s %s<- Error: %v%s\n",
 			envVarName,
 			description,
@@ -58,8 +58,8 @@ func printUsageEnvVar(envVarName string, description string) {
 		return
 	}
 
-	prefix := style.RenderUpdateFrom(twin.StyleDefault, twin.ColorType256)
-	suffix := twin.StyleDefault.RenderUpdateFrom(style, twin.ColorType256)
+	prefix := style.RenderUpdateFrom(twin.StyleDefault, colors)
+	suffix := twin.StyleDefault.RenderUpdateFrom(style, colors)
 	fmt.Printf("  %s (%s): %s\n",
 		envVarName,
 		description,
@@ -73,7 +73,7 @@ func printCommandline(output io.Writer) {
 	fmt.Fprintln(output)
 }
 
-func printUsage(flagSet *flag.FlagSet, withCommandline bool) {
+func printUsage(flagSet *flag.FlagSet, withCommandline bool, colors twin.ColorType) {
 	// This controls where PrintDefaults() prints, see below
 	flagSet.SetOutput(os.Stdout)
 
@@ -106,9 +106,9 @@ func printUsage(flagSet *flag.FlagSet, withCommandline bool) {
 		fmt.Printf("  Current setting: MOAR=\"%s\"\n", moarEnv)
 	}
 
-	printUsageEnvVar("LESS_TERMCAP_md", "man page bold style")
-	printUsageEnvVar("LESS_TERMCAP_us", "man page underline style")
-	printUsageEnvVar("LESS_TERMCAP_so", "search hits and footer style")
+	printUsageEnvVar("LESS_TERMCAP_md", "man page bold style", colors)
+	printUsageEnvVar("LESS_TERMCAP_us", "man page underline style", colors)
+	printUsageEnvVar("LESS_TERMCAP_so", "search hits and footer style", colors)
 
 	absMoarPath, err := absLookPath(os.Args[0])
 	if err == nil {
@@ -482,7 +482,7 @@ func main() {
 	err = flagSet.Parse(remainingArgs)
 	if err != nil {
 		if err == flag.ErrHelp {
-			printUsage(flagSet, false)
+			printUsage(flagSet, false, *terminalColorsCount)
 			return
 		}
 
