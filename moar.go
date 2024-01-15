@@ -25,6 +25,16 @@ import (
 	"github.com/walles/moar/twin"
 )
 
+const defaultDarkTheme = "native"
+
+// I decided on a light theme by doing this:
+//
+//	wc -l ../chroma/styles/*.xml|sort|cut -d/ -f4|grep xml|xargs -I XXX grep -Hi background ../chroma/styles/XXX
+//
+// Then I picked tango because it has a lot of lines, a bright background
+// and I like the looks of it.
+const defaultLightTheme = "tango"
+
 var versionString = "Should be set when building, please use build.sh to build"
 
 func printUsageEnvVar(envVarName string, description string) {
@@ -198,14 +208,14 @@ func parseLexerOption(lexerOption string) (chroma.Lexer, error) {
 	)
 }
 
-func parseStyleOption(styleOption string) (chroma.Style, error) {
+func parseStyleOption(styleOption string) (*chroma.Style, error) {
 	style, ok := styles.Registry[styleOption]
 	if !ok {
-		return *styles.Fallback, fmt.Errorf(
+		return &chroma.Style{}, fmt.Errorf(
 			"Pick a style from here: https://xyproto.github.io/splash/docs/longer/all.html")
 	}
 
-	return *style, nil
+	return style, nil
 }
 
 func parseColorsOption(colorsOption string) (twin.ColorType, error) {
@@ -421,8 +431,8 @@ func main() {
 
 	wrap := flagSet.Bool("wrap", false, "Wrap long lines")
 	follow := flagSet.Bool("follow", false, "Follow piped input just like \"tail -f\"")
-	style := flagSetFunc(flagSet,
-		"style", *styles.Registry["native"],
+	styleOption := flagSetFunc(flagSet,
+		"style", nil,
 		"Highlighting style from https://xyproto.github.io/splash/docs/longer/all.html", parseStyleOption)
 	lexer := flagSetFunc(flagSet,
 		"lang", nil,
@@ -576,13 +586,44 @@ func main() {
 		formatter = formatters.TTY16m
 	}
 
+	var style chroma.Style
+	if *styleOption == nil {
+		t0 := time.Now()
+		select {
+		case event := <-screen.Events():
+			// Event received, let's see if it's the one we want
+			switch ev := event.(type) {
+
+			case twin.EventTerminalBackgroundDetected:
+				log.Debug("Terminal background color detected as ", ev.Color, " after ", time.Since(t0))
+
+				distanceToBlack := ev.Color.Distance(twin.NewColor24Bit(0, 0, 0))
+				distanceToWhite := ev.Color.Distance(twin.NewColor24Bit(255, 255, 255))
+				if distanceToBlack < distanceToWhite {
+					style = *styles.Get(defaultDarkTheme)
+				} else {
+					style = *styles.Get(defaultLightTheme)
+				}
+
+			default:
+				log.Debug("Expected terminal background color event but got ", ev, " after ", time.Since(t0), " putting back and giving up")
+				screen.Events() <- event
+			}
+
+		case <-time.After(5 * time.Millisecond):
+			log.Debug("Terminal background color still not detected after ", time.Since(t0), ", giving up")
+		}
+	} else {
+		style = **styleOption
+	}
+
 	var reader *m.Reader
 	if stdinIsRedirected {
 		// Display input pipe contents
-		reader = m.NewReaderFromStream("", os.Stdin, *style, formatter, *lexer)
+		reader = m.NewReaderFromStream("", os.Stdin, style, formatter, *lexer)
 	} else {
 		// Display the input file contents
-		reader, err = m.NewReaderFromFilename(*inputFilename, *style, formatter, *lexer)
+		reader, err = m.NewReaderFromFilename(*inputFilename, style, formatter, *lexer)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "ERROR: %v\n", err)
 			os.Exit(1)
@@ -607,7 +648,7 @@ func main() {
 		pager.TargetLineNumber = &reallyHigh
 	}
 
-	startPaging(pager, screen, style, &formatter)
+	startPaging(pager, screen, &style, &formatter)
 }
 
 // Define a generic flag with specified name, default value, and usage string.

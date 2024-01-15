@@ -110,7 +110,7 @@ func (reader *Reader) readStream(stream io.Reader, originalFileName *string, onD
 
 	bufioReader := bufio.NewReader(stream)
 	completeLine := make([]byte, 0)
-	t0 := time.Now().UnixNano()
+	t0 := time.Now()
 	for {
 		keepReadingLine := true
 		eof := false
@@ -171,9 +171,7 @@ func (reader *Reader) readStream(stream io.Reader, originalFileName *string, onD
 		onDone()
 	}
 
-	t1 := time.Now().UnixNano()
-	dtNanos := t1 - t0
-	log.Debug("Stream read in ", dtNanos/1_000_000, "ms")
+	log.Debug("Stream read in ", time.Since(t0))
 }
 
 // NewReaderFromStream creates a new stream reader
@@ -307,7 +305,7 @@ func countLines(filename string) (uint64, error) {
 	}()
 
 	var count uint64
-	t0 := time.Now().UnixNano()
+	t0 := time.Now()
 	buf := make([]byte, bufio.MaxScanTokenSize)
 	lastReadEndsInNewline := true
 	for {
@@ -331,12 +329,11 @@ func countLines(filename string) (uint64, error) {
 		count++
 	}
 
-	t1 := time.Now().UnixNano()
-	dtNanos := t1 - t0
+	t1 := time.Now()
 	if count == 0 {
-		log.Debug("Counted ", count, " lines in 0ms")
+		log.Debug("Counted ", count, " lines in ", t1.Sub(t0))
 	} else {
-		log.Debug("Counted ", count, " lines in ", dtNanos/1_000_000, "ms at ", dtNanos/int64(count), "ns/line")
+		log.Debug("Counted ", count, " lines in ", t1.Sub(t0), " at ", t1.Sub(t0)/time.Duration(count), "/line")
 	}
 	return count, nil
 }

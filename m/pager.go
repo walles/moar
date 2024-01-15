@@ -442,6 +442,9 @@ func (p *Pager) StartPaging(screen twin.Screen, chromaStyle *chroma.Style, chrom
 		case eventSpinnerUpdate:
 			spinner = event.spinner
 
+		case twin.EventTerminalBackgroundDetected:
+			// Do nothing, we don't care about background color updates
+
 		default:
 			log.Warnf("Unhandled event type: %v", event)
 		}

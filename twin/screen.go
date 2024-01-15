@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"regexp"
+	"strconv"
 	"strings"
 	"unicode/utf8"
 
@@ -138,6 +139,14 @@ func NewScreenWithMouseModeAndColorType(mouseMode MouseMode, terminalColorCount 
 	if err != nil {
 		return nil, fmt.Errorf("problem setting up TTY: %w", err)
 	}
+
+	// Request to get terminal background color. Answer will be handled in our
+	// main loop.
+	//
+	// Ref:
+	// https://stackoverflow.com/questions/2507337/how-to-determine-a-terminals-background-color
+	fmt.Println("\x1b]11;?\x07")
+
 	screen.setAlternateScreenMode(true)
 
 	if mouseMode == MouseModeAuto {
@@ -325,6 +334,7 @@ func (screen *UnixScreen) mainLoop() {
 	buffer := make([]byte, 1400)
 
 	maxBytesRead := 0
+	expectingTerminalBackgroundColor := true
 	for {
 		count, err := screen.ttyIn.Read(buffer)
 		if err != nil {
@@ -338,6 +348,27 @@ func (screen *UnixScreen) mainLoop() {
 			screen.events <- event
 			return
 		}
+
+		if expectingTerminalBackgroundColor {
+			// This is the response to our background color request
+			bg := parseTerminalBgColorResponse(buffer[0:count])
+			if bg != nil {
+				select {
+				case screen.events <- EventTerminalBackgroundDetected{Color: *bg}:
+					// Yay
+				default:
+					// If this happens, consider increasing the channel size in
+					// NewScreen()
+					log.Debugf("Unable to post terminal background color detected event")
+				}
+				expectingTerminalBackgroundColor = false
+				continue
+			}
+		}
+
+		// We only expect this on entry, it's requested right before we start
+		// the main loop in NewScreenWithMouseModeAndColorType().
+		expectingTerminalBackgroundColor = false
 
 		if count > maxBytesRead {
 			maxBytesRead = count
@@ -491,6 +522,53 @@ func (screen *UnixScreen) Size() (width int, height int) {
 	screen.cells = newCells
 
 	return screen.widthAccessFromSizeOnly, screen.heightAccessFromSizeOnly
+}
+
+func parseTerminalBgColorResponse(responseBytes []byte) *Color {
+	prefix := "\x1b]11;rgb:"
+	suffix := "\x07"
+	sampleResponse := prefix + "0000/0000/0000" + suffix
+
+	if len(responseBytes) != len(sampleResponse) {
+		// Not a bg color response
+		return nil
+	}
+
+	response := string(responseBytes)
+	if !strings.HasPrefix(response, prefix) {
+		log.Debug("Got unexpected prefix in bg color response from terminal: ", string(responseBytes))
+		return nil
+	}
+	response = strings.TrimPrefix(response, prefix)
+
+	if !strings.HasSuffix(response, suffix) {
+		log.Debug("Got unexpected suffix in bg color response from terminal: ", string(responseBytes))
+		return nil
+	}
+	response = strings.TrimSuffix(response, suffix)
+
+	// response is now "RRRR/GGGG/BBBB"
+	red, err := strconv.ParseUint(response[0:4], 16, 16)
+	if err != nil {
+		log.Debug("Failed parsing red in bg color response from terminal: ", string(responseBytes), ": ", err)
+		return nil
+	}
+
+	green, err := strconv.ParseUint(response[5:9], 16, 16)
+	if err != nil {
+		log.Debug("Failed parsing green in bg color response from terminal: ", string(responseBytes), ": ", err)
+		return nil
+	}
+
+	blue, err := strconv.ParseUint(response[10:14], 16, 16)
+	if err != nil {
+		log.Debug("Failed parsing blue in bg color response from terminal: ", string(responseBytes), ": ", err)
+		return nil
+	}
+
+	color := NewColor24Bit(uint8(red/256), uint8(green/256), uint8(blue/256))
+
+	return &color
 }
 
 func (screen *UnixScreen) SetCell(column int, row int, cell Cell) {

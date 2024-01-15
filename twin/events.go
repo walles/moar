@@ -12,6 +12,11 @@ type EventKeyCode struct {
 	keyCode KeyCode
 }
 
+type EventTerminalBackgroundDetected struct {
+	// Terminal background color
+	Color Color
+}
+
 type MouseButtonMask uint16
 
 const (
