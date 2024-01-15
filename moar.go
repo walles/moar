@@ -73,13 +73,20 @@ func printCommandline(output io.Writer) {
 	fmt.Fprintln(output)
 }
 
+func heading(text string, colors twin.ColorType) string {
+	style := twin.StyleDefault.WithAttr(twin.AttrItalic)
+	prefix := style.RenderUpdateFrom(twin.StyleDefault, colors)
+	suffix := twin.StyleDefault.RenderUpdateFrom(style, colors)
+	return prefix + text + suffix
+}
+
 func printUsage(flagSet *flag.FlagSet, colors twin.ColorType) {
 	// This controls where PrintDefaults() prints, see below
 	flagSet.SetOutput(os.Stdout)
 
 	// FIXME: Log if any printouts fail?
 
-	fmt.Println("Usage:")
+	fmt.Println(heading("Usage", colors))
 	fmt.Println("  moar [options] <file>")
 	fmt.Println("  ... | moar")
 	fmt.Println("  moar < file")
@@ -91,7 +98,7 @@ func printUsage(flagSet *flag.FlagSet, colors twin.ColorType) {
 	fmt.Println("More information + source code:")
 	fmt.Println("  <https://github.com/walles/moar#readme>")
 	fmt.Println()
-	fmt.Println("Environment:")
+	fmt.Println(heading("Environment", colors))
 
 	moarEnv := os.Getenv("MOAR")
 	if len(moarEnv) == 0 {
@@ -115,7 +122,7 @@ func printUsage(flagSet *flag.FlagSet, colors twin.ColorType) {
 		if absPagerValue != absMoarPath {
 			// We're not the default pager
 			fmt.Println()
-			fmt.Println("Making moar your default pager:")
+			fmt.Println(heading("Making moar Your Default Pager", colors))
 			fmt.Println("  Put the following line in your ~/.bashrc, ~/.bash_profile or ~/.zshrc")
 			fmt.Println("  and moar will be used as the default pager in all new terminal windows:")
 			fmt.Println()
@@ -126,7 +133,7 @@ func printUsage(flagSet *flag.FlagSet, colors twin.ColorType) {
 	}
 
 	fmt.Println()
-	fmt.Println("Options:")
+	fmt.Println(heading("Options", colors))
 
 	flagSet.PrintDefaults()
 
@@ -429,7 +436,7 @@ func main() {
 	follow := flagSet.Bool("follow", false, "Follow piped input just like \"tail -f\"")
 	styleOption := flagSetFunc(flagSet,
 		"style", nil,
-		"Highlighting style from https://xyproto.github.io/splash/docs/longer/all.html", parseStyleOption)
+		"Highlighting `style` from https://xyproto.github.io/splash/docs/longer/all.html", parseStyleOption)
 	lexer := flagSetFunc(flagSet,
 		"lang", nil,
 		"File contents, used for highlighting. Mime type or file extension (\"html\"). Default is to guess by filename.", parseLexerOption)
@@ -446,7 +453,7 @@ func main() {
 	quitIfOneScreen := flagSet.Bool("quit-if-one-screen", false, "Don't page if contents fits on one screen")
 	noClearOnExit := flagSet.Bool("no-clear-on-exit", false, "Retain screen contents when exiting moar")
 	statusBarStyle := flagSetFunc(flagSet, "statusbar", m.STATUSBAR_STYLE_INVERSE,
-		"Status bar style: inverse, plain or bold", parseStatusBarStyle)
+		"Status bar `style`: inverse, plain or bold", parseStatusBarStyle)
 	unprintableStyle := flagSetFunc(flagSet, "render-unprintable", textstyles.UnprintableStyleHighlight,
 		"How unprintable characters are rendered: highlight or whitespace", parseUnprintableStyle)
 	scrollLeftHint := flagSetFunc(flagSet, "scroll-left-hint",
@@ -455,12 +462,12 @@ func main() {
 	scrollRightHint := flagSetFunc(flagSet, "scroll-right-hint",
 		twin.NewCell('>', twin.StyleDefault.WithAttr(twin.AttrReverse)),
 		"Shown when view can scroll right. One character with optional ANSI highlighting.", parseScrollHint)
-	shift := flagSetFunc(flagSet, "shift", 16, "Horizontal scroll amount >=1, defaults to 16", parseShiftAmount)
+	shift := flagSetFunc(flagSet, "shift", 16, "Horizontal scroll `amount` >=1, defaults to 16", parseShiftAmount)
 	mouseMode := flagSetFunc(
 		flagSet,
 		"mousemode",
 		twin.MouseModeAuto,
-		"Mouse mode: auto, select or scroll: https://github.com/walles/moar/blob/master/MOUSE.md",
+		"Mouse `mode`: auto, select or scroll: https://github.com/walles/moar/blob/master/MOUSE.md",
 		parseMouseMode,
 	)
 
