@@ -309,25 +309,26 @@ func parseMouseMode(mouseMode string) (twin.MouseMode, error) {
 	return twin.MouseModeAuto, fmt.Errorf("Valid modes are auto, select and scroll")
 }
 
-func pumpToStdout(inputFilename *string) error {
-	if inputFilename != nil {
-		// If we get both redirected stdin and an input filename, we must prefer
-		// to copy the file, because that's how less works. That's why we go for
-		// the filename first.
-		inputFile, err := m.ZOpen(*inputFilename)
-		if err != nil {
-			return fmt.Errorf("Failed to open %s: %w", *inputFilename, err)
+func pumpToStdout(inputFilenames ...string) error {
+	if len(inputFilenames) > 0 {
+		// If we get both redirected stdin and an input filenames, should only
+		// copy the files and ignore stdin, because that's how less works.
+		for _, inputFilename := range inputFilenames {
+			inputFile, err := m.ZOpen(inputFilename)
+			if err != nil {
+				return fmt.Errorf("Failed to open %s: %w", inputFilename, err)
+			}
+
+			_, err = io.Copy(os.Stdout, inputFile)
+			if err != nil {
+				return fmt.Errorf("Failed to copy %s to stdout: %w", inputFilename, err)
+			}
 		}
 
-		_, err = io.Copy(os.Stdout, inputFile)
-		if err != nil {
-			return fmt.Errorf("Failed to copy %s to stdout: %w", *inputFilename, err)
-		}
 		return nil
 	}
 
-	// Must be done after trying to pump the input filename to stdout to be
-	// compatible with less, see above.
+	// No input filenames, pump stdin to stdout
 	_, err := io.Copy(os.Stdout, os.Stdin)
 	if err != nil {
 		return fmt.Errorf("Failed to copy stdin to stdout: %w", err)
@@ -519,7 +520,10 @@ func main() {
 		TimestampFormat: time.StampMicro,
 	})
 
-	if len(flagSet.Args()) > 1 {
+	stdinIsRedirected := !term.IsTerminal(int(os.Stdin.Fd()))
+	stdoutIsRedirected := !term.IsTerminal(int(os.Stdout.Fd()))
+
+	if len(flagSet.Args()) > 1 && !stdoutIsRedirected {
 		fmt.Fprintln(os.Stderr, "ERROR: Expected exactly one filename, or data piped from stdin")
 		fmt.Fprintln(os.Stderr)
 		printCommandline(os.Stderr)
@@ -528,23 +532,17 @@ func main() {
 		os.Exit(1)
 	}
 
-	stdinIsRedirected := !term.IsTerminal(int(os.Stdin.Fd()))
-	stdoutIsRedirected := !term.IsTerminal(int(os.Stdout.Fd()))
-	var inputFilename *string
-	if len(flagSet.Args()) == 1 {
-		word := flagSet.Args()[0]
-		inputFilename = &word
-
+	for _, inputFilename := range flagSet.Args() {
 		// Need to check before twin.NewScreen() below, otherwise the screen
 		// will be cleared before we print the "No such file" error.
-		err := tryOpen(*inputFilename)
+		err := tryOpen(inputFilename)
 		if err != nil {
 			fmt.Fprintln(os.Stderr, "ERROR:", err)
 			os.Exit(1)
 		}
 	}
 
-	if inputFilename == nil && !stdinIsRedirected {
+	if len(flagSet.Args()) == 0 && !stdinIsRedirected {
 		fmt.Fprintln(os.Stderr, "ERROR: Filename or input pipe required")
 		fmt.Fprintln(os.Stderr)
 		printCommandline(os.Stderr)
@@ -553,7 +551,7 @@ func main() {
 	}
 
 	if stdoutIsRedirected {
-		err := pumpToStdout(inputFilename)
+		err := pumpToStdout(flagSet.Args()...)
 		if err != nil {
 			fmt.Fprintln(os.Stderr, "ERROR:", err)
 			os.Exit(1)
@@ -572,12 +570,21 @@ func main() {
 	if err != nil {
 		// Ref: https://github.com/walles/moar/issues/149
 		log.Debug("Failed to set up screen for paging, pumping to stdout instead: ", err)
-		err := pumpToStdout(inputFilename)
+		err := pumpToStdout(flagSet.Args()...)
 		if err != nil {
 			fmt.Fprintln(os.Stderr, "ERROR:", err)
 			os.Exit(1)
 		}
 		return
+	}
+
+	if len(flagSet.Args()) > 1 {
+		fmt.Fprintln(os.Stderr, "ERROR: Expected exactly one filename, or data piped from stdin")
+		fmt.Fprintln(os.Stderr)
+		printCommandline(os.Stderr)
+		fmt.Fprintln(os.Stderr, "For help, run: \x1b[1mmoar --help\x1b[m")
+
+		os.Exit(1)
 	}
 
 	formatter := formatters.TTY256
@@ -626,7 +633,10 @@ func main() {
 		reader = m.NewReaderFromStream("", os.Stdin, style, formatter, *lexer)
 	} else {
 		// Display the input file contents
-		reader, err = m.NewReaderFromFilename(*inputFilename, style, formatter, *lexer)
+		if len(flagSet.Args()) > 0 {
+			panic("Invariant broken: Expected exactly one filename")
+		}
+		reader, err = m.NewReaderFromFilename(flagSet.Args()[0], style, formatter, *lexer)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "ERROR: %v\n", err)
 			os.Exit(1)

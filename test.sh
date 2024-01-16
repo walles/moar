@@ -55,6 +55,11 @@ echo Test redirecting a file by name into file by redirecting stdout...
 ./moar moar.go >"${RESULT}"
 diff -u moar.go "${RESULT}"
 
+# Ref: https://github.com/walles/moar/issues/187
+echo Test redirecting multiple files by name into redirected stdout...
+./moar moar.go moar.go >"${RESULT}"
+diff -u <(cat moar.go moar.go) "${RESULT}"
+
 echo Test redirecting non-existing file by name into redirected stdout...
 if ./moar does-not-exist >&/dev/null; then
   echo ERROR: Should have failed on non-existing input file name
