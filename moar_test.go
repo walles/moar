@@ -15,3 +15,19 @@ func TestParseScrollHint(t *testing.T) {
 		Style: twin.StyleDefault.WithAttr(twin.AttrReverse),
 	})
 }
+
+func TestPageOneInputFile(t *testing.T) {
+	pager, screen, _, formatter, err := pagerFromArgs(
+		[]string{"", "moar_test.go"},
+		func(mouseMode twin.MouseMode, terminalColorCount twin.ColorType) (twin.Screen, error) {
+			return twin.NewFakeScreen(80, 24), nil
+		},
+		false, // stdin is redirected
+		false, // stdout is redirected
+	)
+
+	assert.NilError(t, err)
+	assert.Assert(t, pager != nil)
+	assert.Assert(t, screen != nil)
+	assert.Assert(t, formatter != nil)
+}

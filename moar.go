@@ -396,33 +396,15 @@ func getTargetLineNumber(args []string) (*linenumbers.LineNumber, []string) {
 	return nil, args
 }
 
-func main() {
+func pagerFromArgs(
+	args []string,
+	newScreen func(mouseMode twin.MouseMode, terminalColorCount twin.ColorType) (twin.Screen, error),
+	stdinIsRedirected bool,
+	stdoutIsRedirected bool,
+) (
+	*m.Pager, twin.Screen, chroma.Style, *chroma.Formatter, error,
+) {
 	// FIXME: If we get a CTRL-C, get terminal back into a useful state before terminating
-
-	var loglines strings.Builder
-	log.SetOutput(&loglines)
-	defer func() {
-		err := recover()
-		if len(loglines.String()) == 0 && err == nil {
-			// No problems
-			return
-		}
-
-		printProblemsHeader()
-
-		if len(loglines.String()) > 0 {
-			fmt.Fprintln(os.Stderr)
-			// Consider not printing duplicate log messages more than once
-			fmt.Fprintf(os.Stderr, "%s", loglines.String())
-		}
-
-		if err != nil {
-			fmt.Fprintln(os.Stderr)
-			panic(err)
-		}
-
-		os.Exit(1)
-	}()
 
 	flagSet := flag.NewFlagSet("",
 		flag.ContinueOnError, // We want to do our own error handling
@@ -473,7 +455,7 @@ func main() {
 	)
 
 	// Combine flags from environment and from command line
-	flags := os.Args[1:]
+	flags := args[1:]
 	moarEnv := strings.Trim(os.Getenv("MOAR"), " ")
 	if len(moarEnv) > 0 {
 		// FIXME: It would be nice if we could debug log that we're doing this,
@@ -487,7 +469,7 @@ func main() {
 	if err != nil {
 		if err == flag.ErrHelp {
 			printUsage(flagSet, *terminalColorsCount)
-			return
+			return nil, nil, chroma.Style{}, nil, nil
 		}
 
 		errorText := err.Error()
@@ -506,7 +488,7 @@ func main() {
 
 	if *printVersion {
 		fmt.Println(versionString)
-		os.Exit(0)
+		return nil, nil, chroma.Style{}, nil, nil
 	}
 
 	log.SetLevel(log.InfoLevel)
@@ -520,9 +502,6 @@ func main() {
 		TimestampFormat: time.StampMicro,
 	})
 
-	stdinIsRedirected := !term.IsTerminal(int(os.Stdin.Fd()))
-	stdoutIsRedirected := !term.IsTerminal(int(os.Stdout.Fd()))
-
 	if len(flagSet.Args()) > 1 && !stdoutIsRedirected {
 		fmt.Fprintln(os.Stderr, "ERROR: Expected exactly one filename, or data piped from stdin")
 		fmt.Fprintln(os.Stderr)
@@ -533,12 +512,11 @@ func main() {
 	}
 
 	for _, inputFilename := range flagSet.Args() {
-		// Need to check before twin.NewScreen() below, otherwise the screen
+		// Need to check before newScreen() below, otherwise the screen
 		// will be cleared before we print the "No such file" error.
 		err := tryOpen(inputFilename)
 		if err != nil {
-			fmt.Fprintln(os.Stderr, "ERROR:", err)
-			os.Exit(1)
+			return nil, nil, chroma.Style{}, nil, err
 		}
 	}
 
@@ -553,10 +531,9 @@ func main() {
 	if stdoutIsRedirected {
 		err := pumpToStdout(flagSet.Args()...)
 		if err != nil {
-			fmt.Fprintln(os.Stderr, "ERROR:", err)
-			os.Exit(1)
+			return nil, nil, chroma.Style{}, nil, err
 		}
-		os.Exit(0)
+		return nil, nil, chroma.Style{}, nil, nil
 	}
 
 	// INVARIANT: At this point, stdout is a terminal and we should proceed with
@@ -566,16 +543,15 @@ func main() {
 		panic("Invariant broken: stdout is not a terminal")
 	}
 
-	screen, err := twin.NewScreenWithMouseModeAndColorType(*mouseMode, *terminalColorsCount)
+	screen, err := newScreen(*mouseMode, *terminalColorsCount)
 	if err != nil {
 		// Ref: https://github.com/walles/moar/issues/149
 		log.Debug("Failed to set up screen for paging, pumping to stdout instead: ", err)
 		err := pumpToStdout(flagSet.Args()...)
 		if err != nil {
-			fmt.Fprintln(os.Stderr, "ERROR:", err)
-			os.Exit(1)
+			return nil, nil, chroma.Style{}, nil, err
 		}
-		return
+		return nil, nil, chroma.Style{}, nil, nil
 	}
 
 	if len(flagSet.Args()) > 1 {
@@ -638,8 +614,7 @@ func main() {
 		}
 		reader, err = m.NewReaderFromFilename(flagSet.Args()[0], style, formatter, *lexer)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "ERROR: %v\n", err)
-			os.Exit(1)
+			return nil, nil, chroma.Style{}, nil, err
 		}
 	}
 
@@ -661,7 +636,53 @@ func main() {
 		pager.TargetLineNumber = &reallyHigh
 	}
 
-	startPaging(pager, screen, &style, &formatter)
+	return pager, screen, style, &formatter, nil
+}
+
+func main() {
+	var loglines strings.Builder
+	log.SetOutput(&loglines)
+
+	defer func() {
+		err := recover()
+		if len(loglines.String()) == 0 && err == nil {
+			// No problems
+			return
+		}
+
+		printProblemsHeader()
+
+		if len(loglines.String()) > 0 {
+			fmt.Fprintln(os.Stderr)
+			// Consider not printing duplicate log messages more than once
+			fmt.Fprintf(os.Stderr, "%s", loglines.String())
+		}
+
+		if err != nil {
+			fmt.Fprintln(os.Stderr)
+			panic(err)
+		}
+
+		os.Exit(1)
+	}()
+
+	stdinIsRedirected := !term.IsTerminal(int(os.Stdin.Fd()))
+	stdoutIsRedirected := !term.IsTerminal(int(os.Stdout.Fd()))
+
+	pager, screen, style, formatter, err := pagerFromArgs(
+		os.Args,
+		twin.NewScreenWithMouseModeAndColorType,
+		stdinIsRedirected,
+		stdoutIsRedirected,
+	)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "ERROR:", err)
+		os.Exit(1)
+	}
+
+	if pager != nil {
+		startPaging(pager, screen, &style, formatter)
+	}
 }
 
 // Define a generic flag with specified name, default value, and usage string.
