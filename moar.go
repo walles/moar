@@ -633,7 +633,7 @@ func main() {
 		reader = m.NewReaderFromStream("", os.Stdin, style, formatter, *lexer)
 	} else {
 		// Display the input file contents
-		if len(flagSet.Args()) > 0 {
+		if len(flagSet.Args()) != 1 {
 			panic("Invariant broken: Expected exactly one filename")
 		}
 		reader, err = m.NewReaderFromFilename(flagSet.Args()[0], style, formatter, *lexer)
