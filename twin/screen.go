@@ -526,10 +526,12 @@ func (screen *UnixScreen) Size() (width int, height int) {
 
 func parseTerminalBgColorResponse(responseBytes []byte) *Color {
 	prefix := "\x1b]11;rgb:"
-	suffix := "\x07"
-	sampleResponse := prefix + "0000/0000/0000" + suffix
+	suffix1 := "\x07"
+	suffix2 := "\x1b\\"
+	sampleResponse1 := prefix + "0000/0000/0000" + suffix1
+	sampleResponse2 := prefix + "0000/0000/0000" + suffix2
 
-	if len(responseBytes) != len(sampleResponse) {
+	if len(responseBytes) != len(sampleResponse1) && len(responseBytes) != len(sampleResponse2) {
 		// Not a bg color response
 		return nil
 	}
@@ -541,11 +543,12 @@ func parseTerminalBgColorResponse(responseBytes []byte) *Color {
 	}
 	response = strings.TrimPrefix(response, prefix)
 
-	if !strings.HasSuffix(response, suffix) {
+	if !strings.HasSuffix(response, suffix1) && !strings.HasSuffix(response, suffix2) {
 		log.Debug("Got unexpected suffix in bg color response from terminal: ", string(responseBytes))
 		return nil
 	}
-	response = strings.TrimSuffix(response, suffix)
+	response = strings.TrimSuffix(response, suffix1)
+	response = strings.TrimSuffix(response, suffix2)
 
 	// response is now "RRRR/GGGG/BBBB"
 	red, err := strconv.ParseUint(response[0:4], 16, 16)
