@@ -140,14 +140,14 @@ func NewScreenWithMouseModeAndColorType(mouseMode MouseMode, terminalColorCount 
 		return nil, fmt.Errorf("problem setting up TTY: %w", err)
 	}
 
+	screen.setAlternateScreenMode(true)
+
 	// Request to get terminal background color. Answer will be handled in our
 	// main loop.
 	//
 	// Ref:
 	// https://stackoverflow.com/questions/2507337/how-to-determine-a-terminals-background-color
 	fmt.Println("\x1b]11;?\x07")
-
-	screen.setAlternateScreenMode(true)
 
 	if mouseMode == MouseModeAuto {
 		screen.enableMouseTracking(!terminalHasArrowKeysEmulation())
