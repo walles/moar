@@ -28,10 +28,11 @@ func setStyle(updateMe *twin.Style, envVarName string, fallback *twin.Style) {
 
 	style, err := TermcapToStyle(envValue)
 	if err != nil {
-		*updateMe = style
+		log.Debug("Ignoring invalid ", envVarName, ": ", strings.ReplaceAll(envValue, "\x1b", "ESC"), ": ", err)
+		return
 	}
 
-	log.Debug("Ignoring invalid ", envVarName, ": ", strings.ReplaceAll(envValue, "\x1b", "ESC"), ": ", err)
+	*updateMe = style
 }
 
 // With exact set, only return a style if the Chroma formatter has an explicit
