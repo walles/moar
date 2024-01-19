@@ -113,6 +113,12 @@ func printUsage(flagSet *flag.FlagSet, colors twin.ColorType) {
 	printUsageEnvVar("LESS_TERMCAP_us", "man page underline style", colors)
 	printUsageEnvVar("LESS_TERMCAP_so", "search hits and footer style", colors)
 
+	// Requested here: https://github.com/walles/moar/issues/170#issuecomment-1891154661
+	manroffopt := os.Getenv("MANROFFOPT")
+	if manroffopt != "" {
+		fmt.Printf("  MANROFFOPT: %s\n", manroffopt)
+	}
+
 	absMoarPath, err := absLookPath(os.Args[0])
 	if err == nil {
 		absPagerValue, err := absLookPath(os.Getenv("PAGER"))
