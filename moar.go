@@ -602,7 +602,7 @@ func pagerFromArgs(
 				screen.Events() <- event
 			}
 
-		case <-time.After(5 * time.Millisecond):
+		case <-time.After(50 * time.Millisecond):
 			log.Debug("Terminal background color still not detected after ", time.Since(t0), ", giving up")
 		}
 	} else {
