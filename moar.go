@@ -603,6 +603,9 @@ func pagerFromArgs(
 				screen.Events() <- event
 			}
 
+		// The worst number I have measured was around 15ms, in GNOME Terminal
+		// running inside of VirtualBox. 3x that should be enough for everyone
+		// (TM).
 		case <-time.After(50 * time.Millisecond):
 			log.Debug("Terminal background color still not detected after ", time.Since(t0), ", giving up")
 		}
