@@ -57,6 +57,14 @@ type Screen interface {
 	// If the position is outside of the screen, the cursor will be hidden.
 	ShowCursorAt(column int, row int)
 
+	// RequestTerminalBackgroundColor() asks the terminal to report its
+	// background color.
+	//
+	// If your terminal supports background color queries and it responds, the
+	// result will be reported as an EventTerminalBackgroundDetected on the
+	// Events() channel.
+	RequestTerminalBackgroundColor()
+
 	// This channel is what your main loop should be checking.
 	Events() chan Event
 }
@@ -141,13 +149,6 @@ func NewScreenWithMouseModeAndColorType(mouseMode MouseMode, terminalColorCount 
 	}
 
 	screen.setAlternateScreenMode(true)
-
-	// Request to get terminal background color. Answer will be handled in our
-	// main loop.
-	//
-	// Ref:
-	// https://stackoverflow.com/questions/2507337/how-to-determine-a-terminals-background-color
-	fmt.Println("\x1b]11;?\x07")
 
 	if mouseMode == MouseModeAuto {
 		screen.enableMouseTracking(!terminalHasArrowKeysEmulation())
@@ -522,6 +523,12 @@ func (screen *UnixScreen) Size() (width int, height int) {
 	screen.cells = newCells
 
 	return screen.widthAccessFromSizeOnly, screen.heightAccessFromSizeOnly
+}
+
+func (screen *UnixScreen) RequestTerminalBackgroundColor() {
+	// Ref:
+	// https://stackoverflow.com/questions/2507337/how-to-determine-a-terminals-background-color
+	fmt.Println("\x1b]11;?\x07")
 }
 
 func parseTerminalBgColorResponse(responseBytes []byte) *Color {

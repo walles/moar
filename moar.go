@@ -581,6 +581,7 @@ func pagerFromArgs(
 	var style chroma.Style
 	if *styleOption == nil {
 		t0 := time.Now()
+		screen.RequestTerminalBackgroundColor()
 		select {
 		case event := <-screen.Events():
 			// Event received, let's see if it's the one we want
