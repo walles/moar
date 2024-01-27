@@ -286,6 +286,11 @@ func terminalHasArrowKeysEmulation() bool {
 		return true
 	}
 
+	// Rio, tested on macOS 14.3, January 27th, 2024
+	if os.Getenv("TERM_PROGRAM") == "rio" {
+		return true
+	}
+
 	return false
 }
 
