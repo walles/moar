@@ -8,6 +8,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"runtime"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -67,6 +68,53 @@ func printUsageEnvVar(envVarName string, description string, colors twin.ColorTy
 	)
 }
 
+func printPagerEnvVar(name string, colors twin.ColorType) {
+	bold := twin.StyleDefault.WithAttr(twin.AttrBold).RenderUpdateFrom(twin.StyleDefault, colors)
+	notBold := twin.StyleDefault.RenderUpdateFrom(twin.StyleDefault.WithAttr(twin.AttrBold), colors)
+
+	value, isSet := os.LookupEnv(name)
+	if value == "" {
+		what := "unset"
+		if isSet {
+			what = "empty"
+		}
+
+		fmt.Printf("  %s is %s %s<- Should be %s%s\n",
+			name,
+			what,
+			bold,
+			getMoarPath(),
+			notBold,
+		)
+		return
+	}
+
+	absMoarPath, err := absLookPath(os.Args[0])
+	if err != nil {
+		log.Warn("Unable to find absolute moar path: ", err)
+		return
+	}
+
+	absEnvValue, err := absLookPath(value)
+	if err != nil {
+		// This can happen if this is set to some outdated value
+		absEnvValue = value
+	}
+
+	if absEnvValue == absMoarPath {
+		fmt.Printf("  %s=%s\n", name, value)
+		return
+	}
+
+	fmt.Printf("  %s=%s %s<- Should be %s%s\n",
+		name,
+		value,
+		bold,
+		getMoarPath(),
+		notBold,
+	)
+}
+
 func printCommandline(output io.Writer) {
 	fmt.Fprintln(output, "Commandline: moar", strings.Join(os.Args[1:], " "))
 	fmt.Fprintf(output, "Environment: MOAR=\"%v\"\n", os.Getenv("MOAR"))
@@ -112,6 +160,27 @@ func printUsage(flagSet *flag.FlagSet, colors twin.ColorType) {
 	printUsageEnvVar("LESS_TERMCAP_md", "man page bold style", colors)
 	printUsageEnvVar("LESS_TERMCAP_us", "man page underline style", colors)
 	printUsageEnvVar("LESS_TERMCAP_so", "search hits and footer style", colors)
+
+	printPagerEnvVar("PAGER", colors)
+	envVars := os.Environ()
+	sort.Strings(envVars)
+	for _, env := range envVars {
+		split := strings.SplitN(env, "=", 2)
+		if len(split) != 2 {
+			continue
+		}
+
+		name := split[0]
+		if name == "PAGER" {
+			// Already done above
+			continue
+		}
+		if !strings.HasSuffix(name, "PAGER") {
+			continue
+		}
+
+		printPagerEnvVar(name, colors)
+	}
 
 	// Requested here: https://github.com/walles/moar/issues/170#issuecomment-1891154661
 	manroffopt := os.Getenv("MANROFFOPT")
