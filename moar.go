@@ -38,17 +38,17 @@ const defaultLightTheme = "tango"
 
 var versionString = "Should be set when building, please use build.sh to build"
 
-func printUsageEnvVar(envVarName string, description string, colors twin.ColorType) {
+func renderUsageEnvVar(envVarName string, description string, colors twin.ColorType) string {
 	value := os.Getenv(envVarName)
 	if len(value) == 0 {
-		return
+		return ""
 	}
 
 	style, err := m.TermcapToStyle(value)
 	if err != nil {
 		bold := twin.StyleDefault.WithAttr(twin.AttrBold).RenderUpdateFrom(twin.StyleDefault, colors)
 		notBold := twin.StyleDefault.RenderUpdateFrom(twin.StyleDefault.WithAttr(twin.AttrBold), colors)
-		fmt.Printf("  %s (%s): %s %s<- Error: %v%s\n",
+		return fmt.Sprintf("  %s (%s): %s %s<- Error: %v%s\n",
 			envVarName,
 			description,
 			strings.ReplaceAll(value, "\x1b", "ESC"),
@@ -56,19 +56,18 @@ func printUsageEnvVar(envVarName string, description string, colors twin.ColorTy
 			err,
 			notBold,
 		)
-		return
 	}
 
 	prefix := style.RenderUpdateFrom(twin.StyleDefault, colors)
 	suffix := twin.StyleDefault.RenderUpdateFrom(style, colors)
-	fmt.Printf("  %s (%s): %s\n",
+	return fmt.Sprintf("  %s (%s): %s\n",
 		envVarName,
 		description,
 		prefix+strings.ReplaceAll(value, "\x1b", "ESC")+suffix,
 	)
 }
 
-func printPagerEnvVar(name string, colors twin.ColorType) {
+func renderPagerEnvVar(name string, colors twin.ColorType) string {
 	bold := twin.StyleDefault.WithAttr(twin.AttrBold).RenderUpdateFrom(twin.StyleDefault, colors)
 	notBold := twin.StyleDefault.RenderUpdateFrom(twin.StyleDefault.WithAttr(twin.AttrBold), colors)
 
@@ -79,20 +78,19 @@ func printPagerEnvVar(name string, colors twin.ColorType) {
 			what = "empty"
 		}
 
-		fmt.Printf("  %s is %s %s<- Should be %s%s\n",
+		return fmt.Sprintf("  %s is %s %s<- Should be %s%s\n",
 			name,
 			what,
 			bold,
 			getMoarPath(),
 			notBold,
 		)
-		return
 	}
 
 	absMoarPath, err := absLookPath(os.Args[0])
 	if err != nil {
 		log.Warn("Unable to find absolute moar path: ", err)
-		return
+		return ""
 	}
 
 	absEnvValue, err := absLookPath(value)
@@ -102,11 +100,10 @@ func printPagerEnvVar(name string, colors twin.ColorType) {
 	}
 
 	if absEnvValue == absMoarPath {
-		fmt.Printf("  %s=%s\n", name, value)
-		return
+		return fmt.Sprintf("  %s=%s\n", name, value)
 	}
 
-	fmt.Printf("  %s=%s %s<- Should be %s%s\n",
+	return fmt.Sprintf("  %s=%s %s<- Should be %s%s\n",
 		name,
 		value,
 		bold,
@@ -157,11 +154,12 @@ func printUsage(flagSet *flag.FlagSet, colors twin.ColorType) {
 		fmt.Printf("  Current setting: MOAR=\"%s\"\n", moarEnv)
 	}
 
-	printUsageEnvVar("LESS_TERMCAP_md", "man page bold style", colors)
-	printUsageEnvVar("LESS_TERMCAP_us", "man page underline style", colors)
-	printUsageEnvVar("LESS_TERMCAP_so", "search hits and footer style", colors)
+	envSection := ""
+	envSection += renderUsageEnvVar("LESS_TERMCAP_md", "man page bold style", colors)
+	envSection += renderUsageEnvVar("LESS_TERMCAP_us", "man page underline style", colors)
+	envSection += renderUsageEnvVar("LESS_TERMCAP_so", "search hits and footer style", colors)
 
-	printPagerEnvVar("PAGER", colors)
+	envSection += renderPagerEnvVar("PAGER", colors)
 	envVars := os.Environ()
 	sort.Strings(envVars)
 	for _, env := range envVars {
@@ -179,7 +177,14 @@ func printUsage(flagSet *flag.FlagSet, colors twin.ColorType) {
 			continue
 		}
 
-		printPagerEnvVar(name, colors)
+		envSection += renderPagerEnvVar(name, colors)
+	}
+
+	if envSection != "" {
+		fmt.Println()
+
+		// Not Println since the section already ends with a newline
+		fmt.Print(envSection)
 	}
 
 	// Requested here: https://github.com/walles/moar/issues/170#issuecomment-1891154661
