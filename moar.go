@@ -304,7 +304,7 @@ func parseStyleOption(styleOption string) (*chroma.Style, error) {
 func parseColorsOption(colorsOption string) (twin.ColorType, error) {
 	if strings.ToLower(colorsOption) == "auto" {
 		colorsOption = "16M"
-		if strings.Contains(os.Getenv("TERM"), "256") {
+		if os.Getenv("COLORTERM") != "truecolor" && strings.Contains(os.Getenv("TERM"), "256") {
 			// Covers "xterm-256color" as used by the macOS Terminal
 			colorsOption = "256"
 		}

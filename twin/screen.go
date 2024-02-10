@@ -113,7 +113,7 @@ func NewScreen() (Screen, error) {
 
 func NewScreenWithMouseMode(mouseMode MouseMode) (Screen, error) {
 	terminalColorCount := ColorType24bit
-	if strings.Contains(os.Getenv("TERM"), "256") {
+	if os.Getenv("COLORTERM") != "truecolor" && strings.Contains(os.Getenv("TERM"), "256") {
 		// Covers "xterm-256color" as used by the macOS Terminal
 		terminalColorCount = ColorType256
 	}
