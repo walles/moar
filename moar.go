@@ -193,6 +193,7 @@ func printUsage(flagSet *flag.FlagSet, colors twin.ColorType) {
 
 	envSection += renderPlainEnvVar("TERM")
 	envSection += renderPlainEnvVar("TERM_PROGRAM")
+	envSection += renderPlainEnvVar("COLORTERM")
 
 	// Requested here: https://github.com/walles/moar/issues/170#issuecomment-1891154661
 	envSection += renderPlainEnvVar("MANROFFOPT")
