@@ -38,7 +38,7 @@ const defaultLightTheme = "tango"
 
 var versionString = "Should be set when building, please use build.sh to build"
 
-func renderUsageEnvVar(envVarName string, description string, colors twin.ColorType) string {
+func renderLessTermcapEnvVar(envVarName string, description string, colors twin.ColorType) string {
 	value := os.Getenv(envVarName)
 	if len(value) == 0 {
 		return ""
@@ -112,6 +112,17 @@ func renderPagerEnvVar(name string, colors twin.ColorType) string {
 	)
 }
 
+// If the environment variable is set, render it as APA=bepa indented two
+// spaces, plus a newline at the end. Otherwise, return an empty string.
+func renderPlainEnvVar(envVarName string) string {
+	value := os.Getenv(envVarName)
+	if value == "" {
+		return ""
+	}
+
+	return fmt.Sprintf("  %s=%s\n", envVarName, value)
+}
+
 func printCommandline(output io.Writer) {
 	fmt.Fprintln(output, "Commandline: moar", strings.Join(os.Args[1:], " "))
 	fmt.Fprintf(output, "Environment: MOAR=\"%v\"\n", os.Getenv("MOAR"))
@@ -155,9 +166,9 @@ func printUsage(flagSet *flag.FlagSet, colors twin.ColorType) {
 	}
 
 	envSection := ""
-	envSection += renderUsageEnvVar("LESS_TERMCAP_md", "man page bold style", colors)
-	envSection += renderUsageEnvVar("LESS_TERMCAP_us", "man page underline style", colors)
-	envSection += renderUsageEnvVar("LESS_TERMCAP_so", "search hits and footer style", colors)
+	envSection += renderLessTermcapEnvVar("LESS_TERMCAP_md", "man page bold style", colors)
+	envSection += renderLessTermcapEnvVar("LESS_TERMCAP_us", "man page underline style", colors)
+	envSection += renderLessTermcapEnvVar("LESS_TERMCAP_so", "search hits and footer style", colors)
 
 	envSection += renderPagerEnvVar("PAGER", colors)
 	envVars := os.Environ()
@@ -180,17 +191,17 @@ func printUsage(flagSet *flag.FlagSet, colors twin.ColorType) {
 		envSection += renderPagerEnvVar(name, colors)
 	}
 
+	envSection += renderPlainEnvVar("TERM")
+	envSection += renderPlainEnvVar("TERM_PROGRAM")
+
+	// Requested here: https://github.com/walles/moar/issues/170#issuecomment-1891154661
+	envSection += renderPlainEnvVar("MANROFFOPT")
+
 	if envSection != "" {
 		fmt.Println()
 
 		// Not Println since the section already ends with a newline
 		fmt.Print(envSection)
-	}
-
-	// Requested here: https://github.com/walles/moar/issues/170#issuecomment-1891154661
-	manroffopt := os.Getenv("MANROFFOPT")
-	if manroffopt != "" {
-		fmt.Printf("  MANROFFOPT: %s\n", manroffopt)
 	}
 
 	absMoarPath, err := absLookPath(os.Args[0])
