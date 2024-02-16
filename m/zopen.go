@@ -21,6 +21,10 @@ func ZOpen(filename string) (io.ReadCloser, error) {
 	case strings.HasSuffix(filename, ".gz"):
 		return gzip.NewReader(file)
 
+	// Ref: https://github.com/walles/moar/issues/194
+	case strings.HasSuffix(filename, ".tgz"):
+		return gzip.NewReader(file)
+
 	case strings.HasSuffix(filename, ".bz2"):
 		return struct {
 			io.Reader
