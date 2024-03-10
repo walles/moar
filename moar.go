@@ -488,6 +488,32 @@ func getTargetLineNumber(args []string) (*linenumbers.LineNumber, []string) {
 	return nil, args
 }
 
+// On man pages, disable line numbers by default.
+//
+// Before paging, "man" first checks the terminal width and formats the man page
+// to fit that width.
+//
+// Then, if moar adds line numbers, the rightmost part of the man page won't be
+// visible.
+//
+// So we try to detect showing man pages, and in that case disable line numbers
+// so that the rightmost part of the page is visible by default.
+func noLineNumbersDefault() bool {
+	if os.Getenv("MANPATH") != "" {
+		// Set by "man" on macOS, skip line numbers in this case
+		return true
+	}
+
+	if os.Getenv("MAN_PN") != "" {
+		// Set by "man" on Ubuntu 22.04.4 when I tested it inside of Docker,
+		// skip line numbers in this case
+		return true
+	}
+
+	// Default to not skipping line numbers
+	return false
+}
+
 func pagerFromArgs(
 	args []string,
 	newScreen func(mouseMode twin.MouseMode, terminalColorCount twin.ColorType) (twin.Screen, error),
@@ -523,7 +549,7 @@ func pagerFromArgs(
 	terminalColorsCount := flagSetFunc(flagSet,
 		"colors", defaultFormatter, "Highlighting palette size: 8, 16, 256, 16M, auto", parseColorsOption)
 
-	noLineNumbers := flagSet.Bool("no-linenumbers", false, "Hide line numbers on startup, press left arrow key to show")
+	noLineNumbers := flagSet.Bool("no-linenumbers", noLineNumbersDefault(), "Hide line numbers on startup, press left arrow key to show")
 	noStatusBar := flagSet.Bool("no-statusbar", false, "Hide the status bar, toggle with '='")
 	quitIfOneScreen := flagSet.Bool("quit-if-one-screen", false, "Don't page if contents fits on one screen")
 	noClearOnExit := flagSet.Bool("no-clear-on-exit", false, "Retain screen contents when exiting moar")
