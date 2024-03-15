@@ -45,6 +45,10 @@ type Reader struct {
 
 	highlightingStyle chan chroma.Style
 
+	// This channel will be closed either when the first byte arrives or when
+	// the stream ends, whichever happens first.
+	doneWaitingForFirstByte chan bool
+
 	// For telling the UI it should recheck the --quit-if-one-screen conditions.
 	// Signalled when either highlighting is done or reading is done.
 	maybeDone chan bool
@@ -121,22 +125,25 @@ func (reader *Reader) readStream(stream io.Reader, originalFileName *string, onD
 		var err error
 		for keepReadingLine {
 			lineBytes, keepReadingLine, err = bufioReader.ReadLine()
-			if err != nil {
-				if err == io.EOF {
-					eof = true
-					break
-				}
+			close(reader.doneWaitingForFirstByte)
+			if err == nil {
+				completeLine = append(completeLine, lineBytes...)
+				continue
+			}
 
-				reader.Lock()
-				if reader.err == nil {
-					// Store the error unless it overwrites one we already have
-					reader.err = fmt.Errorf("error reading line from input stream: %w", err)
-				}
-				reader.Unlock()
+			// Something went wrong
+
+			if err == io.EOF {
+				eof = true
 				break
 			}
 
-			completeLine = append(completeLine, lineBytes...)
+			reader.Lock()
+			if reader.err == nil {
+				// Store the error unless it overwrites one we already have
+				reader.err = fmt.Errorf("error reading line from input stream: %w", err)
+			}
+			reader.Unlock()
 		}
 
 		if eof {
@@ -226,11 +233,12 @@ func newReaderFromStream(reader io.Reader, originalFileName *string, formatter c
 		// This needs to be size 1. If it would be 0, and we add more
 		// lines while the pager is processing, the pager would miss
 		// the lines added while it was processing.
-		moreLinesAdded:    make(chan bool, 1),
-		maybeDone:         make(chan bool, 1),
-		highlightingStyle: make(chan chroma.Style, 1),
-		highlightingDone:  &highlightingDone,
-		done:              &done,
+		moreLinesAdded:          make(chan bool, 1),
+		maybeDone:               make(chan bool, 1),
+		highlightingStyle:       make(chan chroma.Style, 1),
+		doneWaitingForFirstByte: make(chan bool),
+		highlightingDone:        &highlightingDone,
+		done:                    &done,
 	}
 
 	// FIXME: Make sure that if we panic somewhere inside of this goroutine,
@@ -265,9 +273,10 @@ func NewReaderFromText(name string, text string) *Reader {
 	highlightingDone := atomic.Bool{}
 	highlightingDone.Store(true) // No highlighting to do = nothing left = Done!
 	returnMe := &Reader{
-		lines:            lines,
-		done:             &done,
-		highlightingDone: &highlightingDone,
+		lines:                   lines,
+		done:                    &done,
+		highlightingDone:        &highlightingDone,
+		doneWaitingForFirstByte: make(chan bool),
 	}
 	if name != "" {
 		returnMe.name = &name
@@ -516,6 +525,14 @@ func (reader *Reader) createStatusUnlocked(lastLine linenumbers.LineNumber) stri
 		prefix,
 		linenumbers.LineNumberFromLength(len(reader.lines)).Format(),
 		percent)
+}
+
+// Wait for the first line to be read.
+//
+// Used for making sudo work:
+// https://github.com/walles/moar/issues/199
+func (reader *Reader) AwaitFirstLine() {
+	<-reader.doneWaitingForFirstByte
 }
 
 // GetLineCount returns the number of lines available for viewing

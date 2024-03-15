@@ -742,6 +742,8 @@ func pagerFromArgs(
 
 	reader.SetStyleForHighlighting(style)
 
+	reader.AwaitFirstLine()
+
 	pager := m.NewPager(reader)
 	pager.WrapLongLines = *wrap
 	pager.ShowLineNumbers = !*noLineNumbers
