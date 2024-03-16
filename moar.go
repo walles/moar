@@ -690,6 +690,21 @@ func pagerFromArgs(
 		formatter = formatters.TTY16m
 	}
 
+	var reader *m.Reader
+	if stdinIsRedirected {
+		// Display input pipe contents
+		reader = m.NewReaderFromStreamWithoutStyle("", os.Stdin, formatter, *lexer)
+	} else {
+		// Display the input file contents
+		if len(flagSet.Args()) != 1 {
+			panic("Invariant broken: Expected exactly one filename")
+		}
+		reader, err = m.NewReaderFromFilenameWithoutStyle(flagSet.Args()[0], formatter, *lexer)
+		if err != nil {
+			return nil, nil, chroma.Style{}, nil, err
+		}
+	}
+
 	var style chroma.Style
 	if *styleOption == nil {
 		t0 := time.Now()
@@ -725,20 +740,7 @@ func pagerFromArgs(
 		style = **styleOption
 	}
 
-	var reader *m.Reader
-	if stdinIsRedirected {
-		// Display input pipe contents
-		reader = m.NewReaderFromStream("", os.Stdin, style, formatter, *lexer)
-	} else {
-		// Display the input file contents
-		if len(flagSet.Args()) != 1 {
-			panic("Invariant broken: Expected exactly one filename")
-		}
-		reader, err = m.NewReaderFromFilename(flagSet.Args()[0], style, formatter, *lexer)
-		if err != nil {
-			return nil, nil, chroma.Style{}, nil, err
-		}
-	}
+	reader.SetStyleForHighlighting(style)
 
 	pager := m.NewPager(reader)
 	pager.WrapLongLines = *wrap
