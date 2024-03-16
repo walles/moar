@@ -43,6 +43,8 @@ type Reader struct {
 	done             *atomic.Bool
 	highlightingDone *atomic.Bool
 
+	highlightingStyle chan chroma.Style
+
 	// For telling the UI it should recheck the --quit-if-one-screen conditions.
 	// Signalled when either highlighting is done or reading is done.
 	maybeDone chan bool
@@ -174,14 +176,10 @@ func (reader *Reader) readStream(stream io.Reader, originalFileName *string, onD
 	log.Debug("Stream read in ", time.Since(t0))
 }
 
-// NewReaderFromStream creates a new stream reader
-//
-// The name can be an empty string ("").
-//
-// If non-empty, the name will be displayed by the pager in the bottom left
-// corner to help the user keep track of what is being paged.
-func NewReaderFromStream(name string, reader io.Reader, style chroma.Style, formatter chroma.Formatter, lexer chroma.Lexer) *Reader {
-	mReader := newReaderFromStream(reader, nil, style, formatter, lexer)
+// Note that you must call reader.SetStyleForHighlighting() after this to get
+// highlighting.
+func NewReaderFromStreamWithoutStyle(name string, reader io.Reader, formatter chroma.Formatter, lexer chroma.Lexer) *Reader {
+	mReader := newReaderFromStream(reader, nil, formatter, lexer)
 
 	if len(name) > 0 {
 		mReader.Lock()
@@ -196,6 +194,18 @@ func NewReaderFromStream(name string, reader io.Reader, style chroma.Style, form
 	return mReader
 }
 
+// NewReaderFromStream creates a new stream reader
+//
+// The name can be an empty string ("").
+//
+// If non-empty, the name will be displayed by the pager in the bottom left
+// corner to help the user keep track of what is being paged.
+func NewReaderFromStream(name string, reader io.Reader, style chroma.Style, formatter chroma.Formatter, lexer chroma.Lexer) *Reader {
+	mReader := NewReaderFromStreamWithoutStyle(name, reader, formatter, lexer)
+	mReader.SetStyleForHighlighting(style)
+	return mReader
+}
+
 // newReaderFromStream creates a new stream reader
 //
 // originalFileName is used for counting the lines in the file. nil for
@@ -204,7 +214,10 @@ func NewReaderFromStream(name string, reader io.Reader, style chroma.Style, form
 // loading performance.
 //
 // If lexer is not nil, the file will be highlighted after being fully read.
-func newReaderFromStream(reader io.Reader, originalFileName *string, style chroma.Style, formatter chroma.Formatter, lexer chroma.Lexer) *Reader {
+//
+// Note that you must call reader.SetStyleForHighlighting() after this to get
+// highlighting.
+func newReaderFromStream(reader io.Reader, originalFileName *string, formatter chroma.Formatter, lexer chroma.Lexer) *Reader {
 	done := atomic.Bool{}
 	done.Store(false)
 	highlightingDone := atomic.Bool{}
@@ -213,17 +226,18 @@ func newReaderFromStream(reader io.Reader, originalFileName *string, style chrom
 		// This needs to be size 1. If it would be 0, and we add more
 		// lines while the pager is processing, the pager would miss
 		// the lines added while it was processing.
-		moreLinesAdded:   make(chan bool, 1),
-		maybeDone:        make(chan bool, 1),
-		highlightingDone: &highlightingDone,
-		done:             &done,
+		moreLinesAdded:    make(chan bool, 1),
+		maybeDone:         make(chan bool, 1),
+		highlightingStyle: make(chan chroma.Style, 1),
+		highlightingDone:  &highlightingDone,
+		done:              &done,
 	}
 
 	// FIXME: Make sure that if we panic somewhere inside of this goroutine,
 	// the main program terminates and prints our panic stack trace.
 	go returnMe.readStream(reader, originalFileName, func() {
 		if lexer != nil {
-			highlightFromMemory(&returnMe, style, formatter, lexer)
+			highlightFromMemory(&returnMe, <-returnMe.highlightingStyle, formatter, lexer)
 		}
 	})
 
@@ -338,14 +352,9 @@ func countLines(filename string) (uint64, error) {
 	return count, nil
 }
 
-// NewReaderFromFilename creates a new file reader.
-//
-// If lexer is nil it will be determined from the input file name.
-//
-// The Reader will try to uncompress various compressed file format, and also
-// apply highlighting to the file using Chroma:
-// https://github.com/alecthomas/chroma
-func NewReaderFromFilename(filename string, style chroma.Style, formatter chroma.Formatter, lexer chroma.Lexer) (*Reader, error) {
+// Note that you must call reader.SetStyleForHighlighting() after this to get
+// highlighting.
+func NewReaderFromFilenameWithoutStyle(filename string, formatter chroma.Formatter, lexer chroma.Lexer) (*Reader, error) {
 	fileError := tryOpen(filename)
 	if fileError != nil {
 		return nil, fileError
@@ -359,18 +368,34 @@ func NewReaderFromFilename(filename string, style chroma.Style, formatter chroma
 	// Set lexer to nil in this call since we want to do our own highlighting in
 	// parallel with the stream being read. See the call to
 	// StartHighlightingFromFile() below.
-	returnMe := newReaderFromStream(stream, &filename, chroma.Style{}, nil, nil)
+	returnMe := newReaderFromStream(stream, &filename, nil, nil)
 
 	returnMe.Lock()
 	returnMe.name = &filename
 	returnMe.Unlock()
 
-	startHighlightingFromFile(returnMe, filename, style, formatter, lexer)
+	startHighlightingFromFile(returnMe, filename, formatter, lexer)
 
 	return returnMe, nil
 }
 
-func startHighlightingFromFile(reader *Reader, filename string, style chroma.Style, formatter chroma.Formatter, lexer chroma.Lexer) {
+// NewReaderFromFilename creates a new file reader.
+//
+// If lexer is nil it will be determined from the input file name.
+//
+// The Reader will try to uncompress various compressed file format, and also
+// apply highlighting to the file using Chroma:
+// https://github.com/alecthomas/chroma
+func NewReaderFromFilename(filename string, style chroma.Style, formatter chroma.Formatter, lexer chroma.Lexer) (*Reader, error) {
+	mReader, err := NewReaderFromFilenameWithoutStyle(filename, formatter, lexer)
+	if err != nil {
+		return nil, err
+	}
+	mReader.SetStyleForHighlighting(style)
+	return mReader, nil
+}
+
+func startHighlightingFromFile(reader *Reader, filename string, formatter chroma.Formatter, lexer chroma.Lexer) {
 	reportDone := func() {
 		reader.highlightingDone.Store(true)
 		select {
@@ -407,7 +432,7 @@ func startHighlightingFromFile(reader *Reader, filename string, style chroma.Sty
 			lexer = lexers.Match(filename)
 		}
 
-		highlighted, err := highlight(string(fileBytes), style, formatter, lexer)
+		highlighted, err := highlight(string(fileBytes), <-reader.highlightingStyle, formatter, lexer)
 		if err != nil {
 			log.Warn("Highlighting failed: ", err)
 			return
@@ -422,6 +447,7 @@ func startHighlightingFromFile(reader *Reader, filename string, style chroma.Sty
 	}()
 }
 
+// We expect this to be executed in a goroutine
 func highlightFromMemory(reader *Reader, style chroma.Style, formatter chroma.Formatter, lexer chroma.Lexer) {
 	if lexer == nil {
 		return
@@ -591,4 +617,8 @@ func (reader *Reader) setText(text string) {
 	case reader.moreLinesAdded <- true:
 	default:
 	}
+}
+
+func (reader *Reader) SetStyleForHighlighting(style chroma.Style) {
+	reader.highlightingStyle <- style
 }
