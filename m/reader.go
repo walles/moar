@@ -60,7 +60,7 @@ type Reader struct {
 type InputLines struct {
 	lines []*Line
 
-	// One-based line number of the first line returned
+	// Line number of the first line returned
 	firstLine linenumbers.LineNumber
 
 	// "monkey.txt: 1-23/45 51%"
@@ -602,6 +602,51 @@ func (reader *Reader) getLinesUnlocked(firstLine linenumbers.LineNumber, wantedL
 			statusText: reader.createStatusUnlocked(lastLine),
 		},
 		overflow
+}
+
+func (reader *Reader) PumpToStdout() {
+	const wantedLineCount = 100
+	firstNotPrintedLine := linenumbers.LineNumberFromOneBased(1)
+
+	drainLines := func() bool {
+		lines, _ := reader.GetLines(firstNotPrintedLine, wantedLineCount)
+
+		// Print the lines we got
+		printed := false
+		for index, line := range lines.lines {
+			lineNumber := lines.firstLine.NonWrappingAdd(index)
+			if lineNumber.IsBefore(firstNotPrintedLine) {
+				continue
+			}
+
+			fmt.Println(line.raw)
+			printed = true
+			firstNotPrintedLine = lineNumber.NonWrappingAdd(1)
+		}
+
+		return printed
+	}
+
+	drainAllLines := func() {
+		for drainLines() {
+			// Loop here until nothing was printed
+		}
+	}
+
+	done := false
+	for !done {
+		drainAllLines()
+
+		select {
+		case <-reader.moreLinesAdded:
+			continue
+		case <-reader.maybeDone:
+			done = true
+		}
+	}
+
+	// Print any remaining lines
+	drainAllLines()
 }
 
 // Replace reader contents with the given text and mark as done

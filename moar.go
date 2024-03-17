@@ -694,19 +694,19 @@ func pagerFromArgs(
 		}
 	}
 
-	// This makes sudo xyz | moar work
+	// If the user is doing "sudo something | moar" we can't show the UI until
+	// we start getting data, otherwise we'll mess up sudo's password prompt.
 	reader.AwaitFirstByte()
 
 	// We got the first byte, this means sudo is done (if it was used) and we
-	// can set up the UI
+	// can set up the UI.
 	screen, err := newScreen(*mouseMode, *terminalColorsCount)
 	if err != nil {
 		// Ref: https://github.com/walles/moar/issues/149
 		log.Debug("Failed to set up screen for paging, pumping to stdout instead: ", err)
-		err := pumpToStdout(flagSet.Args()...)
-		if err != nil {
-			return nil, nil, chroma.Style{}, nil, err
-		}
+
+		reader.PumpToStdout()
+
 		return nil, nil, chroma.Style{}, nil, nil
 	}
 
