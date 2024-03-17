@@ -531,7 +531,7 @@ func (reader *Reader) createStatusUnlocked(lastLine linenumbers.LineNumber) stri
 //
 // Used for making sudo work:
 // https://github.com/walles/moar/issues/199
-func (reader *Reader) AwaitFirstLine() {
+func (reader *Reader) AwaitFirstByte() {
 	<-reader.doneWaitingForFirstByte
 }
 
