@@ -45,8 +45,8 @@ type Reader struct {
 
 	highlightingStyle chan chroma.Style
 
-	// This channel will be closed either when the first byte arrives or when
-	// the stream ends, whichever happens first.
+	// This channel expects to be read exactly once. All other uses will lead to
+	// undefined behavior.
 	doneWaitingForFirstByte chan bool
 
 	// For telling the UI it should recheck the --quit-if-one-screen conditions.
@@ -125,7 +125,13 @@ func (reader *Reader) readStream(stream io.Reader, originalFileName *string, onD
 		var err error
 		for keepReadingLine {
 			lineBytes, keepReadingLine, err = bufioReader.ReadLine()
-			close(reader.doneWaitingForFirstByte)
+
+			// Async write, it might already have been written to
+			select {
+			case reader.doneWaitingForFirstByte <- true:
+			default:
+			}
+
 			if err == nil {
 				completeLine = append(completeLine, lineBytes...)
 				continue
@@ -174,6 +180,14 @@ func (reader *Reader) readStream(stream io.Reader, originalFileName *string, onD
 		default:
 			// Default case required for the write to be non-blocking
 		}
+	}
+
+	// If the stream was empty we never got any first byte. Make sure people
+	// stop waiting in this case. Async write since it might already have been
+	// written to.
+	select {
+	case reader.doneWaitingForFirstByte <- true:
+	default:
 	}
 
 	if onDone != nil {
@@ -236,7 +250,7 @@ func newReaderFromStream(reader io.Reader, originalFileName *string, formatter c
 		moreLinesAdded:          make(chan bool, 1),
 		maybeDone:               make(chan bool, 1),
 		highlightingStyle:       make(chan chroma.Style, 1),
-		doneWaitingForFirstByte: make(chan bool),
+		doneWaitingForFirstByte: make(chan bool, 1),
 		highlightingDone:        &highlightingDone,
 		done:                    &done,
 	}
@@ -276,7 +290,7 @@ func NewReaderFromText(name string, text string) *Reader {
 		lines:                   lines,
 		done:                    &done,
 		highlightingDone:        &highlightingDone,
-		doneWaitingForFirstByte: make(chan bool),
+		doneWaitingForFirstByte: make(chan bool, 1),
 	}
 	if name != "" {
 		returnMe.name = &name
