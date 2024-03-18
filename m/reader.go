@@ -45,6 +45,10 @@ type Reader struct {
 
 	highlightingStyle chan chroma.Style
 
+	// This channel expects to be read exactly once. All other uses will lead to
+	// undefined behavior.
+	doneWaitingForFirstByte chan bool
+
 	// For telling the UI it should recheck the --quit-if-one-screen conditions.
 	// Signalled when either highlighting is done or reading is done.
 	maybeDone chan bool
@@ -56,7 +60,7 @@ type Reader struct {
 type InputLines struct {
 	lines []*Line
 
-	// One-based line number of the first line returned
+	// Line number of the first line returned
 	firstLine linenumbers.LineNumber
 
 	// "monkey.txt: 1-23/45 51%"
@@ -121,22 +125,32 @@ func (reader *Reader) readStream(stream io.Reader, originalFileName *string, onD
 		var err error
 		for keepReadingLine {
 			lineBytes, keepReadingLine, err = bufioReader.ReadLine()
-			if err != nil {
-				if err == io.EOF {
-					eof = true
-					break
+
+			if err == nil {
+				// Async write, we probably already wrote to it during the last
+				// iteration
+				select {
+				case reader.doneWaitingForFirstByte <- true:
+				default:
 				}
 
-				reader.Lock()
-				if reader.err == nil {
-					// Store the error unless it overwrites one we already have
-					reader.err = fmt.Errorf("error reading line from input stream: %w", err)
-				}
-				reader.Unlock()
+				completeLine = append(completeLine, lineBytes...)
+				continue
+			}
+
+			// Something went wrong
+
+			if err == io.EOF {
+				eof = true
 				break
 			}
 
-			completeLine = append(completeLine, lineBytes...)
+			reader.Lock()
+			if reader.err == nil {
+				// Store the error unless it overwrites one we already have
+				reader.err = fmt.Errorf("error reading line from input stream: %w", err)
+			}
+			reader.Unlock()
 		}
 
 		if eof {
@@ -167,6 +181,14 @@ func (reader *Reader) readStream(stream io.Reader, originalFileName *string, onD
 		default:
 			// Default case required for the write to be non-blocking
 		}
+	}
+
+	// If the stream was empty we never got any first byte. Make sure people
+	// stop waiting in this case. Async write since it might already have been
+	// written to.
+	select {
+	case reader.doneWaitingForFirstByte <- true:
+	default:
 	}
 
 	if onDone != nil {
@@ -226,11 +248,12 @@ func newReaderFromStream(reader io.Reader, originalFileName *string, formatter c
 		// This needs to be size 1. If it would be 0, and we add more
 		// lines while the pager is processing, the pager would miss
 		// the lines added while it was processing.
-		moreLinesAdded:    make(chan bool, 1),
-		maybeDone:         make(chan bool, 1),
-		highlightingStyle: make(chan chroma.Style, 1),
-		highlightingDone:  &highlightingDone,
-		done:              &done,
+		moreLinesAdded:          make(chan bool, 1),
+		maybeDone:               make(chan bool, 1),
+		highlightingStyle:       make(chan chroma.Style, 1),
+		doneWaitingForFirstByte: make(chan bool, 1),
+		highlightingDone:        &highlightingDone,
+		done:                    &done,
 	}
 
 	// FIXME: Make sure that if we panic somewhere inside of this goroutine,
@@ -265,9 +288,10 @@ func NewReaderFromText(name string, text string) *Reader {
 	highlightingDone := atomic.Bool{}
 	highlightingDone.Store(true) // No highlighting to do = nothing left = Done!
 	returnMe := &Reader{
-		lines:            lines,
-		done:             &done,
-		highlightingDone: &highlightingDone,
+		lines:                   lines,
+		done:                    &done,
+		highlightingDone:        &highlightingDone,
+		doneWaitingForFirstByte: make(chan bool, 1),
 	}
 	if name != "" {
 		returnMe.name = &name
@@ -518,6 +542,14 @@ func (reader *Reader) createStatusUnlocked(lastLine linenumbers.LineNumber) stri
 		percent)
 }
 
+// Wait for the first line to be read.
+//
+// Used for making sudo work:
+// https://github.com/walles/moar/issues/199
+func (reader *Reader) AwaitFirstByte() {
+	<-reader.doneWaitingForFirstByte
+}
+
 // GetLineCount returns the number of lines available for viewing
 func (reader *Reader) GetLineCount() int {
 	reader.Lock()
@@ -585,6 +617,51 @@ func (reader *Reader) getLinesUnlocked(firstLine linenumbers.LineNumber, wantedL
 			statusText: reader.createStatusUnlocked(lastLine),
 		},
 		overflow
+}
+
+func (reader *Reader) PumpToStdout() {
+	const wantedLineCount = 100
+	firstNotPrintedLine := linenumbers.LineNumberFromOneBased(1)
+
+	drainLines := func() bool {
+		lines, _ := reader.GetLines(firstNotPrintedLine, wantedLineCount)
+
+		// Print the lines we got
+		printed := false
+		for index, line := range lines.lines {
+			lineNumber := lines.firstLine.NonWrappingAdd(index)
+			if lineNumber.IsBefore(firstNotPrintedLine) {
+				continue
+			}
+
+			fmt.Println(line.raw)
+			printed = true
+			firstNotPrintedLine = lineNumber.NonWrappingAdd(1)
+		}
+
+		return printed
+	}
+
+	drainAllLines := func() {
+		for drainLines() {
+			// Loop here until nothing was printed
+		}
+	}
+
+	done := false
+	for !done {
+		drainAllLines()
+
+		select {
+		case <-reader.moreLinesAdded:
+			continue
+		case <-reader.maybeDone:
+			done = true
+		}
+	}
+
+	// Print any remaining lines
+	drainAllLines()
 }
 
 // Replace reader contents with the given text and mark as done
