@@ -27,6 +27,10 @@ echo "Testing cross compilation..."
 echo "  Linux i386..."
 GOOS=linux GOARCH=386 ./build.sh
 
+# Ref:
+echo "  Linux amd64..."
+GOOS=linux GOARCH=amd64 ./build.sh
+
 # Ref: https://github.com/walles/moar/issues/122
 echo "  Linux arm32..."
 GOOS=linux GOARCH=arm ./build.sh
