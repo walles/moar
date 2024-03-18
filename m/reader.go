@@ -126,13 +126,14 @@ func (reader *Reader) readStream(stream io.Reader, originalFileName *string, onD
 		for keepReadingLine {
 			lineBytes, keepReadingLine, err = bufioReader.ReadLine()
 
-			// Async write, it might already have been written to
-			select {
-			case reader.doneWaitingForFirstByte <- true:
-			default:
-			}
-
 			if err == nil {
+				// Async write, we probably already wrote to it during the last
+				// iteration
+				select {
+				case reader.doneWaitingForFirstByte <- true:
+				default:
+				}
+
 				completeLine = append(completeLine, lineBytes...)
 				continue
 			}
