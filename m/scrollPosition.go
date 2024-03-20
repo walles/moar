@@ -386,7 +386,12 @@ func numberPrefixLength(pager *Pager, scrollPosition scrollPositionInternal) int
 	// recursion.
 	//
 	// Let's improve on demand.
-	maxVisibleLineNumber := scrollPosition.lineNumber.NonWrappingAdd(
+	var lineNumber linenumbers.LineNumber
+	// Ref: https://github.com/walles/moar/issues/198
+	if scrollPosition.lineNumber != nil {
+		lineNumber = *scrollPosition.lineNumber
+	}
+	maxVisibleLineNumber := lineNumber.NonWrappingAdd(
 		scrollPosition.deltaScreenLines +
 			pager.visibleHeight() - 1)
 	if maxVisibleLineNumber.IsAfter(maxPossibleLineNumber) {
