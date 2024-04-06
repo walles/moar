@@ -406,7 +406,7 @@ func pumpToStdout(inputFilenames ...string) error {
 		// If we get both redirected stdin and an input filenames, should only
 		// copy the files and ignore stdin, because that's how less works.
 		for _, inputFilename := range inputFilenames {
-			inputFile, err := m.ZOpen(inputFilename)
+			inputFile, _, err := m.ZOpen(inputFilename)
 			if err != nil {
 				return fmt.Errorf("Failed to open %s: %w", inputFilename, err)
 			}

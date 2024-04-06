@@ -199,10 +199,10 @@ func TestCodeHighlight_compressed(t *testing.T) {
 	assert.NilError(t, err)
 	assert.NilError(t, reader._wait())
 
-	markdownHeading1Style := twin.StyleDefault.WithAttr(twin.AttrBold)
+	markdownHeading1Style := twin.StyleDefault.WithAttr(twin.AttrBold).WithForeground(twin.NewColorHex(0xffffff))
 	var answers = []twin.Cell{
 		twin.NewCell('#', markdownHeading1Style),
-		twin.NewCell(' ', twin.StyleDefault),
+		twin.NewCell(' ', markdownHeading1Style),
 		twin.NewCell('M', markdownHeading1Style),
 		twin.NewCell('a', markdownHeading1Style),
 		twin.NewCell('r', markdownHeading1Style),
