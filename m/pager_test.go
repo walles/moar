@@ -193,6 +193,32 @@ func TestCodeHighlighting(t *testing.T) {
 	}
 }
 
+func TestCodeHighlight_compressed(t *testing.T) {
+	// Same as TestCodeHighlighting but with "markdown.md.gz"
+	reader, err := NewReaderFromFilename("../sample-files/markdown.md.gz", *styles.Get("native"), formatters.TTY16m, nil)
+	assert.NilError(t, err)
+	assert.NilError(t, reader._wait())
+
+	markdownHeading1Style := twin.StyleDefault.WithAttr(twin.AttrBold)
+	var answers = []twin.Cell{
+		twin.NewCell('#', markdownHeading1Style),
+		twin.NewCell(' ', twin.StyleDefault),
+		twin.NewCell('M', markdownHeading1Style),
+		twin.NewCell('a', markdownHeading1Style),
+		twin.NewCell('r', markdownHeading1Style),
+		twin.NewCell('k', markdownHeading1Style),
+		twin.NewCell('d', markdownHeading1Style),
+		twin.NewCell('o', markdownHeading1Style),
+		twin.NewCell('w', markdownHeading1Style),
+		twin.NewCell('n', markdownHeading1Style),
+	}
+
+	contents := startPaging(t, reader).GetRow(0)
+	for pos, expected := range answers {
+		assertCellsEqual(t, expected, contents[pos])
+	}
+}
+
 func TestUnicodePrivateUse(t *testing.T) {
 	// This character lives in a Private Use Area:
 	// https://codepoints.net/U+f244
