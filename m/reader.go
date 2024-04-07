@@ -331,7 +331,7 @@ func countLines(filename string) (uint64, error) {
 	const lineBreak = '\n'
 	sliceWithSingleLineBreak := []byte{lineBreak}
 
-	reader, err := ZOpen(filename)
+	reader, _, err := ZOpen(filename)
 	if err != nil {
 		return 0, err
 	}
@@ -384,21 +384,24 @@ func NewReaderFromFilenameWithoutStyle(filename string, formatter chroma.Formatt
 		return nil, fileError
 	}
 
-	stream, err := ZOpen(filename)
+	stream, highlightingFilename, err := ZOpen(filename)
 	if err != nil {
 		return nil, err
 	}
 
-	// Set lexer to nil in this call since we want to do our own highlighting in
-	// parallel with the stream being read. See the call to
-	// StartHighlightingFromFile() below.
-	returnMe := newReaderFromStream(stream, &filename, nil, nil)
+	if lexer == nil {
+		lexer = lexers.Match(highlightingFilename)
+	}
+
+	returnMe := newReaderFromStream(stream, &filename, formatter, lexer)
 
 	returnMe.Lock()
 	returnMe.name = &filename
 	returnMe.Unlock()
 
-	startHighlightingFromFile(returnMe, filename, formatter, lexer)
+	if lexer == nil {
+		returnMe.highlightingDone.Store(true)
+	}
 
 	return returnMe, nil
 }
@@ -417,58 +420,6 @@ func NewReaderFromFilename(filename string, style chroma.Style, formatter chroma
 	}
 	mReader.SetStyleForHighlighting(style)
 	return mReader, nil
-}
-
-func startHighlightingFromFile(reader *Reader, filename string, formatter chroma.Formatter, lexer chroma.Lexer) {
-	reportDone := func() {
-		reader.highlightingDone.Store(true)
-		select {
-		case reader.maybeDone <- true:
-		default:
-		}
-
-		log.Trace("Highlighting done")
-	}
-
-	fileInfo, err := os.Stat(filename)
-	if err != nil {
-		log.Warn("Failed to stat file for highlighting: ", err)
-		reportDone()
-		return
-	}
-	if fileInfo.Size() > MAX_HIGHLIGHT_SIZE {
-		log.Debug("File too large for highlighting: ", fileInfo.Size())
-		reportDone()
-		return
-	}
-
-	go func() {
-		defer reportDone()
-
-		fileBytes, err := os.ReadFile(filename)
-		if err != nil {
-			log.Warn("Failed to read file for highlighting: ", err)
-			return
-		}
-
-		if lexer == nil {
-			// Try auto detecting by filename
-			lexer = lexers.Match(filename)
-		}
-
-		highlighted, err := highlight(string(fileBytes), <-reader.highlightingStyle, formatter, lexer)
-		if err != nil {
-			log.Warn("Highlighting failed: ", err)
-			return
-		}
-
-		if highlighted == nil {
-			// No highlighting would be done, never mind
-			return
-		}
-
-		reader.setText(*highlighted)
-	}()
 }
 
 // We expect this to be executed in a goroutine
