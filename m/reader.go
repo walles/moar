@@ -100,7 +100,7 @@ func (reader *Reader) preAllocLines(originalFileName string) {
 	}
 }
 
-// This function will be update the Reader struct in the background.
+// This function will update the Reader struct in the background.
 func (reader *Reader) readStream(stream io.Reader, originalFileName *string, onDone func()) {
 	defer func() {
 		reader.done.Store(true)
@@ -191,11 +191,13 @@ func (reader *Reader) readStream(stream io.Reader, originalFileName *string, onD
 	default:
 	}
 
-	if onDone != nil {
-		onDone()
-	}
-
 	log.Debug("Stream read in ", time.Since(t0))
+
+	if onDone != nil {
+		t1 := time.Now()
+		onDone()
+		log.Debug("onDone() took ", time.Since(t1))
+	}
 }
 
 // Note that you must call reader.SetStyleForHighlighting() after this to get
