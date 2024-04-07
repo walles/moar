@@ -144,22 +144,6 @@ func (r *Reader) _wait() error {
 
 func TestGetLines(t *testing.T) {
 	for _, file := range getTestFiles(t) {
-		if strings.HasSuffix(file, ".xz") {
-			_, err := exec.LookPath("xz")
-			if err != nil {
-				t.Log("Not testing xz compressed file, xz not found in $PATH: ", file)
-				continue
-			}
-		}
-
-		if strings.HasSuffix(file, ".bz2") {
-			_, err := exec.LookPath("bzip2")
-			if err != nil {
-				t.Log("Not testing bzip2 compressed file, bzip2 not found in $PATH: ", file)
-				continue
-			}
-		}
-
 		reader, err := NewReaderFromFilename(file, *styles.Get("native"), formatters.TTY16m, nil)
 		if err != nil {
 			t.Errorf("Error opening file <%s>: %s", file, err.Error())

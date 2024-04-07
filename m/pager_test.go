@@ -194,8 +194,8 @@ func TestCodeHighlighting(t *testing.T) {
 }
 
 func TestCodeHighlight_compressed(t *testing.T) {
-	// Same as TestCodeHighlighting but with "markdown.md.gz"
-	reader, err := NewReaderFromFilename("../sample-files/markdown.md.gz", *styles.Get("native"), formatters.TTY16m, nil)
+	// Same as TestCodeHighlighting but with "compressed-markdown.md.gz"
+	reader, err := NewReaderFromFilename("../sample-files/compressed-markdown.md.gz", *styles.Get("native"), formatters.TTY16m, nil)
 	assert.NilError(t, err)
 	assert.NilError(t, reader._wait())
 

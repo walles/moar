@@ -399,6 +399,10 @@ func NewReaderFromFilenameWithoutStyle(filename string, formatter chroma.Formatt
 	returnMe.name = &filename
 	returnMe.Unlock()
 
+	if lexer == nil {
+		returnMe.highlightingDone.Store(true)
+	}
+
 	return returnMe, nil
 }
 
