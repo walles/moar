@@ -8,7 +8,7 @@ Most terminals support this capability, see [Selection workarounds for `scroll` 
 - `select` makes `moar` not process mouse events. This makes selecting and copying text work, but scrolling might not be possible, depending on your terminal and its configuration.
 - `auto` uses `select` on terminals where we know it won't break scrolling, and
   `scroll` on all others. [The white list lives in the
-  `mouseTrackingRecommended()` function in
+  `terminalHasArrowKeysEmulation()` function in
   `screen.go`](https://github.com/walles/moar/blob/master/twin/screen.go).
 
 The reason these tradeoffs exist is that if `moar` requests mouse events from the terminal,

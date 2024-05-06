@@ -291,6 +291,16 @@ func terminalHasArrowKeysEmulation() bool {
 		return true
 	}
 
+	// VSCode 1.89.0, tested on macOS 14.4, May 6th, 2024
+	if os.Getenv("TERM_PROGRAM") == "vscode" {
+		return true
+	}
+
+	// IntelliJ IDEA CE 2023.2.2, tested on macOS 14.4, May 6th, 2024
+	if os.Getenv("TERM_PROGRAM") == "JetBrains-JediTerm" {
+		return true
+	}
+
 	return false
 }
 
