@@ -223,8 +223,6 @@ Execute `release.sh` and follow instructions.
 
 # TODO
 
-- Searching for something above us should wrap the search.
-
 - Enable exiting using ^c (without restoring the screen).
 
 - Start at a certain line if run as `moar file.txt:42`
@@ -236,8 +234,6 @@ Execute `release.sh` and follow instructions.
 
 - Support viewing multiple files by pushing them in reverse order on the view
   stack.
-
-- Incremental search using ^s and ^r like in Emacs
 
 - Retain the search string when pressing / to search a second time.
 
