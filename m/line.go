@@ -37,6 +37,8 @@ func (line *Line) HighlightedTokens(linePrefix string, search *regexp.Regexp, li
 				style = *standoutStyle
 			} else {
 				style = style.WithAttr(twin.AttrReverse)
+				style = style.WithBackground(twin.ColorDefault)
+				style = style.WithForeground(twin.ColorDefault)
 			}
 		}
 
