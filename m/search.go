@@ -12,10 +12,10 @@ func (p *Pager) scrollToSearchHits() {
 		return
 	}
 
-	firstHitPosition := p.findFirstHit(*p.scrollPosition.lineNumber(p), false)
+	firstHitPosition := p.findFirstHit(*p.scrollPosition.lineNumber(p), nil, false)
 	if firstHitPosition == nil {
 		// Try again from the top
-		firstHitPosition = p.findFirstHit(linenumbers.LineNumber{}, false)
+		firstHitPosition = p.findFirstHit(linenumbers.LineNumber{}, p.scrollPosition.lineNumber(p), false)
 	}
 	if firstHitPosition == nil {
 		// No match, give up
@@ -35,7 +35,7 @@ func (p *Pager) scrollToSearchHits() {
 // scrollPosition for searching.
 //
 // FIXME: We should take startPosition.deltaScreenLines into account as well!
-func (p *Pager) findFirstHit(startPosition linenumbers.LineNumber, backwards bool) *scrollPosition {
+func (p *Pager) findFirstHit(startPosition linenumbers.LineNumber, beforePosition *linenumbers.LineNumber, backwards bool) *scrollPosition {
 	searchPosition := startPosition
 	for {
 		line := p.reader.GetLine(searchPosition)
@@ -58,6 +58,11 @@ func (p *Pager) findFirstHit(startPosition linenumbers.LineNumber, backwards boo
 			searchPosition = searchPosition.NonWrappingAdd(-1)
 		} else {
 			searchPosition = searchPosition.NonWrappingAdd(1)
+
+			if beforePosition != nil && searchPosition == *beforePosition {
+				// No match, give up
+				return nil
+			}
 		}
 	}
 }
@@ -105,7 +110,7 @@ func (p *Pager) scrollToNextSearchHit() {
 		panic(fmt.Sprint("Unknown search mode when finding next: ", p.mode))
 	}
 
-	firstHitPosition := p.findFirstHit(firstSearchPosition, false)
+	firstHitPosition := p.findFirstHit(firstSearchPosition, nil, false)
 	if firstHitPosition == nil {
 		p.mode = PagerModeNotFound{pager: p}
 		return
@@ -144,7 +149,7 @@ func (p *Pager) scrollToPreviousSearchHit() {
 		panic(fmt.Sprint("Unknown search mode when finding previous: ", p.mode))
 	}
 
-	firstHitPosition := p.findFirstHit(firstSearchPosition, true)
+	firstHitPosition := p.findFirstHit(firstSearchPosition, nil, true)
 	if firstHitPosition == nil {
 		p.mode = PagerModeNotFound{pager: p}
 		return
