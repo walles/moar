@@ -10,36 +10,6 @@ import (
 	"github.com/walles/moar/m/linenumbers"
 )
 
-func (p *Pager) scrollToSearchHits() {
-	if p.searchPattern == nil {
-		// This is not a search
-		return
-	}
-
-	lineNumber := p.scrollPosition.lineNumber(p)
-	if lineNumber == nil {
-		// No lines to search
-		return
-	}
-
-	firstHitPosition := p.findFirstHit(*lineNumber, nil, false)
-	if firstHitPosition == nil && (*lineNumber != linenumbers.LineNumber{}) {
-		// Try again from the top
-		firstHitPosition = p.findFirstHit(linenumbers.LineNumber{}, lineNumber, false)
-	}
-	if firstHitPosition == nil {
-		// No match, give up
-		return
-	}
-
-	if firstHitPosition.isVisible(p) {
-		// Already on-screen, never mind
-		return
-	}
-
-	p.scrollPosition = *firstHitPosition
-}
-
 // NOTE: When we search, we do that by looping over the *input lines*, not the
 // screen lines. That's why startPosition is a LineNumber rather than a
 // scrollPosition.
