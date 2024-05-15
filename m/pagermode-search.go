@@ -2,6 +2,7 @@ package m
 
 import (
 	"regexp"
+	"sync"
 	"unicode"
 	"unicode/utf8"
 
@@ -9,8 +10,19 @@ import (
 	"github.com/walles/moar/twin"
 )
 
+type searchCommand int
+
+const (
+	searchCommandSearch searchCommand = iota
+	searchCommandDone
+)
+
 type PagerModeSearch struct {
 	pager *Pager
+
+	pattern     *regexp.Regexp
+	patternLock *sync.Mutex
+	searcher    chan searchCommand
 }
 
 func (m PagerModeSearch) drawFooter(_ string, _ string) {
@@ -34,11 +46,23 @@ func (m PagerModeSearch) drawFooter(_ string, _ string) {
 }
 
 func (m *PagerModeSearch) updateSearchPattern() {
+	// For highlighting
 	m.pager.searchPattern = toPattern(m.pager.searchString)
 
-	m.pager.scrollToSearchHits()
+	if m.searcher == nil {
+		m.initSearcher()
+	}
 
-	// FIXME: If the user is typing, indicate to user if we didn't find anything
+	// Give the searcher the new pattern
+	m.patternLock.Lock()
+	m.pattern = m.pager.searchPattern
+	m.patternLock.Unlock()
+
+	// Tell the searcher there's a new pattern to look for
+	select {
+	case m.searcher <- searchCommandSearch:
+	default:
+	}
 }
 
 // toPattern compiles a search string into a pattern.
