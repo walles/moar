@@ -7,6 +7,7 @@ import (
 	"unicode/utf8"
 
 	log "github.com/sirupsen/logrus"
+	"github.com/walles/moar/m/linenumbers"
 	"github.com/walles/moar/twin"
 )
 
@@ -20,9 +21,11 @@ const (
 type PagerModeSearch struct {
 	pager *Pager
 
-	pattern     *regexp.Regexp
-	patternLock *sync.Mutex
-	searcher    chan searchCommand
+	pattern   *regexp.Regexp
+	startLine linenumbers.LineNumber
+	lock      *sync.Mutex
+
+	searcher chan searchCommand
 }
 
 func (m PagerModeSearch) drawFooter(_ string, _ string) {
@@ -45,18 +48,72 @@ func (m PagerModeSearch) drawFooter(_ string, _ string) {
 	}
 }
 
+func (m PagerModeSearch) searcherSearch() *linenumbers.LineNumber {
+	// Search to the end
+	for position := m.startLine; ; position = position.NonWrappingAdd(1) {
+		line := m.pager.reader.GetLine(position)
+		if line == nil {
+			// Reached end of input without any match, give up
+			break
+		}
+
+		if m.pattern.MatchString(line.Plain(&position)) {
+			return &position
+		}
+	}
+
+	// Search from the beginning
+	for position := m.startLine; position != m.startLine; position = position.NonWrappingAdd(1) {
+		line := m.pager.reader.GetLine(position)
+		if m.pattern.MatchString(line.Plain(&position)) {
+			return &position
+		}
+	}
+
+	return nil
+}
+
+func (m *PagerModeSearch) initSearcher() {
+	m.lock = &sync.Mutex{}
+	m.searcher = make(chan searchCommand, 1)
+
+	go func() {
+		for command := range m.searcher {
+			switch command {
+			case searchCommandSearch:
+				found := m.searcherSearch()
+				if found != nil {
+					FIXME: Tell the pager to scroll to this position
+				}
+			case searchCommandDone:
+				return
+			}
+		}
+	}()
+}
+
 func (m *PagerModeSearch) updateSearchPattern() {
 	// For highlighting
 	m.pager.searchPattern = toPattern(m.pager.searchString)
+	if m.pager.searchPattern == nil {
+		// Nothing to search for, never mind
+		return
+	}
+	startLine := m.pager.scrollPosition.lineNumber(m.pager)
+	if startLine == nil {
+		// Nothing to search in, never mind
+		return
+	}
 
 	if m.searcher == nil {
 		m.initSearcher()
 	}
 
 	// Give the searcher the new pattern
-	m.patternLock.Lock()
+	m.lock.Lock()
 	m.pattern = m.pager.searchPattern
-	m.patternLock.Unlock()
+	m.startLine = *startLine
+	m.lock.Unlock()
 
 	// Tell the searcher there's a new pattern to look for
 	select {
