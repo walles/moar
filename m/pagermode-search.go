@@ -18,6 +18,10 @@ const (
 	searchCommandDone
 )
 
+type eventGoToLine struct {
+	lineNumber linenumbers.LineNumber
+}
+
 type PagerModeSearch struct {
 	pager *Pager
 
@@ -83,7 +87,7 @@ func (m *PagerModeSearch) initSearcher() {
 			case searchCommandSearch:
 				found := m.searcherSearch()
 				if found != nil {
-					FIXME: Tell the pager to scroll to this position
+					m.pager.screen.Events() <- eventGoToLine{*found}
 				}
 			case searchCommandDone:
 				return

@@ -445,6 +445,9 @@ func (p *Pager) StartPaging(screen twin.Screen, chromaStyle *chroma.Style, chrom
 		case twin.EventTerminalBackgroundDetected:
 			// Do nothing, we don't care about background color updates
 
+		case eventGoToLine:
+			p.scrollPosition = NewScrollPositionFromLineNumber(event.lineNumber, "goToLine")
+
 		default:
 			log.Warnf("Unhandled event type: %v", event)
 		}
