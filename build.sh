@@ -28,4 +28,6 @@ fi
 go build -trimpath -ldflags="-s -w -X main.versionString=${VERSION}" -o "${BINARY}"
 
 # Alternative build line, if you want to attach to the running process in the Go debugger:
+#
+# -gcflags='-N -l' disables optimizations and inlining, which makes debugging easier.
 # go build -ldflags="-X main.versionString=${VERSION}" -gcflags='-N -l' -o "${BINARY}"

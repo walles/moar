@@ -27,12 +27,12 @@ type PagerModeSearch struct {
 
 	pattern   *regexp.Regexp
 	startLine linenumbers.LineNumber
-	lock      *sync.Mutex
+	lock      sync.Mutex
 
 	searcher chan searchCommand
 }
 
-func (m PagerModeSearch) drawFooter(_ string, _ string) {
+func (m *PagerModeSearch) drawFooter(_ string, _ string) {
 	width, height := m.pager.screen.Size()
 
 	pos := 0
@@ -52,7 +52,7 @@ func (m PagerModeSearch) drawFooter(_ string, _ string) {
 	}
 }
 
-func (m PagerModeSearch) searcherSearch() *linenumbers.LineNumber {
+func (m *PagerModeSearch) searcherSearch() *linenumbers.LineNumber {
 	// Search to the end
 	for position := m.startLine; ; position = position.NonWrappingAdd(1) {
 		line := m.pager.reader.GetLine(position)
@@ -78,7 +78,6 @@ func (m PagerModeSearch) searcherSearch() *linenumbers.LineNumber {
 }
 
 func (m *PagerModeSearch) initSearcher() {
-	m.lock = &sync.Mutex{}
 	m.searcher = make(chan searchCommand, 1)
 
 	go func() {
@@ -177,9 +176,10 @@ func removeLastChar(s string) string {
 	return s[:len(s)-size]
 }
 
-func (m PagerModeSearch) onKey(key twin.KeyCode) {
+func (m *PagerModeSearch) onKey(key twin.KeyCode) {
 	switch key {
 	case twin.KeyEscape, twin.KeyEnter:
+		m.searcher <- searchCommandDone
 		//nolint:gosimple // The linter's advice is just wrong here
 		m.pager.mode = PagerModeViewing{pager: m.pager}
 
@@ -192,6 +192,7 @@ func (m PagerModeSearch) onKey(key twin.KeyCode) {
 		m.updateSearchPattern()
 
 	case twin.KeyUp, twin.KeyDown, twin.KeyPgUp, twin.KeyPgDown:
+		m.searcher <- searchCommandDone
 		//nolint:gosimple // The linter's advice is just wrong here
 		m.pager.mode = PagerModeViewing{pager: m.pager}
 		m.pager.mode.onKey(key)
@@ -201,7 +202,7 @@ func (m PagerModeSearch) onKey(key twin.KeyCode) {
 	}
 }
 
-func (m PagerModeSearch) onRune(char rune) {
+func (m *PagerModeSearch) onRune(char rune) {
 	m.pager.searchString = m.pager.searchString + string(char)
 	m.updateSearchPattern()
 }

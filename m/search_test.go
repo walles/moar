@@ -13,7 +13,7 @@ func modeName(pager *Pager) string {
 		return "Viewing"
 	case PagerModeNotFound:
 		return "NotFound"
-	case PagerModeSearch:
+	case *PagerModeSearch:
 		return "Search"
 	case *PagerModeGotoLine:
 		return "GotoLine"
@@ -116,7 +116,7 @@ func Test152(t *testing.T) {
 
 	// Search for the first not-visible hit
 	pager.searchString = "abcde"
-	searchMode := PagerModeSearch{pager: pager}
+	searchMode := &PagerModeSearch{pager: pager}
 	pager.mode = searchMode
 
 	// Scroll to the next search hit

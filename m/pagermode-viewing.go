@@ -144,7 +144,7 @@ func (m PagerModeViewing) onRune(char rune) {
 		p.handleScrolledDown()
 
 	case '/':
-		p.mode = PagerModeSearch{pager: p}
+		p.mode = &PagerModeSearch{pager: p}
 		p.TargetLineNumber = nil
 		p.searchString = ""
 		p.searchPattern = nil
