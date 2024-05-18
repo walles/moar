@@ -82,14 +82,16 @@ func (p *Pager) findFirstHit(startPosition linenumbers.LineNumber, beforePositio
 		findings[i] = make(chan *scrollPosition)
 
 		searchEndIndex := i + 1
-		var beforePosition *linenumbers.LineNumber
+		var chunkBefore *linenumbers.LineNumber
 		if searchEndIndex < len(searchStarts) {
-			beforePosition = &searchStarts[searchEndIndex]
+			chunkBefore = &searchStarts[searchEndIndex]
+		} else if beforePosition != nil {
+			chunkBefore = beforePosition
 		}
 
-		go func(i int, searchStart linenumbers.LineNumber) {
-			findings[i] <- p._findFirstHit(searchStart, beforePosition, backwards)
-		}(i, searchStart)
+		go func(i int, searchStart linenumbers.LineNumber, chunkBefore *linenumbers.LineNumber) {
+			findings[i] <- p._findFirstHit(searchStart, chunkBefore, backwards)
+		}(i, searchStart, chunkBefore)
 	}
 
 	// Return the first non-nil result
