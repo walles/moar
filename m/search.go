@@ -15,10 +15,16 @@ func (p *Pager) scrollToSearchHits() {
 		return
 	}
 
-	firstHitPosition := p.findFirstHit(*p.scrollPosition.lineNumber(p), nil, false)
+	lineNumber := p.scrollPosition.lineNumber(p)
+	if lineNumber == nil {
+		// No lines to search
+		return
+	}
+
+	firstHitPosition := p.findFirstHit(*lineNumber, nil, false)
 	if firstHitPosition == nil {
 		// Try again from the top
-		firstHitPosition = p.findFirstHit(linenumbers.LineNumber{}, p.scrollPosition.lineNumber(p), false)
+		firstHitPosition = p.findFirstHit(linenumbers.LineNumber{}, lineNumber, false)
 	}
 	if firstHitPosition == nil {
 		// No match, give up
