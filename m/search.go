@@ -60,7 +60,7 @@ func (p *Pager) findFirstHit(startPosition linenumbers.LineNumber, beforePositio
 	}
 
 	if linesCount < chunkCount {
-		chunkCount = 0
+		chunkCount = 1
 	}
 	chunkSize := linesCount / chunkCount
 
