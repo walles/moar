@@ -43,7 +43,22 @@ func (p *Pager) findFirstHit(startPosition linenumbers.LineNumber, beforePositio
 	// If the number of lines to search matches the number of cores (or more),
 	// divide the search into chunks. Otherwise use one chunk.
 	chunkCount := runtime.NumCPU()
-	linesCount := p.reader.GetLineCount() - startPosition.AsZeroBased()
+	var linesCount int
+	if backwards {
+		// If the startPosition is zero, that should make the count one
+		linesCount = startPosition.AsZeroBased() + 1
+		if beforePosition != nil {
+			// Searching from 1 with before set to 0 should make the count 1
+			linesCount = startPosition.AsZeroBased() - beforePosition.AsZeroBased()
+		}
+	} else {
+		linesCount = p.reader.GetLineCount() - startPosition.AsZeroBased()
+		if beforePosition != nil {
+			// Searching from 1 with before set to 2 should make the count 1
+			linesCount = beforePosition.AsZeroBased() - startPosition.AsZeroBased()
+		}
+	}
+
 	if linesCount < chunkCount {
 		chunkCount = 0
 	}
