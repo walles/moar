@@ -82,7 +82,7 @@ func (p *Pager) findFirstHit(startPosition linenumbers.LineNumber, beforePositio
 		linesPerSecond := float64(linesCount) / time.Since(t0).Seconds()
 		linesPerSecondS := fmt.Sprintf("%.0f", linesPerSecond)
 		if linesPerSecond > 7_000_000.0 {
-			linesPerSecondS = fmt.Sprintf("%.0f", linesPerSecond/1000_000.0)
+			linesPerSecondS = fmt.Sprintf("%.0fM", linesPerSecond/1000_000.0)
 		} else if linesPerSecond > 7_000.0 {
 			linesPerSecondS = fmt.Sprintf("%.0fk", linesPerSecond/1000.0)
 		}
