@@ -30,12 +30,36 @@ func (p *Pager) scrollToSearchHits() {
 	p.scrollPosition = *firstHitPosition
 }
 
-// NOTE: When we search, we do that by looping over the *input lines*, not
-// the screen lines. That's why we're using a line number rather than a
+// NOTE: When we search, we do that by looping over the *input lines*, not the
+// screen lines. That's why we're using a line number rather than a
 // scrollPosition for searching.
+//
+// The `beforePosition` parameter is exclusive, meaning that line will not be
+// searched.
 //
 // FIXME: We should take startPosition.deltaScreenLines into account as well!
 func (p *Pager) findFirstHit(startPosition linenumbers.LineNumber, beforePosition *linenumbers.LineNumber, backwards bool) *scrollPosition {
+	// FIXME: Check the number of CPU cores
+
+	// FIXME: If the number of lines to search match the number of cores (or
+	// more), divide the search into chunks. Otherwise use one chunk.
+
+	// FIXME: Make a results array, with one result per chunk
+
+	// FIXME: Search all chunks in parallel
+
+	// FIXME: Return the first non-nil result
+}
+
+// NOTE: When we search, we do that by looping over the *input lines*, not the
+// screen lines. That's why we're using a line number rather than a
+// scrollPosition for searching.
+//
+// The `beforePosition` parameter is exclusive, meaning that line will not be
+// searched.
+//
+// FIXME: We should take startPosition.deltaScreenLines into account as well!
+func (p *Pager) _findFirstHit(startPosition linenumbers.LineNumber, beforePosition *linenumbers.LineNumber, backwards bool) *scrollPosition {
 	searchPosition := startPosition
 	for {
 		line := p.reader.GetLine(searchPosition)
