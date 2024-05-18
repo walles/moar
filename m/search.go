@@ -55,9 +55,23 @@ func (p *Pager) findFirstHit(startPosition linenumbers.LineNumber, beforePositio
 		searchStarts[i] = startPosition.NonWrappingAdd(i * chunkSize)
 	}
 
-	// FIXME: Make a results array, with one result per chunk
+	// Make a results array, with one result per chunk
+	findings := make([]chan *scrollPosition, chunkCount)
 
-	// FIXME: Search all chunks in parallel
+	// Search all chunks in parallel
+	for i, searchStart := range searchStarts {
+		findings[i] = make(chan *scrollPosition)
+
+		searchEndIndex := i + 1
+		var beforePosition *linenumbers.LineNumber
+		if searchEndIndex < len(searchStarts) {
+			beforePosition = &searchStarts[searchEndIndex]
+		}
+
+		go func() {
+			findings[i] <- p._findFirstHit(searchStart, beforePosition, backwards)
+		}()
+	}
 
 	// FIXME: Return the first non-nil result
 }
