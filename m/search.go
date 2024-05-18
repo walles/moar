@@ -51,8 +51,12 @@ func (p *Pager) findFirstHit(startPosition linenumbers.LineNumber, beforePositio
 
 	// Each parallel search will start at one of these positions
 	searchStarts := make([]linenumbers.LineNumber, chunkCount)
+	direction := 1
+	if backwards {
+		direction = -1
+	}
 	for i := 0; i < chunkCount; i++ {
-		searchStarts[i] = startPosition.NonWrappingAdd(i * chunkSize)
+		searchStarts[i] = startPosition.NonWrappingAdd(i * direction * chunkSize)
 	}
 
 	// Make a results array, with one result per chunk
@@ -73,7 +77,15 @@ func (p *Pager) findFirstHit(startPosition linenumbers.LineNumber, beforePositio
 		}()
 	}
 
-	// FIXME: Return the first non-nil result
+	// Return the first non-nil result
+	for _, finding := range findings {
+		result := <-finding
+		if result != nil {
+			return result
+		}
+	}
+
+	return nil
 }
 
 // NOTE: When we search, we do that by looping over the *input lines*, not the
