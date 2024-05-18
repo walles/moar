@@ -2,6 +2,7 @@ package m
 
 import (
 	"fmt"
+	"runtime"
 
 	"github.com/walles/moar/m/linenumbers"
 )
@@ -39,10 +40,20 @@ func (p *Pager) scrollToSearchHits() {
 //
 // FIXME: We should take startPosition.deltaScreenLines into account as well!
 func (p *Pager) findFirstHit(startPosition linenumbers.LineNumber, beforePosition *linenumbers.LineNumber, backwards bool) *scrollPosition {
-	// FIXME: Check the number of CPU cores
+	// If the number of lines to search matches the number of cores (or more),
+	// divide the search into chunks. Otherwise use one chunk.
+	chunkCount := runtime.NumCPU()
+	linesCount := p.reader.GetLineCount() - startPosition.AsZeroBased()
+	if linesCount < chunkCount {
+		chunkCount = 0
+	}
+	chunkSize := linesCount / chunkCount
 
-	// FIXME: If the number of lines to search match the number of cores (or
-	// more), divide the search into chunks. Otherwise use one chunk.
+	// Each parallel search will start at one of these positions
+	searchStarts := make([]linenumbers.LineNumber, chunkCount)
+	for i := 0; i < chunkCount; i++ {
+		searchStarts[i] = startPosition.NonWrappingAdd(i * chunkSize)
+	}
 
 	// FIXME: Make a results array, with one result per chunk
 
