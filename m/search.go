@@ -2,6 +2,9 @@ package m
 
 import (
 	"fmt"
+	"runtime"
+
+	log "github.com/sirupsen/logrus"
 
 	"github.com/walles/moar/m/linenumbers"
 )
@@ -12,10 +15,16 @@ func (p *Pager) scrollToSearchHits() {
 		return
 	}
 
-	firstHitPosition := p.findFirstHit(*p.scrollPosition.lineNumber(p), nil, false)
+	lineNumber := p.scrollPosition.lineNumber(p)
+	if lineNumber == nil {
+		// No lines to search
+		return
+	}
+
+	firstHitPosition := p.findFirstHit(*lineNumber, nil, false)
 	if firstHitPosition == nil {
 		// Try again from the top
-		firstHitPosition = p.findFirstHit(linenumbers.LineNumber{}, p.scrollPosition.lineNumber(p), false)
+		firstHitPosition = p.findFirstHit(linenumbers.LineNumber{}, lineNumber, false)
 	}
 	if firstHitPosition == nil {
 		// No match, give up
@@ -30,12 +39,97 @@ func (p *Pager) scrollToSearchHits() {
 	p.scrollPosition = *firstHitPosition
 }
 
-// NOTE: When we search, we do that by looping over the *input lines*, not
-// the screen lines. That's why we're using a line number rather than a
-// scrollPosition for searching.
+// NOTE: When we search, we do that by looping over the *input lines*, not the
+// screen lines. That's why startPosition is a LineNumber rather than a
+// scrollPosition.
+//
+// The `beforePosition` parameter is exclusive, meaning that line will not be
+// searched.
+//
+// For the actual searching, this method will call _findFirstHit() in parallel
+// on multiple cores, to help large file search performance.
 //
 // FIXME: We should take startPosition.deltaScreenLines into account as well!
 func (p *Pager) findFirstHit(startPosition linenumbers.LineNumber, beforePosition *linenumbers.LineNumber, backwards bool) *scrollPosition {
+	// If the number of lines to search matches the number of cores (or more),
+	// divide the search into chunks. Otherwise use one chunk.
+	chunkCount := runtime.NumCPU()
+	var linesCount int
+	if backwards {
+		// If the startPosition is zero, that should make the count one
+		linesCount = startPosition.AsZeroBased() + 1
+		if beforePosition != nil {
+			// Searching from 1 with before set to 0 should make the count 1
+			linesCount = startPosition.AsZeroBased() - beforePosition.AsZeroBased()
+		}
+	} else {
+		linesCount = p.reader.GetLineCount() - startPosition.AsZeroBased()
+		if beforePosition != nil {
+			// Searching from 1 with before set to 2 should make the count 1
+			linesCount = beforePosition.AsZeroBased() - startPosition.AsZeroBased()
+		}
+	}
+
+	if linesCount < chunkCount {
+		chunkCount = 1
+	}
+	chunkSize := linesCount / chunkCount
+
+	log.Debugf("Searching %d lines across %d cores with %d lines per core", linesCount, chunkCount, chunkSize)
+
+	// Each parallel search will start at one of these positions
+	searchStarts := make([]linenumbers.LineNumber, chunkCount)
+	direction := 1
+	if backwards {
+		direction = -1
+	}
+	for i := 0; i < chunkCount; i++ {
+		searchStarts[i] = startPosition.NonWrappingAdd(i * direction * chunkSize)
+	}
+
+	// Make a results array, with one result per chunk
+	findings := make([]chan *scrollPosition, chunkCount)
+
+	// Search all chunks in parallel
+	for i, searchStart := range searchStarts {
+		findings[i] = make(chan *scrollPosition)
+
+		searchEndIndex := i + 1
+		var chunkBefore *linenumbers.LineNumber
+		if searchEndIndex < len(searchStarts) {
+			chunkBefore = &searchStarts[searchEndIndex]
+		} else if beforePosition != nil {
+			chunkBefore = beforePosition
+		}
+
+		go func(i int, searchStart linenumbers.LineNumber, chunkBefore *linenumbers.LineNumber) {
+			findings[i] <- p._findFirstHit(searchStart, chunkBefore, backwards)
+		}(i, searchStart, chunkBefore)
+	}
+
+	// Return the first non-nil result
+	for _, finding := range findings {
+		result := <-finding
+		if result != nil {
+			return result
+		}
+	}
+
+	return nil
+}
+
+// NOTE: When we search, we do that by looping over the *input lines*, not the
+// screen lines. That's why startPosition is a LineNumber rather than a
+// scrollPosition.
+//
+// The `beforePosition` parameter is exclusive, meaning that line will not be
+// searched.
+//
+// This method will run over multiple chunks of the input file in parallel to
+// help large file search performance.
+//
+// FIXME: We should take startPosition.deltaScreenLines into account as well!
+func (p *Pager) _findFirstHit(startPosition linenumbers.LineNumber, beforePosition *linenumbers.LineNumber, backwards bool) *scrollPosition {
 	searchPosition := startPosition
 	for {
 		line := p.reader.GetLine(searchPosition)
