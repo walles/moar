@@ -72,9 +72,9 @@ func (p *Pager) findFirstHit(startPosition linenumbers.LineNumber, beforePositio
 			beforePosition = &searchStarts[searchEndIndex]
 		}
 
-		go func() {
+		go func(i int, searchStart linenumbers.LineNumber) {
 			findings[i] <- p._findFirstHit(searchStart, beforePosition, backwards)
-		}()
+		}(i, searchStart)
 	}
 
 	// Return the first non-nil result
