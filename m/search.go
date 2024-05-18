@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"runtime"
 
+	log "github.com/sirupsen/logrus"
+
 	"github.com/walles/moar/m/linenumbers"
 )
 
@@ -63,6 +65,8 @@ func (p *Pager) findFirstHit(startPosition linenumbers.LineNumber, beforePositio
 		chunkCount = 1
 	}
 	chunkSize := linesCount / chunkCount
+
+	log.Debugf("Searching %d lines across %d cores with %d lines per core", linesCount, chunkCount, chunkSize)
 
 	// Each parallel search will start at one of these positions
 	searchStarts := make([]linenumbers.LineNumber, chunkCount)
