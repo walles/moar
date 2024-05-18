@@ -40,11 +40,14 @@ func (p *Pager) scrollToSearchHits() {
 }
 
 // NOTE: When we search, we do that by looping over the *input lines*, not the
-// screen lines. That's why we're using a line number rather than a
-// scrollPosition for searching.
+// screen lines. That's why startPosition is a LineNumber rather than a
+// scrollPosition.
 //
 // The `beforePosition` parameter is exclusive, meaning that line will not be
 // searched.
+//
+// For the actual searching, this method will call _findFirstHit() in parallel
+// on multiple cores, to help large file search performance.
 //
 // FIXME: We should take startPosition.deltaScreenLines into account as well!
 func (p *Pager) findFirstHit(startPosition linenumbers.LineNumber, beforePosition *linenumbers.LineNumber, backwards bool) *scrollPosition {
@@ -116,11 +119,14 @@ func (p *Pager) findFirstHit(startPosition linenumbers.LineNumber, beforePositio
 }
 
 // NOTE: When we search, we do that by looping over the *input lines*, not the
-// screen lines. That's why we're using a line number rather than a
-// scrollPosition for searching.
+// screen lines. That's why startPosition is a LineNumber rather than a
+// scrollPosition.
 //
 // The `beforePosition` parameter is exclusive, meaning that line will not be
 // searched.
+//
+// This method will run over multiple chunks of the input file in parallel to
+// help large file search performance.
 //
 // FIXME: We should take startPosition.deltaScreenLines into account as well!
 func (p *Pager) _findFirstHit(startPosition linenumbers.LineNumber, beforePosition *linenumbers.LineNumber, backwards bool) *scrollPosition {
