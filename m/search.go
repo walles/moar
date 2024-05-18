@@ -3,6 +3,7 @@ package m
 import (
 	"fmt"
 	"runtime"
+	"time"
 
 	log "github.com/sirupsen/logrus"
 
@@ -75,7 +76,27 @@ func (p *Pager) findFirstHit(startPosition linenumbers.LineNumber, beforePositio
 	}
 	chunkSize := linesCount / chunkCount
 
-	log.Debugf("Searching %d lines across %d cores with %d lines per core", linesCount, chunkCount, chunkSize)
+	log.Debugf("Searching %d lines across %d cores with %d lines per core...", linesCount, chunkCount, chunkSize)
+	t0 := time.Now()
+	defer func() {
+		linesPerSecond := float64(linesCount) / time.Since(t0).Seconds()
+		linesPerSecondS := fmt.Sprintf("%.0f", linesPerSecond)
+		if linesPerSecond > 7_000_000.0 {
+			linesPerSecondS = fmt.Sprintf("%.0f", linesPerSecond/1000_000.0)
+		} else if linesPerSecond > 7_000.0 {
+			linesPerSecondS = fmt.Sprintf("%.0fk", linesPerSecond/1000.0)
+		}
+
+		if linesCount > 0 {
+			log.Debugf("Searched %d lines in %s at %slines/s or %s/line",
+				linesCount,
+				time.Since(t0),
+				linesPerSecondS,
+				time.Since(t0)/time.Duration(linesCount))
+		} else {
+			log.Debugf("Searched %d lines in %s at %slines/s", linesCount, time.Since(t0), linesPerSecondS)
+		}
+	}()
 
 	// Each parallel search will start at one of these positions
 	searchStarts := make([]linenumbers.LineNumber, chunkCount)
