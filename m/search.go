@@ -145,18 +145,18 @@ func (p *Pager) _findFirstHit(startPosition linenumbers.LineNumber, beforePositi
 
 		if backwards {
 			if (searchPosition == linenumbers.LineNumber{}) {
-				// No match, give up
+				// Reached the top without any match, give up
 				return nil
 			}
 
 			searchPosition = searchPosition.NonWrappingAdd(-1)
 		} else {
 			searchPosition = searchPosition.NonWrappingAdd(1)
+		}
 
-			if beforePosition != nil && searchPosition == *beforePosition {
-				// No match, give up
-				return nil
-			}
+		if beforePosition != nil && searchPosition == *beforePosition {
+			// No match, give up
+			return nil
 		}
 	}
 }
