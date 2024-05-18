@@ -23,7 +23,7 @@ func (p *Pager) scrollToSearchHits() {
 	}
 
 	firstHitPosition := p.findFirstHit(*lineNumber, nil, false)
-	if firstHitPosition == nil {
+	if firstHitPosition == nil && (*lineNumber != linenumbers.LineNumber{}) {
 		// Try again from the top
 		firstHitPosition = p.findFirstHit(linenumbers.LineNumber{}, lineNumber, false)
 	}
