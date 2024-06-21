@@ -101,6 +101,8 @@ type Pager struct {
 	//
 	// Ref: https://github.com/walles/moar/issues/175
 	marks map[rune]scrollPosition
+
+	AfterExit func() error
 }
 
 type _PreHelpState struct {

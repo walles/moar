@@ -1,6 +1,8 @@
 package m
 
 import (
+	"fmt"
+
 	log "github.com/sirupsen/logrus"
 	"github.com/walles/moar/twin"
 )
@@ -74,6 +76,14 @@ func (m PagerModeViewing) onRune(char rune) {
 
 	switch char {
 	case 'q':
+		p.Quit()
+
+	case 'v':
+		p.AfterExit = func() error {
+			FIXME: Do editor launching things here
+			_, err := fmt.Println("JOHAN: Imagine launching an editor here")
+			return err
+		}
 		p.Quit()
 
 	case '?':
