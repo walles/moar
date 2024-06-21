@@ -110,8 +110,7 @@ func handleEditingRequest(p *Pager) {
 	}
 	if editorStat.Mode()&0111 == 0 {
 		// Note that this check isn't perfect, it could still be executable but
-		// not by us. Corner case, let's just complain about that when trying to
-		// run it.
+		// not by us. Corner case, let's just fail later in that case.
 
 		// FIXME: Show a message in the status bar instead? Nothing wrong with
 		// moar here.
@@ -119,27 +118,33 @@ func handleEditingRequest(p *Pager) {
 		return
 	}
 
-	var fileToEdit string
+	mustCreateTempFile := p.reader.fileName == nil
 	if p.reader.fileName != nil {
-		fileToEdit = *p.reader.fileName
-	} else {
+		// Verify that the file exists and is readable
+		fileToEditStat, err := os.Stat(*p.reader.fileName)
+		if err != nil {
+			log.Info("Failed to stat file to edit "+*p.reader.fileName+": ", err)
+			mustCreateTempFile = true
+		} else if fileToEditStat.Mode()&0444 == 0 {
+			// Note that this check isn't perfect, it could still be readable but
+			// not by us. Corner case, let's just fail later in that case.
+
+			log.Info("File to edit " + *p.reader.fileName + " is not readable")
+			mustCreateTempFile = true
+		}
+	}
+
+	var fileToEdit string
+	if mustCreateTempFile {
 		// FIXME: If the buffer is from stdin, store it in a temp file. Consider
-		// naming it based on the current language setting.
+		// naming it based on p.reader.fileName if set or the current language
+		// setting.
 
-		// FIXME: Should we wait for the stream to end before launching the
-		// editor? Maybe no?
+		// FIXME: Should we wait for the stream to finish loading before
+		// launching the editor? Maybe no?
 		panic("Make a temp file with the buffer contents")
-	}
-
-	// Verify that the file exists and is readable
-	fileToEditStat, err := os.Stat(fileToEdit)
-	if err != nil {
-		log.Warn("Failed to stat file to edit "+fileToEdit+": ", err)
-		return
-	}
-	if fileToEditStat.Mode()&0444 == 0 {
-		log.Warn("File to edit " + fileToEdit + " is not readable")
-		return
+	} else {
+		fileToEdit = *p.reader.fileName
 	}
 
 	p.AfterExit = func() error {
