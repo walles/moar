@@ -97,6 +97,7 @@ func handleEditingRequest(p *Pager) {
 		// FIXME: Show a message in the status bar instead? Nothing wrong with
 		// moar here.
 		log.Warn("Failed to find editor"+firstWord+" from $"+editorEnv+": ", err)
+		return
 	}
 	// Check that the editor is executable
 	editorStat, err := os.Stat(editorPath)
@@ -104,6 +105,7 @@ func handleEditingRequest(p *Pager) {
 		// FIXME: Show a message in the status bar instead? Nothing wrong with
 		// moar here.
 		log.Warn("Failed to stat editor "+editorPath+": ", err)
+		return
 	}
 	if editorStat.Mode()&0111 == 0 {
 		// Note that this check isn't perfect, it could still be executable but
@@ -113,16 +115,37 @@ func handleEditingRequest(p *Pager) {
 		// FIXME: Show a message in the status bar instead? Nothing wrong with
 		// moar here.
 		log.Warn("Editor " + editorPath + " is not executable")
+		return
 	}
 
-	// FIXME: If the buffer is from stdin, store it in a temp file. Consider
-	// naming it based on the current language setting.
+	var fileToEdit string
+	// FIXME: p.reader.name might not be the original file name, get another
+	// field explicitly for that purpose
+	if p.reader.name != nil {
+		fileToEdit = *p.reader.name
+	} else {
+		// FIXME: If the buffer is from stdin, store it in a temp file. Consider
+		// naming it based on the current language setting.
 
-	// FIXME: Set an AfterExit function that launches the editor
+		// FIXME: Should we wait for the stream to end before launching the
+		// editor? Maybe no?
+		panic("Make a temp file with the buffer contents")
+	}
+
+	// FIXME: Verify that the file exists and is readable
+	fileToEditStat, err := os.Stat(fileToEdit)
+	if err != nil {
+		log.Warn("Failed to stat file to edit "+fileToEdit+": ", err)
+		return
+	}
+	if fileToEditStat.Mode()&0444 == 0 {
+		log.Warn("File to edit " + fileToEdit + " is not readable")
+		return
+	}
 
 	p.AfterExit = func() error {
 		// FIXME: Actually launch the editor here
-		_, err := fmt.Println("JOHAN: Imagine launching " + editor + " here")
+		_, err := fmt.Println("JOHAN: Imagine launching " + editor + " " + fileToEdit + " here")
 		return err
 	}
 	p.Quit()
