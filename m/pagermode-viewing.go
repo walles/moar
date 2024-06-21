@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+	"syscall"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/walles/moar/twin"
@@ -96,7 +97,7 @@ func handleEditingRequest(p *Pager) {
 	if err != nil {
 		// FIXME: Show a message in the status bar instead? Nothing wrong with
 		// moar here.
-		log.Warn("Failed to find editor"+firstWord+" from $"+editorEnv+": ", err)
+		log.Warn("Failed to find editor "+firstWord+" from $"+editorEnv+": ", err)
 		return
 	}
 	// Check that the editor is executable
@@ -132,7 +133,7 @@ func handleEditingRequest(p *Pager) {
 		panic("Make a temp file with the buffer contents")
 	}
 
-	// FIXME: Verify that the file exists and is readable
+	// Verify that the file exists and is readable
 	fileToEditStat, err := os.Stat(fileToEdit)
 	if err != nil {
 		log.Warn("Failed to stat file to edit "+fileToEdit+": ", err)
@@ -144,9 +145,16 @@ func handleEditingRequest(p *Pager) {
 	}
 
 	p.AfterExit = func() error {
-		// FIXME: Actually launch the editor here
-		_, err := fmt.Println("JOHAN: Imagine launching " + editor + " " + fileToEdit + " here")
-		return err
+		// NOTE: If you do any changes here, make sure they work with both nano
+		// and "code -w".
+		commandWithArgs := strings.Fields(editor)
+		commandWithArgs = append(commandWithArgs, fileToEdit)
+
+		// syscall.Exec() will terminate ourselves if it succeeds
+		err := syscall.Exec(editorPath, commandWithArgs, os.Environ())
+
+		// When we get here, err will always be non-nil
+		return fmt.Errorf("Failed to exec %s %s: %w", editorPath, commandWithArgs[1:], err)
 	}
 	p.Quit()
 }

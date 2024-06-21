@@ -850,14 +850,14 @@ func startPaging(pager *m.Pager, screen twin.Screen, chromaStyle *chroma.Style, 
 		if !pager.DeInit {
 			err := pager.ReprintAfterExit()
 			if err != nil {
-				log.Error("Failed reprinting pager view after exit", err)
+				log.Error("Failed reprinting pager view after exit: ", err)
 			}
 		}
 
 		if pager.AfterExit != nil {
 			err := pager.AfterExit()
 			if err != nil {
-				log.Error("Failed running AfterExit hook", err)
+				log.Error("Failed running AfterExit hook: ", err)
 			}
 		}
 	}()
