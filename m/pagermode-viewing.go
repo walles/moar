@@ -1,8 +1,6 @@
 package m
 
 import (
-	"fmt"
-
 	log "github.com/sirupsen/logrus"
 	"github.com/walles/moar/twin"
 )
@@ -71,6 +69,24 @@ func (m PagerModeViewing) onKey(keyCode twin.KeyCode) {
 	}
 }
 
+func handleEditingRequest() {
+	// FIXME: Get an editor setting from either VISUAL or EDITOR
+
+	// FIXME: Tyre kicking check that we can launch the editor
+
+	// FIXME: If the buffer is from stdin, store it in a temp file. Consider
+	// naming it based on the current language setting.
+
+	// FIXME: Set an AfterExit function that launches the editor
+
+	p.AfterExit = func() error {
+		FIXME: Do editor launching things here
+		_, err := fmt.Println("JOHAN: Imagine launching an editor here")
+		return err
+	}
+	p.Quit()
+}
+
 func (m PagerModeViewing) onRune(char rune) {
 	p := m.pager
 
@@ -79,12 +95,7 @@ func (m PagerModeViewing) onRune(char rune) {
 		p.Quit()
 
 	case 'v':
-		p.AfterExit = func() error {
-			FIXME: Do editor launching things here
-			_, err := fmt.Println("JOHAN: Imagine launching an editor here")
-			return err
-		}
-		p.Quit()
+		handleEditingRequest()
 
 	case '?':
 		if !p.isShowingHelp {
