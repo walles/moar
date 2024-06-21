@@ -136,9 +136,10 @@ func handleEditingRequest(p *Pager) {
 
 	var fileToEdit string
 	if mustCreateTempFile {
-		// FIXME: If the buffer is from stdin, store it in a temp file. Consider
-		// naming it based on p.reader.fileName if set or the current language
-		// setting.
+		// FIXME: Create a temp file based on reader contents. Consider naming
+		// it based on p.reader.fileName if set or the current language setting.
+
+		write code here
 
 		// FIXME: Should we wait for the stream to finish loading before
 		// launching the editor? Maybe no?
