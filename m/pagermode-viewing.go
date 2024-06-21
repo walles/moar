@@ -1,6 +1,11 @@
 package m
 
 import (
+	"fmt"
+	"os"
+	"os/exec"
+	"strings"
+
 	log "github.com/sirupsen/logrus"
 	"github.com/walles/moar/twin"
 )
@@ -69,10 +74,46 @@ func (m PagerModeViewing) onKey(keyCode twin.KeyCode) {
 	}
 }
 
-func handleEditingRequest() {
-	// FIXME: Get an editor setting from either VISUAL or EDITOR
+func handleEditingRequest(p *Pager) {
+	// Get an editor setting from either VISUAL or EDITOR
+	editorEnv := "VISUAL"
+	editor := strings.TrimSpace(os.Getenv(editorEnv))
+	if editor == "" {
+		editorEnv := "EDITOR"
+		editor = strings.TrimSpace(os.Getenv(editorEnv))
+	}
+	if editor == "" {
+		// FIXME: Show a message in the status bar instead? Nothing wrong with
+		// moar here.
+		log.Warn("Neither $VISUAL nor $EDITOR are set, can't launch any editor")
+		return
+	}
 
-	// FIXME: Tyre kicking check that we can launch the editor
+	// Tyre kicking check that we can find the editor either in the PATH or as
+	// an absolute path
+	firstWord := strings.Fields(editor)[0]
+	editorPath, err := exec.LookPath(firstWord)
+	if err != nil {
+		// FIXME: Show a message in the status bar instead? Nothing wrong with
+		// moar here.
+		log.Warn("Failed to find editor"+firstWord+" from $"+editorEnv+": ", err)
+	}
+	// Check that the editor is executable
+	editorStat, err := os.Stat(editorPath)
+	if err != nil {
+		// FIXME: Show a message in the status bar instead? Nothing wrong with
+		// moar here.
+		log.Warn("Failed to stat editor "+editorPath+": ", err)
+	}
+	if editorStat.Mode()&0111 == 0 {
+		// Note that this check isn't perfect, it could still be executable but
+		// not by us. Corner case, let's just complain about that when trying to
+		// run it.
+
+		// FIXME: Show a message in the status bar instead? Nothing wrong with
+		// moar here.
+		log.Warn("Editor " + editorPath + " is not executable")
+	}
 
 	// FIXME: If the buffer is from stdin, store it in a temp file. Consider
 	// naming it based on the current language setting.
@@ -80,8 +121,8 @@ func handleEditingRequest() {
 	// FIXME: Set an AfterExit function that launches the editor
 
 	p.AfterExit = func() error {
-		FIXME: Do editor launching things here
-		_, err := fmt.Println("JOHAN: Imagine launching an editor here")
+		// FIXME: Actually launch the editor here
+		_, err := fmt.Println("JOHAN: Imagine launching " + editor + " here")
 		return err
 	}
 	p.Quit()
@@ -95,7 +136,7 @@ func (m PagerModeViewing) onRune(char rune) {
 		p.Quit()
 
 	case 'v':
-		handleEditingRequest()
+		handleEditingRequest(p)
 
 	case '?':
 		if !p.isShowingHelp {
