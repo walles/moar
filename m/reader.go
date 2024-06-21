@@ -35,7 +35,12 @@ type Reader struct {
 
 	lines []*Line
 	name  *string
-	err   error
+
+	// If this is set, it will point out the file we are reading from. If this
+	// is not set, we are not reading from a file.
+	fileName *string
+
+	err error
 
 	// Have we had our contents replaced using setText()?
 	replaced bool
@@ -399,6 +404,7 @@ func NewReaderFromFilenameWithoutStyle(filename string, formatter chroma.Formatt
 
 	returnMe.Lock()
 	returnMe.name = &filename
+	returnMe.fileName = &filename
 	returnMe.Unlock()
 
 	if lexer == nil {

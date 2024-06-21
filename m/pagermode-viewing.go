@@ -120,10 +120,8 @@ func handleEditingRequest(p *Pager) {
 	}
 
 	var fileToEdit string
-	// FIXME: p.reader.name might not be the original file name, get another
-	// field explicitly for that purpose
-	if p.reader.name != nil {
-		fileToEdit = *p.reader.name
+	if p.reader.fileName != nil {
+		fileToEdit = *p.reader.fileName
 	} else {
 		// FIXME: If the buffer is from stdin, store it in a temp file. Consider
 		// naming it based on the current language setting.
