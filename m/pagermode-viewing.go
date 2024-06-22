@@ -1,11 +1,9 @@
 package m
 
 import (
-	"fmt"
 	"os"
 	"os/exec"
 	"strings"
-	"syscall"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/walles/moar/twin"
@@ -118,47 +116,53 @@ func handleEditingRequest(p *Pager) {
 		return
 	}
 
-	mustCreateTempFile := p.reader.fileName == nil
+	canOpenFile := p.reader.fileName != nil
 	if p.reader.fileName != nil {
 		// Verify that the file exists and is readable
 		fileToEditStat, err := os.Stat(*p.reader.fileName)
 		if err != nil {
 			log.Info("Failed to stat file to edit "+*p.reader.fileName+": ", err)
-			mustCreateTempFile = true
+			canOpenFile = false
 		} else if fileToEditStat.Mode()&0444 == 0 {
 			// Note that this check isn't perfect, it could still be readable but
 			// not by us. Corner case, let's just fail later in that case.
 
 			log.Info("File to edit " + *p.reader.fileName + " is not readable")
-			mustCreateTempFile = true
+			canOpenFile = false
 		}
 	}
 
 	var fileToEdit string
-	if mustCreateTempFile {
+	if canOpenFile {
+		fileToEdit = *p.reader.fileName
+	} else {
 		// FIXME: Create a temp file based on reader contents. Consider naming
 		// it based on p.reader.fileName if set or the current language setting.
 
-		write code here
-
 		// FIXME: Should we wait for the stream to finish loading before
 		// launching the editor? Maybe no?
-		panic("Make a temp file with the buffer contents")
-	} else {
-		fileToEdit = *p.reader.fileName
+
+		log.Warn("Not a readable file, can't launch editor: ", p.reader.fileName)
+		return
 	}
 
 	p.AfterExit = func() error {
-		// NOTE: If you do any changes here, make sure they work with both nano
-		// and "code -w".
+		// NOTE: If you do any changes here, make sure they work with both "nano"
+		// and "code -w" (VSCode).
 		commandWithArgs := strings.Fields(editor)
 		commandWithArgs = append(commandWithArgs, fileToEdit)
 
-		// syscall.Exec() will terminate ourselves if it succeeds
-		err := syscall.Exec(editorPath, commandWithArgs, os.Environ())
+		log.Info("'v' pressed, launching editor: ", commandWithArgs)
+		command := exec.Command(commandWithArgs[0], commandWithArgs[1:]...)
+		command.Stdin = os.Stdin
+		command.Stdout = os.Stdout
+		command.Stderr = os.Stderr
 
-		// When we get here, err will always be non-nil
-		return fmt.Errorf("Failed to exec %s %s: %w", editorPath, commandWithArgs[1:], err)
+		err := command.Run()
+		if err == nil {
+			log.Info("Editor exited successfully: ", commandWithArgs)
+		}
+		return err
 	}
 	p.Quit()
 }
