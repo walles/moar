@@ -1,6 +1,10 @@
 package m
 
 import (
+	"os"
+	"os/exec"
+	"strings"
+
 	log "github.com/sirupsen/logrus"
 	"github.com/walles/moar/twin"
 )
@@ -69,12 +73,109 @@ func (m PagerModeViewing) onKey(keyCode twin.KeyCode) {
 	}
 }
 
+func handleEditingRequest(p *Pager) {
+	// Get an editor setting from either VISUAL or EDITOR
+	editorEnv := "VISUAL"
+	editor := strings.TrimSpace(os.Getenv(editorEnv))
+	if editor == "" {
+		editorEnv := "EDITOR"
+		editor = strings.TrimSpace(os.Getenv(editorEnv))
+	}
+	if editor == "" {
+		// FIXME: Show a message in the status bar instead? Nothing wrong with
+		// moar here.
+		log.Warn("Neither $VISUAL nor $EDITOR are set, can't launch any editor")
+		return
+	}
+
+	// Tyre kicking check that we can find the editor either in the PATH or as
+	// an absolute path
+	firstWord := strings.Fields(editor)[0]
+	editorPath, err := exec.LookPath(firstWord)
+	if err != nil {
+		// FIXME: Show a message in the status bar instead? Nothing wrong with
+		// moar here.
+		log.Warn("Failed to find editor "+firstWord+" from $"+editorEnv+": ", err)
+		return
+	}
+	// Check that the editor is executable
+	editorStat, err := os.Stat(editorPath)
+	if err != nil {
+		// FIXME: Show a message in the status bar instead? Nothing wrong with
+		// moar here.
+		log.Warn("Failed to stat editor "+editorPath+": ", err)
+		return
+	}
+	if editorStat.Mode()&0111 == 0 {
+		// Note that this check isn't perfect, it could still be executable but
+		// not by us. Corner case, let's just fail later in that case.
+
+		// FIXME: Show a message in the status bar instead? Nothing wrong with
+		// moar here.
+		log.Warn("Editor " + editorPath + " is not executable")
+		return
+	}
+
+	canOpenFile := p.reader.fileName != nil
+	if p.reader.fileName != nil {
+		// Verify that the file exists and is readable
+		fileToEditStat, err := os.Stat(*p.reader.fileName)
+		if err != nil {
+			log.Info("Failed to stat file to edit "+*p.reader.fileName+": ", err)
+			canOpenFile = false
+		} else if fileToEditStat.Mode()&0444 == 0 {
+			// Note that this check isn't perfect, it could still be readable but
+			// not by us. Corner case, let's just fail later in that case.
+
+			log.Info("File to edit " + *p.reader.fileName + " is not readable")
+			canOpenFile = false
+		}
+	}
+
+	var fileToEdit string
+	if canOpenFile {
+		fileToEdit = *p.reader.fileName
+	} else {
+		// FIXME: Create a temp file based on reader contents. Consider naming
+		// it based on p.reader.fileName if set or the current language setting.
+
+		// FIXME: Should we wait for the stream to finish loading before
+		// launching the editor? Maybe no?
+
+		log.Warn("Not a readable file, can't launch editor: ", p.reader.fileName)
+		return
+	}
+
+	p.AfterExit = func() error {
+		// NOTE: If you do any changes here, make sure they work with both "nano"
+		// and "code -w" (VSCode).
+		commandWithArgs := strings.Fields(editor)
+		commandWithArgs = append(commandWithArgs, fileToEdit)
+
+		log.Info("'v' pressed, launching editor: ", commandWithArgs)
+		command := exec.Command(commandWithArgs[0], commandWithArgs[1:]...)
+		command.Stdin = os.Stdin
+		command.Stdout = os.Stdout
+		command.Stderr = os.Stderr
+
+		err := command.Run()
+		if err == nil {
+			log.Info("Editor exited successfully: ", commandWithArgs)
+		}
+		return err
+	}
+	p.Quit()
+}
+
 func (m PagerModeViewing) onRune(char rune) {
 	p := m.pager
 
 	switch char {
 	case 'q':
 		p.Quit()
+
+	case 'v':
+		handleEditingRequest(p)
 
 	case '?':
 		if !p.isShowingHelp {

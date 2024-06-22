@@ -514,6 +514,7 @@ func noLineNumbersDefault() bool {
 	return false
 }
 
+// Can return a nil pager on --help or --version, or if pumping to stdout.
 func pagerFromArgs(
 	args []string,
 	newScreen func(mouseMode twin.MouseMode, terminalColorCount twin.ColorType) (twin.Screen, error),
@@ -809,9 +810,12 @@ func main() {
 		os.Exit(1)
 	}
 
-	if pager != nil {
-		startPaging(pager, screen, &style, formatter)
+	if pager == nil {
+		// No pager, we're done
+		return
 	}
+
+	startPaging(pager, screen, &style, formatter)
 }
 
 // Define a generic flag with specified name, default value, and usage string.
@@ -846,7 +850,14 @@ func startPaging(pager *m.Pager, screen twin.Screen, chromaStyle *chroma.Style, 
 		if !pager.DeInit {
 			err := pager.ReprintAfterExit()
 			if err != nil {
-				log.Error("Failed reprinting pager view after exit", err)
+				log.Error("Failed reprinting pager view after exit: ", err)
+			}
+		}
+
+		if pager.AfterExit != nil {
+			err := pager.AfterExit()
+			if err != nil {
+				log.Error("Failed running AfterExit hook: ", err)
 			}
 		}
 	}()

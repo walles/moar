@@ -101,6 +101,8 @@ type Pager struct {
 	//
 	// Ref: https://github.com/walles/moar/issues/175
 	marks map[rune]scrollPosition
+
+	AfterExit func() error
 }
 
 type _PreHelpState struct {
@@ -120,6 +122,7 @@ Miscellaneous
 * Press 'q' or 'ESC' to quit
 * Press 'w' to toggle wrapping of long lines
 * Press '=' to toggle showing the status bar at the bottom
+* Press 'v' to edit the file in your favorite editor
 
 Moving around
 -------------
