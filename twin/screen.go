@@ -174,6 +174,9 @@ func (screen *UnixScreen) Close() {
 	screen.enableMouseTracking(false)
 	screen.setAlternateScreenMode(false)
 
+	// This will make the main loop exit
+	screen.ttyIn.Close()
+
 	err := screen.restoreTtyInTtyOut()
 	if err != nil {
 		// Debug logging because this is expected to fail in some cases:
