@@ -610,7 +610,7 @@ func pagerFromArgs(
 		return nil, nil, chroma.Style{}, nil, nil
 	}
 
-	log.SetLevel(log.InfoLevel)
+	log.SetLevel(log.WarnLevel)
 	if *trace {
 		log.SetLevel(log.TraceLevel)
 	} else if *debug {
