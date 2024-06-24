@@ -77,6 +77,13 @@ echo Testing not crashing with different argument orders...
 ./moar --trace +123 moar.go >/dev/null
 ./moar --trace moar.go +123 >/dev/null
 
+# We can only do this test if we have a terminal. This means it will be run
+# locally but not in CI. Not great, but better than nothing.
+if [[ -t 1 ]]; then
+  echo Test auto quitting on single screen...
+  echo "  (success)" | ./moar --quit-if-one-screen
+fi
+
 echo Test decompressing while piping
 # Related to https://github.com/walles/moar/issues/177
 ./moar sample-files/compressed.txt.gz | grep compressed >/dev/null

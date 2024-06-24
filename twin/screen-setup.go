@@ -45,18 +45,27 @@ func (screen *UnixScreen) setupSigwinchNotification() {
 }
 
 func (screen *UnixScreen) setupTtyInTtyOut() error {
+	// Dup stdout so we can close stdin in Close() without closing stdout.
+	// Before this dupping, we crashed on using --quit-if-one-screen.
+	//
+	// Ref:https://github.com/walles/moar/issues/214
+	stdoutDupFd, err := syscall.Dup(int(os.Stdout.Fd()))
+	if err != nil {
+		return err
+	}
+	stdoutDup := os.NewFile(uintptr(stdoutDupFd), "moar-stdout-dup")
+
 	// os.Stdout is a stream that goes to our terminal window.
 	//
 	// So if we read from there, we'll get input from the terminal window.
 	//
-	// Reading from os.Stdin will fail if we're getting data piped into
-	// ourselves from some other command.
+	// If we just read from os.Stdin that would fail if we're getting data piped
+	// into ourselves from some other command.
 	//
 	// Tested on macOS and Linux, works like a charm!
-	screen.ttyIn = os.Stdout // <- YES, WE SHOULD ASSIGN STDOUT TO TTYIN
+	screen.ttyIn = stdoutDup // <- YES, WE SHOULD ASSIGN STDOUT TO TTYIN
 
 	// Set input stream to raw mode
-	var err error
 	screen.oldTerminalState, err = term.MakeRaw(int(screen.ttyIn.Fd()))
 	if err != nil {
 		return err
