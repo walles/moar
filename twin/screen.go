@@ -170,6 +170,14 @@ func NewScreenWithMouseModeAndColorType(mouseMode MouseMode, terminalColorCount 
 // Close() restores terminal to normal state, must be called after you are done
 // with the screen returned by NewScreen()
 func (screen *UnixScreen) Close() {
+	// Tell the pager to exit unless it hasn't already
+	screen.events <- EventExit{}
+
+	// Tell our main loop to exit. It may still be stuck in a read() call after
+	// this, but even if it posts nore events the pager has already exited and
+	// nobody will care.
+	screen.ttyIn.Close()
+
 	screen.hideCursor(false)
 	screen.enableMouseTracking(false)
 	screen.setAlternateScreenMode(false)
