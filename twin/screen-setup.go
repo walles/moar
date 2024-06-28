@@ -59,7 +59,7 @@ func (screen *UnixScreen) setupTtyInTtyOut() error {
 	//
 	// So if we read from there, we'll get input from the terminal window.
 	//
-	// If we just read from os.Stdin that would fail if we're getting data piped
+	// If we just read from os.Stdin that would fail when getting data piped
 	// into ourselves from some other command.
 	//
 	// Tested on macOS and Linux, works like a charm!

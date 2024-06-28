@@ -1,11 +1,13 @@
 package m
 
 import (
+	"math"
 	"os"
 	"os/exec"
 	"strings"
 
 	log "github.com/sirupsen/logrus"
+	"github.com/walles/moar/m/linenumbers"
 	"github.com/walles/moar/twin"
 )
 
@@ -73,6 +75,35 @@ func (m PagerModeViewing) onKey(keyCode twin.KeyCode) {
 	}
 }
 
+// Dump the reader lines into a read-only temp file and return the absolute file
+// name.
+func dumpToTempFile(reader *Reader) (string, error) {
+	tempFile, err := os.CreateTemp("", "moar-contents-")
+	if err != nil {
+		return "", err
+	}
+	defer tempFile.Close()
+
+	log.Debug("Dumping contents into: ", tempFile.Name())
+
+	lines, _ := reader.GetLines(linenumbers.LineNumber{}, math.MaxInt)
+	for _, line := range lines.lines {
+		_, err := tempFile.WriteString(line.raw + "\n")
+		if err != nil {
+			return "", err
+		}
+	}
+
+	// Ref: https://pkg.go.dev/os#Chmod
+	err = os.Chmod(tempFile.Name(), 0400)
+	if err != nil {
+		// Doesn't matter that much, but if it fails we should at least log it
+		log.Debug("Failed to make temp file ", tempFile.Name(), " read-only: ", err)
+	}
+
+	return tempFile.Name(), nil
+}
+
 func handleEditingRequest(p *Pager) {
 	// Get an editor setting from either VISUAL or EDITOR
 	editorEnv := "VISUAL"
@@ -136,14 +167,16 @@ func handleEditingRequest(p *Pager) {
 	if canOpenFile {
 		fileToEdit = *p.reader.fileName
 	} else {
-		// FIXME: Create a temp file based on reader contents. Consider naming
-		// it based on p.reader.fileName if set or the current language setting.
+		// NOTE: Let's not wait for the stream to finish, just dump whatever we
+		// have and open the editor on that. The user just asked for it, if they
+		// wanted to wait, they should have done that themselves.
 
-		// FIXME: Should we wait for the stream to finish loading before
-		// launching the editor? Maybe no?
-
-		log.Warn("Not a readable file, can't launch editor: ", p.reader.fileName)
-		return
+		// Create a temp file based on reader contents
+		fileToEdit, err = dumpToTempFile(p.reader)
+		if err != nil {
+			log.Warn("Failed to create temp file to edit: ", err)
+			return
+		}
 	}
 
 	p.AfterExit = func() error {
@@ -154,7 +187,14 @@ func handleEditingRequest(p *Pager) {
 
 		log.Info("'v' pressed, launching editor: ", commandWithArgs)
 		command := exec.Command(commandWithArgs[0], commandWithArgs[1:]...)
-		command.Stdin = os.Stdin
+
+		// Since os.Stdin might come from a pipe, we can't trust that. Instead,
+		// we tell the editor to read from os.Stdout, which points to the
+		// terminal as well.
+		//
+		// Tested on macOS and Linux, works like a charm.
+		command.Stdin = os.Stdout // <- YES, WE SHOULD ASSIGN STDOUT TO STDIN
+
 		command.Stdout = os.Stdout
 		command.Stderr = os.Stderr
 
