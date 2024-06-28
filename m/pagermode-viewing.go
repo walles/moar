@@ -1,6 +1,7 @@
 package m
 
 import (
+	"fmt"
 	"math"
 	"os"
 	"os/exec"
@@ -104,6 +105,21 @@ func dumpToTempFile(reader *Reader) (string, error) {
 	return tempFile.Name(), nil
 }
 
+// Check that the editor is executable
+func errUnlessExecutable(file string) error {
+	stat, err := os.Stat(file)
+	if err != nil {
+		return fmt.Errorf("Failed to stat %s: %w", file, err)
+	}
+	if stat.Mode()&0111 == 0 {
+		// Note that this check isn't perfect, it could still be executable but
+		// not by us. Corner case, let's just fail later in that case.
+		return fmt.Errorf("Not executable: %s", file)
+	}
+
+	return nil
+}
+
 func handleEditingRequest(p *Pager) {
 	// Get an editor setting from either VISUAL or EDITOR
 	editorEnv := "VISUAL"
@@ -129,37 +145,23 @@ func handleEditingRequest(p *Pager) {
 		log.Warn("Failed to find editor "+firstWord+" from $"+editorEnv+": ", err)
 		return
 	}
+
 	// Check that the editor is executable
-	editorStat, err := os.Stat(editorPath)
+	err = errUnlessExecutable(editorPath)
 	if err != nil {
 		// FIXME: Show a message in the status bar instead? Nothing wrong with
 		// moar here.
-		log.Warn("Failed to stat editor "+editorPath+": ", err)
-		return
-	}
-	if editorStat.Mode()&0111 == 0 {
-		// Note that this check isn't perfect, it could still be executable but
-		// not by us. Corner case, let's just fail later in that case.
-
-		// FIXME: Show a message in the status bar instead? Nothing wrong with
-		// moar here.
-		log.Warn("Editor " + editorPath + " is not executable")
+		log.Warn("Editor not executable: {}", err)
 		return
 	}
 
 	canOpenFile := p.reader.fileName != nil
 	if p.reader.fileName != nil {
 		// Verify that the file exists and is readable
-		fileToEditStat, err := os.Stat(*p.reader.fileName)
+		err = tryOpen(*p.reader.fileName)
 		if err != nil {
-			log.Info("Failed to stat file to edit "+*p.reader.fileName+": ", err)
 			canOpenFile = false
-		} else if fileToEditStat.Mode()&0444 == 0 {
-			// Note that this check isn't perfect, it could still be readable but
-			// not by us. Corner case, let's just fail later in that case.
-
-			log.Info("File to edit " + *p.reader.fileName + " is not readable")
-			canOpenFile = false
+			log.Info("File to edit is not readable: ", err)
 		}
 	}
 
