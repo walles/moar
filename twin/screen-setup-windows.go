@@ -64,17 +64,23 @@ func (screen *UnixScreen) setupTtyInTtyOut() error {
 }
 
 func (screen *UnixScreen) restoreTtyInTtyOut() error {
+	errors := []error{}
+
 	stdin := windows.Handle(screen.ttyIn.Fd())
 	err := windows.SetConsoleMode(stdin, screen.oldTtyInMode)
 	if err != nil {
-		return err
+		errors = append(errors, fmt.Errorf("failed to restore stdin console mode: %w", err))
 	}
 
 	stdout := windows.Handle(screen.ttyOut.Fd())
 	err = windows.SetConsoleMode(stdout, screen.oldTtyOutMode)
 	if err != nil {
-		return err
+		errors = append(errors, fmt.Errorf("failed to restore stdout console mode: %w", err))
 	}
 
-	return nil
+	if len(errors) == 0 {
+		return nil
+	}
+
+	return fmt.Errorf("failed to restore terminal state: %v", errors)
 }

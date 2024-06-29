@@ -353,6 +353,10 @@ func (screen *UnixScreen) ShowCursorAt(column int, row int) {
 }
 
 func (screen *UnixScreen) mainLoop() {
+	defer func() {
+		log.Debug("Twin screen main loop done")
+	}()
+
 	// "1400" comes from me trying fling scroll operations on my MacBook
 	// trackpad and looking at the high watermark (logged below).
 	//
