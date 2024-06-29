@@ -280,6 +280,7 @@ func printProblemsHeader() {
 	fmt.Fprintln(os.Stderr, "LANG   :", os.Getenv("LANG"))
 	fmt.Fprintln(os.Stderr, "TERM   :", os.Getenv("TERM"))
 	fmt.Fprintln(os.Stderr, "MOAR   :", os.Getenv("MOAR"))
+	fmt.Fprintln(os.Stderr, "EDITOR :", os.Getenv("EDITOR"))
 	fmt.Fprintln(os.Stderr)
 	fmt.Fprintln(os.Stderr, "GOOS    :", runtime.GOOS)
 	fmt.Fprintln(os.Stderr, "GOARCH  :", runtime.GOARCH)

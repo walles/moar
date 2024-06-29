@@ -5,6 +5,7 @@ import (
 	"math"
 	"os"
 	"os/exec"
+	"runtime"
 	"strings"
 
 	log "github.com/sirupsen/logrus"
@@ -111,13 +112,19 @@ func errUnlessExecutable(file string) error {
 	if err != nil {
 		return fmt.Errorf("Failed to stat %s: %w", file, err)
 	}
-	if stat.Mode()&0111 == 0 {
-		// Note that this check isn't perfect, it could still be executable but
-		// not by us. Corner case, let's just fail later in that case.
-		return fmt.Errorf("Not executable: %s", file)
+
+	if runtime.GOOS == "windows" && strings.HasSuffix(strings.ToLower(file), ".exe") {
+		log.Debug(".exe file on Windows, assuming executable: ", file)
+		return nil
 	}
 
-	return nil
+	if stat.Mode()&0111 != 0 {
+		// Note that this check isn't perfect, it could still be executable but
+		// not by us. Corner case, let's just fail later in that case.
+		return nil
+	}
+
+	return fmt.Errorf("Not executable: %s", file)
 }
 
 func handleEditingRequest(p *Pager) {
