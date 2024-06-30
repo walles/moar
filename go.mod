@@ -15,6 +15,7 @@ require (
 )
 
 require (
+	github.com/creack/goselect v0.1.2 // indirect
 	github.com/dlclark/regexp2 v1.10.0 // indirect
 	github.com/stretchr/testify v1.7.0 // indirect
 )

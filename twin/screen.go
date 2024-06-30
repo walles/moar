@@ -7,14 +7,16 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
-	"sync/atomic"
 	"unicode/utf8"
 
+	"github.com/creack/goselect"
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/term"
 )
 
 type MouseMode int
+
+var errShutdownInitiated = fmt.Errorf("shutdown initiated")
 
 const (
 	MouseModeAuto MouseMode = iota
@@ -81,7 +83,9 @@ type UnixScreen struct {
 
 	events chan Event
 
-	shutdownRequested atomic.Bool
+	shutdownPipeReader *os.File
+	shutdownPipeWriter *os.File
+	shutdownDone       chan bool
 
 	ttyIn            *os.File
 	oldTerminalState *term.State //nolint Not used on Windows
@@ -128,8 +132,15 @@ func NewScreenWithMouseModeAndColorType(mouseMode MouseMode, terminalColorCount 
 		return nil, fmt.Errorf("stdout (fd=%d) must be a terminal for paging to work", os.Stdout.Fd())
 	}
 
+	shutdownPipeReader, shutdownPipeWriter, err := os.Pipe()
+	if err != nil {
+		return nil, fmt.Errorf("unable to create shutdown pipe: %w", err)
+	}
 	screen := UnixScreen{
 		terminalColorCount: terminalColorCount,
+		shutdownPipeReader: shutdownPipeReader,
+		shutdownPipeWriter: shutdownPipeWriter,
+		shutdownDone:       make(chan bool, 1),
 	}
 
 	// The number "80" here is from manual testing on my MacBook:
@@ -146,7 +157,7 @@ func NewScreenWithMouseModeAndColorType(mouseMode MouseMode, terminalColorCount 
 	screen.events = make(chan Event, 160)
 
 	screen.setupSigwinchNotification()
-	err := screen.setupTtyInTtyOut()
+	err = screen.setupTtyInTtyOut()
 	if err != nil {
 		return nil, fmt.Errorf("problem setting up TTY: %w", err)
 	}
@@ -176,18 +187,10 @@ func (screen *UnixScreen) Close() {
 	// Tell the pager to exit unless it hasn't already
 	screen.events <- EventExit{}
 
-	// Tell our main loop to exit. Previously we used to close the screen.ttyIn
-	// file descriptor here, but:
-	// * That didn't interrupt the blocking read() in the main loop
-	// * It may or may not have caused shutdown issues on Windows
-	//
-	// Setting this flag doesn't interrupt the blocking read() either, but it
-	// is should at least be less likely to cause shutdown issues on Windows.
-	//
-	// Ref:
-	// * https://github.com/walles/moar/issues/217
-	// * https://github.com/walles/moar/issues/221
-	screen.shutdownRequested.Store(true)
+	// Tell our main loop to exit.
+	screen.shutdownPipeWriter.Close()
+	<-screen.shutdownDone
+	log.Debug("Got confirmation that the twin screen main loop has exited")
 
 	screen.hideCursor(false)
 	screen.enableMouseTracking(false)
@@ -360,8 +363,38 @@ func (screen *UnixScreen) ShowCursorAt(column int, row int) {
 	screen.hideCursor(false)
 }
 
+func (screen *UnixScreen) readFromTtyIn(b []byte) (int, error) {
+	rFDSet := &goselect.FDSet{}
+	rFDSet.Zero()
+	rFDSet.Set(screen.ttyIn.Fd())
+	rFDSet.Set(screen.shutdownPipeReader.Fd())
+
+	maxFd := screen.ttyIn.Fd()
+	if screen.shutdownPipeReader.Fd() > maxFd {
+		maxFd = screen.shutdownPipeReader.Fd()
+	}
+
+	err := goselect.Select(int(maxFd)+1, rFDSet, nil, nil, -1)
+	if err != nil {
+		return 0, err
+	}
+
+	if rFDSet.IsSet(screen.shutdownPipeReader.Fd()) {
+		return 0, errShutdownInitiated
+	}
+
+	if !rFDSet.IsSet(screen.ttyIn.Fd()) {
+		// This should never happen
+		return 0, fmt.Errorf("ttyIn not ready for reading")
+	}
+
+	return screen.ttyIn.Read(b)
+}
+
 func (screen *UnixScreen) mainLoop() {
 	defer func() {
+		log.Debug("Twin screen main loop exiting...")
+		screen.shutdownDone <- true
 		log.Debug("Twin screen main loop done")
 	}()
 
@@ -375,19 +408,15 @@ func (screen *UnixScreen) mainLoop() {
 	maxBytesRead := 0
 	expectingTerminalBackgroundColor := true
 	for {
-		count, err := screen.ttyIn.Read(buffer)
+		count, err := screen.readFromTtyIn(buffer)
 		if err != nil {
-			// Ref:
-			// * https://github.com/walles/moar/issues/145
-			// * https://github.com/walles/moar/issues/149
-			// * https://github.com/walles/moar/issues/150
-			log.Debug("ttyin read error, twin giving up: ", err)
-
-			screen.events <- EventExit{}
-			return
-		}
-		if screen.shutdownRequested.Load() {
-			log.Debug("Shutdown requested, twin giving up")
+			if err != errShutdownInitiated {
+				// Ref:
+				// * https://github.com/walles/moar/issues/145
+				// * https://github.com/walles/moar/issues/149
+				// * https://github.com/walles/moar/issues/150
+				log.Debug("ttyin read error, twin giving up: ", err)
+			}
 
 			screen.events <- EventExit{}
 			return
