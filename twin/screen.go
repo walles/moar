@@ -363,6 +363,8 @@ func (screen *UnixScreen) ShowCursorAt(column int, row int) {
 	screen.hideCursor(false)
 }
 
+// Read from screen.ttyIn, but return immedeately with errShutdownInitiated if
+// we get interrupted by shutting down.
 func (screen *UnixScreen) readFromTtyIn(b []byte) (int, error) {
 	rFDSet := &goselect.FDSet{}
 	rFDSet.Zero()
@@ -374,6 +376,7 @@ func (screen *UnixScreen) readFromTtyIn(b []byte) (int, error) {
 		maxFd = screen.shutdownPipeReader.Fd()
 	}
 
+	// Timeout values < 0 mean "wait forever". We use -1 for this purpose.
 	err := goselect.Select(int(maxFd)+1, rFDSet, nil, nil, -1)
 	if err != nil {
 		return 0, err

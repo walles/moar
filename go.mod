@@ -4,6 +4,7 @@ go 1.20
 
 require (
 	github.com/alecthomas/chroma/v2 v2.12.0
+	github.com/creack/goselect v0.1.2
 	github.com/google/go-cmp v0.5.9
 	github.com/klauspost/compress v1.17.4
 	github.com/sirupsen/logrus v1.8.1
@@ -15,7 +16,6 @@ require (
 )
 
 require (
-	github.com/creack/goselect v0.1.2 // indirect
 	github.com/dlclark/regexp2 v1.10.0 // indirect
 	github.com/stretchr/testify v1.7.0 // indirect
 )
