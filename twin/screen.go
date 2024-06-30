@@ -7,6 +7,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"sync/atomic"
 	"unicode/utf8"
 
 	log "github.com/sirupsen/logrus"
@@ -79,6 +80,8 @@ type UnixScreen struct {
 	sigwinch chan int
 
 	events chan Event
+
+	shutdownRequested atomic.Bool
 
 	ttyIn            *os.File
 	oldTerminalState *term.State //nolint Not used on Windows
@@ -173,10 +176,18 @@ func (screen *UnixScreen) Close() {
 	// Tell the pager to exit unless it hasn't already
 	screen.events <- EventExit{}
 
-	// Tell our main loop to exit. It may still be stuck in a read() call after
-	// this, but even if it posts nore events the pager has already exited and
-	// nobody will care.
-	screen.ttyIn.Close()
+	// Tell our main loop to exit. Previously we used to close the screen.ttyIn
+	// file descriptor here, but:
+	// * That didn't interrupt the blocking read() in the main loop
+	// * It may or may not have caused shutdown issues on Windows
+	//
+	// Setting this flag doesn't interrupt the blocking read() either, but it
+	// is should at least be less likely to cause shutdown issues on Windows.
+	//
+	// Ref:
+	// * https://github.com/walles/moar/issues/217
+	// * https://github.com/walles/moar/issues/221
+	screen.shutdownRequested.Store(true)
 
 	screen.hideCursor(false)
 	screen.enableMouseTracking(false)
@@ -375,8 +386,13 @@ func (screen *UnixScreen) mainLoop() {
 			// * https://github.com/walles/moar/issues/150
 			log.Debug("ttyin read error, twin giving up: ", err)
 
-			var event Event = EventExit{}
-			screen.events <- event
+			screen.events <- EventExit{}
+			return
+		}
+		if screen.shutdownRequested.Load() {
+			log.Debug("Shutdown requested, twin giving up")
+
+			screen.events <- EventExit{}
 			return
 		}
 
