@@ -94,7 +94,31 @@ yay -S moar
 
 More info [here](https://aur.archlinux.org/packages/moar-git).
 
+## Debian / Ubuntu
+
+Nobody has stepped up and packaged `moar` for Debian.
+
+If you want to [package `moar` for
+Debian](https://github.com/walles/moar/issues/137), that would be very welcome!
+
+Otherwise read on for manual install instructions.
+
 ## Manual Install
+
+### Using `go`
+
+This will [install
+`moar` into `$GOPATH/bin`](<(https://manpages.debian.org/testing/golang-go/go-install.1.en.html)>)
+:
+
+```sh
+go install github.com/walles/moar@latest
+```
+
+NOTE: If you got here because there is no binary for your platform,
+[please consider packaging `moar`](#packaging).
+
+### Downloading binaries
 
 1. Download `moar` for your platform from
    <https://github.com/walles/moar/releases/latest>
@@ -104,15 +128,6 @@ More info [here](https://aur.archlinux.org/packages/moar-git).
 And now you can just invoke `moar` from the prompt!
 
 Try `moar --help` to see options.
-
-If a binary for your platform is not available, please
-[file a ticket](https://github.com/walles/moar/releases) or contact
-<johan.walles@gmail.com>.
-
-## Debian / Ubuntu
-
-[A Request for Packaging is open](https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=944035),
-please help!
 
 # Configuring
 
