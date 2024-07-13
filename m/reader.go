@@ -105,8 +105,18 @@ func (reader *Reader) preAllocLines(originalFileName string) {
 	}
 }
 
+func (reader *Reader) readStream(stream io.Reader, originalFileName *string, formatter chroma.Formatter, lexer chroma.Lexer) {
+	reader.readStreamInternal(stream, originalFileName)
+
+	if lexer != nil {
+		t0 := time.Now()
+		highlightFromMemory(reader, <-reader.highlightingStyle, formatter, lexer)
+		log.Debug("highlightFromMemory() took ", time.Since(t0))
+	}
+}
+
 // This function will update the Reader struct in the background.
-func (reader *Reader) readStream(stream io.Reader, originalFileName *string, onDone func()) {
+func (reader *Reader) readStreamInternal(stream io.Reader, originalFileName *string) {
 	defer func() {
 		reader.done.Store(true)
 		select {
@@ -197,12 +207,6 @@ func (reader *Reader) readStream(stream io.Reader, originalFileName *string, onD
 	}
 
 	log.Debug("Stream read in ", time.Since(t0))
-
-	if onDone != nil {
-		t1 := time.Now()
-		onDone()
-		log.Debug("onDone() took ", time.Since(t1))
-	}
 }
 
 // Note that you must call reader.SetStyleForHighlighting() after this to get
@@ -265,11 +269,7 @@ func newReaderFromStream(reader io.Reader, originalFileName *string, formatter c
 
 	// FIXME: Make sure that if we panic somewhere inside of this goroutine,
 	// the main program terminates and prints our panic stack trace.
-	go returnMe.readStream(reader, originalFileName, func() {
-		if lexer != nil {
-			highlightFromMemory(&returnMe, <-returnMe.highlightingStyle, formatter, lexer)
-		}
-	})
+	go returnMe.readStream(reader, originalFileName, formatter, lexer)
 
 	return &returnMe
 }
