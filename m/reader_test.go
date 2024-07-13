@@ -323,22 +323,6 @@ func TestReadTextDone(t *testing.T) {
 	assert.NilError(t, testMe._wait())
 }
 
-func TestFilterNotInstalled(t *testing.T) {
-	t.Skip("FIXME: Test what happens if we try to use a filter that is not installed")
-}
-
-func TestFilterFailure(t *testing.T) {
-	t.Skip("FIXME: Test what happens if the filter command fails because of bad command line options")
-}
-
-func TestFilterPermissionDenied(t *testing.T) {
-	t.Skip("FIXME: Test what happens if the filter command fails because it can't access the requested file")
-}
-
-func TestFilterNotAFile(t *testing.T) {
-	t.Skip("FIXME: Test what happens if the filter command fails because the target is not a file")
-}
-
 // How long does it take to read a file?
 //
 // This can be slow due to highlighting.
