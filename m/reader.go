@@ -76,8 +76,12 @@ type InputLines struct {
 // performance improvement:
 //
 // go test -benchmem -benchtime=10s -run='^$' -bench 'ReadLargeFile'
-func (reader *Reader) preAllocLines(originalFileName string) {
-	lineCount, err := countLines(originalFileName)
+func (reader *Reader) preAllocLines() {
+	if reader.fileName == nil {
+		return
+	}
+
+	lineCount, err := countLines(*reader.fileName)
 	if err != nil {
 		log.Warn("Line counting failed: ", err)
 		return
@@ -105,8 +109,8 @@ func (reader *Reader) preAllocLines(originalFileName string) {
 	}
 }
 
-func (reader *Reader) readStream(stream io.Reader, originalFileName *string, formatter chroma.Formatter, lexer chroma.Lexer) {
-	reader.readStreamInternal(stream, originalFileName)
+func (reader *Reader) readStream(stream io.Reader, formatter chroma.Formatter, lexer chroma.Lexer) {
+	reader.readStreamInternal(stream)
 
 	if lexer != nil {
 		t0 := time.Now()
@@ -116,7 +120,7 @@ func (reader *Reader) readStream(stream io.Reader, originalFileName *string, for
 }
 
 // This function will update the Reader struct in the background.
-func (reader *Reader) readStreamInternal(stream io.Reader, originalFileName *string) {
+func (reader *Reader) readStreamInternal(stream io.Reader) {
 	defer func() {
 		reader.done.Store(true)
 		select {
@@ -125,9 +129,7 @@ func (reader *Reader) readStreamInternal(stream io.Reader, originalFileName *str
 		}
 	}()
 
-	if originalFileName != nil {
-		reader.preAllocLines(*originalFileName)
-	}
+	reader.preAllocLines()
 
 	bufioReader := bufio.NewReader(stream)
 	completeLine := make([]byte, 0)
@@ -259,6 +261,7 @@ func newReaderFromStream(reader io.Reader, originalFileName *string, formatter c
 		// This needs to be size 1. If it would be 0, and we add more
 		// lines while the pager is processing, the pager would miss
 		// the lines added while it was processing.
+		fileName:                originalFileName,
 		moreLinesAdded:          make(chan bool, 1),
 		maybeDone:               make(chan bool, 1),
 		highlightingStyle:       make(chan chroma.Style, 1),
@@ -269,7 +272,7 @@ func newReaderFromStream(reader io.Reader, originalFileName *string, formatter c
 
 	// FIXME: Make sure that if we panic somewhere inside of this goroutine,
 	// the main program terminates and prints our panic stack trace.
-	go returnMe.readStream(reader, originalFileName, formatter, lexer)
+	go returnMe.readStream(reader, formatter, lexer)
 
 	return &returnMe
 }
