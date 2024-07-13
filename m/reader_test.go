@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/alecthomas/chroma/v2"
 	"github.com/alecthomas/chroma/v2/formatters"
@@ -321,6 +322,49 @@ func TestReadTextDone(t *testing.T) {
 	testMe := NewReaderFromText("", "Johan")
 
 	assert.NilError(t, testMe._wait())
+}
+
+// If people keep appending to the currently opened file we should show display
+// those changes.
+func TestReadUpdatingFile(t *testing.T) {
+	// Make a temp file containing one line of text, ending with a newline
+	file, err := os.CreateTemp("", "moar-TestReadUpdatingFile-*.txt")
+	assert.NilError(t, err)
+	defer os.Remove(file.Name())
+
+	_, err = file.WriteString("First line\n")
+	assert.NilError(t, err)
+
+	// Start a reader on that file
+	testMe, err := NewReaderFromFilename(file.Name(), *styles.Get("native"), formatters.TTY16m, nil)
+	assert.NilError(t, err)
+
+	// Wait for the reader to finish reading
+	assert.NilError(t, testMe._wait())
+
+	// Verify we got the single line
+	allLines, _ := testMe.GetLines(linenumbers.LineNumber{}, 10)
+	assert.Equal(t, len(allLines.lines), 1)
+	assert.Equal(t, allLines.lines[0].Plain(nil), "First line")
+
+	// Append a line to the file
+	_, err = file.WriteString("Second line\n")
+	assert.NilError(t, err)
+
+	// Give the reader some time to react
+	for i := 0; i < 20; i++ {
+		allLines, _ = testMe.GetLines(linenumbers.LineNumber{}, 10)
+		if len(allLines.lines) == 2 {
+			break
+		}
+		time.Sleep(100 * time.Millisecond)
+	}
+
+	// Verify we got the two lines
+	allLines, _ = testMe.GetLines(linenumbers.LineNumber{}, 10)
+	assert.Equal(t, len(allLines.lines), 2, "Expected two lines after adding a second one, got %d", len(allLines.lines))
+	assert.Equal(t, allLines.lines[0].Plain(nil), "First line")
+	assert.Equal(t, allLines.lines[1].Plain(nil), "Second line")
 }
 
 // How long does it take to read a file?
