@@ -45,9 +45,6 @@ type Reader struct {
 
 	err error
 
-	// Have we had our contents replaced using setText()?
-	replaced bool
-
 	done             *atomic.Bool
 	highlightingDone *atomic.Bool
 
@@ -106,16 +103,7 @@ func (reader *Reader) preAllocLines() {
 	}
 
 	// There are already lines in here, this is unexpected.
-	if reader.replaced {
-		// Highlighting already done (because that's how reader.replaced gets
-		// set to true)
-		log.Debug("Highlighting was faster than line counting for a ",
-			len(reader.lines), " lines file, this is unexpected")
-	} else {
-		// Highlighing not done, where the heck did those lines come from?
-		log.Warn("Already had ", len(reader.lines),
-			" lines by the time counting was done, and it's not highlighting")
-	}
+	log.Debugf("Already had %d lines by the time counting was done", len(reader.lines))
 }
 
 func (reader *Reader) readStream(stream io.Reader, formatter chroma.Formatter, lexer chroma.Lexer) {
@@ -197,11 +185,6 @@ func (reader *Reader) consumeLinesFromStream(stream io.Reader) {
 		newLine := NewLine(newLineString)
 
 		reader.Lock()
-		if reader.replaced {
-			// Somebody called setText(), never mind reading the rest of this stream
-			reader.Unlock()
-			break
-		}
 		reader.lines = append(reader.lines, &newLine)
 		reader.Unlock()
 		completeLine = completeLine[:0]
@@ -285,7 +268,7 @@ func (reader *Reader) tailFile() error {
 		// File grew, read the new lines
 		stream, _, err := ZOpen(*fileName)
 		if err != nil {
-			log.Debugf("failed to open file %s for re-reading while tailing: %s", *fileName, err.Error())
+			log.Debugf("Failed to open file %s for re-reading while tailing: %s", *fileName, err.Error())
 			return nil
 		}
 
@@ -305,10 +288,12 @@ func (reader *Reader) tailFile() error {
 			return nil
 		}
 
+		log.Tracef("File %s up from %d bytes to %d bytes, reading more lines...", *fileName, bytesCount, fileStats.Size())
+
 		reader.consumeLinesFromStream(seekable)
 		err = seekable.Close()
 		if err != nil {
-			// This can lead to file handle leaks, warn and give up
+			// This can lead to file handle leaks
 			return fmt.Errorf("failed to close file %s after tailing: %w", *fileName, err)
 		}
 	}
@@ -745,7 +730,6 @@ func (reader *Reader) setText(text string) {
 
 	reader.Lock()
 	reader.lines = lines
-	reader.replaced = true
 	reader.Unlock()
 
 	reader.done.Store(true)
