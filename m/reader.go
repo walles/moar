@@ -237,6 +237,15 @@ func (reader *Reader) tailFile() error {
 	log.Debugf("Tailing file %s", *fileName)
 
 	for {
+		// NOTE: We could use something like
+		// https://github.com/fsnotify/fsnotify instead of sleeping and polling
+		// here, but before that we need to fix the...
+		//
+		//   reader.bytesCount = fileStats.Size()
+		//
+		// ... logic above, and ensure that if the current last line doesn't end
+		// with a newline, any new line read appends to the incomplete last
+		// line.
 		time.Sleep(1 * time.Second)
 
 		fileStats, err := os.Stat(*fileName)
