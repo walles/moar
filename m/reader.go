@@ -81,6 +81,12 @@ func (reader *Reader) preAllocLines() {
 		return
 	}
 
+	if len(reader.lines) > 0 {
+		// We already have lines, could be because we're tailing some file, too
+		// late for pre-allocation.
+		return
+	}
+
 	lineCount, err := countLines(*reader.fileName)
 	if err != nil {
 		log.Warn("Line counting failed: ", err)
