@@ -40,10 +40,10 @@ type Reader struct {
 	// is not set, we are not reading from a file.
 	fileName *string
 
-	err error
+	// How many bytes have we read so far?
+	bytesCount int64
 
-	// Have we had our contents replaced using setText()?
-	replaced bool
+	err error
 
 	done             *atomic.Bool
 	highlightingDone *atomic.Bool
@@ -76,8 +76,18 @@ type InputLines struct {
 // performance improvement:
 //
 // go test -benchmem -benchtime=10s -run='^$' -bench 'ReadLargeFile'
-func (reader *Reader) preAllocLines(originalFileName string) {
-	lineCount, err := countLines(originalFileName)
+func (reader *Reader) preAllocLines() {
+	if reader.fileName == nil {
+		return
+	}
+
+	if reader.GetLineCount() > 0 {
+		// We already have lines, could be because we're tailing some file. Too
+		// late for pre-allocation.
+		return
+	}
+
+	lineCount, err := countLines(*reader.fileName)
 	if err != nil {
 		log.Warn("Line counting failed: ", err)
 		return
@@ -86,38 +96,43 @@ func (reader *Reader) preAllocLines(originalFileName string) {
 	reader.Lock()
 	defer reader.Unlock()
 
-	if len(reader.lines) == 0 {
-		// We had no lines since before, this is the expected happy path.
-		reader.lines = make([]*Line, 0, lineCount)
+	if len(reader.lines) != 0 {
+		// I don't understand how this could happen.
+		log.Warnf("Already had %d lines by the time counting was done", len(reader.lines))
 		return
 	}
 
-	// There are already lines in here, this is unexpected.
-	if reader.replaced {
-		// Highlighting already done (because that's how reader.replaced gets
-		// set to true)
-		log.Debug("Highlighting was faster than line counting for a ",
-			len(reader.lines), " lines file, this is unexpected")
-	} else {
-		// Highlighing not done, where the heck did those lines come from?
-		log.Warn("Already had ", len(reader.lines),
-			" lines by the time counting was done, and it's not highlighting")
+	// We had no lines since before, this is the expected happy path.
+	reader.lines = make([]*Line, 0, lineCount)
+}
+
+func (reader *Reader) readStream(stream io.Reader, formatter chroma.Formatter, lexer chroma.Lexer) {
+	reader.consumeLinesFromStream(stream)
+
+	if lexer != nil {
+		t0 := time.Now()
+		highlightFromMemory(reader, <-reader.highlightingStyle, formatter, lexer)
+		log.Debug("highlightFromMemory() took ", time.Since(t0))
+	}
+
+	reader.done.Store(true)
+	select {
+	case reader.maybeDone <- true:
+	default:
+	}
+
+	// Tail the file if the stream is coming from a file.
+	// Ref: https://github.com/walles/moar/issues/224
+	err := reader.tailFile()
+	if err != nil {
+		log.Warn("Failed to tail file: ", err)
 	}
 }
 
-// This function will update the Reader struct in the background.
-func (reader *Reader) readStream(stream io.Reader, originalFileName *string, onDone func()) {
-	defer func() {
-		reader.done.Store(true)
-		select {
-		case reader.maybeDone <- true:
-		default:
-		}
-	}()
-
-	if originalFileName != nil {
-		reader.preAllocLines(*originalFileName)
-	}
+// This function will update the Reader struct. It is expected to run in a
+// goroutine.
+func (reader *Reader) consumeLinesFromStream(stream io.Reader) {
+	reader.preAllocLines()
 
 	bufioReader := bufio.NewReader(stream)
 	completeLine := make([]byte, 0)
@@ -132,9 +147,9 @@ func (reader *Reader) readStream(stream io.Reader, originalFileName *string, onD
 			lineBytes, keepReadingLine, err = bufioReader.ReadLine()
 
 			if err == nil {
+				select {
 				// Async write, we probably already wrote to it during the last
 				// iteration
-				select {
 				case reader.doneWaitingForFirstByte <- true:
 				default:
 				}
@@ -170,11 +185,6 @@ func (reader *Reader) readStream(stream io.Reader, originalFileName *string, onD
 		newLine := NewLine(newLineString)
 
 		reader.Lock()
-		if reader.replaced {
-			// Somebody called setText(), never mind reading the rest of this stream
-			reader.Unlock()
-			break
-		}
 		reader.lines = append(reader.lines, &newLine)
 		reader.Unlock()
 		completeLine = completeLine[:0]
@@ -188,6 +198,23 @@ func (reader *Reader) readStream(stream io.Reader, originalFileName *string, onD
 		}
 	}
 
+	if reader.fileName != nil {
+		// NOTE: It would be better to track this by counting the number of
+		// bytes read in the loop above, but since ReadLine() can skip zero to
+		// two bytes at the end of each line without telling us, we can't do
+		// that. So we stat the file afterwards instead.
+		fileStats, err := os.Stat(*reader.fileName)
+
+		reader.Lock()
+		if err != nil {
+			log.Warn("Failed to stat file ", *reader.fileName, ": ", err)
+			reader.bytesCount = -1
+		} else {
+			reader.bytesCount = fileStats.Size()
+		}
+		reader.Unlock()
+	}
+
 	// If the stream was empty we never got any first byte. Make sure people
 	// stop waiting in this case. Async write since it might already have been
 	// written to.
@@ -197,11 +224,87 @@ func (reader *Reader) readStream(stream io.Reader, originalFileName *string, onD
 	}
 
 	log.Debug("Stream read in ", time.Since(t0))
+}
 
-	if onDone != nil {
-		t1 := time.Now()
-		onDone()
-		log.Debug("onDone() took ", time.Since(t1))
+func (reader *Reader) tailFile() error {
+	reader.Lock()
+	fileName := reader.fileName
+	reader.Unlock()
+	if fileName == nil {
+		return nil
+	}
+
+	log.Debugf("Tailing file %s", *fileName)
+
+	for {
+		// NOTE: We could use something like
+		// https://github.com/fsnotify/fsnotify instead of sleeping and polling
+		// here, but before that we need to fix the...
+		//
+		//   reader.bytesCount = fileStats.Size()
+		//
+		// ... logic above, and ensure that if the current last line doesn't end
+		// with a newline, any new line read appends to the incomplete last
+		// line.
+		time.Sleep(1 * time.Second)
+
+		fileStats, err := os.Stat(*fileName)
+		if err != nil {
+			log.Debugf("Failed to stat file %s while tailing, giving up: %s", *fileName, err.Error())
+			return nil
+		}
+
+		reader.Lock()
+		bytesCount := reader.bytesCount
+		reader.Unlock()
+
+		if bytesCount == -1 {
+			log.Debugf("Bytes count unknown for %s, stop tailing", *fileName)
+			return nil
+		}
+
+		if fileStats.Size() == bytesCount {
+			log.Tracef("File %s unchanged at %d bytes, continue tailing", *fileName, fileStats.Size())
+			continue
+		}
+
+		if fileStats.Size() < bytesCount {
+			log.Debugf("File %s shrunk from %d to %d bytes, stop tailing",
+				*fileName, bytesCount, fileStats.Size())
+			return nil
+		}
+
+		// File grew, read the new lines
+		stream, _, err := ZOpen(*fileName)
+		if err != nil {
+			log.Debugf("Failed to open file %s for re-reading while tailing: %s", *fileName, err.Error())
+			return nil
+		}
+
+		seekable, ok := stream.(io.ReadSeekCloser)
+		if !ok {
+			err = stream.Close()
+			if err != nil {
+				log.Debugf("Giving up on tailing, failed to close non-seekable stream from %s: %s", *fileName, err.Error())
+				return nil
+			}
+			log.Debugf("Giving up on tailing, file %s is not seekable", *fileName)
+			return nil
+		}
+		_, err = seekable.Seek(bytesCount, io.SeekStart)
+		if err != nil {
+			log.Debugf("Failed to seek in file %s while tailing: %s", *fileName, err.Error())
+			return nil
+		}
+
+		log.Tracef("File %s up from %d bytes to %d bytes, reading more lines...", *fileName, bytesCount, fileStats.Size())
+
+		reader.consumeLinesFromStream(seekable)
+		err = seekable.Close()
+		if err != nil {
+			// This can lead to file handle leaks
+			return fmt.Errorf("failed to close file %s after tailing: %w", *fileName, err)
+		}
 	}
 }
 
@@ -255,6 +358,7 @@ func newReaderFromStream(reader io.Reader, originalFileName *string, formatter c
 		// This needs to be size 1. If it would be 0, and we add more
 		// lines while the pager is processing, the pager would miss
 		// the lines added while it was processing.
+		fileName:                originalFileName,
 		moreLinesAdded:          make(chan bool, 1),
 		maybeDone:               make(chan bool, 1),
 		highlightingStyle:       make(chan chroma.Style, 1),
@@ -265,11 +369,7 @@ func newReaderFromStream(reader io.Reader, originalFileName *string, formatter c
 
 	// FIXME: Make sure that if we panic somewhere inside of this goroutine,
 	// the main program terminates and prints our panic stack trace.
-	go returnMe.readStream(reader, originalFileName, func() {
-		if lexer != nil {
-			highlightFromMemory(&returnMe, <-returnMe.highlightingStyle, formatter, lexer)
-		}
-	})
+	go returnMe.readStream(reader, formatter, lexer)
 
 	return &returnMe
 }
@@ -639,7 +739,6 @@ func (reader *Reader) setText(text string) {
 
 	reader.Lock()
 	reader.lines = lines
-	reader.replaced = true
 	reader.Unlock()
 
 	reader.done.Store(true)
