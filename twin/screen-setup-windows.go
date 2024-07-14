@@ -19,6 +19,11 @@ type interruptableReaderImpl struct {
 	shutdownRequested atomic.Bool
 }
 
+// NOTE: To work properly, this Read() should return immediately after somebody
+// calls Interrupt(), *without first reading any bytes from the base reader*.
+//
+// This implementation doesn't do that. If you want to fix this, the not-Windows
+// implementation in screen-setup.go may or may not work as inspiration.
 func (r *interruptableReaderImpl) Read(p []byte) (n int, err error) {
 	if r.shutdownRequested.Load() {
 		err = io.EOF
