@@ -227,7 +227,7 @@ func (reader *Reader) consumeLinesFromStream(stream io.Reader) {
 			log.Warn("Failed to stat file ", *reader.fileName, ": ", err)
 			reader.bytesCount = -1
 		} else {
-			reader.bytesCount += fileStats.Size()
+			reader.bytesCount = fileStats.Size()
 		}
 		reader.Unlock()
 	}
@@ -251,6 +251,8 @@ func (reader *Reader) tailFile() error {
 		return nil
 	}
 
+	log.Debugf("Tailing file %s", *fileName)
+
 	for {
 		time.Sleep(1 * time.Second)
 
@@ -270,7 +272,7 @@ func (reader *Reader) tailFile() error {
 		}
 
 		if fileStats.Size() == bytesCount {
-			// File still the same, keep waiting
+			log.Tracef("File %s unchanged at %d bytes, continue tailing", *fileName, fileStats.Size())
 			continue
 		}
 
