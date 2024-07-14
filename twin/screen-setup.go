@@ -7,36 +7,78 @@ import (
 	"io"
 	"os"
 	"os/signal"
-	"sync/atomic"
 	"syscall"
 
 	log "github.com/sirupsen/logrus"
+	"golang.org/x/sys/unix"
 	"golang.org/x/term"
 )
 
 type interruptableReaderImpl struct {
-	base              io.Reader
-	shutdownRequested atomic.Bool
+	base *os.File
+
+	shutdownPipeReader *os.File
+	shutdownPipeWriter *os.File
 }
 
 func (r *interruptableReaderImpl) Read(p []byte) (n int, err error) {
-	n, err = r.base.Read(p)
+	// "This argument should be set to the highest-numbered file descriptor in
+	// any of the three sets, plus 1. The indicated file descriptors in each set
+	// are checked, up to this limit"
+	//
+	// Ref: https://man7.org/linux/man-pages/man2/select.2.html
+	nfds := r.base.Fd()
+	if r.shutdownPipeReader.Fd() > nfds {
+		nfds = r.shutdownPipeReader.Fd()
+	}
+
+	readFds := unix.FdSet{}
+	readFds.Set(int(r.shutdownPipeReader.Fd()))
+	readFds.Set(int(r.base.Fd()))
+
+	_, err = unix.Select(int(nfds)+1, &readFds, nil, nil, nil)
 	if err != nil {
+		// Select failed
 		return
 	}
 
-	if r.shutdownRequested.Load() {
+	if readFds.IsSet(int(r.shutdownPipeReader.Fd())) {
+		// Shutdown requested
+		closeErr := r.shutdownPipeReader.Close()
+		if closeErr != nil {
+			// This should never happen, but if it does we should log it
+			log.Debug("Failed to close shutdown pipe reader: ", closeErr)
+		}
+
 		err = io.EOF
+		return
 	}
+
+	if readFds.IsSet(int(r.base.Fd())) {
+		// Base has stuff
+		return r.base.Read(p)
+	}
+
+	// Neither base nor shutdown pipe was ready, this should never happen
 	return
 }
 
 func (r *interruptableReaderImpl) Interrupt() {
-	r.shutdownRequested.Store(true)
+	// This will make the select() call claim the read end is ready
+	r.shutdownPipeWriter.Close()
 }
 
-func newInterruptableReader(base io.Reader) interruptableReader {
-	return &interruptableReaderImpl{base: base}
+func newInterruptableReader(base *os.File) (interruptableReader, error) {
+	reader := interruptableReaderImpl{base: base}
+	pr, pw, err := os.Pipe()
+	if err != nil {
+		return nil, err
+	}
+
+	reader.shutdownPipeReader = pr
+	reader.shutdownPipeWriter = pw
+
+	return &reader, nil
 }
 
 func (screen *UnixScreen) setupSigwinchNotification() {

@@ -15,7 +15,7 @@ import (
 )
 
 type interruptableReaderImpl struct {
-	base              io.Reader
+	base              *os.File
 	shutdownRequested atomic.Bool
 }
 
@@ -45,8 +45,8 @@ func (r *interruptableReaderImpl) Interrupt() {
 	r.shutdownRequested.Store(true)
 }
 
-func newInterruptableReader(base io.Reader) interruptableReader {
-	return &interruptableReaderImpl{base: base}
+func newInterruptableReader(base *os.File) (interruptableReader, error) {
+	return &interruptableReaderImpl{base: base}, nil
 }
 
 func (screen *UnixScreen) setupSigwinchNotification() {

@@ -156,7 +156,14 @@ func NewScreenWithMouseModeAndColorType(mouseMode MouseMode, terminalColorCount 
 	if err != nil {
 		return nil, fmt.Errorf("problem setting up TTY: %w", err)
 	}
-	screen.ttyInReader = newInterruptableReader(screen.ttyIn)
+	screen.ttyInReader, err = newInterruptableReader(screen.ttyIn)
+	if err != nil {
+		restoreErr := screen.restoreTtyInTtyOut()
+		if restoreErr != nil {
+			log.Warn("Problem restoring TTY state after failed interruptable reader setup: ", restoreErr)
+		}
+		return nil, fmt.Errorf("problem setting up TTY reader: %w", err)
+	}
 
 	screen.setAlternateScreenMode(true)
 
