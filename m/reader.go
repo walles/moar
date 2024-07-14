@@ -40,6 +40,9 @@ type Reader struct {
 	// is not set, we are not reading from a file.
 	fileName *string
 
+	// How many bytes have we read so far?
+	bytesCount int64
+
 	err error
 
 	// Have we had our contents replaced using setText()?
@@ -116,7 +119,7 @@ func (reader *Reader) preAllocLines() {
 }
 
 func (reader *Reader) readStream(stream io.Reader, formatter chroma.Formatter, lexer chroma.Lexer) {
-	reader.readStreamInternal(stream)
+	reader.addLinesFromStream(stream)
 
 	if lexer != nil {
 		t0 := time.Now()
@@ -135,7 +138,7 @@ func (reader *Reader) readStream(stream io.Reader, formatter chroma.Formatter, l
 }
 
 // This function will update the Reader struct in the background.
-func (reader *Reader) readStreamInternal(stream io.Reader) {
+func (reader *Reader) addLinesFromStream(stream io.Reader) {
 	reader.preAllocLines()
 
 	bufioReader := bufio.NewReader(stream)
@@ -151,9 +154,13 @@ func (reader *Reader) readStreamInternal(stream io.Reader) {
 			lineBytes, keepReadingLine, err = bufioReader.ReadLine()
 
 			if err == nil {
+				reader.Lock()
+				reader.bytesCount += int64(len(lineBytes))
+				reader.Unlock()
+
+				select {
 				// Async write, we probably already wrote to it during the last
 				// iteration
-				select {
 				case reader.doneWaitingForFirstByte <- true:
 				default:
 				}
