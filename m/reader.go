@@ -84,8 +84,8 @@ func (reader *Reader) preAllocLines() {
 		return
 	}
 
-	if len(reader.lines) > 0 {
-		// We already have lines, could be because we're tailing some file, too
+	if reader.GetLineCount() > 0 {
+		// We already have lines, could be because we're tailing some file. Too
 		// late for pre-allocation.
 		return
 	}
@@ -119,7 +119,7 @@ func (reader *Reader) preAllocLines() {
 }
 
 func (reader *Reader) readStream(stream io.Reader, formatter chroma.Formatter, lexer chroma.Lexer) {
-	reader.addLinesFromStream(stream)
+	reader.consumeLinesFromStream(stream)
 
 	if lexer != nil {
 		t0 := time.Now()
@@ -133,12 +133,17 @@ func (reader *Reader) readStream(stream io.Reader, formatter chroma.Formatter, l
 	default:
 	}
 
-	// FIXME: Tail the file if the stream is coming from a file
-	//reader.tailFile()
+	// Tail the file if the stream is coming from a file.
+	// Ref: https://github.com/walles/moar/issues/224
+	err := reader.tailFile()
+	if err != nil {
+		log.Warn("Failed to tail file: ", err)
+	}
 }
 
-// This function will update the Reader struct in the background.
-func (reader *Reader) addLinesFromStream(stream io.Reader) {
+// This function will update the Reader struct. It is expected to run in a
+// goroutine.
+func (reader *Reader) consumeLinesFromStream(stream io.Reader) {
 	reader.preAllocLines()
 
 	bufioReader := bufio.NewReader(stream)
@@ -154,10 +159,6 @@ func (reader *Reader) addLinesFromStream(stream io.Reader) {
 			lineBytes, keepReadingLine, err = bufioReader.ReadLine()
 
 			if err == nil {
-				reader.Lock()
-				reader.bytesCount += int64(len(lineBytes))
-				reader.Unlock()
-
 				select {
 				// Async write, we probably already wrote to it during the last
 				// iteration
@@ -214,6 +215,23 @@ func (reader *Reader) addLinesFromStream(stream io.Reader) {
 		}
 	}
 
+	if reader.fileName != nil {
+		// NOTE: It would be better to track this by counting the number of
+		// bytes read in the loop above, but since ReadLine() can skip zero to
+		// two bytes at the end of each line without telling us, we can't do
+		// that. So we stat the file afterwards instead.
+		fileStats, err := os.Stat(*reader.fileName)
+
+		reader.Lock()
+		if err != nil {
+			log.Warn("Failed to stat file ", *reader.fileName, ": ", err)
+			reader.bytesCount = -1
+		} else {
+			reader.bytesCount += fileStats.Size()
+		}
+		reader.Unlock()
+	}
+
 	// If the stream was empty we never got any first byte. Make sure people
 	// stop waiting in this case. Async write since it might already have been
 	// written to.
@@ -223,6 +241,75 @@ func (reader *Reader) addLinesFromStream(stream io.Reader) {
 	}
 
 	log.Debug("Stream read in ", time.Since(t0))
+}
+
+func (reader *Reader) tailFile() error {
+	reader.Lock()
+	fileName := reader.fileName
+	reader.Unlock()
+	if fileName == nil {
+		return nil
+	}
+
+	for {
+		time.Sleep(1 * time.Second)
+
+		fileStats, err := os.Stat(*fileName)
+		if err != nil {
+			log.Debugf("Failed to stat file %s while tailing, giving up: %s", *fileName, err.Error())
+			return nil
+		}
+
+		reader.Lock()
+		bytesCount := reader.bytesCount
+		reader.Unlock()
+
+		if bytesCount == -1 {
+			log.Debugf("Bytes count unknown for %s, stop tailing", *fileName)
+			return nil
+		}
+
+		if fileStats.Size() == bytesCount {
+			// File still the same, keep waiting
+			continue
+		}
+
+		if fileStats.Size() < bytesCount {
+			log.Debugf("File %s shrunk from %d to %d bytes, stop tailing",
+				*fileName, bytesCount, fileStats.Size())
+			return nil
+		}
+
+		// File grew, read the new lines
+		stream, _, err := ZOpen(*fileName)
+		if err != nil {
+			log.Debugf("failed to open file %s for re-reading while tailing: %s", *fileName, err.Error())
+			return nil
+		}
+
+		seekable, ok := stream.(io.ReadSeekCloser)
+		if !ok {
+			err = stream.Close()
+			if err != nil {
+				log.Debugf("Giving up on tailing, failed to close non-seekable stream from %s: %s", *fileName, err.Error())
+				return nil
+			}
+			log.Debugf("Giving up on tailing, file %s is not seekable", *fileName)
+			return nil
+		}
+		_, err = seekable.Seek(bytesCount, io.SeekStart)
+		if err != nil {
+			log.Debugf("Failed to seek in file %s while tailing: %s", *fileName, err.Error())
+			return nil
+		}
+
+		reader.consumeLinesFromStream(seekable)
+		err = seekable.Close()
+		if err != nil {
+			// This can lead to file handle leaks, warn and give up
+			return fmt.Errorf("failed to close file %s after tailing: %w", *fileName, err)
+		}
+	}
 }
 
 // Note that you must call reader.SetStyleForHighlighting() after this to get

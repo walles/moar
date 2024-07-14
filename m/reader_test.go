@@ -434,7 +434,7 @@ func TestReadUpdatingFile_InitiallyEmpty(t *testing.T) {
 	// Wait for the reader to finish reading
 	assert.NilError(t, testMe._wait())
 
-	// Verify no lines were read
+	// Verify no lines
 	allLines, _ := testMe.GetLines(linenumbers.LineNumber{}, 10)
 	assert.Equal(t, len(allLines.lines), 0)
 	assert.Equal(t, testMe.GetLineCount(), 0)
@@ -452,7 +452,7 @@ func TestReadUpdatingFile_InitiallyEmpty(t *testing.T) {
 		time.Sleep(100 * time.Millisecond)
 	}
 
-	// Verify we got the line
+	// Verify we got the two lines
 	allLines, _ = testMe.GetLines(linenumbers.LineNumber{}, 10)
 	assert.Equal(t, len(allLines.lines), 1, "Expected one line after adding one, got %d", len(allLines.lines))
 	assert.Equal(t, testMe.GetLineCount(), 1)
