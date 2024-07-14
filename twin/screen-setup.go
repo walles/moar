@@ -19,6 +19,8 @@ type interruptableReaderImpl struct {
 
 	shutdownPipeReader *os.File
 	shutdownPipeWriter *os.File
+
+	interruptionComplete chan struct{}
 }
 
 func (r *interruptableReaderImpl) Read(p []byte) (n int, err error) {
@@ -51,6 +53,10 @@ func (r *interruptableReaderImpl) Read(p []byte) (n int, err error) {
 		}
 
 		err = io.EOF
+
+		// Let Interrupt() know we're done
+		r.interruptionComplete <- struct{}{}
+
 		return
 	}
 
@@ -66,10 +72,16 @@ func (r *interruptableReaderImpl) Read(p []byte) (n int, err error) {
 func (r *interruptableReaderImpl) Interrupt() {
 	// This will make the select() call claim the read end is ready
 	r.shutdownPipeWriter.Close()
+
+	// Wait for reader to react
+	<-r.interruptionComplete
 }
 
 func newInterruptableReader(base *os.File) (interruptableReader, error) {
-	reader := interruptableReaderImpl{base: base}
+	reader := interruptableReaderImpl{
+		base:                 base,
+		interruptionComplete: make(chan struct{}),
+	}
 	pr, pw, err := os.Pipe()
 	if err != nil {
 		return nil, err
