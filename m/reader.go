@@ -117,18 +117,19 @@ func (reader *Reader) readStream(stream io.Reader, formatter chroma.Formatter, l
 		highlightFromMemory(reader, <-reader.highlightingStyle, formatter, lexer)
 		log.Debug("highlightFromMemory() took ", time.Since(t0))
 	}
+
+	reader.done.Store(true)
+	select {
+	case reader.maybeDone <- true:
+	default:
+	}
+
+	// FIXME: Tail the file if the stream is coming from a file
+	//reader.tailFile()
 }
 
 // This function will update the Reader struct in the background.
 func (reader *Reader) readStreamInternal(stream io.Reader) {
-	defer func() {
-		reader.done.Store(true)
-		select {
-		case reader.maybeDone <- true:
-		default:
-		}
-	}()
-
 	reader.preAllocLines()
 
 	bufioReader := bufio.NewReader(stream)
