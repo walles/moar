@@ -136,7 +136,6 @@ func NewScreenWithMouseModeAndColorType(mouseMode MouseMode, terminalColorCount 
 
 	screen := UnixScreen{
 		terminalColorCount: terminalColorCount,
-		ttyInReader:        newInterruptableReader(),
 	}
 
 	// The number "80" here is from manual testing on my MacBook:
@@ -157,6 +156,7 @@ func NewScreenWithMouseModeAndColorType(mouseMode MouseMode, terminalColorCount 
 	if err != nil {
 		return nil, fmt.Errorf("problem setting up TTY: %w", err)
 	}
+	screen.ttyInReader = newInterruptableReader(screen.ttyIn)
 
 	screen.setAlternateScreenMode(true)
 

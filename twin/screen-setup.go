@@ -4,13 +4,40 @@
 package twin
 
 import (
+	"io"
 	"os"
 	"os/signal"
+	"sync/atomic"
 	"syscall"
 
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/term"
 )
+
+type interruptableReaderImpl struct {
+	base              io.Reader
+	shutdownRequested atomic.Bool
+}
+
+func (r *interruptableReaderImpl) Read(p []byte) (n int, err error) {
+	n, err = r.base.Read(p)
+	if err != nil {
+		return
+	}
+
+	if r.shutdownRequested.Load() {
+		err = io.EOF
+	}
+	return
+}
+
+func (r *interruptableReaderImpl) Interrupt() {
+	r.shutdownRequested.Store(true)
+}
+
+func newInterruptableReader(base io.Reader) interruptableReader {
+	return &interruptableReaderImpl{base: base}
+}
 
 func (screen *UnixScreen) setupSigwinchNotification() {
 	screen.sigwinch = make(chan int, 1)

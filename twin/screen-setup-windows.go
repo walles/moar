@@ -5,12 +5,49 @@ package twin
 
 import (
 	"fmt"
+	"io"
 	"os"
+	"sync/atomic"
 	"syscall"
 
 	"golang.org/x/sys/windows"
 	"golang.org/x/term"
 )
+
+type interruptableReaderImpl struct {
+	base              io.Reader
+	shutdownRequested atomic.Bool
+}
+
+func (r *interruptableReaderImpl) Read(p []byte) (n int, err error) {
+	n, err = r.base.Read(p)
+	if err != nil {
+		return
+	}
+
+	if r.shutdownRequested.Load() {
+		err = io.EOF
+	}
+	return
+}
+
+func (r *interruptableReaderImpl) Interrupt() {
+	// Previously we used to close the screen.ttyIn file descriptor here, but:
+	// * That didn't interrupt the blocking read() in the main loop
+	// * It may or may not have caused shutdown issues on Windows
+	//
+	// Setting this flag doesn't interrupt the blocking read() either, but it
+	// should at least not cause any shutdown issues on Windows.
+	//
+	// Ref:
+	// * https://github.com/walles/moar/issues/217
+	// * https://github.com/walles/moar/issues/221
+	r.shutdownRequested.Store(true)
+}
+
+func newInterruptableReader(base io.Reader) interruptableReader {
+	return &interruptableReaderImpl{base: base}
+}
 
 func (screen *UnixScreen) setupSigwinchNotification() {
 	screen.sigwinch = make(chan int, 1)
