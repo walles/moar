@@ -20,6 +20,11 @@ type interruptableReaderImpl struct {
 }
 
 func (r *interruptableReaderImpl) Read(p []byte) (n int, err error) {
+	if r.shutdownRequested.Load() {
+		err = io.EOF
+		return
+	}
+
 	n, err = r.base.Read(p)
 	if err != nil {
 		return
