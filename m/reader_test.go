@@ -369,14 +369,6 @@ func TestReadUpdatingFile(t *testing.T) {
 	assert.Equal(t, allLines.lines[1].Plain(nil), "Second line")
 }
 
-// NOTE: Consider testing file tailing with the first part not ending in a
-// linefeed. In this case, the last line should become longer when new bytes
-// show up.
-
-// NOTE: Consider testing file tailing with the first part ending ending in the
-// middle of an UTF-8 character. In this case, the new bytes should complete the
-// UTF-8 character so it looks great again.
-
 // If people keep appending to the currently opened file we should display those
 // changes.
 //
@@ -418,6 +410,14 @@ func TestReadUpdatingFile_InitiallyEmpty(t *testing.T) {
 	assert.Equal(t, testMe.GetLineCount(), 1)
 	assert.Equal(t, allLines.lines[0].Plain(nil), "Text")
 }
+
+// NOTE: Consider testing file tailing with the first part not ending in a
+// linefeed. In this case, the last line should become longer when new bytes
+// show up.
+
+// NOTE: Consider testing file tailing with the first part ending ending in the
+// middle of an UTF-8 character. In this case, the new bytes should complete the
+// UTF-8 character so it looks great again.
 
 // How long does it take to read a file?
 //

@@ -96,14 +96,14 @@ func (reader *Reader) preAllocLines() {
 	reader.Lock()
 	defer reader.Unlock()
 
-	if len(reader.lines) == 0 {
-		// We had no lines since before, this is the expected happy path.
-		reader.lines = make([]*Line, 0, lineCount)
+	if len(reader.lines) != 0 {
+		// I don't understand how this could happen.
+		log.Warnf("Already had %d lines by the time counting was done", len(reader.lines))
 		return
 	}
 
-	// There are already lines in here, this is unexpected.
-	log.Debugf("Already had %d lines by the time counting was done", len(reader.lines))
+	// We had no lines since before, this is the expected happy path.
+	reader.lines = make([]*Line, 0, lineCount)
 }
 
 func (reader *Reader) readStream(stream io.Reader, formatter chroma.Formatter, lexer chroma.Lexer) {
