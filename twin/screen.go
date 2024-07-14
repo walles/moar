@@ -7,7 +7,6 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
-	"sync/atomic"
 	"unicode/utf8"
 
 	log "github.com/sirupsen/logrus"
@@ -70,6 +69,13 @@ type Screen interface {
 	Events() chan Event
 }
 
+type interruptableReader interface {
+	Read(p []byte) (n int, err error)
+
+	// Interrupt unblocks the read call, either now or eventually.
+	Interrupt()
+}
+
 type UnixScreen struct {
 	widthAccessFromSizeOnly  int // Access from Size() method only
 	heightAccessFromSizeOnly int // Access from Size() method only
@@ -81,7 +87,7 @@ type UnixScreen struct {
 
 	events chan Event
 
-	shutdownRequested atomic.Bool
+	ttyInReader interruptableReader
 
 	ttyIn            *os.File
 	oldTerminalState *term.State //nolint Not used on Windows
@@ -130,6 +136,7 @@ func NewScreenWithMouseModeAndColorType(mouseMode MouseMode, terminalColorCount 
 
 	screen := UnixScreen{
 		terminalColorCount: terminalColorCount,
+		ttyInReader:        newInterruptableReader(),
 	}
 
 	// The number "80" here is from manual testing on my MacBook:
@@ -176,18 +183,8 @@ func (screen *UnixScreen) Close() {
 	// Tell the pager to exit unless it hasn't already
 	screen.events <- EventExit{}
 
-	// Tell our main loop to exit. Previously we used to close the screen.ttyIn
-	// file descriptor here, but:
-	// * That didn't interrupt the blocking read() in the main loop
-	// * It may or may not have caused shutdown issues on Windows
-	//
-	// Setting this flag doesn't interrupt the blocking read() either, but it
-	// is should at least be less likely to cause shutdown issues on Windows.
-	//
-	// Ref:
-	// * https://github.com/walles/moar/issues/217
-	// * https://github.com/walles/moar/issues/221
-	screen.shutdownRequested.Store(true)
+	// Tell our main loop to exit
+	screen.ttyInReader.Interrupt()
 
 	screen.hideCursor(false)
 	screen.enableMouseTracking(false)
@@ -375,19 +372,13 @@ func (screen *UnixScreen) mainLoop() {
 	maxBytesRead := 0
 	expectingTerminalBackgroundColor := true
 	for {
-		count, err := screen.ttyIn.Read(buffer)
+		count, err := screen.ttyInReader.Read(buffer)
 		if err != nil {
 			// Ref:
 			// * https://github.com/walles/moar/issues/145
 			// * https://github.com/walles/moar/issues/149
 			// * https://github.com/walles/moar/issues/150
 			log.Debug("ttyin read error, twin giving up: ", err)
-
-			screen.events <- EventExit{}
-			return
-		}
-		if screen.shutdownRequested.Load() {
-			log.Debug("Shutdown requested, twin giving up")
 
 			screen.events <- EventExit{}
 			return
