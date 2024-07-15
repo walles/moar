@@ -134,7 +134,8 @@ func (reader *Reader) readStream(stream io.Reader, formatter chroma.Formatter, l
 func (reader *Reader) consumeLinesFromStream(stream io.Reader) {
 	reader.preAllocLines()
 
-	bufioReader := bufio.NewReader(stream)
+	inspectionReader := inspectionReader{base: stream}
+	bufioReader := bufio.NewReader(&inspectionReader)
 	completeLine := make([]byte, 0)
 	t0 := time.Now()
 	for {
@@ -199,19 +200,8 @@ func (reader *Reader) consumeLinesFromStream(stream io.Reader) {
 	}
 
 	if reader.fileName != nil {
-		// NOTE: It would be better to track this by counting the number of
-		// bytes read in the loop above, but since ReadLine() can skip zero to
-		// two bytes at the end of each line without telling us, we can't do
-		// that. So we stat the file afterwards instead.
-		fileStats, err := os.Stat(*reader.fileName)
-
 		reader.Lock()
-		if err != nil {
-			log.Warn("Failed to stat file ", *reader.fileName, ": ", err)
-			reader.bytesCount = -1
-		} else {
-			reader.bytesCount = fileStats.Size()
-		}
+		reader.bytesCount += inspectionReader.bytesCount
 		reader.Unlock()
 	}
 
@@ -239,13 +229,9 @@ func (reader *Reader) tailFile() error {
 	for {
 		// NOTE: We could use something like
 		// https://github.com/fsnotify/fsnotify instead of sleeping and polling
-		// here, but before that we need to fix the...
-		//
-		//   reader.bytesCount = fileStats.Size()
-		//
-		// ... logic above, and ensure that if the current last line doesn't end
-		// with a newline, any new line read appends to the incomplete last
-		// line.
+		// here, but before that we need to ensure that if the current last line
+		// doesn't end with a newline, any new line read appends to the
+		// incomplete last line.
 		time.Sleep(1 * time.Second)
 
 		fileStats, err := os.Stat(*fileName)
