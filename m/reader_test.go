@@ -332,7 +332,8 @@ func TestReadUpdatingFile(t *testing.T) {
 	assert.NilError(t, err)
 	defer os.Remove(file.Name())
 
-	_, err = file.WriteString("First line\n")
+	const firstLineString = "First line\n"
+	_, err = file.WriteString(firstLineString)
 	assert.NilError(t, err)
 
 	// Start a reader on that file
@@ -341,6 +342,7 @@ func TestReadUpdatingFile(t *testing.T) {
 
 	// Wait for the reader to finish reading
 	assert.NilError(t, testMe._wait())
+	assert.Equal(t, len([]byte(firstLineString)), int(testMe.bytesCount))
 
 	// Verify we got the single line
 	allLines, _ := testMe.GetLines(linenumbers.LineNumber{}, 10)
@@ -349,7 +351,8 @@ func TestReadUpdatingFile(t *testing.T) {
 	assert.Equal(t, allLines.lines[0].Plain(nil), "First line")
 
 	// Append a line to the file
-	_, err = file.WriteString("Second line\n")
+	const secondLineString = "Second line\n"
+	_, err = file.WriteString(secondLineString)
 	assert.NilError(t, err)
 
 	// Give the reader some time to react
@@ -367,6 +370,8 @@ func TestReadUpdatingFile(t *testing.T) {
 	assert.Equal(t, testMe.GetLineCount(), 2)
 	assert.Equal(t, allLines.lines[0].Plain(nil), "First line")
 	assert.Equal(t, allLines.lines[1].Plain(nil), "Second line")
+
+	assert.Equal(t, int(testMe.bytesCount), len([]byte(firstLineString+secondLineString)))
 }
 
 // If people keep appending to the currently opened file we should display those
