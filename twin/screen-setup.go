@@ -24,6 +24,19 @@ type interruptableReaderImpl struct {
 }
 
 func (r *interruptableReaderImpl) Read(p []byte) (n int, err error) {
+	for {
+		n, err = r.read(p)
+		if err == syscall.EINTR {
+			// Not really a problem, we can get this on window resizes for
+			// example, just try again.
+			continue
+		}
+
+		return
+	}
+}
+
+func (r *interruptableReaderImpl) read(p []byte) (n int, err error) {
 	// "This argument should be set to the highest-numbered file descriptor in
 	// any of the three sets, plus 1. The indicated file descriptors in each set
 	// are checked, up to this limit"
@@ -55,7 +68,7 @@ func (r *interruptableReaderImpl) Read(p []byte) (n int, err error) {
 		err = io.EOF
 
 		// Let Interrupt() know we're done
-		r.interruptionComplete <- struct{}{}
+		r.Close()
 
 		return
 	}
@@ -77,10 +90,18 @@ func (r *interruptableReaderImpl) Interrupt() {
 	<-r.interruptionComplete
 }
 
+func (r *interruptableReaderImpl) Close() error {
+	select {
+	case r.interruptionComplete <- struct{}{}:
+	default:
+	}
+	return nil
+}
+
 func newInterruptableReader(base *os.File) (interruptableReader, error) {
 	reader := interruptableReaderImpl{
 		base:                 base,
-		interruptionComplete: make(chan struct{}),
+		interruptionComplete: make(chan struct{}, 1),
 	}
 	pr, pw, err := os.Pipe()
 	if err != nil {

@@ -55,6 +55,10 @@ func (r *interruptableReaderImpl) Interrupt() {
 	r.shutdownRequested.Store(true)
 }
 
+func (r *interruptableReaderImpl) Close() error {
+	return nil
+}
+
 func newInterruptableReader(base *os.File) (interruptableReader, error) {
 	return &interruptableReaderImpl{base: base}, nil
 }
