@@ -41,6 +41,7 @@ func (r *interruptableReaderImpl) Read(p []byte) (n int, err error) {
 
 	if r.shutdownRequested.Load() {
 		err = io.EOF
+		n = 0
 	}
 	return
 }
