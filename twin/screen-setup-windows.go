@@ -14,6 +14,10 @@ import (
 	"golang.org/x/term"
 )
 
+// NOTE: Karma points for replacing TestInterruptableReader_blockedOnRead() with
+// TestInterruptableReader_blockedOnReadImmediate() and fixing the Windows
+// implementation here so that the tests pass.
+
 type interruptableReaderImpl struct {
 	base              *os.File
 	shutdownRequested atomic.Bool

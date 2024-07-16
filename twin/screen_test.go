@@ -248,6 +248,10 @@ func TestMultiCharHyperlink(t *testing.T) {
 //
 // What we really want is for the reader to return EOF immediately when
 // interrupted, with no write needed.
+//
+// This test should be replaced by
+// TestInterruptableReader_blockedOnReadImmediate if or when the Windows
+// implementation catches up.
 func TestInterruptableReader_blockedOnRead(t *testing.T) {
 	// Make a pipe to read from and write to
 	pipeReader, pipeWriter, err := os.Pipe()
