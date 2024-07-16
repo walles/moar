@@ -1,8 +1,11 @@
 package twin
 
 import (
+	"io"
+	"os"
 	"strings"
 	"testing"
+	"time"
 
 	"gotest.tools/v3/assert"
 )
@@ -238,4 +241,56 @@ func TestMultiCharHyperlink(t *testing.T) {
 	assert.Equal(t,
 		strings.ReplaceAll(rendered, "", "ESC"),
 		`ESC[mESC]8;;`+url+`ESC\-X-ESC]8;;ESC\ESC[K`)
+}
+
+// Test the most basic form of interruptability. Interrupting and sending a byte
+// should make the reader return EOF.
+//
+// What we really want is for the reader to return EOF immediately when
+// interrupted, with no write needed.
+func TestInterruptableReader_blockedOnRead(t *testing.T) {
+	// Make a pipe to read from and write to
+	pipeReader, pipeWriter, err := os.Pipe()
+	assert.NilError(t, err)
+
+	// Make an interruptable reader
+	testMe, err := newInterruptableReader(pipeReader)
+	assert.NilError(t, err)
+	assert.Assert(t, testMe != nil)
+
+	// Start a thread that reads from the pipe
+	type readResult struct {
+		n   int
+		err error
+	}
+	readResultChan := make(chan readResult)
+	go func() {
+		buffer := make([]byte, 1)
+		n, err := testMe.Read(buffer)
+		readResultChan <- readResult{n, err}
+	}()
+
+	// Give the reader thread some time to start waiting
+	time.Sleep(100 * time.Millisecond)
+
+	// Interrupt the reader
+	testMe.Interrupt()
+
+	// Write a byte to the pipe
+	n, err := pipeWriter.Write([]byte{42})
+	assert.NilError(t, err)
+	assert.Equal(t, n, 1)
+
+	// Wait for the reader thread to finish
+	result := <-readResultChan
+
+	// Check the result
+	assert.Equal(t, result.n, 0)
+	assert.Equal(t, result.err, io.EOF)
+
+	// Another read should return EOF immediately
+	buffer := make([]byte, 1)
+	n, err = testMe.Read(buffer)
+	assert.Equal(t, err, io.EOF)
+	assert.Equal(t, n, 0)
 }

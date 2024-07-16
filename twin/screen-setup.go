@@ -7,6 +7,7 @@ import (
 	"io"
 	"os"
 	"os/signal"
+	"sync"
 	"syscall"
 
 	log "github.com/sirupsen/logrus"
@@ -20,12 +21,21 @@ type interruptableReaderImpl struct {
 	shutdownPipeReader *os.File
 	shutdownPipeWriter *os.File
 
-	interruptionComplete chan struct{}
+	lock        sync.Mutex
+	interrupted bool
 }
 
 func (r *interruptableReaderImpl) Read(p []byte) (n int, err error) {
 	for {
+		r.lock.Lock()
+		interrupted := r.interrupted
+		r.lock.Unlock()
+		if interrupted {
+			return 0, io.EOF
+		}
+
 		n, err = r.read(p)
+
 		if err == syscall.EINTR {
 			// Not really a problem, we can get this on window resizes for
 			// example, just try again.
@@ -67,9 +77,6 @@ func (r *interruptableReaderImpl) read(p []byte) (n int, err error) {
 
 		err = io.EOF
 
-		// Let Interrupt() know we're done
-		r.Close()
-
 		return
 	}
 
@@ -83,25 +90,21 @@ func (r *interruptableReaderImpl) read(p []byte) (n int, err error) {
 }
 
 func (r *interruptableReaderImpl) Interrupt() {
-	// This will make the select() call claim the read end is ready
-	r.shutdownPipeWriter.Close()
+	r.lock.Lock()
+	defer r.lock.Unlock()
+	r.interrupted = true
 
-	// Wait for reader to react
-	<-r.interruptionComplete
-}
-
-func (r *interruptableReaderImpl) Close() error {
-	select {
-	case r.interruptionComplete <- struct{}{}:
-	default:
+	err := r.shutdownPipeWriter.Close()
+	if err != nil {
+		// This should never happen, but if it does we should log it
+		log.Warn("Failed to close shutdown pipe writer: ", err)
 	}
-	return nil
 }
 
 func newInterruptableReader(base *os.File) (interruptableReader, error) {
 	reader := interruptableReaderImpl{
-		base:                 base,
-		interruptionComplete: make(chan struct{}, 1),
+		base: base,
+		lock: sync.Mutex{},
 	}
 	pr, pw, err := os.Pipe()
 	if err != nil {

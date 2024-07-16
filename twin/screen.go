@@ -74,12 +74,6 @@ type interruptableReader interface {
 
 	// Interrupt unblocks the read call, either now or eventually.
 	Interrupt()
-
-	// Close() should be called after you are done with the interruptableReader.
-	//
-	// It will not close the underlying reader, but it will prevent Interrupt()
-	// from hanging if called after a failure in the screen mainLoop().
-	Close() error
 }
 
 type UnixScreen struct {
@@ -371,10 +365,7 @@ func (screen *UnixScreen) ShowCursorAt(column int, row int) {
 }
 
 func (screen *UnixScreen) mainLoop() {
-	defer func() {
-		screen.ttyInReader.Close()
-		log.Debug("Twin screen main loop done")
-	}()
+	defer log.Debug("Twin screen main loop done")
 
 	// "1400" comes from me trying fling scroll operations on my MacBook
 	// trackpad and looking at the high watermark (logged below).
