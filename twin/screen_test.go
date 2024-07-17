@@ -277,6 +277,13 @@ func TestInterruptableReader_blockedOnRead(t *testing.T) {
 	// Give the reader thread some time to start waiting
 	time.Sleep(100 * time.Millisecond)
 
+	// Ensure the reader is not done, it should be blocked on the read()
+	select {
+	case <-readResultChan:
+		t.Fatal("Reader should not be done yet")
+	default:
+	}
+
 	// Interrupt the reader
 	testMe.Interrupt()
 
