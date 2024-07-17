@@ -323,3 +323,27 @@ func TestInterruptableReader_interruptFirstReadLater(t *testing.T) {
 	assert.Equal(t, n, 0)
 	assert.Equal(t, err, io.EOF)
 }
+
+func TestInterruptableReader_justRead(t *testing.T) {
+	// Make a pipe to read from and write to
+	pipeReader, pipeWriter, err := os.Pipe()
+	assert.NilError(t, err)
+
+	// Make an interruptable reader
+	testMe, err := newInterruptableReader(pipeReader)
+	assert.NilError(t, err)
+	assert.Assert(t, testMe != nil)
+
+	// Write something so that we have something to read
+	n, err := pipeWriter.Write([]byte{42})
+	assert.NilError(t, err)
+	assert.Equal(t, n, 1)
+
+	// Try reading from the reader
+	buffer := make([]byte, 7)
+	n, err = testMe.Read(buffer)
+	assert.Equal(t, n, 1)
+	assert.NilError(t, err)
+	assert.Equal(t, buffer[0], byte(42))
+	assert.Equal(t, len(buffer), 7)
+}
