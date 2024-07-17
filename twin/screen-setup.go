@@ -7,7 +7,7 @@ import (
 	"io"
 	"os"
 	"os/signal"
-	"sync"
+	"sync/atomic"
 	"syscall"
 
 	log "github.com/sirupsen/logrus"
@@ -21,16 +21,12 @@ type interruptableReaderImpl struct {
 	shutdownPipeReader *os.File
 	shutdownPipeWriter *os.File
 
-	lock        sync.Mutex
-	interrupted bool
+	interrupted atomic.Bool
 }
 
 func (r *interruptableReaderImpl) Read(p []byte) (n int, err error) {
 	for {
-		r.lock.Lock()
-		interrupted := r.interrupted
-		r.lock.Unlock()
-		if interrupted {
+		if r.interrupted.Load() {
 			return 0, io.EOF
 		}
 
@@ -90,9 +86,7 @@ func (r *interruptableReaderImpl) read(p []byte) (n int, err error) {
 }
 
 func (r *interruptableReaderImpl) Interrupt() {
-	r.lock.Lock()
-	defer r.lock.Unlock()
-	r.interrupted = true
+	r.interrupted.Store(true)
 
 	err := r.shutdownPipeWriter.Close()
 	if err != nil {
@@ -104,7 +98,6 @@ func (r *interruptableReaderImpl) Interrupt() {
 func newInterruptableReader(base *os.File) (interruptableReader, error) {
 	reader := interruptableReaderImpl{
 		base: base,
-		lock: sync.Mutex{},
 	}
 	pr, pw, err := os.Pipe()
 	if err != nil {
