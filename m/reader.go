@@ -43,6 +43,8 @@ type Reader struct {
 	// How many bytes have we read so far?
 	bytesCount int64
 
+	endsWithNewline bool
+
 	err error
 
 	done             *atomic.Bool
@@ -137,6 +139,7 @@ func (reader *Reader) consumeLinesFromStream(stream io.Reader) {
 	inspectionReader := inspectionReader{base: stream}
 	bufioReader := bufio.NewReader(&inspectionReader)
 	completeLine := make([]byte, 0)
+
 	t0 := time.Now()
 	for {
 		keepReadingLine := true
@@ -186,7 +189,15 @@ func (reader *Reader) consumeLinesFromStream(stream io.Reader) {
 		newLine := NewLine(newLineString)
 
 		reader.Lock()
-		reader.lines = append(reader.lines, &newLine)
+		if len(reader.lines) > 0 && !reader.endsWithNewline {
+			// The last line didn't end with a newline, append to it
+			newLineString = reader.lines[len(reader.lines)-1].raw + newLineString
+			newLine = NewLine(newLineString)
+			reader.lines[len(reader.lines)-1] = &newLine
+		} else {
+			reader.lines = append(reader.lines, &newLine)
+		}
+		reader.endsWithNewline = true
 		reader.Unlock()
 		completeLine = completeLine[:0]
 
@@ -213,6 +224,8 @@ func (reader *Reader) consumeLinesFromStream(stream io.Reader) {
 	default:
 	}
 
+	reader.endsWithNewline = inspectionReader.endedWithNewline
+
 	log.Debug("Stream read in ", time.Since(t0))
 }
 
@@ -230,8 +243,9 @@ func (reader *Reader) tailFile() error {
 		// NOTE: We could use something like
 		// https://github.com/fsnotify/fsnotify instead of sleeping and polling
 		// here, but before that we need to ensure that if the current last line
-		// doesn't end with a newline, any new line read appends to the
-		// incomplete last line.
+		// ends in the middle of an UTF-8 character and no newline, any new line
+		// read appends to the incomplete last line and fixes the incomplete
+		// UTF-8 character.
 		time.Sleep(1 * time.Second)
 
 		fileStats, err := os.Stat(*fileName)
