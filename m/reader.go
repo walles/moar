@@ -242,10 +242,7 @@ func (reader *Reader) tailFile() error {
 	for {
 		// NOTE: We could use something like
 		// https://github.com/fsnotify/fsnotify instead of sleeping and polling
-		// here, but before that we need to ensure that if the current last line
-		// ends in the middle of an UTF-8 character and no newline, any new line
-		// read appends to the incomplete last line and fixes the incomplete
-		// UTF-8 character.
+		// here.
 		time.Sleep(1 * time.Second)
 
 		fileStats, err := os.Stat(*fileName)
