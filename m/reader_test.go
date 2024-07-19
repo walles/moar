@@ -416,13 +416,93 @@ func TestReadUpdatingFile_InitiallyEmpty(t *testing.T) {
 	assert.Equal(t, allLines.lines[0].Plain(nil), "Text")
 }
 
-// NOTE: Consider testing file tailing with the first part not ending in a
-// linefeed. In this case, the last line should become longer when new bytes
-// show up.
+// If people keep appending to the currently opened file we should display those
+// changes.
+//
+// This test verifies it with the initial contents not ending with a linefeed.
+func TestReadUpdatingFile_HalfLine(t *testing.T) {
+	// Make a temp file containing one line of text, ending with a newline
+	file, err := os.CreateTemp("", "moar-TestReadUpdatingFile-*.txt")
+	assert.NilError(t, err)
+	defer os.Remove(file.Name())
 
-// NOTE: Consider testing file tailing with the first part ending ending in the
-// middle of an UTF-8 character. In this case, the new bytes should complete the
-// UTF-8 character so it looks great again.
+	_, err = file.WriteString("Start")
+	assert.NilError(t, err)
+
+	// Start a reader on that file
+	testMe, err := NewReaderFromFilename(file.Name(), *styles.Get("native"), formatters.TTY16m, nil)
+	assert.NilError(t, err)
+
+	// Wait for the reader to finish reading
+	assert.NilError(t, testMe._wait())
+	assert.Equal(t, int(testMe.bytesCount), len([]byte("Start")))
+
+	// Append the rest of the line
+	const secondLineString = ", end\n"
+	_, err = file.WriteString(secondLineString)
+	assert.NilError(t, err)
+
+	// Give the reader some time to react
+	for i := 0; i < 20; i++ {
+		allLines, _ := testMe.GetLines(linenumbers.LineNumber{}, 10)
+		if len(allLines.lines) == 2 {
+			break
+		}
+		time.Sleep(100 * time.Millisecond)
+	}
+
+	// Verify we got the two lines
+	allLines, _ := testMe.GetLines(linenumbers.LineNumber{}, 10)
+	assert.Equal(t, len(allLines.lines), 1, "Still expecting one line, got %d", len(allLines.lines))
+	assert.Equal(t, testMe.GetLineCount(), 1)
+	assert.Equal(t, allLines.lines[0].Plain(nil), "Start, end")
+
+	assert.Equal(t, int(testMe.bytesCount), len([]byte("Start, end\n")))
+}
+
+// If people keep appending to the currently opened file we should display those
+// changes.
+//
+// This test verifies it with the initial contents ending in the middle of an UTF-8 character.
+func TestReadUpdatingFile_HalfUtf8(t *testing.T) {
+	// Make a temp file containing one line of text, ending with a newline
+	file, err := os.CreateTemp("", "moar-TestReadUpdatingFile-*.txt")
+	assert.NilError(t, err)
+	defer os.Remove(file.Name())
+
+	// Write "h" and half an "ä" to the file
+	_, err = file.Write([]byte("här"[0:2]))
+	assert.NilError(t, err)
+
+	// Start a reader on that file
+	testMe, err := NewReaderFromFilename(file.Name(), *styles.Get("native"), formatters.TTY16m, nil)
+	assert.NilError(t, err)
+
+	// Wait for the reader to finish reading
+	assert.NilError(t, testMe._wait())
+	assert.Equal(t, testMe.GetLineCount(), 1)
+
+	// Append the rest of the UTF-8 character
+	_, err = file.WriteString("här"[2:])
+	assert.NilError(t, err)
+
+	// Give the reader some time to react
+	for i := 0; i < 20; i++ {
+		allLines, _ := testMe.GetLines(linenumbers.LineNumber{}, 10)
+		if len(allLines.lines) == 2 {
+			break
+		}
+		time.Sleep(100 * time.Millisecond)
+	}
+
+	// Verify we got the two lines
+	allLines, _ := testMe.GetLines(linenumbers.LineNumber{}, 10)
+	assert.Equal(t, len(allLines.lines), 1, "Still expecting one line, got %d", len(allLines.lines))
+	assert.Equal(t, testMe.GetLineCount(), 1)
+	assert.Equal(t, allLines.lines[0].Plain(nil), "här")
+
+	assert.Equal(t, int(testMe.bytesCount), len([]byte("här")))
+}
 
 // How long does it take to read a file?
 //
