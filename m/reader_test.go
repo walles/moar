@@ -372,6 +372,31 @@ func TestReadUpdatingFile(t *testing.T) {
 	assert.Equal(t, allLines.lines[1].Plain(nil), "Second line")
 
 	assert.Equal(t, int(testMe.bytesCount), len([]byte(firstLineString+secondLineString)))
+
+	// Append a third line to the file. We want to verify line 2 didn't just
+	// succeed due to special handling.
+	const thirdLineString = "Third line\n"
+	_, err = file.WriteString(thirdLineString)
+	assert.NilError(t, err)
+
+	// Give the reader some time to react
+	for i := 0; i < 20; i++ {
+		allLines, _ = testMe.GetLines(linenumbers.LineNumber{}, 10)
+		if len(allLines.lines) == 3 {
+			break
+		}
+		time.Sleep(100 * time.Millisecond)
+	}
+
+	// Verify we got all three lines
+	allLines, _ = testMe.GetLines(linenumbers.LineNumber{}, 10)
+	assert.Equal(t, len(allLines.lines), 3, "Expected three lines after adding a third one, got %d", len(allLines.lines))
+	assert.Equal(t, testMe.GetLineCount(), 3)
+	assert.Equal(t, allLines.lines[0].Plain(nil), "First line")
+	assert.Equal(t, allLines.lines[1].Plain(nil), "Second line")
+	assert.Equal(t, allLines.lines[2].Plain(nil), "Third line")
+
+	assert.Equal(t, int(testMe.bytesCount), len([]byte(firstLineString+secondLineString+thirdLineString)))
 }
 
 // If people keep appending to the currently opened file we should display those
