@@ -12,6 +12,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/fsnotify/fsnotify"
 	"github.com/walles/moar/m/linenumbers"
 
 	"github.com/alecthomas/chroma/v2"
@@ -239,11 +240,39 @@ func (reader *Reader) tailFile() error {
 
 	log.Debugf("Tailing file %s", *fileName)
 
+	watcher, err := fsnotify.NewWatcher()
+	if err != nil {
+		log.Debugf("Failed to create watcher for %s, giving up: %s", *fileName, err.Error())
+		return nil
+	}
+	err = watcher.Add(*fileName)
+	if err != nil {
+		log.Debugf("Failed to add %s to watcher for tailing, giving up: %s", *fileName, err.Error())
+		return nil
+	}
+
+	// Make sure to not miss any events while we were setting up the watcher
+	firstLap := true
+
 	for {
-		// NOTE: We could use something like
-		// https://github.com/fsnotify/fsnotify instead of sleeping and polling
-		// here.
-		time.Sleep(1 * time.Second)
+		if !firstLap {
+			select {
+			case event, ok := <-watcher.Events:
+				if !ok {
+					log.Debug("Watcher closed, giving up on tailing")
+					return nil
+				}
+				log.Trace("File event received: ", event.String())
+			case err, ok := <-watcher.Errors:
+				if !ok {
+					log.Debug("Watcher closed, giving up on tailing")
+					return nil
+				}
+				log.Debugf("Watcher error, giving up on tailing: %s", err.Error())
+				return nil
+			}
+		}
+		firstLap = false
 
 		fileStats, err := os.Stat(*fileName)
 		if err != nil {
