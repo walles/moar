@@ -117,6 +117,16 @@ func (m PagerModeSearch) onKey(key twin.KeyCode) {
 }
 
 func (m PagerModeSearch) onRune(char rune) {
-	m.pager.searchString = m.pager.searchString + string(char)
+	if char == '\x08' {
+		// Backspace
+		if len(m.pager.searchString) == 0 {
+			return
+		}
+
+		m.pager.searchString = removeLastChar(m.pager.searchString)
+	} else {
+		m.pager.searchString = m.pager.searchString + string(char)
+	}
+
 	m.updateSearchPattern()
 }
