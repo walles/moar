@@ -266,10 +266,11 @@ func (p *Pager) handleScrolledUp() {
 
 func (p *Pager) handleScrolledDown() {
 	if p.isScrolledToEnd() {
+		// Follow output
 		reallyHigh := linenumbers.LineNumberMax()
 		p.TargetLineNumber = &reallyHigh
 	} else {
-		p.TargetLineNumber = &linenumbers.LineNumber{}
+		p.TargetLineNumber = nil
 	}
 }
 
