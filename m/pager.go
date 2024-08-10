@@ -193,6 +193,10 @@ func NewPager(r *Reader) *Pager {
 	return &pager
 }
 
+func (p *Pager) Close() error {
+	return p.reader.Close()
+}
+
 // How many lines are visible on screen? Depends on screen height and whether or
 // not the status bar is visible.
 func (p *Pager) visibleHeight() int {

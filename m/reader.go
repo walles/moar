@@ -110,6 +110,7 @@ func (reader *Reader) preAllocLines() {
 	reader.lines = make([]*Line, 0, lineCount)
 }
 
+// Reads from our stream. Expected to be run in a goroutine.
 func (reader *Reader) readStream(formatter chroma.Formatter, lexer chroma.Lexer) {
 	reader.consumeLinesFromStream(reader.stream)
 
