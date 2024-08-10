@@ -342,7 +342,7 @@ func NewReaderFromStream(name string, reader io.Reader, style chroma.Style, form
 // then used for pre-allocating the lines slice, which improves large file
 // loading performance.
 //
-// If lexer is not nil, the file will be highlighted after being fully read.
+// If lexer is set, the file will be highlighted after being fully read.
 //
 // Note that you must call reader.SetStyleForHighlighting() after this to get
 // highlighting.
@@ -364,9 +364,13 @@ func newReaderFromStream(reader io.Reader, originalFileName *string, formatter c
 		done:                    &done,
 	}
 
-	// FIXME: Make sure that if we panic somewhere inside of this goroutine,
-	// the main program terminates and prints our panic stack trace.
-	go returnMe.readStream(reader, formatter, lexer)
+	go func() {
+		defer func() {
+			panicHandler("newReaderFromStream()/readStream()", recover())
+		}()
+
+		returnMe.readStream(reader, formatter, lexer)
+	}()
 
 	return &returnMe
 }

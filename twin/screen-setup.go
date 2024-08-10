@@ -117,6 +117,10 @@ func (screen *UnixScreen) setupSigwinchNotification() {
 	sigwinch := make(chan os.Signal, 1)
 	signal.Notify(sigwinch, syscall.SIGWINCH)
 	go func() {
+		defer func() {
+			panicHandler("setupSigwinchNotification()/SIGWINCH", recover())
+		}()
+
 		for {
 			// Await window resize signal
 			<-sigwinch

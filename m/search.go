@@ -124,6 +124,10 @@ func (p *Pager) findFirstHit(startPosition linenumbers.LineNumber, beforePositio
 		}
 
 		go func(i int, searchStart linenumbers.LineNumber, chunkBefore *linenumbers.LineNumber) {
+			defer func() {
+				panicHandler("findFirstHit()/chunkSearch", recover())
+			}()
+
 			findings[i] <- p._findFirstHit(searchStart, chunkBefore, backwards)
 		}(i, searchStart, chunkBefore)
 	}

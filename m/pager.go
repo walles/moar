@@ -322,6 +322,10 @@ func (p *Pager) StartPaging(screen twin.Screen, chromaStyle *chroma.Style, chrom
 	p.marks = make(map[rune]scrollPosition)
 
 	go func() {
+		defer func() {
+			panicHandler("StartPaging()/moreLinesAvailable", recover())
+		}()
+
 		for range p.reader.moreLinesAdded {
 			// Notify the main loop about the new lines so it can show them
 			screen.Events() <- eventMoreLinesAvailable{}
@@ -337,6 +341,10 @@ func (p *Pager) StartPaging(screen twin.Screen, chromaStyle *chroma.Style, chrom
 	}()
 
 	go func() {
+		defer func() {
+			panicHandler("StartPaging()/spinner", recover())
+		}()
+
 		// Spin the spinner as long as contents is still loading
 		spinnerFrames := [...]string{"/.\\", "-o-", "\\O/", "| |"}
 		spinnerIndex := 0
@@ -359,6 +367,10 @@ func (p *Pager) StartPaging(screen twin.Screen, chromaStyle *chroma.Style, chrom
 	}()
 
 	go func() {
+		defer func() {
+			panicHandler("StartPaging()/maybeDone", recover())
+		}()
+
 		for range p.reader.maybeDone {
 			screen.Events() <- eventMaybeDone{}
 		}

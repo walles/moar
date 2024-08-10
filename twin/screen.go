@@ -179,7 +179,13 @@ func NewScreenWithMouseModeAndColorType(mouseMode MouseMode, terminalColorCount 
 
 	screen.hideCursor(true)
 
-	go screen.mainLoop()
+	go func() {
+		defer func() {
+			panicHandler("NewScreenWithMouseModeAndColorType()/mainLoop()", recover())
+		}()
+
+		screen.mainLoop()
+	}()
 
 	return &screen, nil
 }

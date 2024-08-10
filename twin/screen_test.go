@@ -269,6 +269,10 @@ func TestInterruptableReader_blockedOnRead(t *testing.T) {
 	}
 	readResultChan := make(chan readResult)
 	go func() {
+		defer func() {
+			panicHandler("TestInterruptableReader_blockedOnRead()", recover())
+		}()
+
 		buffer := make([]byte, 1)
 		n, err := testMe.Read(buffer)
 		readResultChan <- readResult{n, err}
