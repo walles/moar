@@ -36,6 +36,8 @@ type Reader struct {
 	lines []*Line
 	name  *string
 
+	stream io.Reader
+
 	// If this is set, it will point out the file we are reading from. If this
 	// is not set, we are not reading from a file.
 	fileName *string
@@ -108,8 +110,8 @@ func (reader *Reader) preAllocLines() {
 	reader.lines = make([]*Line, 0, lineCount)
 }
 
-func (reader *Reader) readStream(stream io.Reader, formatter chroma.Formatter, lexer chroma.Lexer) {
-	reader.consumeLinesFromStream(stream)
+func (reader *Reader) readStream(formatter chroma.Formatter, lexer chroma.Lexer) {
+	reader.consumeLinesFromStream(reader.stream)
 
 	if lexer != nil {
 		t0 := time.Now()
@@ -356,6 +358,7 @@ func newReaderFromStream(reader io.Reader, originalFileName *string, formatter c
 		// lines while the pager is processing, the pager would miss
 		// the lines added while it was processing.
 		fileName:                originalFileName,
+		stream:                  reader,
 		moreLinesAdded:          make(chan bool, 1),
 		maybeDone:               make(chan bool, 1),
 		highlightingStyle:       make(chan chroma.Style, 1),
@@ -369,7 +372,7 @@ func newReaderFromStream(reader io.Reader, originalFileName *string, formatter c
 			panicHandler("newReaderFromStream()/readStream()", recover())
 		}()
 
-		returnMe.readStream(reader, formatter, lexer)
+		returnMe.readStream(formatter, lexer)
 	}()
 
 	return &returnMe
