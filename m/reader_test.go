@@ -304,15 +304,23 @@ func TestReadFileDoneYesHighlighting(t *testing.T) {
 	assert.NilError(t, testMe._wait())
 }
 
+type stringReadCloser struct {
+	*strings.Reader
+}
+
+func (s stringReadCloser) Close() error {
+	return nil
+}
+
 func TestReadStreamDoneNoHighlighting(t *testing.T) {
-	testMe := NewReaderFromStream("", strings.NewReader("Johan"), chroma.Style{}, nil, nil)
+	testMe := NewReaderFromStream("", stringReadCloser{strings.NewReader("Johan")}, chroma.Style{}, nil, nil)
 
 	assert.NilError(t, testMe._wait())
 }
 
 func TestReadStreamDoneYesHighlighting(t *testing.T) {
 	testMe := NewReaderFromStream("",
-		strings.NewReader("Johan"),
+		stringReadCloser{strings.NewReader("Johan")},
 		*styles.Get("Native"), formatters.TTY, lexers.EmacsLisp)
 
 	assert.NilError(t, testMe._wait())

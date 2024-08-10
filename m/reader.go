@@ -36,7 +36,7 @@ type Reader struct {
 	lines []*Line
 	name  *string
 
-	stream io.Reader
+	stream io.ReadCloser
 
 	// If this is set, it will point out the file we are reading from. If this
 	// is not set, we are not reading from a file.
@@ -131,6 +131,10 @@ func (reader *Reader) readStream(formatter chroma.Formatter, lexer chroma.Lexer)
 	if err != nil {
 		log.Warn("Failed to tail file: ", err)
 	}
+}
+
+func (reader *Reader) Close() error {
+	return reader.stream.Close()
 }
 
 // This function will update the Reader struct. It is expected to run in a
@@ -309,7 +313,7 @@ func (reader *Reader) tailFile() error {
 
 // Note that you must call reader.SetStyleForHighlighting() after this to get
 // highlighting.
-func NewReaderFromStreamWithoutStyle(name string, reader io.Reader, formatter chroma.Formatter, lexer chroma.Lexer) *Reader {
+func NewReaderFromStreamWithoutStyle(name string, reader io.ReadCloser, formatter chroma.Formatter, lexer chroma.Lexer) *Reader {
 	mReader := newReaderFromStream(reader, nil, formatter, lexer)
 
 	if len(name) > 0 {
@@ -331,7 +335,7 @@ func NewReaderFromStreamWithoutStyle(name string, reader io.Reader, formatter ch
 //
 // If non-empty, the name will be displayed by the pager in the bottom left
 // corner to help the user keep track of what is being paged.
-func NewReaderFromStream(name string, reader io.Reader, style chroma.Style, formatter chroma.Formatter, lexer chroma.Lexer) *Reader {
+func NewReaderFromStream(name string, reader io.ReadCloser, style chroma.Style, formatter chroma.Formatter, lexer chroma.Lexer) *Reader {
 	mReader := NewReaderFromStreamWithoutStyle(name, reader, formatter, lexer)
 	mReader.SetStyleForHighlighting(style)
 	return mReader
@@ -348,7 +352,7 @@ func NewReaderFromStream(name string, reader io.Reader, style chroma.Style, form
 //
 // Note that you must call reader.SetStyleForHighlighting() after this to get
 // highlighting.
-func newReaderFromStream(reader io.Reader, originalFileName *string, formatter chroma.Formatter, lexer chroma.Lexer) *Reader {
+func newReaderFromStream(reader io.ReadCloser, originalFileName *string, formatter chroma.Formatter, lexer chroma.Lexer) *Reader {
 	done := atomic.Bool{}
 	done.Store(false)
 	highlightingDone := atomic.Bool{}
