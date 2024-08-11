@@ -28,10 +28,14 @@ func highlight(text string, style chroma.Style, formatter chroma.Formatter, lexe
 		return nil, nil
 	}
 
-	// See: https://github.com/alecthomas/chroma#identifying-the-language
-	// FIXME: Do we actually need this? We should profile our reader performance
-	// with and without.
-	lexer = chroma.Coalesce(lexer)
+	// NOTE: We used to do...
+	//
+	//   lexer = chroma.Coalesce(lexer)
+	//
+	// ... here, but with Chroma 2.12.0 that resulted in this problem:
+	// https://github.com/walles/moar/issues/236#issuecomment-2282677792
+	//
+	// So let's not do that anymore.
 
 	iterator, err := lexer.Tokenise(nil, text)
 	if err != nil {
