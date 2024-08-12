@@ -585,9 +585,9 @@ func joinUints(ints []uint) string {
 // * A color value that can be applied to a style
 func consumeCompositeColor(numbers []uint, index int) (int, *twin.Color, error) {
 	baseIndex := index
-	if numbers[index] != 38 && numbers[index] != 48 {
+	if numbers[index] != 38 && numbers[index] != 48 && numbers[index] != 58 {
 		err := fmt.Errorf(
-			"unknown start of color sequence <%d>, expected 38 (foreground) or 48 (background): <CSI %sm>",
+			"unknown start of color sequence <%d>, expected 38 (foreground), 48 (background) or 58 (underline): <CSI %sm>",
 			numbers[index],
 			joinUints(numbers[baseIndex:]))
 		return -1, nil, err
