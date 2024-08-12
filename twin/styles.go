@@ -139,7 +139,7 @@ func (style Style) WithForeground(color Color) Style {
 // one.
 //
 //revive:disable-next-line:receiver-naming
-func (current Style) RenderUpdateFrom(previous Style, terminalColorCount ColorType) string {
+func (current Style) RenderUpdateFrom(previous Style, terminalColorCount ColorCount) string {
 	if current == previous {
 		// Shortcut for the common case
 		return ""

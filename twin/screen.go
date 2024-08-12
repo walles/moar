@@ -96,7 +96,7 @@ type UnixScreen struct {
 	ttyOut        *os.File
 	oldTtyOutMode uint32 //nolint Windows only
 
-	terminalColorCount ColorType
+	terminalColorCount ColorCount
 }
 
 // Example event: "\x1b[<65;127;41M"
@@ -121,15 +121,15 @@ func NewScreen() (Screen, error) {
 }
 
 func NewScreenWithMouseMode(mouseMode MouseMode) (Screen, error) {
-	terminalColorCount := ColorType24bit
+	terminalColorCount := ColorCount24bit
 	if os.Getenv("COLORTERM") != "truecolor" && strings.Contains(os.Getenv("TERM"), "256") {
 		// Covers "xterm-256color" as used by the macOS Terminal
-		terminalColorCount = ColorType256
+		terminalColorCount = ColorCount256
 	}
 	return NewScreenWithMouseModeAndColorType(mouseMode, terminalColorCount)
 }
 
-func NewScreenWithMouseModeAndColorType(mouseMode MouseMode, terminalColorCount ColorType) (Screen, error) {
+func NewScreenWithMouseModeAndColorType(mouseMode MouseMode, terminalColorCount ColorCount) (Screen, error) {
 	if !term.IsTerminal(int(os.Stdout.Fd())) {
 		return nil, fmt.Errorf("stdout (fd=%d) must be a terminal for paging to work", os.Stdout.Fd())
 	}
@@ -657,7 +657,7 @@ func (screen *UnixScreen) Clear() {
 
 // Returns the rendered line, plus how many information carrying cells went into
 // it
-func renderLine(row []Cell, terminalColorCount ColorType) (string, int) {
+func renderLine(row []Cell, terminalColorCount ColorCount) (string, int) {
 	// Strip trailing whitespace
 	lastSignificantCellIndex := len(row) - 1
 	for ; lastSignificantCellIndex >= 0; lastSignificantCellIndex-- {

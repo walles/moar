@@ -19,7 +19,7 @@ func TestParseScrollHint(t *testing.T) {
 func TestPageOneInputFile(t *testing.T) {
 	pager, screen, _, formatter, err := pagerFromArgs(
 		[]string{"", "moar_test.go"},
-		func(_ twin.MouseMode, _ twin.ColorType) (twin.Screen, error) {
+		func(_ twin.MouseMode, _ twin.ColorCount) (twin.Screen, error) {
 			return twin.NewFakeScreen(80, 24), nil
 		},
 		false, // stdin is redirected

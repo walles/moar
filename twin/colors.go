@@ -10,30 +10,30 @@ import (
 // Create using NewColor16(), NewColor256 or NewColor24Bit(), or use
 // ColorDefault.
 type Color uint32
-type ColorType uint8
+type ColorCount uint8
 
 const (
 	// Default foreground / background color
-	ColorTypeDefault ColorType = iota
+	ColorCountDefault ColorCount = iota
 
 	// https://en.wikipedia.org/wiki/ANSI_escape_code#3-bit_and_4-bit
 	//
 	// Note that this type is only used for output, on input we store 3 bit
 	// colors as 4 bit colors since they map to the same values.
-	ColorType8
+	ColorCount8
 
 	// https://en.wikipedia.org/wiki/ANSI_escape_code#3-bit_and_4-bit
-	ColorType16
+	ColorCount16
 
 	// https://en.wikipedia.org/wiki/ANSI_escape_code#8-bit
-	ColorType256
+	ColorCount256
 
 	// RGB: https://en.wikipedia.org/wiki/ANSI_escape_code#24-bit
-	ColorType24bit
+	ColorCount24bit
 )
 
 // Reset to default foreground / background color
-var ColorDefault = newColor(ColorTypeDefault, 0)
+var ColorDefault = newColor(ColorCountDefault, 0)
 
 // From: https://en.wikipedia.org/wiki/ANSI_escape_code#3-bit_and_4-bit
 var colorNames16 = map[int]string{
@@ -55,30 +55,30 @@ var colorNames16 = map[int]string{
 	15: "15 bright white",
 }
 
-func newColor(colorType ColorType, value uint32) Color {
+func newColor(colorType ColorCount, value uint32) Color {
 	return Color(value | (uint32(colorType) << 24))
 }
 
 // Four bit colors as defined here:
 // https://en.wikipedia.org/wiki/ANSI_escape_code#3-bit_and_4-bit
 func NewColor16(colorNumber0to15 int) Color {
-	return newColor(ColorType16, uint32(colorNumber0to15))
+	return newColor(ColorCount16, uint32(colorNumber0to15))
 }
 
 func NewColor256(colorNumber uint8) Color {
-	return newColor(ColorType256, uint32(colorNumber))
+	return newColor(ColorCount256, uint32(colorNumber))
 }
 
 func NewColor24Bit(red uint8, green uint8, blue uint8) Color {
-	return newColor(ColorType24bit, (uint32(red)<<16)+(uint32(green)<<8)+(uint32(blue)<<0))
+	return newColor(ColorCount24bit, (uint32(red)<<16)+(uint32(green)<<8)+(uint32(blue)<<0))
 }
 
 func NewColorHex(rgb uint32) Color {
-	return newColor(ColorType24bit, rgb)
+	return newColor(ColorCount24bit, rgb)
 }
 
-func (color Color) ColorType() ColorType {
-	return ColorType(color >> 24)
+func (color Color) ColorType() ColorCount {
+	return ColorCount(color >> 24)
 }
 
 func (color Color) colorValue() uint32 {
@@ -88,19 +88,19 @@ func (color Color) colorValue() uint32 {
 // Render color into an ANSI string.
 //
 // Ref: https://en.wikipedia.org/wiki/ANSI_escape_code#SGR_(Select_Graphic_Rendition)_parameters
-func (color Color) ansiString(foreground bool, terminalColorCount ColorType) string {
+func (color Color) ansiString(foreground bool, terminalColorCount ColorCount) string {
 	fgBgMarker := "3"
 	if !foreground {
 		fgBgMarker = "4"
 	}
 
-	if color.ColorType() == ColorTypeDefault {
+	if color.ColorType() == ColorCountDefault {
 		return fmt.Sprint("\x1b[", fgBgMarker, "9m")
 	}
 
 	color = color.downsampleTo(terminalColorCount)
 
-	if color.ColorType() == ColorType16 {
+	if color.ColorType() == ColorCount16 {
 		value := color.colorValue()
 		if value < 8 {
 			return fmt.Sprint("\x1b[", fgBgMarker, value, "m")
@@ -113,14 +113,14 @@ func (color Color) ansiString(foreground bool, terminalColorCount ColorType) str
 		}
 	}
 
-	if color.ColorType() == ColorType256 {
+	if color.ColorType() == ColorCount256 {
 		value := color.colorValue()
 		if value <= 255 {
 			return fmt.Sprint("\x1b[", fgBgMarker, "8;5;", value, "m")
 		}
 	}
 
-	if color.ColorType() == ColorType24bit {
+	if color.ColorType() == ColorCount24bit {
 		value := color.colorValue()
 		red := (value & 0xff0000) >> 16
 		green := (value & 0xff00) >> 8
@@ -132,31 +132,31 @@ func (color Color) ansiString(foreground bool, terminalColorCount ColorType) str
 	panic(fmt.Errorf("unhandled color type=%d %s", color.ColorType(), color.String()))
 }
 
-func (color Color) ForegroundAnsiString(terminalColorCount ColorType) string {
+func (color Color) ForegroundAnsiString(terminalColorCount ColorCount) string {
 	// FIXME: Test this function with all different color types.
 	return color.ansiString(true, terminalColorCount)
 }
 
-func (color Color) BackgroundAnsiString(terminalColorCount ColorType) string {
+func (color Color) BackgroundAnsiString(terminalColorCount ColorCount) string {
 	// FIXME: Test this function with all different color types.
 	return color.ansiString(false, terminalColorCount)
 }
 
 func (color Color) String() string {
 	switch color.ColorType() {
-	case ColorTypeDefault:
+	case ColorCountDefault:
 		return "Default color"
 
-	case ColorType16:
+	case ColorCount16:
 		return colorNames16[int(color.colorValue())]
 
-	case ColorType256:
+	case ColorCount256:
 		if color.colorValue() < 16 {
 			return colorNames16[int(color.colorValue())]
 		}
 		return fmt.Sprintf("#%02x", color.colorValue())
 
-	case ColorType24bit:
+	case ColorCount24bit:
 		return fmt.Sprintf("#%06x", color.colorValue())
 	}
 
@@ -164,11 +164,11 @@ func (color Color) String() string {
 }
 
 func (color Color) to24Bit() Color {
-	if color.ColorType() == ColorType24bit {
+	if color.ColorType() == ColorCount24bit {
 		return color
 	}
 
-	if color.ColorType() == ColorType8 || color.ColorType() == ColorType16 || color.ColorType() == ColorType256 {
+	if color.ColorType() == ColorCount8 || color.ColorType() == ColorCount16 || color.ColorType() == ColorCount256 {
 		r0, g0, b0 := color256ToRGB(uint8(color.colorValue()))
 		return NewColor24Bit(r0, g0, b0)
 	}
@@ -176,8 +176,8 @@ func (color Color) to24Bit() Color {
 	panic(fmt.Errorf("unhandled color type %d", color.ColorType()))
 }
 
-func (color Color) downsampleTo(terminalColorCount ColorType) Color {
-	if color.ColorType() == ColorTypeDefault || terminalColorCount == ColorTypeDefault {
+func (color Color) downsampleTo(terminalColorCount ColorCount) Color {
+	if color.ColorType() == ColorCountDefault || terminalColorCount == ColorCountDefault {
 		panic(fmt.Errorf("downsampling to or from default color not supported, %s -> %#v", color.String(), terminalColorCount))
 	}
 
@@ -192,13 +192,13 @@ func (color Color) downsampleTo(terminalColorCount ColorType) Color {
 	var scanFirst int
 	var scanLast int
 	switch terminalColorCount {
-	case ColorType8:
+	case ColorCount8:
 		scanFirst = 0
 		scanLast = 7
-	case ColorType16:
+	case ColorCount16:
 		scanFirst = 0
 		scanLast = 15
-	case ColorType256:
+	case ColorCount256:
 		// Colors 0-15 can be customized by the user, so we skip them and use
 		// only the well defined ones
 		scanFirst = 16
@@ -234,7 +234,7 @@ func (color Color) downsampleTo(terminalColorCount ColorType) Color {
 // The result from this function has been scaled to 0.0-1.0, where 1.0 is the
 // distance between black and white.
 func (color Color) Distance(other Color) float64 {
-	if color.ColorType() != ColorType24bit {
+	if color.ColorType() != ColorCount24bit {
 		panic(fmt.Errorf("contrast only supported for 24 bit colors, got %s vs %s", color.String(), other.String()))
 	}
 
