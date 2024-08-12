@@ -180,6 +180,10 @@ func (current Style) RenderUpdateFrom(previous Style, terminalColorCount ColorCo
 		builder.WriteString(current.bg.ansiString(colorTypeBackground, terminalColorCount))
 	}
 
+	if current.underlineColor != previous.underlineColor {
+		builder.WriteString(current.underlineColor.ansiString(colorTypeUnderline, terminalColorCount))
+	}
+
 	// Handle AttrDim / AttrBold changes
 	previousBoldDim := previous.attrs & (AttrBold | AttrDim)
 	currentBoldDim := current.attrs & (AttrBold | AttrDim)
