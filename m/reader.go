@@ -7,6 +7,7 @@ import (
 	"io"
 	"os"
 	"path"
+	"runtime/debug"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -366,7 +367,7 @@ func newReaderFromStream(reader io.Reader, originalFileName *string, formatter c
 
 	go func() {
 		defer func() {
-			panicHandler("newReaderFromStream()/readStream()", recover())
+			panicHandler("newReaderFromStream()/readStream()", recover(), debug.Stack())
 		}()
 
 		returnMe.readStream(reader, formatter, lexer)

@@ -7,6 +7,7 @@ import (
 	"io"
 	"os"
 	"os/signal"
+	"runtime/debug"
 	"sync/atomic"
 	"syscall"
 
@@ -118,7 +119,7 @@ func (screen *UnixScreen) setupSigwinchNotification() {
 	signal.Notify(sigwinch, syscall.SIGWINCH)
 	go func() {
 		defer func() {
-			panicHandler("setupSigwinchNotification()/SIGWINCH", recover())
+			panicHandler("setupSigwinchNotification()/SIGWINCH", recover(), debug.Stack())
 		}()
 
 		for {

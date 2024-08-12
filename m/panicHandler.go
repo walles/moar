@@ -6,12 +6,13 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func panicHandler(goroutineName string, recoverResult any) {
+func panicHandler(goroutineName string, recoverResult any, stackTrace []byte) {
 	if recoverResult == nil {
 		return
 	}
 
 	log.WithFields(log.Fields{
-		"recoverResult": recoverResult,
+		"panic":      recoverResult,
+		"stackTrace": string(stackTrace),
 	}).Error("Goroutine panicked: " + goroutineName)
 }

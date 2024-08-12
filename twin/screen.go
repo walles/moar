@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"regexp"
+	"runtime/debug"
 	"strconv"
 	"strings"
 	"unicode/utf8"
@@ -181,7 +182,7 @@ func NewScreenWithMouseModeAndColorCount(mouseMode MouseMode, terminalColorCount
 
 	go func() {
 		defer func() {
-			panicHandler("NewScreenWithMouseModeAndColorCount()/mainLoop()", recover())
+			panicHandler("NewScreenWithMouseModeAndColorCount()/mainLoop()", recover(), debug.Stack())
 		}()
 
 		screen.mainLoop()

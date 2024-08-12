@@ -6,6 +6,7 @@ package twin
 import (
 	"io"
 	"os"
+	"runtime/debug"
 	"testing"
 	"time"
 
@@ -32,7 +33,7 @@ func TestInterruptableReader_blockedOnReadImmediate(t *testing.T) {
 	readResultChan := make(chan readResult)
 	go func() {
 		defer func() {
-			panicHandler("TestInterruptableReader_blockedOnReadImmediate()", recover())
+			panicHandler("TestInterruptableReader_blockedOnReadImmediate()", recover(), debug.Stack())
 		}()
 
 		buffer := make([]byte, 1)

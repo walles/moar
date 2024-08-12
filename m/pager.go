@@ -3,6 +3,7 @@ package m
 import (
 	"fmt"
 	"regexp"
+	"runtime/debug"
 	"strings"
 	"time"
 
@@ -323,7 +324,7 @@ func (p *Pager) StartPaging(screen twin.Screen, chromaStyle *chroma.Style, chrom
 
 	go func() {
 		defer func() {
-			panicHandler("StartPaging()/moreLinesAvailable", recover())
+			panicHandler("StartPaging()/moreLinesAvailable", recover(), debug.Stack())
 		}()
 
 		for range p.reader.moreLinesAdded {
@@ -342,7 +343,7 @@ func (p *Pager) StartPaging(screen twin.Screen, chromaStyle *chroma.Style, chrom
 
 	go func() {
 		defer func() {
-			panicHandler("StartPaging()/spinner", recover())
+			panicHandler("StartPaging()/spinner", recover(), debug.Stack())
 		}()
 
 		// Spin the spinner as long as contents is still loading
@@ -368,7 +369,7 @@ func (p *Pager) StartPaging(screen twin.Screen, chromaStyle *chroma.Style, chrom
 
 	go func() {
 		defer func() {
-			panicHandler("StartPaging()/maybeDone", recover())
+			panicHandler("StartPaging()/maybeDone", recover(), debug.Stack())
 		}()
 
 		for range p.reader.maybeDone {

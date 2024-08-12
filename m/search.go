@@ -3,6 +3,7 @@ package m
 import (
 	"fmt"
 	"runtime"
+	"runtime/debug"
 	"time"
 
 	log "github.com/sirupsen/logrus"
@@ -125,7 +126,7 @@ func (p *Pager) findFirstHit(startPosition linenumbers.LineNumber, beforePositio
 
 		go func(i int, searchStart linenumbers.LineNumber, chunkBefore *linenumbers.LineNumber) {
 			defer func() {
-				panicHandler("findFirstHit()/chunkSearch", recover())
+				panicHandler("findFirstHit()/chunkSearch", recover(), debug.Stack())
 			}()
 
 			findings[i] <- p._findFirstHit(searchStart, chunkBefore, backwards)
