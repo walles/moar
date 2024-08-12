@@ -216,7 +216,7 @@ func TestConsumeCompositeColorBadPrefix(t *testing.T) {
 	// 8 bit color
 	// Example from: https://github.com/walles/moar/issues/14
 	_, color, err := consumeCompositeColor([]uint{29}, 0)
-	assert.Equal(t, err.Error(), "unknown start of color sequence <29>, expected 38 (foreground) or 48 (background): <CSI 29m>")
+	assert.Equal(t, err.Error(), "unknown start of color sequence <29>, expected 38 (foreground), 48 (background) or 58 (underline): <CSI 29m>")
 	assert.Assert(t, color == nil)
 }
 

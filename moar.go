@@ -38,7 +38,7 @@ const defaultLightTheme = "tango"
 
 var versionString = "Should be set when building, please use build.sh to build"
 
-func renderLessTermcapEnvVar(envVarName string, description string, colors twin.ColorType) string {
+func renderLessTermcapEnvVar(envVarName string, description string, colors twin.ColorCount) string {
 	value := os.Getenv(envVarName)
 	if len(value) == 0 {
 		return ""
@@ -67,7 +67,7 @@ func renderLessTermcapEnvVar(envVarName string, description string, colors twin.
 	)
 }
 
-func renderPagerEnvVar(name string, colors twin.ColorType) string {
+func renderPagerEnvVar(name string, colors twin.ColorCount) string {
 	bold := twin.StyleDefault.WithAttr(twin.AttrBold).RenderUpdateFrom(twin.StyleDefault, colors)
 	notBold := twin.StyleDefault.RenderUpdateFrom(twin.StyleDefault.WithAttr(twin.AttrBold), colors)
 
@@ -129,14 +129,14 @@ func printCommandline(output io.Writer) {
 	fmt.Fprintln(output)
 }
 
-func heading(text string, colors twin.ColorType) string {
+func heading(text string, colors twin.ColorCount) string {
 	style := twin.StyleDefault.WithAttr(twin.AttrItalic)
 	prefix := style.RenderUpdateFrom(twin.StyleDefault, colors)
 	suffix := twin.StyleDefault.RenderUpdateFrom(style, colors)
 	return prefix + text + suffix
 }
 
-func printUsage(flagSet *flag.FlagSet, colors twin.ColorType) {
+func printUsage(flagSet *flag.FlagSet, colors twin.ColorCount) {
 	// This controls where PrintDefaults() prints, see below
 	flagSet.SetOutput(os.Stdout)
 
@@ -315,7 +315,7 @@ func parseStyleOption(styleOption string) (*chroma.Style, error) {
 	return style, nil
 }
 
-func parseColorsOption(colorsOption string) (twin.ColorType, error) {
+func parseColorsOption(colorsOption string) (twin.ColorCount, error) {
 	if strings.ToLower(colorsOption) == "auto" {
 		colorsOption = "16M"
 		if os.Getenv("COLORTERM") != "truecolor" && strings.Contains(os.Getenv("TERM"), "256") {
@@ -326,16 +326,16 @@ func parseColorsOption(colorsOption string) (twin.ColorType, error) {
 
 	switch strings.ToUpper(colorsOption) {
 	case "8":
-		return twin.ColorType8, nil
+		return twin.ColorCount8, nil
 	case "16":
-		return twin.ColorType16, nil
+		return twin.ColorCount16, nil
 	case "256":
-		return twin.ColorType256, nil
+		return twin.ColorCount256, nil
 	case "16M":
-		return twin.ColorType24bit, nil
+		return twin.ColorCount24bit, nil
 	}
 
-	var noColor twin.ColorType
+	var noColor twin.ColorCount
 	return noColor, fmt.Errorf("Valid counts are 8, 16, 256, 16M or auto")
 }
 
@@ -519,7 +519,7 @@ func noLineNumbersDefault() bool {
 // Can return a nil pager on --help or --version, or if pumping to stdout.
 func pagerFromArgs(
 	args []string,
-	newScreen func(mouseMode twin.MouseMode, terminalColorCount twin.ColorType) (twin.Screen, error),
+	newScreen func(mouseMode twin.MouseMode, terminalColorCount twin.ColorCount) (twin.Screen, error),
 	stdinIsRedirected bool,
 	stdoutIsRedirected bool,
 ) (
@@ -674,11 +674,11 @@ func pagerFromArgs(
 	}
 
 	formatter := formatters.TTY256
-	if *terminalColorsCount == twin.ColorType8 {
+	if *terminalColorsCount == twin.ColorCount8 {
 		formatter = formatters.TTY8
-	} else if *terminalColorsCount == twin.ColorType16 {
+	} else if *terminalColorsCount == twin.ColorCount16 {
 		formatter = formatters.TTY16
-	} else if *terminalColorsCount == twin.ColorType24bit {
+	} else if *terminalColorsCount == twin.ColorCount24bit {
 		formatter = formatters.TTY16m
 	}
 
@@ -803,7 +803,7 @@ func main() {
 
 	pager, screen, style, formatter, err := pagerFromArgs(
 		os.Args,
-		twin.NewScreenWithMouseModeAndColorType,
+		twin.NewScreenWithMouseModeAndColorCount,
 		stdinIsRedirected,
 		stdoutIsRedirected,
 	)

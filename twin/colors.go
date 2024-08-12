@@ -10,30 +10,39 @@ import (
 // Create using NewColor16(), NewColor256 or NewColor24Bit(), or use
 // ColorDefault.
 type Color uint32
-type ColorType uint8
+
+type ColorCount uint8
 
 const (
 	// Default foreground / background color
-	ColorTypeDefault ColorType = iota
+	ColorCountDefault ColorCount = iota
 
 	// https://en.wikipedia.org/wiki/ANSI_escape_code#3-bit_and_4-bit
 	//
 	// Note that this type is only used for output, on input we store 3 bit
 	// colors as 4 bit colors since they map to the same values.
-	ColorType8
+	ColorCount8
 
 	// https://en.wikipedia.org/wiki/ANSI_escape_code#3-bit_and_4-bit
-	ColorType16
+	ColorCount16
 
 	// https://en.wikipedia.org/wiki/ANSI_escape_code#8-bit
-	ColorType256
+	ColorCount256
 
 	// RGB: https://en.wikipedia.org/wiki/ANSI_escape_code#24-bit
-	ColorType24bit
+	ColorCount24bit
+)
+
+type colorType uint8
+
+const (
+	colorTypeForeground colorType = iota
+	colorTypeBackground
+	colorTypeUnderline
 )
 
 // Reset to default foreground / background color
-var ColorDefault = newColor(ColorTypeDefault, 0)
+var ColorDefault = newColor(ColorCountDefault, 0)
 
 // From: https://en.wikipedia.org/wiki/ANSI_escape_code#3-bit_and_4-bit
 var colorNames16 = map[int]string{
@@ -55,30 +64,30 @@ var colorNames16 = map[int]string{
 	15: "15 bright white",
 }
 
-func newColor(colorType ColorType, value uint32) Color {
-	return Color(value | (uint32(colorType) << 24))
+func newColor(colorCount ColorCount, value uint32) Color {
+	return Color(value | (uint32(colorCount) << 24))
 }
 
 // Four bit colors as defined here:
 // https://en.wikipedia.org/wiki/ANSI_escape_code#3-bit_and_4-bit
 func NewColor16(colorNumber0to15 int) Color {
-	return newColor(ColorType16, uint32(colorNumber0to15))
+	return newColor(ColorCount16, uint32(colorNumber0to15))
 }
 
 func NewColor256(colorNumber uint8) Color {
-	return newColor(ColorType256, uint32(colorNumber))
+	return newColor(ColorCount256, uint32(colorNumber))
 }
 
 func NewColor24Bit(red uint8, green uint8, blue uint8) Color {
-	return newColor(ColorType24bit, (uint32(red)<<16)+(uint32(green)<<8)+(uint32(blue)<<0))
+	return newColor(ColorCount24bit, (uint32(red)<<16)+(uint32(green)<<8)+(uint32(blue)<<0))
 }
 
 func NewColorHex(rgb uint32) Color {
-	return newColor(ColorType24bit, rgb)
+	return newColor(ColorCount24bit, rgb)
 }
 
-func (color Color) ColorType() ColorType {
-	return ColorType(color >> 24)
+func (color Color) ColorCount() ColorCount {
+	return ColorCount(color >> 24)
 }
 
 func (color Color) colorValue() uint32 {
@@ -88,100 +97,105 @@ func (color Color) colorValue() uint32 {
 // Render color into an ANSI string.
 //
 // Ref: https://en.wikipedia.org/wiki/ANSI_escape_code#SGR_(Select_Graphic_Rendition)_parameters
-func (color Color) ansiString(foreground bool, terminalColorCount ColorType) string {
-	fgBgMarker := "3"
-	if !foreground {
-		fgBgMarker = "4"
+func (color Color) ansiString(cType colorType, terminalColorCount ColorCount) string {
+	var typeMarker string
+	if cType == colorTypeForeground {
+		typeMarker = "3"
+	} else if cType == colorTypeBackground {
+		typeMarker = "4"
+	} else if cType == colorTypeUnderline {
+		typeMarker = "5"
+	} else {
+		panic(fmt.Errorf("unhandled color type %d", cType))
 	}
 
-	if color.ColorType() == ColorTypeDefault {
-		return fmt.Sprint("\x1b[", fgBgMarker, "9m")
+	if color.ColorCount() == ColorCountDefault {
+		return fmt.Sprint("\x1b[", typeMarker, "9m")
 	}
 
 	color = color.downsampleTo(terminalColorCount)
 
-	if color.ColorType() == ColorType16 {
+	// We never create any ColorCount8 colors, but we store them as
+	// ColorCount16. So this if() statement will cover both.
+	if color.ColorCount() == ColorCount16 {
+		if cType == colorTypeUnderline {
+			// Only 256 and 24 bit colors supported for underline color
+			return ""
+		}
+
 		value := color.colorValue()
 		if value < 8 {
-			return fmt.Sprint("\x1b[", fgBgMarker, value, "m")
+			return fmt.Sprint("\x1b[", typeMarker, value, "m")
 		} else if value <= 15 {
-			fgBgMarker := "9"
-			if !foreground {
-				fgBgMarker = "10"
+			typeMarker := "9"
+			if cType == colorTypeBackground {
+				typeMarker = "10"
 			}
-			return fmt.Sprint("\x1b[", fgBgMarker, value-8, "m")
+			return fmt.Sprint("\x1b[", typeMarker, value-8, "m")
 		}
+
+		panic(fmt.Errorf("unhandled color16 value %d", value))
 	}
 
-	if color.ColorType() == ColorType256 {
+	if color.ColorCount() == ColorCount256 {
 		value := color.colorValue()
 		if value <= 255 {
-			return fmt.Sprint("\x1b[", fgBgMarker, "8;5;", value, "m")
+			return fmt.Sprint("\x1b[", typeMarker, "8;5;", value, "m")
 		}
 	}
 
-	if color.ColorType() == ColorType24bit {
+	if color.ColorCount() == ColorCount24bit {
 		value := color.colorValue()
 		red := (value & 0xff0000) >> 16
 		green := (value & 0xff00) >> 8
 		blue := value & 0xff
 
-		return fmt.Sprint("\x1b[", fgBgMarker, "8;2;", red, ";", green, ";", blue, "m")
+		return fmt.Sprint("\x1b[", typeMarker, "8;2;", red, ";", green, ";", blue, "m")
 	}
 
-	panic(fmt.Errorf("unhandled color type=%d %s", color.ColorType(), color.String()))
-}
-
-func (color Color) ForegroundAnsiString(terminalColorCount ColorType) string {
-	// FIXME: Test this function with all different color types.
-	return color.ansiString(true, terminalColorCount)
-}
-
-func (color Color) BackgroundAnsiString(terminalColorCount ColorType) string {
-	// FIXME: Test this function with all different color types.
-	return color.ansiString(false, terminalColorCount)
+	panic(fmt.Errorf("unhandled color type=%d %s", color.ColorCount(), color.String()))
 }
 
 func (color Color) String() string {
-	switch color.ColorType() {
-	case ColorTypeDefault:
+	switch color.ColorCount() {
+	case ColorCountDefault:
 		return "Default color"
 
-	case ColorType16:
+	case ColorCount16:
 		return colorNames16[int(color.colorValue())]
 
-	case ColorType256:
+	case ColorCount256:
 		if color.colorValue() < 16 {
 			return colorNames16[int(color.colorValue())]
 		}
 		return fmt.Sprintf("#%02x", color.colorValue())
 
-	case ColorType24bit:
+	case ColorCount24bit:
 		return fmt.Sprintf("#%06x", color.colorValue())
 	}
 
-	panic(fmt.Errorf("unhandled color type %d", color.ColorType()))
+	panic(fmt.Errorf("unhandled color type %d", color.ColorCount()))
 }
 
 func (color Color) to24Bit() Color {
-	if color.ColorType() == ColorType24bit {
+	if color.ColorCount() == ColorCount24bit {
 		return color
 	}
 
-	if color.ColorType() == ColorType8 || color.ColorType() == ColorType16 || color.ColorType() == ColorType256 {
+	if color.ColorCount() == ColorCount8 || color.ColorCount() == ColorCount16 || color.ColorCount() == ColorCount256 {
 		r0, g0, b0 := color256ToRGB(uint8(color.colorValue()))
 		return NewColor24Bit(r0, g0, b0)
 	}
 
-	panic(fmt.Errorf("unhandled color type %d", color.ColorType()))
+	panic(fmt.Errorf("unhandled color type %d", color.ColorCount()))
 }
 
-func (color Color) downsampleTo(terminalColorCount ColorType) Color {
-	if color.ColorType() == ColorTypeDefault || terminalColorCount == ColorTypeDefault {
+func (color Color) downsampleTo(terminalColorCount ColorCount) Color {
+	if color.ColorCount() == ColorCountDefault || terminalColorCount == ColorCountDefault {
 		panic(fmt.Errorf("downsampling to or from default color not supported, %s -> %#v", color.String(), terminalColorCount))
 	}
 
-	if color.ColorType() <= terminalColorCount {
+	if color.ColorCount() <= terminalColorCount {
 		// Already low enough
 		return color
 	}
@@ -192,13 +206,13 @@ func (color Color) downsampleTo(terminalColorCount ColorType) Color {
 	var scanFirst int
 	var scanLast int
 	switch terminalColorCount {
-	case ColorType8:
+	case ColorCount8:
 		scanFirst = 0
 		scanLast = 7
-	case ColorType16:
+	case ColorCount16:
 		scanFirst = 0
 		scanLast = 15
-	case ColorType256:
+	case ColorCount256:
 		// Colors 0-15 can be customized by the user, so we skip them and use
 		// only the well defined ones
 		scanFirst = 16
@@ -234,7 +248,7 @@ func (color Color) downsampleTo(terminalColorCount ColorType) Color {
 // The result from this function has been scaled to 0.0-1.0, where 1.0 is the
 // distance between black and white.
 func (color Color) Distance(other Color) float64 {
-	if color.ColorType() != ColorType24bit {
+	if color.ColorCount() != ColorCount24bit {
 		panic(fmt.Errorf("contrast only supported for 24 bit colors, got %s vs %s", color.String(), other.String()))
 	}
 

@@ -19,9 +19,10 @@ const (
 )
 
 type Style struct {
-	fg    Color
-	bg    Color
-	attrs AttrMask
+	fg             Color
+	bg             Color
+	underlineColor Color
+	attrs          AttrMask
 
 	// This hyperlinkURL is a URL for in-terminal hyperlinks.
 	//
@@ -37,8 +38,13 @@ type Style struct {
 var StyleDefault Style
 
 func (style Style) String() string {
+	undelineSuffix := ""
+	if style.underlineColor != ColorDefault {
+		undelineSuffix = fmt.Sprintf(" underlined with %v", style.underlineColor)
+	}
+
 	if style.attrs == AttrNone {
-		return fmt.Sprint(style.fg, " on ", style.bg)
+		return fmt.Sprint(style.fg, " on ", style.bg, undelineSuffix)
 	}
 
 	attrNames := make([]string, 0)
@@ -67,15 +73,16 @@ func (style Style) String() string {
 		attrNames = append(attrNames, "\""+*style.hyperlinkURL+"\"")
 	}
 
-	return fmt.Sprint(strings.Join(attrNames, " "), " ", style.fg, " on ", style.bg)
+	return fmt.Sprint(strings.Join(attrNames, " "), " ", style.fg, " on ", style.bg, undelineSuffix)
 }
 
 func (style Style) WithAttr(attr AttrMask) Style {
 	result := Style{
-		fg:           style.fg,
-		bg:           style.bg,
-		attrs:        style.attrs | attr,
-		hyperlinkURL: style.hyperlinkURL,
+		fg:             style.fg,
+		bg:             style.bg,
+		underlineColor: style.underlineColor,
+		attrs:          style.attrs | attr,
+		hyperlinkURL:   style.hyperlinkURL,
 	}
 
 	// Bold and dim are mutually exclusive
@@ -97,19 +104,21 @@ func (style Style) WithHyperlink(hyperlinkURL *string) Style {
 	}
 
 	return Style{
-		fg:           style.fg,
-		bg:           style.bg,
-		attrs:        style.attrs,
-		hyperlinkURL: hyperlinkURL,
+		fg:             style.fg,
+		bg:             style.bg,
+		underlineColor: style.underlineColor,
+		attrs:          style.attrs,
+		hyperlinkURL:   hyperlinkURL,
 	}
 }
 
 func (style Style) WithoutAttr(attr AttrMask) Style {
 	return Style{
-		fg:           style.fg,
-		bg:           style.bg,
-		attrs:        style.attrs & ^attr,
-		hyperlinkURL: style.hyperlinkURL,
+		fg:             style.fg,
+		bg:             style.bg,
+		underlineColor: style.underlineColor,
+		attrs:          style.attrs & ^attr,
+		hyperlinkURL:   style.hyperlinkURL,
 	}
 }
 
@@ -119,19 +128,31 @@ func (attr AttrMask) has(attrs AttrMask) bool {
 
 func (style Style) WithBackground(color Color) Style {
 	return Style{
-		fg:           style.fg,
-		bg:           color,
-		attrs:        style.attrs,
-		hyperlinkURL: style.hyperlinkURL,
+		fg:             style.fg,
+		bg:             color,
+		underlineColor: style.underlineColor,
+		attrs:          style.attrs,
+		hyperlinkURL:   style.hyperlinkURL,
 	}
 }
 
 func (style Style) WithForeground(color Color) Style {
 	return Style{
-		fg:           color,
-		bg:           style.bg,
-		attrs:        style.attrs,
-		hyperlinkURL: style.hyperlinkURL,
+		fg:             color,
+		bg:             style.bg,
+		underlineColor: style.underlineColor,
+		attrs:          style.attrs,
+		hyperlinkURL:   style.hyperlinkURL,
+	}
+}
+
+func (style Style) WithUnderlineColor(color Color) Style {
+	return Style{
+		fg:             style.fg,
+		bg:             style.bg,
+		underlineColor: color,
+		attrs:          style.attrs,
+		hyperlinkURL:   style.hyperlinkURL,
 	}
 }
 
@@ -139,7 +160,7 @@ func (style Style) WithForeground(color Color) Style {
 // one.
 //
 //revive:disable-next-line:receiver-naming
-func (current Style) RenderUpdateFrom(previous Style, terminalColorCount ColorType) string {
+func (current Style) RenderUpdateFrom(previous Style, terminalColorCount ColorCount) string {
 	if current == previous {
 		// Shortcut for the common case
 		return ""
@@ -152,11 +173,15 @@ func (current Style) RenderUpdateFrom(previous Style, terminalColorCount ColorTy
 
 	var builder strings.Builder
 	if current.fg != previous.fg {
-		builder.WriteString(current.fg.ForegroundAnsiString(terminalColorCount))
+		builder.WriteString(current.fg.ansiString(colorTypeForeground, terminalColorCount))
 	}
 
 	if current.bg != previous.bg {
-		builder.WriteString(current.bg.BackgroundAnsiString(terminalColorCount))
+		builder.WriteString(current.bg.ansiString(colorTypeBackground, terminalColorCount))
+	}
+
+	if current.underlineColor != previous.underlineColor {
+		builder.WriteString(current.underlineColor.ansiString(colorTypeUnderline, terminalColorCount))
 	}
 
 	// Handle AttrDim / AttrBold changes

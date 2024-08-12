@@ -511,6 +511,18 @@ func rawUpdateStyle(style twin.Style, escapeSequenceWithoutHeader string, number
 		case 49:
 			style = style.WithBackground(twin.ColorDefault)
 
+		case 58:
+			var err error
+			var color *twin.Color
+			index, color, err = consumeCompositeColor(numbersBuffer, index-1)
+			if err != nil {
+				return style, numbersBuffer, fmt.Errorf("Underline: %w", err)
+			}
+			style = style.WithUnderlineColor(*color)
+
+		case 59:
+			style = style.WithUnderlineColor(twin.ColorDefault)
+
 		// Bright foreground colors: see https://pkg.go.dev/github.com/gdamore/Color
 		//
 		// After testing vs less and cat on iTerm2 3.3.9 / macOS Catalina
@@ -573,9 +585,9 @@ func joinUints(ints []uint) string {
 // * A color value that can be applied to a style
 func consumeCompositeColor(numbers []uint, index int) (int, *twin.Color, error) {
 	baseIndex := index
-	if numbers[index] != 38 && numbers[index] != 48 {
+	if numbers[index] != 38 && numbers[index] != 48 && numbers[index] != 58 {
 		err := fmt.Errorf(
-			"unknown start of color sequence <%d>, expected 38 (foreground) or 48 (background): <CSI %sm>",
+			"unknown start of color sequence <%d>, expected 38 (foreground), 48 (background) or 58 (underline): <CSI %sm>",
 			numbers[index],
 			joinUints(numbers[baseIndex:]))
 		return -1, nil, err
