@@ -156,16 +156,6 @@ func (color Color) ansiString(cType colorType, terminalColorCount ColorCount) st
 	panic(fmt.Errorf("unhandled color type=%d %s", color.ColorCount(), color.String()))
 }
 
-func (color Color) ForegroundAnsiString(terminalColorCount ColorCount) string {
-	// FIXME: Test this function with all different color types.
-	return color.ansiString(colorTypeForeground, terminalColorCount)
-}
-
-func (color Color) BackgroundAnsiString(terminalColorCount ColorCount) string {
-	// FIXME: Test this function with all different color types.
-	return color.ansiString(colorTypeBackground, terminalColorCount)
-}
-
 func (color Color) String() string {
 	switch color.ColorCount() {
 	case ColorCountDefault:

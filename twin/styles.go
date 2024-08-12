@@ -152,11 +152,11 @@ func (current Style) RenderUpdateFrom(previous Style, terminalColorCount ColorCo
 
 	var builder strings.Builder
 	if current.fg != previous.fg {
-		builder.WriteString(current.fg.ForegroundAnsiString(terminalColorCount))
+		builder.WriteString(current.fg.ansiString(colorTypeForeground, terminalColorCount))
 	}
 
 	if current.bg != previous.bg {
-		builder.WriteString(current.bg.BackgroundAnsiString(terminalColorCount))
+		builder.WriteString(current.bg.ansiString(colorTypeBackground, terminalColorCount))
 	}
 
 	// Handle AttrDim / AttrBold changes
