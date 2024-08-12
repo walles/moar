@@ -1,0 +1,1 @@
+[4m[58:5:196mRed underline[59m Default colored underline
