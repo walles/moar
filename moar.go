@@ -803,7 +803,7 @@ func main() {
 
 	pager, screen, style, formatter, err := pagerFromArgs(
 		os.Args,
-		twin.NewScreenWithMouseModeAndColorType,
+		twin.NewScreenWithMouseModeAndColorCount,
 		stdinIsRedirected,
 		stdoutIsRedirected,
 	)

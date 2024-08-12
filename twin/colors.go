@@ -55,8 +55,8 @@ var colorNames16 = map[int]string{
 	15: "15 bright white",
 }
 
-func newColor(colorType ColorCount, value uint32) Color {
-	return Color(value | (uint32(colorType) << 24))
+func newColor(colorCount ColorCount, value uint32) Color {
+	return Color(value | (uint32(colorCount) << 24))
 }
 
 // Four bit colors as defined here:
@@ -77,7 +77,7 @@ func NewColorHex(rgb uint32) Color {
 	return newColor(ColorCount24bit, rgb)
 }
 
-func (color Color) ColorType() ColorCount {
+func (color Color) ColorCount() ColorCount {
 	return ColorCount(color >> 24)
 }
 
@@ -94,13 +94,13 @@ func (color Color) ansiString(foreground bool, terminalColorCount ColorCount) st
 		fgBgMarker = "4"
 	}
 
-	if color.ColorType() == ColorCountDefault {
+	if color.ColorCount() == ColorCountDefault {
 		return fmt.Sprint("\x1b[", fgBgMarker, "9m")
 	}
 
 	color = color.downsampleTo(terminalColorCount)
 
-	if color.ColorType() == ColorCount16 {
+	if color.ColorCount() == ColorCount16 {
 		value := color.colorValue()
 		if value < 8 {
 			return fmt.Sprint("\x1b[", fgBgMarker, value, "m")
@@ -113,14 +113,14 @@ func (color Color) ansiString(foreground bool, terminalColorCount ColorCount) st
 		}
 	}
 
-	if color.ColorType() == ColorCount256 {
+	if color.ColorCount() == ColorCount256 {
 		value := color.colorValue()
 		if value <= 255 {
 			return fmt.Sprint("\x1b[", fgBgMarker, "8;5;", value, "m")
 		}
 	}
 
-	if color.ColorType() == ColorCount24bit {
+	if color.ColorCount() == ColorCount24bit {
 		value := color.colorValue()
 		red := (value & 0xff0000) >> 16
 		green := (value & 0xff00) >> 8
@@ -129,7 +129,7 @@ func (color Color) ansiString(foreground bool, terminalColorCount ColorCount) st
 		return fmt.Sprint("\x1b[", fgBgMarker, "8;2;", red, ";", green, ";", blue, "m")
 	}
 
-	panic(fmt.Errorf("unhandled color type=%d %s", color.ColorType(), color.String()))
+	panic(fmt.Errorf("unhandled color type=%d %s", color.ColorCount(), color.String()))
 }
 
 func (color Color) ForegroundAnsiString(terminalColorCount ColorCount) string {
@@ -143,7 +143,7 @@ func (color Color) BackgroundAnsiString(terminalColorCount ColorCount) string {
 }
 
 func (color Color) String() string {
-	switch color.ColorType() {
+	switch color.ColorCount() {
 	case ColorCountDefault:
 		return "Default color"
 
@@ -160,28 +160,28 @@ func (color Color) String() string {
 		return fmt.Sprintf("#%06x", color.colorValue())
 	}
 
-	panic(fmt.Errorf("unhandled color type %d", color.ColorType()))
+	panic(fmt.Errorf("unhandled color type %d", color.ColorCount()))
 }
 
 func (color Color) to24Bit() Color {
-	if color.ColorType() == ColorCount24bit {
+	if color.ColorCount() == ColorCount24bit {
 		return color
 	}
 
-	if color.ColorType() == ColorCount8 || color.ColorType() == ColorCount16 || color.ColorType() == ColorCount256 {
+	if color.ColorCount() == ColorCount8 || color.ColorCount() == ColorCount16 || color.ColorCount() == ColorCount256 {
 		r0, g0, b0 := color256ToRGB(uint8(color.colorValue()))
 		return NewColor24Bit(r0, g0, b0)
 	}
 
-	panic(fmt.Errorf("unhandled color type %d", color.ColorType()))
+	panic(fmt.Errorf("unhandled color type %d", color.ColorCount()))
 }
 
 func (color Color) downsampleTo(terminalColorCount ColorCount) Color {
-	if color.ColorType() == ColorCountDefault || terminalColorCount == ColorCountDefault {
+	if color.ColorCount() == ColorCountDefault || terminalColorCount == ColorCountDefault {
 		panic(fmt.Errorf("downsampling to or from default color not supported, %s -> %#v", color.String(), terminalColorCount))
 	}
 
-	if color.ColorType() <= terminalColorCount {
+	if color.ColorCount() <= terminalColorCount {
 		// Already low enough
 		return color
 	}
@@ -234,7 +234,7 @@ func (color Color) downsampleTo(terminalColorCount ColorCount) Color {
 // The result from this function has been scaled to 0.0-1.0, where 1.0 is the
 // distance between black and white.
 func (color Color) Distance(other Color) float64 {
-	if color.ColorType() != ColorCount24bit {
+	if color.ColorCount() != ColorCount24bit {
 		panic(fmt.Errorf("contrast only supported for 24 bit colors, got %s vs %s", color.String(), other.String()))
 	}
 

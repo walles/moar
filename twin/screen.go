@@ -126,10 +126,10 @@ func NewScreenWithMouseMode(mouseMode MouseMode) (Screen, error) {
 		// Covers "xterm-256color" as used by the macOS Terminal
 		terminalColorCount = ColorCount256
 	}
-	return NewScreenWithMouseModeAndColorType(mouseMode, terminalColorCount)
+	return NewScreenWithMouseModeAndColorCount(mouseMode, terminalColorCount)
 }
 
-func NewScreenWithMouseModeAndColorType(mouseMode MouseMode, terminalColorCount ColorCount) (Screen, error) {
+func NewScreenWithMouseModeAndColorCount(mouseMode MouseMode, terminalColorCount ColorCount) (Screen, error) {
 	if !term.IsTerminal(int(os.Stdout.Fd())) {
 		return nil, fmt.Errorf("stdout (fd=%d) must be a terminal for paging to work", os.Stdout.Fd())
 	}
@@ -181,7 +181,7 @@ func NewScreenWithMouseModeAndColorType(mouseMode MouseMode, terminalColorCount 
 
 	go func() {
 		defer func() {
-			panicHandler("NewScreenWithMouseModeAndColorType()/mainLoop()", recover())
+			panicHandler("NewScreenWithMouseModeAndColorCount()/mainLoop()", recover())
 		}()
 
 		screen.mainLoop()
@@ -413,7 +413,7 @@ func (screen *UnixScreen) mainLoop() {
 		}
 
 		// We only expect this on entry, it's requested right before we start
-		// the main loop in NewScreenWithMouseModeAndColorType().
+		// the main loop in NewScreenWithMouseModeAndColorCount().
 		expectingTerminalBackgroundColor = false
 
 		if count > maxBytesRead {
