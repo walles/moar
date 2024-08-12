@@ -1,6 +1,7 @@
 package twin
 
 import (
+	"strings"
 	"testing"
 
 	"gotest.tools/v3/assert"
@@ -30,16 +31,22 @@ func TestRealWorldDownsampling(t *testing.T) {
 }
 
 func TestAnsiStringWithDownSampling(t *testing.T) {
+	actual := NewColor24Bit(0xd0, 0xd0, 0xd0).ansiString(colorTypeForeground, ColorCount256)
+	actual = strings.ReplaceAll(actual, "\x1b", "ESC")
+	expected := "ESC[38;5;252m"
 	assert.Equal(t,
-		NewColor24Bit(0xd0, 0xd0, 0xd0).ansiString(true, ColorCount256),
-		"\x1b[38;5;252m",
+		actual,
+		expected,
 	)
 }
 
 func TestAnsiStringDefault(t *testing.T) {
+	actual := ColorDefault.ansiString(colorTypeBackground, ColorCount16)
+	actual = strings.ReplaceAll(actual, "\x1b", "ESC")
+	expected := "ESC[49m"
 	assert.Equal(t,
-		ColorDefault.ansiString(true, ColorCount16),
-		"\x1b[39m",
+		actual,
+		expected,
 	)
 }
 

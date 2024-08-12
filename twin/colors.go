@@ -10,6 +10,7 @@ import (
 // Create using NewColor16(), NewColor256 or NewColor24Bit(), or use
 // ColorDefault.
 type Color uint32
+
 type ColorCount uint8
 
 const (
@@ -30,6 +31,14 @@ const (
 
 	// RGB: https://en.wikipedia.org/wiki/ANSI_escape_code#24-bit
 	ColorCount24bit
+)
+
+type colorType uint8
+
+const (
+	colorTypeForeground colorType = iota
+	colorTypeBackground
+	colorTypeUnderline
 )
 
 // Reset to default foreground / background color
@@ -88,35 +97,50 @@ func (color Color) colorValue() uint32 {
 // Render color into an ANSI string.
 //
 // Ref: https://en.wikipedia.org/wiki/ANSI_escape_code#SGR_(Select_Graphic_Rendition)_parameters
-func (color Color) ansiString(foreground bool, terminalColorCount ColorCount) string {
-	fgBgMarker := "3"
-	if !foreground {
-		fgBgMarker = "4"
+func (color Color) ansiString(cType colorType, terminalColorCount ColorCount) string {
+	var typeMarker string
+	if cType == colorTypeForeground {
+		typeMarker = "3"
+	} else if cType == colorTypeBackground {
+		typeMarker = "4"
+	} else if cType == colorTypeUnderline {
+		typeMarker = "5"
+	} else {
+		panic(fmt.Errorf("unhandled color type %d", cType))
 	}
 
 	if color.ColorCount() == ColorCountDefault {
-		return fmt.Sprint("\x1b[", fgBgMarker, "9m")
+		return fmt.Sprint("\x1b[", typeMarker, "9m")
 	}
 
 	color = color.downsampleTo(terminalColorCount)
 
+	// We never create any ColorCount8 colors, but we store them as
+	// ColorCount16. So this if() statement will cover both.
 	if color.ColorCount() == ColorCount16 {
+		if cType == colorTypeUnderline {
+			// Only 256 and 24 bit colors supported for underline color
+			return ""
+		}
+
 		value := color.colorValue()
 		if value < 8 {
-			return fmt.Sprint("\x1b[", fgBgMarker, value, "m")
+			return fmt.Sprint("\x1b[", typeMarker, value, "m")
 		} else if value <= 15 {
-			fgBgMarker := "9"
-			if !foreground {
-				fgBgMarker = "10"
+			typeMarker := "9"
+			if cType == colorTypeBackground {
+				typeMarker = "10"
 			}
-			return fmt.Sprint("\x1b[", fgBgMarker, value-8, "m")
+			return fmt.Sprint("\x1b[", typeMarker, value-8, "m")
 		}
+
+		panic(fmt.Errorf("unhandled color16 value %d", value))
 	}
 
 	if color.ColorCount() == ColorCount256 {
 		value := color.colorValue()
 		if value <= 255 {
-			return fmt.Sprint("\x1b[", fgBgMarker, "8;5;", value, "m")
+			return fmt.Sprint("\x1b[", typeMarker, "8;5;", value, "m")
 		}
 	}
 
@@ -126,7 +150,7 @@ func (color Color) ansiString(foreground bool, terminalColorCount ColorCount) st
 		green := (value & 0xff00) >> 8
 		blue := value & 0xff
 
-		return fmt.Sprint("\x1b[", fgBgMarker, "8;2;", red, ";", green, ";", blue, "m")
+		return fmt.Sprint("\x1b[", typeMarker, "8;2;", red, ";", green, ";", blue, "m")
 	}
 
 	panic(fmt.Errorf("unhandled color type=%d %s", color.ColorCount(), color.String()))
@@ -134,12 +158,12 @@ func (color Color) ansiString(foreground bool, terminalColorCount ColorCount) st
 
 func (color Color) ForegroundAnsiString(terminalColorCount ColorCount) string {
 	// FIXME: Test this function with all different color types.
-	return color.ansiString(true, terminalColorCount)
+	return color.ansiString(colorTypeForeground, terminalColorCount)
 }
 
 func (color Color) BackgroundAnsiString(terminalColorCount ColorCount) string {
 	// FIXME: Test this function with all different color types.
-	return color.ansiString(false, terminalColorCount)
+	return color.ansiString(colorTypeBackground, terminalColorCount)
 }
 
 func (color Color) String() string {
