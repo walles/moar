@@ -219,6 +219,24 @@ func TestCodeHighlight_compressed(t *testing.T) {
 	}
 }
 
+// Regression test for:
+// https://github.com/walles/moar/issues/236#issuecomment-2282677792
+//
+// Sample file sysctl.h from:
+// https://github.com/fastfetch-cli/fastfetch/blob/f9597eba39d6afd278eeca2f2972f73a7e54f111/src/common/sysctl.h
+func TestCodeHighlightingIncludes(t *testing.T) {
+	reader, err := NewReaderFromFilename("../sample-files/sysctl.h", *styles.Get("native"), formatters.TTY16m, nil)
+	assert.NilError(t, err)
+	assert.NilError(t, reader._wait())
+
+	screen := startPaging(t, reader)
+	firstIncludeLine := screen.GetRow(2)
+	secondIncludeLine := screen.GetRow(3)
+
+	// Both should start with "#include" colored the same way
+	assertCellsEqual(t, firstIncludeLine[0], secondIncludeLine[0])
+}
+
 func TestUnicodePrivateUse(t *testing.T) {
 	// This character lives in a Private Use Area:
 	// https://codepoints.net/U+f244
