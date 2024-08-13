@@ -119,10 +119,10 @@ func styleUI(chromaStyle *chroma.Style, chromaFormatter *chroma.Formatter, statu
 
 	chromaLineNumbers := twinStyleFromChroma(chromaStyle, chromaFormatter, chroma.LineNumbers, true)
 	if chromaLineNumbers != nil {
-		// If somebody can provide an example where not-dimmed line numbers
-		// looks good I'll change this, but until then they will be dimmed no
-		// matter what the theme authors think.
-		lineNumbersStyle = chromaLineNumbers.WithAttr(twin.AttrDim)
+		// NOTE: We used to dim line numbers here, but Johan found them too hard
+		// to read. If line numbers should look some other way for some Chroma
+		// style, go fix that in Chroma!
+		lineNumbersStyle = *chromaLineNumbers
 	}
 
 	if standoutStyle != nil {
