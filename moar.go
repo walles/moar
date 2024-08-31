@@ -8,6 +8,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"runtime"
+	"runtime/debug"
 	"sort"
 	"strconv"
 	"strings"
@@ -36,7 +37,7 @@ const defaultDarkTheme = "native"
 // and I like the looks of it.
 const defaultLightTheme = "tango"
 
-var versionString = "Should be set when building, please use build.sh to build"
+var versionString = ""
 
 func renderLessTermcapEnvVar(envVarName string, description string, colors twin.ColorCount) string {
 	value := os.Getenv(envVarName)
@@ -276,7 +277,7 @@ func printProblemsHeader() {
 	fmt.Fprintln(os.Stderr, "Please post the following report at <https://github.com/walles/moar/issues>,")
 	fmt.Fprintln(os.Stderr, "or e-mail it to johan.walles@gmail.com.")
 	fmt.Fprintln(os.Stderr)
-	fmt.Fprintln(os.Stderr, "Version:", versionString)
+	fmt.Fprintln(os.Stderr, "Version:", getVersion())
 	fmt.Fprintln(os.Stderr, "LANG   :", os.Getenv("LANG"))
 	fmt.Fprintln(os.Stderr, "TERM   :", os.Getenv("TERM"))
 	fmt.Fprintln(os.Stderr, "MOAR   :", os.Getenv("MOAR"))
@@ -516,6 +517,19 @@ func noLineNumbersDefault() bool {
 	return false
 }
 
+// Return complete version when built with build.sh or fallback to module version (i.e. "go install")
+func getVersion() string {
+	if versionString != "" {
+		return versionString
+	}
+	info, ok := debug.ReadBuildInfo()
+	if ok {
+		return info.Main.Version
+	} else {
+		return "Should be set when building, please use build.sh to build"
+	}
+}
+
 // Can return a nil pager on --help or --version, or if pumping to stdout.
 func pagerFromArgs(
 	args []string,
@@ -608,7 +622,7 @@ func pagerFromArgs(
 	}
 
 	if *printVersion {
-		fmt.Println(versionString)
+		fmt.Println(getVersion())
 		return nil, nil, chroma.Style{}, nil, nil
 	}
 
