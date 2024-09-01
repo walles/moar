@@ -525,9 +525,8 @@ func getVersion() string {
 	info, ok := debug.ReadBuildInfo()
 	if ok {
 		return info.Main.Version
-	} else {
-		return "Should be set when building, please use build.sh to build"
 	}
+	return "Should be set when building, please use build.sh to build"
 }
 
 // Can return a nil pager on --help or --version, or if pumping to stdout.
