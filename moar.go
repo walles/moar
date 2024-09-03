@@ -523,7 +523,7 @@ func getVersion() string {
 		return versionString
 	}
 	info, ok := debug.ReadBuildInfo()
-	if ok {
+	if ok && info.Main.Version != "" && info.Main.Version != "(devel)" {
 		return info.Main.Version
 	}
 	return "Should be set when building, please use build.sh to build"
