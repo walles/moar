@@ -3,6 +3,7 @@ package m
 import (
 	"bufio"
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"io"
 	"os"
@@ -112,11 +113,9 @@ func (reader *Reader) preAllocLines() {
 func (reader *Reader) readStream(stream io.Reader, formatter chroma.Formatter, lexer chroma.Lexer) {
 	reader.consumeLinesFromStream(stream)
 
-	if lexer != nil {
-		t0 := time.Now()
-		highlightFromMemory(reader, <-reader.highlightingStyle, formatter, lexer)
-		log.Debug("highlightFromMemory() took ", time.Since(t0))
-	}
+	t0 := time.Now()
+	highlightFromMemory(reader, <-reader.highlightingStyle, formatter, lexer)
+	log.Debug("highlightFromMemory() took ", time.Since(t0))
 
 	reader.done.Store(true)
 	select {
@@ -534,10 +533,6 @@ func NewReaderFromFilename(filename string, style chroma.Style, formatter chroma
 
 // We expect this to be executed in a goroutine
 func highlightFromMemory(reader *Reader, style chroma.Style, formatter chroma.Formatter, lexer chroma.Lexer) {
-	if lexer == nil {
-		return
-	}
-
 	defer func() {
 		reader.highlightingDone.Store(true)
 		select {
@@ -546,17 +541,19 @@ func highlightFromMemory(reader *Reader, style chroma.Style, formatter chroma.Fo
 		}
 	}()
 
+	// Is the buffer small enough?
 	var byteCount int64
 	reader.Lock()
 	for _, line := range reader.lines {
 		byteCount += int64(len(line.raw))
+
+		if byteCount > MAX_HIGHLIGHT_SIZE {
+			log.Debug("File too large for highlighting: ", byteCount)
+			reader.Unlock()
+			return
+		}
 	}
 	reader.Unlock()
-
-	if byteCount > MAX_HIGHLIGHT_SIZE {
-		log.Debug("File too large for highlighting: ", byteCount)
-		return
-	}
 
 	textBuilder := strings.Builder{}
 	reader.Lock()
@@ -565,8 +562,19 @@ func highlightFromMemory(reader *Reader, style chroma.Style, formatter chroma.Fo
 		textBuilder.WriteString("\n")
 	}
 	reader.Unlock()
+	text := textBuilder.String()
 
-	highlighted, err := highlight(textBuilder.String(), style, formatter, lexer)
+	if lexer == nil && json.Valid([]byte(text)) {
+		log.Debug("Buffer is valid JSON, highlighting as JSON")
+		lexer = lexers.Get("json")
+	}
+
+	if lexer == nil {
+		log.Debug("No lexer set for highlighting")
+		return
+	}
+
+	highlighted, err := highlight(text, style, formatter, lexer)
 	if err != nil {
 		log.Warn("Highlighting failed: ", err)
 		return
