@@ -208,9 +208,12 @@ func (s *styledStringSplitter) handleOsc(sequence string) error {
 
 // We just got ESC]8; and should now read the URL. URLs end with ASCII 7 BEL or ESC \.
 func (s *styledStringSplitter) handleURL() error {
+	// Ref: https://github.com/walles/moar/issues/244#issuecomment-2350908401
+	const windowsURLChars = `\`
+
 	// Valid URL characters.
 	// Ref: https://stackoverflow.com/a/1547940/473672
-	const validChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~:/?#[]@!$&'()*+,;="
+	const validChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~:/?#[]@!$&'()*+,;=" + windowsURLChars
 
 	// Points to right after "ESC]8;"
 	urlStartIndex := s.nextByteIndex
