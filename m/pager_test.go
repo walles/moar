@@ -659,6 +659,33 @@ func TestInitStyle256(t *testing.T) {
 	)
 }
 
+// Render a line of text on our 20 cell wide screen
+func renderTextLine(text string) string {
+	reader := NewReaderFromText("renderTextLine", text)
+	screen := startPaging(nil, reader)
+	return rowToString(screen.GetRow(0))
+}
+
+// Ref: https://github.com/walles/moar/issues/243
+func TestPageWideChars(t *testing.T) {
+	// Both of these characters are 2 cells wide on a terminal
+	const monospaced4cells = "上午"
+	const monospaced8cells = monospaced4cells + monospaced4cells
+	const monospaced16cells = monospaced8cells + monospaced8cells
+	const monospaced20cells = monospaced16cells + monospaced4cells
+	const monospaced24cells = monospaced16cells + monospaced8cells
+
+	// Cut the line in the middle of a wide character
+	const monospaced18cells = monospaced16cells + "午"
+	assert.Equal(t, monospaced18cells+" >", renderTextLine(monospaced24cells))
+
+	// Just the right length, no cutting
+	assert.Equal(t, monospaced20cells, renderTextLine(monospaced20cells))
+
+	// Cut this line after a whide character
+	assert.Equal(t, "x"+monospaced18cells+">", renderTextLine("x"+monospaced24cells))
+}
+
 func benchmarkSearch(b *testing.B, highlighted bool) {
 	// Pick a go file so we get something with highlighting
 	_, sourceFilename, _, ok := runtime.Caller(0)
