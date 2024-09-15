@@ -4,6 +4,8 @@ import (
 	"reflect"
 	"testing"
 
+	"gotest.tools/v3/assert"
+
 	"github.com/walles/moar/twin"
 )
 
@@ -119,4 +121,13 @@ func TestWordWrapWideChars(t *testing.T) {
 	assertWrap(t, "x上午y", 4, "x上", "午y")
 	assertWrap(t, "x上午y", 3, "x上", "午y")
 	assertWrap(t, "x上午y", 2, "x", "上", "午", "y")
+}
+
+func TestGetWrapCountWideChars(t *testing.T) {
+	line := tokenize("x上午y")
+	assert.Equal(t, getWrapCount(line, 5), 3)
+	assert.Equal(t, getWrapCount(line, 4), 2)
+	assert.Equal(t, getWrapCount(line, 3), 2)
+	assert.Equal(t, getWrapCount(line, 2), 1)
+	assert.Equal(t, getWrapCount(line, 1), 1)
 }

@@ -62,6 +62,10 @@ func getWrapCount(line []twin.StyledRune, maxScreenCellsCount int) int {
 		screenCells += line[cutBeforeThisIndex].Width()
 		if screenCells > maxScreenCellsCount {
 			// We went too far
+			if bestCutPoint > cutBeforeThisIndex {
+				// We have to cut here
+				bestCutPoint = cutBeforeThisIndex
+			}
 			break
 		}
 	}
