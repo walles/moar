@@ -81,6 +81,8 @@ func TestWordWrap(t *testing.T) {
 	assertWrap(t, "abc 123", 4, "abc", "123")
 	assertWrap(t, "abc 123", 3, "abc", "123")
 	assertWrap(t, "abc 123", 2, "ab", "c", "12", "3")
+
+	assertWrap(t, "here's the last line", 10, "here's the", "last line")
 }
 
 func TestWordWrapUrl(t *testing.T) {
