@@ -12,7 +12,7 @@ import (
 //revive:disable-next-line:var-naming
 const NO_BREAK_SPACE = '\xa0'
 
-func getWrapWidth(line []twin.Cell, maxWrapWidth int) int {
+func getWrapWidth(line []twin.StyledRune, maxWrapWidth int) int {
 	if len(line) <= maxWrapWidth {
 		panic(fmt.Errorf("cannot compute wrap width when input isn't longer than max (%d<=%d)",
 			len(line), maxWrapWidth))
@@ -49,16 +49,16 @@ func getWrapWidth(line []twin.Cell, maxWrapWidth int) int {
 	return maxWrapWidth
 }
 
-func wrapLine(width int, line []twin.Cell) [][]twin.Cell {
+func wrapLine(width int, line []twin.StyledRune) [][]twin.StyledRune {
 	// Trailing space risks showing up by itself on a line, which would just
 	// look weird.
 	line = twin.TrimSpaceRight(line)
 
 	if len(line) == 0 {
-		return [][]twin.Cell{{}}
+		return [][]twin.StyledRune{{}}
 	}
 
-	wrapped := make([][]twin.Cell, 0, len(line)/width)
+	wrapped := make([][]twin.StyledRune, 0, len(line)/width)
 	for len(line) > width {
 		wrapWidth := getWrapWidth(line, width)
 		firstPart := line[:wrapWidth]

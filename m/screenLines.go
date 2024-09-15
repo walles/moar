@@ -22,7 +22,7 @@ type renderedLine struct {
 	// will have a wrapIndex of 1.
 	wrapIndex int
 
-	cells []twin.Cell
+	cells []twin.StyledRune
 
 	// Used for rendering clear-to-end-of-line control sequences:
 	// https://en.wikipedia.org/wiki/ANSI_escape_code#EL
@@ -38,7 +38,7 @@ func (p *Pager) redraw(spinner string) overflowState {
 	p.longestLineLength = 0
 
 	lastUpdatedScreenLineNumber := -1
-	var renderedScreenLines [][]twin.Cell
+	var renderedScreenLines [][]twin.StyledRune
 	renderedScreenLines, statusText, overflow := p.renderScreenLines()
 	for screenLineNumber, row := range renderedScreenLines {
 		lastUpdatedScreenLineNumber = screenLineNumber
@@ -54,7 +54,7 @@ func (p *Pager) redraw(spinner string) overflowState {
 		// This happens when we're done
 		eofSpinner = "---"
 	}
-	spinnerLine := textstyles.CellsFromString("", _EofMarkerFormat+eofSpinner, nil).Cells
+	spinnerLine := textstyles.StyledRunesFromString("", _EofMarkerFormat+eofSpinner, nil).StyledRunes
 	for column, cell := range spinnerLine {
 		p.screen.SetCell(column, lastUpdatedScreenLineNumber+1, cell)
 	}
@@ -71,14 +71,14 @@ func (p *Pager) redraw(spinner string) overflowState {
 //
 // The lines returned by this method are decorated with horizontal scroll
 // markers and line numbers and are ready to be output to the screen.
-func (p *Pager) renderScreenLines() (lines [][]twin.Cell, statusText string, overflow overflowState) {
+func (p *Pager) renderScreenLines() (lines [][]twin.StyledRune, statusText string, overflow overflowState) {
 	renderedLines, statusText, overflow := p.renderLines()
 	if len(renderedLines) == 0 {
 		return
 	}
 
 	// Construct the screen lines to return
-	screenLines := make([][]twin.Cell, 0, len(renderedLines))
+	screenLines := make([][]twin.StyledRune, 0, len(renderedLines))
 	for _, renderedLine := range renderedLines {
 		screenLines = append(screenLines, renderedLine.cells)
 
@@ -90,7 +90,7 @@ func (p *Pager) renderScreenLines() (lines [][]twin.Cell, statusText string, ove
 		screenWidth, _ := p.screen.Size()
 		for len(screenLines[len(screenLines)-1]) < screenWidth {
 			screenLines[len(screenLines)-1] =
-				append(screenLines[len(screenLines)-1], twin.NewCell(' ', renderedLine.trailer))
+				append(screenLines[len(screenLines)-1], twin.NewStyledRune(' ', renderedLine.trailer))
 		}
 	}
 
@@ -214,14 +214,14 @@ func (p *Pager) renderLines() ([]renderedLine, string, overflowState) {
 // indent, and to (optionally) render the line number.
 func (p *Pager) renderLine(line *Line, lineNumber linenumbers.LineNumber, scrollPosition scrollPositionInternal) ([]renderedLine, overflowState) {
 	highlighted := line.HighlightedTokens(p.linePrefix, p.searchPattern, &lineNumber)
-	var wrapped [][]twin.Cell
+	var wrapped [][]twin.StyledRune
 	overflow := didFit
 	if p.WrapLongLines {
 		width, _ := p.screen.Size()
-		wrapped = wrapLine(width-numberPrefixLength(p, scrollPosition), highlighted.Cells)
+		wrapped = wrapLine(width-numberPrefixLength(p, scrollPosition), highlighted.StyledRunes)
 	} else {
 		// All on one line
-		wrapped = [][]twin.Cell{highlighted.Cells}
+		wrapped = [][]twin.StyledRune{highlighted.StyledRunes}
 	}
 
 	if len(wrapped) > 1 {
@@ -260,9 +260,9 @@ func (p *Pager) renderLine(line *Line, lineNumber linenumbers.LineNumber, scroll
 // * Line number, or leading whitespace for wrapped lines
 // * Scroll left indicator
 // * Scroll right indicator
-func (p *Pager) decorateLine(lineNumberToShow *linenumbers.LineNumber, contents []twin.Cell, scrollPosition scrollPositionInternal) ([]twin.Cell, overflowState) {
+func (p *Pager) decorateLine(lineNumberToShow *linenumbers.LineNumber, contents []twin.StyledRune, scrollPosition scrollPositionInternal) ([]twin.StyledRune, overflowState) {
 	width, _ := p.screen.Size()
-	newLine := make([]twin.Cell, 0, width)
+	newLine := make([]twin.StyledRune, 0, width)
 	numberPrefixLength := numberPrefixLength(p, scrollPosition)
 	newLine = append(newLine, createLinePrefix(lineNumberToShow, numberPrefixLength)...)
 	overflow := didFit
@@ -282,7 +282,7 @@ func (p *Pager) decorateLine(lineNumberToShow *linenumbers.LineNumber, contents 
 		if len(newLine) == 0 {
 			// Don't panic on short lines, this new Cell will be
 			// overwritten with '<' right after this if statement
-			newLine = append(newLine, twin.Cell{})
+			newLine = append(newLine, twin.StyledRune{})
 		}
 
 		// Add can-scroll-left marker
@@ -306,15 +306,15 @@ func (p *Pager) decorateLine(lineNumberToShow *linenumbers.LineNumber, contents 
 // Generate a line number prefix of the given length.
 //
 // Can be empty or all-whitespace depending on parameters.
-func createLinePrefix(lineNumber *linenumbers.LineNumber, numberPrefixLength int) []twin.Cell {
+func createLinePrefix(lineNumber *linenumbers.LineNumber, numberPrefixLength int) []twin.StyledRune {
 	if numberPrefixLength == 0 {
-		return []twin.Cell{}
+		return []twin.StyledRune{}
 	}
 
-	lineNumberPrefix := make([]twin.Cell, 0, numberPrefixLength)
+	lineNumberPrefix := make([]twin.StyledRune, 0, numberPrefixLength)
 	if lineNumber == nil {
 		for len(lineNumberPrefix) < numberPrefixLength {
-			lineNumberPrefix = append(lineNumberPrefix, twin.Cell{Rune: ' '})
+			lineNumberPrefix = append(lineNumberPrefix, twin.StyledRune{Rune: ' '})
 		}
 		return lineNumberPrefix
 	}
@@ -331,7 +331,7 @@ func createLinePrefix(lineNumber *linenumbers.LineNumber, numberPrefixLength int
 			break
 		}
 
-		lineNumberPrefix = append(lineNumberPrefix, twin.NewCell(digit, lineNumbersStyle))
+		lineNumberPrefix = append(lineNumberPrefix, twin.NewStyledRune(digit, lineNumbersStyle))
 	}
 
 	return lineNumberPrefix

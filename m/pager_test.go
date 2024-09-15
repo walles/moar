@@ -27,19 +27,19 @@ const blueBackgroundClearToEol = "\x1b[44m\x1b[K"   // No 0 before the K, should
 func TestUnicodeRendering(t *testing.T) {
 	reader := NewReaderFromText("", "åäö")
 
-	var answers = []twin.Cell{
-		twin.NewCell('å', twin.StyleDefault),
-		twin.NewCell('ä', twin.StyleDefault),
-		twin.NewCell('ö', twin.StyleDefault),
+	var answers = []twin.StyledRune{
+		twin.NewStyledRune('å', twin.StyleDefault),
+		twin.NewStyledRune('ä', twin.StyleDefault),
+		twin.NewStyledRune('ö', twin.StyleDefault),
 	}
 
 	contents := startPaging(t, reader).GetRow(0)
 	for pos, expected := range answers {
-		assertCellsEqual(t, expected, contents[pos])
+		assertRunesEqual(t, expected, contents[pos])
 	}
 }
 
-func assertCellsEqual(t *testing.T, expected twin.Cell, actual twin.Cell) {
+func assertRunesEqual(t *testing.T, expected twin.StyledRune, actual twin.StyledRune) {
 	if actual.Rune == expected.Rune && actual.Style == expected.Style {
 		return
 	}
@@ -51,21 +51,21 @@ func TestFgColorRendering(t *testing.T) {
 	reader := NewReaderFromText("",
 		"\x1b[30ma\x1b[31mb\x1b[32mc\x1b[33md\x1b[34me\x1b[35mf\x1b[36mg\x1b[37mh\x1b[0mi")
 
-	var answers = []twin.Cell{
-		twin.NewCell('a', twin.StyleDefault.WithForeground(twin.NewColor16(0))),
-		twin.NewCell('b', twin.StyleDefault.WithForeground(twin.NewColor16(1))),
-		twin.NewCell('c', twin.StyleDefault.WithForeground(twin.NewColor16(2))),
-		twin.NewCell('d', twin.StyleDefault.WithForeground(twin.NewColor16(3))),
-		twin.NewCell('e', twin.StyleDefault.WithForeground(twin.NewColor16(4))),
-		twin.NewCell('f', twin.StyleDefault.WithForeground(twin.NewColor16(5))),
-		twin.NewCell('g', twin.StyleDefault.WithForeground(twin.NewColor16(6))),
-		twin.NewCell('h', twin.StyleDefault.WithForeground(twin.NewColor16(7))),
-		twin.NewCell('i', twin.StyleDefault),
+	var answers = []twin.StyledRune{
+		twin.NewStyledRune('a', twin.StyleDefault.WithForeground(twin.NewColor16(0))),
+		twin.NewStyledRune('b', twin.StyleDefault.WithForeground(twin.NewColor16(1))),
+		twin.NewStyledRune('c', twin.StyleDefault.WithForeground(twin.NewColor16(2))),
+		twin.NewStyledRune('d', twin.StyleDefault.WithForeground(twin.NewColor16(3))),
+		twin.NewStyledRune('e', twin.StyleDefault.WithForeground(twin.NewColor16(4))),
+		twin.NewStyledRune('f', twin.StyleDefault.WithForeground(twin.NewColor16(5))),
+		twin.NewStyledRune('g', twin.StyleDefault.WithForeground(twin.NewColor16(6))),
+		twin.NewStyledRune('h', twin.StyleDefault.WithForeground(twin.NewColor16(7))),
+		twin.NewStyledRune('i', twin.StyleDefault),
 	}
 
 	contents := startPaging(t, reader).GetRow(0)
 	for pos, expected := range answers {
-		assertCellsEqual(t, expected, contents[pos])
+		assertRunesEqual(t, expected, contents[pos])
 	}
 }
 
@@ -78,19 +78,19 @@ func TestBrokenUtf8(t *testing.T) {
 	// The broken UTF8 character in the middle is based on "©" = 0xc2a9
 	reader := NewReaderFromText("", "abc\xc2def")
 
-	var answers = []twin.Cell{
-		twin.NewCell('a', twin.StyleDefault),
-		twin.NewCell('b', twin.StyleDefault),
-		twin.NewCell('c', twin.StyleDefault),
-		twin.NewCell('?', twin.StyleDefault.WithForeground(twin.NewColor16(7)).WithBackground(twin.NewColor16(1))),
-		twin.NewCell('d', twin.StyleDefault),
-		twin.NewCell('e', twin.StyleDefault),
-		twin.NewCell('f', twin.StyleDefault),
+	var answers = []twin.StyledRune{
+		twin.NewStyledRune('a', twin.StyleDefault),
+		twin.NewStyledRune('b', twin.StyleDefault),
+		twin.NewStyledRune('c', twin.StyleDefault),
+		twin.NewStyledRune('?', twin.StyleDefault.WithForeground(twin.NewColor16(7)).WithBackground(twin.NewColor16(1))),
+		twin.NewStyledRune('d', twin.StyleDefault),
+		twin.NewStyledRune('e', twin.StyleDefault),
+		twin.NewStyledRune('f', twin.StyleDefault),
 	}
 
 	contents := startPaging(t, reader).GetRow(0)
 	for pos, expected := range answers {
-		assertCellsEqual(t, expected, contents[pos])
+		assertRunesEqual(t, expected, contents[pos])
 	}
 }
 
@@ -171,21 +171,21 @@ func TestCodeHighlighting(t *testing.T) {
 
 	packageKeywordStyle := twin.StyleDefault.WithAttr(twin.AttrBold).WithForeground(twin.NewColorHex(0x6AB825))
 	packageNameStyle := twin.StyleDefault.WithForeground(twin.NewColorHex(0xD0D0D0))
-	var answers = []twin.Cell{
-		twin.NewCell('p', packageKeywordStyle),
-		twin.NewCell('a', packageKeywordStyle),
-		twin.NewCell('c', packageKeywordStyle),
-		twin.NewCell('k', packageKeywordStyle),
-		twin.NewCell('a', packageKeywordStyle),
-		twin.NewCell('g', packageKeywordStyle),
-		twin.NewCell('e', packageKeywordStyle),
-		twin.NewCell(' ', packageNameStyle),
-		twin.NewCell('m', packageNameStyle),
+	var answers = []twin.StyledRune{
+		twin.NewStyledRune('p', packageKeywordStyle),
+		twin.NewStyledRune('a', packageKeywordStyle),
+		twin.NewStyledRune('c', packageKeywordStyle),
+		twin.NewStyledRune('k', packageKeywordStyle),
+		twin.NewStyledRune('a', packageKeywordStyle),
+		twin.NewStyledRune('g', packageKeywordStyle),
+		twin.NewStyledRune('e', packageKeywordStyle),
+		twin.NewStyledRune(' ', packageNameStyle),
+		twin.NewStyledRune('m', packageNameStyle),
 	}
 
 	contents := startPaging(t, reader).GetRow(0)
 	for pos, expected := range answers {
-		assertCellsEqual(t, expected, contents[pos])
+		assertRunesEqual(t, expected, contents[pos])
 	}
 }
 
@@ -196,22 +196,22 @@ func TestCodeHighlight_compressed(t *testing.T) {
 	assert.NilError(t, reader._wait())
 
 	markdownHeading1Style := twin.StyleDefault.WithAttr(twin.AttrBold).WithForeground(twin.NewColorHex(0xffffff))
-	var answers = []twin.Cell{
-		twin.NewCell('#', markdownHeading1Style),
-		twin.NewCell(' ', markdownHeading1Style),
-		twin.NewCell('M', markdownHeading1Style),
-		twin.NewCell('a', markdownHeading1Style),
-		twin.NewCell('r', markdownHeading1Style),
-		twin.NewCell('k', markdownHeading1Style),
-		twin.NewCell('d', markdownHeading1Style),
-		twin.NewCell('o', markdownHeading1Style),
-		twin.NewCell('w', markdownHeading1Style),
-		twin.NewCell('n', markdownHeading1Style),
+	var answers = []twin.StyledRune{
+		twin.NewStyledRune('#', markdownHeading1Style),
+		twin.NewStyledRune(' ', markdownHeading1Style),
+		twin.NewStyledRune('M', markdownHeading1Style),
+		twin.NewStyledRune('a', markdownHeading1Style),
+		twin.NewStyledRune('r', markdownHeading1Style),
+		twin.NewStyledRune('k', markdownHeading1Style),
+		twin.NewStyledRune('d', markdownHeading1Style),
+		twin.NewStyledRune('o', markdownHeading1Style),
+		twin.NewStyledRune('w', markdownHeading1Style),
+		twin.NewStyledRune('n', markdownHeading1Style),
 	}
 
 	contents := startPaging(t, reader).GetRow(0)
 	for pos, expected := range answers {
-		assertCellsEqual(t, expected, contents[pos])
+		assertRunesEqual(t, expected, contents[pos])
 	}
 }
 
@@ -230,7 +230,7 @@ func TestCodeHighlightingIncludes(t *testing.T) {
 	secondIncludeLine := screen.GetRow(3)
 
 	// Both should start with "#include" colored the same way
-	assertCellsEqual(t, firstIncludeLine[0], secondIncludeLine[0])
+	assertRunesEqual(t, firstIncludeLine[0], secondIncludeLine[0])
 }
 
 func TestUnicodePrivateUse(t *testing.T) {
@@ -242,10 +242,10 @@ func TestUnicodePrivateUse(t *testing.T) {
 	char := '\uf244'
 
 	reader := NewReaderFromText("hello", string(char))
-	renderedCell := startPaging(t, reader).GetRow(0)[0]
+	renderedRune := startPaging(t, reader).GetRow(0)[0]
 
 	// Make sure we display this character unmodified
-	assertCellsEqual(t, twin.NewCell(char, twin.StyleDefault), renderedCell)
+	assertRunesEqual(t, twin.NewStyledRune(char, twin.StyleDefault), renderedRune)
 }
 
 func resetManPageFormat() {
@@ -253,7 +253,7 @@ func resetManPageFormat() {
 	textstyles.ManPageUnderline = twin.StyleDefault.WithAttr(twin.AttrUnderline)
 }
 
-func testManPageFormatting(t *testing.T, input string, expected twin.Cell) {
+func testManPageFormatting(t *testing.T, input string, expected twin.StyledRune) {
 	reader := NewReaderFromText("", input)
 
 	// Without these lines the man page tests will fail if either of these
@@ -264,19 +264,19 @@ func testManPageFormatting(t *testing.T, input string, expected twin.Cell) {
 	resetManPageFormat()
 
 	contents := startPaging(t, reader).GetRow(0)
-	assertCellsEqual(t, expected, contents[0])
+	assertRunesEqual(t, expected, contents[0])
 	assert.Equal(t, contents[1].Rune, ' ')
 }
 
 func TestManPageFormatting(t *testing.T) {
-	testManPageFormatting(t, "n\x08n", twin.NewCell('n', twin.StyleDefault.WithAttr(twin.AttrBold)))
-	testManPageFormatting(t, "_\x08x", twin.NewCell('x', twin.StyleDefault.WithAttr(twin.AttrUnderline)))
+	testManPageFormatting(t, "n\x08n", twin.NewStyledRune('n', twin.StyleDefault.WithAttr(twin.AttrBold)))
+	testManPageFormatting(t, "_\x08x", twin.NewStyledRune('x', twin.StyleDefault.WithAttr(twin.AttrUnderline)))
 
 	// Non-breaking space UTF-8 encoded (0xc2a0) should render as a non-breaking unicode space (0xa0)
-	testManPageFormatting(t, string([]byte{0xc2, 0xa0}), twin.NewCell(rune(0xa0), twin.StyleDefault))
+	testManPageFormatting(t, string([]byte{0xc2, 0xa0}), twin.NewStyledRune(rune(0xa0), twin.StyleDefault))
 
 	// Corner cases
-	testManPageFormatting(t, "\x08", twin.NewCell('<', twin.StyleDefault.WithForeground(twin.NewColor16(7)).WithBackground(twin.NewColor16(1))))
+	testManPageFormatting(t, "\x08", twin.NewStyledRune('<', twin.StyleDefault.WithForeground(twin.NewColor16(7)).WithBackground(twin.NewColor16(1))))
 
 	// FIXME: Test two consecutive backspaces
 
@@ -359,7 +359,7 @@ func TestFindFirstHitNoMatchBackwards(t *testing.T) {
 }
 
 // Converts a cell row to a plain string and removes trailing whitespace.
-func rowToString(row []twin.Cell) string {
+func rowToString(row []twin.StyledRune) string {
 	rowString := ""
 	for _, cell := range row {
 		rowString += string(cell.Rune)
@@ -432,7 +432,7 @@ func TestScrollToEndLongInput(t *testing.T) {
 	// line holds the last contents line.
 	lastContentsLine := screen.GetRow(screenHeight - 2)
 	firstContentsColumn := len("10_100 ")
-	assertCellsEqual(t, twin.NewCell('X', twin.StyleDefault), lastContentsLine[firstContentsColumn])
+	assertRunesEqual(t, twin.NewStyledRune('X', twin.StyleDefault), lastContentsLine[firstContentsColumn])
 }
 
 func TestIsScrolledToEnd_LongFile(t *testing.T) {
@@ -581,10 +581,10 @@ func TestClearToEndOfLine_ClearFromStart(t *testing.T) {
 	screen := startPaging(t, NewReaderFromText("TestClearToEol", blueBackgroundClearToEol))
 
 	screenWidth, _ := screen.Size()
-	var expected []twin.Cell
+	var expected []twin.StyledRune
 	for len(expected) < screenWidth {
 		expected = append(expected,
-			twin.NewCell(' ', twin.StyleDefault.WithBackground(twin.NewColor16(4))),
+			twin.NewStyledRune(' ', twin.StyleDefault.WithBackground(twin.NewColor16(4))),
 		)
 	}
 
@@ -597,12 +597,12 @@ func TestClearToEndOfLine_ClearFromNotStart(t *testing.T) {
 	screen := startPaging(t, NewReaderFromText("TestClearToEol", "a"+blueBackgroundClearToEol))
 
 	screenWidth, _ := screen.Size()
-	expected := []twin.Cell{
-		twin.NewCell('a', twin.StyleDefault),
+	expected := []twin.StyledRune{
+		twin.NewStyledRune('a', twin.StyleDefault),
 	}
 	for len(expected) < screenWidth {
 		expected = append(expected,
-			twin.NewCell(' ', twin.StyleDefault.WithBackground(twin.NewColor16(4))),
+			twin.NewStyledRune(' ', twin.StyleDefault.WithBackground(twin.NewColor16(4))),
 		)
 	}
 
@@ -629,10 +629,10 @@ func TestClearToEndOfLine_ClearFromStartScrolledRight(t *testing.T) {
 	pager.redraw("")
 
 	screenWidth, _ := screen.Size()
-	var expected []twin.Cell
+	var expected []twin.StyledRune
 	for len(expected) < screenWidth {
 		expected = append(expected,
-			twin.NewCell(' ', twin.StyleDefault.WithBackground(twin.NewColor16(4))),
+			twin.NewStyledRune(' ', twin.StyleDefault.WithBackground(twin.NewColor16(4))),
 		)
 	}
 

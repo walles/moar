@@ -24,15 +24,15 @@ func NewLine(raw string) Line {
 
 // Returns a representation of the string split into styled tokens. Any regexp
 // matches are highlighted. A nil regexp means no highlighting.
-func (line *Line) HighlightedTokens(linePrefix string, search *regexp.Regexp, lineNumber *linenumbers.LineNumber) textstyles.CellsWithTrailer {
+func (line *Line) HighlightedTokens(linePrefix string, search *regexp.Regexp, lineNumber *linenumbers.LineNumber) textstyles.StyledRunesWithTrailer {
 	plain := line.Plain(lineNumber)
 	matchRanges := getMatchRanges(&plain, search)
 
-	fromString := textstyles.CellsFromString(linePrefix, line.raw, lineNumber)
-	returnCells := make([]twin.Cell, 0, len(fromString.Cells))
-	for _, token := range fromString.Cells {
+	fromString := textstyles.StyledRunesFromString(linePrefix, line.raw, lineNumber)
+	returnRunes := make([]twin.StyledRune, 0, len(fromString.StyledRunes))
+	for _, token := range fromString.StyledRunes {
 		style := token.Style
-		if matchRanges.InRange(len(returnCells)) {
+		if matchRanges.InRange(len(returnRunes)) {
 			if standoutStyle != nil {
 				style = *standoutStyle
 			} else {
@@ -42,15 +42,15 @@ func (line *Line) HighlightedTokens(linePrefix string, search *regexp.Regexp, li
 			}
 		}
 
-		returnCells = append(returnCells, twin.Cell{
+		returnRunes = append(returnRunes, twin.StyledRune{
 			Rune:  token.Rune,
 			Style: style,
 		})
 	}
 
-	return textstyles.CellsWithTrailer{
-		Cells:   returnCells,
-		Trailer: fromString.Trailer,
+	return textstyles.StyledRunesWithTrailer{
+		StyledRunes: returnRunes,
+		Trailer:     fromString.Trailer,
 	}
 }
 

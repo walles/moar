@@ -18,17 +18,17 @@ func (m PagerModeSearch) drawFooter(_ string, _ string) {
 
 	pos := 0
 	for _, token := range "Search: " + m.pager.searchString {
-		m.pager.screen.SetCell(pos, height-1, twin.NewCell(token, twin.StyleDefault))
+		m.pager.screen.SetCell(pos, height-1, twin.NewStyledRune(token, twin.StyleDefault))
 		pos++
 	}
 
 	// Add a cursor
-	m.pager.screen.SetCell(pos, height-1, twin.NewCell(' ', twin.StyleDefault.WithAttr(twin.AttrReverse)))
+	m.pager.screen.SetCell(pos, height-1, twin.NewStyledRune(' ', twin.StyleDefault.WithAttr(twin.AttrReverse)))
 	pos++
 
 	// Clear the rest of the line
 	for pos < width {
-		m.pager.screen.SetCell(pos, height-1, twin.NewCell(' ', twin.StyleDefault))
+		m.pager.screen.SetCell(pos, height-1, twin.NewStyledRune(' ', twin.StyleDefault))
 		pos++
 	}
 }

@@ -36,7 +36,7 @@ type Screen interface {
 
 	Clear()
 
-	SetCell(column int, row int, cell Cell)
+	SetCell(column int, row int, cell StyledRune)
 
 	// Render our contents into the terminal window
 	Show()
@@ -80,7 +80,7 @@ type interruptableReader interface {
 type UnixScreen struct {
 	widthAccessFromSizeOnly  int // Access from Size() method only
 	heightAccessFromSizeOnly int // Access from Size() method only
-	cells                    [][]Cell
+	cells                    [][]StyledRune
 
 	// Note that the type here doesn't matter, we only want to know whether or
 	// not this channel has been signalled
@@ -556,9 +556,9 @@ func (screen *UnixScreen) Size() (width int, height int) {
 		return screen.widthAccessFromSizeOnly, screen.heightAccessFromSizeOnly
 	}
 
-	newCells := make([][]Cell, height)
+	newCells := make([][]StyledRune, height)
 	for rowNumber := 0; rowNumber < height; rowNumber++ {
-		newCells[rowNumber] = make([]Cell, width)
+		newCells[rowNumber] = make([]StyledRune, width)
 	}
 
 	// FIXME: Copy any existing contents over to the new, resized screen array
@@ -627,7 +627,7 @@ func parseTerminalBgColorResponse(responseBytes []byte) *Color {
 	return &color
 }
 
-func (screen *UnixScreen) SetCell(column int, row int, cell Cell) {
+func (screen *UnixScreen) SetCell(column int, row int, cell StyledRune) {
 	if column < 0 {
 		return
 	}
@@ -646,7 +646,7 @@ func (screen *UnixScreen) SetCell(column int, row int, cell Cell) {
 }
 
 func (screen *UnixScreen) Clear() {
-	empty := NewCell(' ', StyleDefault)
+	empty := NewStyledRune(' ', StyleDefault)
 
 	width, height := screen.Size()
 	for row := 0; row < height; row++ {
@@ -658,7 +658,7 @@ func (screen *UnixScreen) Clear() {
 
 // Returns the rendered line, plus how many information carrying cells went into
 // it
-func renderLine(row []Cell, terminalColorCount ColorCount) (string, int) {
+func renderLine(row []StyledRune, terminalColorCount ColorCount) (string, int) {
 	// Strip trailing whitespace
 	lastSignificantCellIndex := len(row) - 1
 	for ; lastSignificantCellIndex >= 0; lastSignificantCellIndex-- {

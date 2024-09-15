@@ -7,13 +7,13 @@ package twin
 type FakeScreen struct {
 	width  int
 	height int
-	cells  [][]Cell
+	cells  [][]StyledRune
 }
 
 func NewFakeScreen(width int, height int) *FakeScreen {
-	rows := make([][]Cell, height)
+	rows := make([][]StyledRune, height)
 	for i := 0; i < height; i++ {
-		rows[i] = make([]Cell, width)
+		rows[i] = make([]StyledRune, width)
 	}
 
 	return &FakeScreen{
@@ -30,7 +30,7 @@ func (screen *FakeScreen) Close() {
 func (screen *FakeScreen) Clear() {
 	// This method's contents has been copied from UnixScreen.Clear()
 
-	empty := NewCell(' ', StyleDefault)
+	empty := NewStyledRune(' ', StyleDefault)
 
 	width, height := screen.Size()
 	for row := 0; row < height; row++ {
@@ -40,7 +40,7 @@ func (screen *FakeScreen) Clear() {
 	}
 }
 
-func (screen *FakeScreen) SetCell(column int, row int, cell Cell) {
+func (screen *FakeScreen) SetCell(column int, row int, cell StyledRune) {
 	// This method's contents has been copied from UnixScreen.Clear()
 
 	if column < 0 {
@@ -85,6 +85,6 @@ func (screen *FakeScreen) Events() chan Event {
 	return nil
 }
 
-func (screen *FakeScreen) GetRow(row int) []Cell {
+func (screen *FakeScreen) GetRow(row int) []StyledRune {
 	return screen.cells[row]
 }

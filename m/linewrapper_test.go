@@ -7,12 +7,12 @@ import (
 	"github.com/walles/moar/twin"
 )
 
-func tokenize(input string) []twin.Cell {
+func tokenize(input string) []twin.StyledRune {
 	line := NewLine(input)
-	return line.HighlightedTokens("", nil, nil).Cells
+	return line.HighlightedTokens("", nil, nil).StyledRunes
 }
 
-func rowsToString(cellLines [][]twin.Cell) string {
+func rowsToString(cellLines [][]twin.StyledRune) string {
 	returnMe := ""
 	for _, cellLine := range cellLines {
 		lineString := ""
@@ -33,7 +33,7 @@ func assertWrap(t *testing.T, input string, widthInScreenCells int, wrappedLines
 	toWrap := tokenize(input)
 	actual := wrapLine(widthInScreenCells, toWrap)
 
-	expected := [][]twin.Cell{}
+	expected := [][]twin.StyledRune{}
 	for _, wrappedLine := range wrappedLines {
 		expected = append(expected, tokenize(wrappedLine))
 	}

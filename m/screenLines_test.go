@@ -93,7 +93,7 @@ func TestSearchHighlight(t *testing.T) {
 		{
 			inputLine: linenumbers.LineNumber{},
 			wrapIndex: 0,
-			cells: []twin.Cell{
+			cells: []twin.StyledRune{
 				{Rune: 'x', Style: twin.StyleDefault},
 				{Rune: '"', Style: twin.StyleDefault.WithAttr(twin.AttrReverse)},
 				{Rune: '"', Style: twin.StyleDefault.WithAttr(twin.AttrReverse)},

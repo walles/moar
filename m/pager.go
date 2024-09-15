@@ -77,8 +77,8 @@ type Pager struct {
 	QuitIfOneScreen bool
 
 	// Ref: https://github.com/walles/moar/issues/94
-	ScrollLeftHint  twin.Cell
-	ScrollRightHint twin.Cell
+	ScrollLeftHint  twin.StyledRune
+	ScrollRightHint twin.StyledRune
 
 	SideScrollAmount int // Should be positive
 
@@ -184,8 +184,8 @@ func NewPager(r *Reader) *Pager {
 		ShowStatusBar:    true,
 		DeInit:           true,
 		SideScrollAmount: 16,
-		ScrollLeftHint:   twin.NewCell('<', twin.StyleDefault.WithAttr(twin.AttrReverse)),
-		ScrollRightHint:  twin.NewCell('>', twin.StyleDefault.WithAttr(twin.AttrReverse)),
+		ScrollLeftHint:   twin.NewStyledRune('<', twin.StyleDefault.WithAttr(twin.AttrReverse)),
+		ScrollRightHint:  twin.NewStyledRune('>', twin.StyleDefault.WithAttr(twin.AttrReverse)),
 		scrollPosition:   newScrollPosition(name),
 	}
 
@@ -210,12 +210,12 @@ func (p *Pager) setFooter(footer string) {
 
 	pos := 0
 	for _, token := range footer {
-		p.screen.SetCell(pos, height-1, twin.NewCell(token, statusbarStyle))
+		p.screen.SetCell(pos, height-1, twin.NewStyledRune(token, statusbarStyle))
 		pos++
 	}
 
 	for ; pos < width; pos++ {
-		p.screen.SetCell(pos, height-1, twin.NewCell(' ', statusbarStyle))
+		p.screen.SetCell(pos, height-1, twin.NewStyledRune(' ', statusbarStyle))
 	}
 }
 

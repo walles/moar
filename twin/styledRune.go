@@ -5,25 +5,27 @@ import (
 	"unicode"
 )
 
-// Cell is a rune with a style to be written to a cell on screen
-type Cell struct {
+// StyledRune is a rune with a style to be written to a one or more cells on the
+// screen. Note that a StyledRune may use more than one cell on the screen ('午'
+// for example).
+type StyledRune struct {
 	Rune  rune
 	Style Style
 }
 
-func NewCell(rune rune, style Style) Cell {
-	return Cell{
+func NewStyledRune(rune rune, style Style) StyledRune {
+	return StyledRune{
 		Rune:  rune,
 		Style: style,
 	}
 }
 
-func (cell Cell) String() string {
+func (cell StyledRune) String() string {
 	return fmt.Sprint("rune='", string(cell.Rune), "' ", cell.Style)
 }
 
 // Returns a slice of cells with trailing whitespace cells removed
-func TrimSpaceRight(cells []Cell) []Cell {
+func TrimSpaceRight(cells []StyledRune) []StyledRune {
 	for i := len(cells) - 1; i >= 0; i-- {
 		cell := cells[i]
 		if !unicode.IsSpace(cell.Rune) {
@@ -34,11 +36,11 @@ func TrimSpaceRight(cells []Cell) []Cell {
 	}
 
 	// All whitespace, return empty
-	return []Cell{}
+	return []StyledRune{}
 }
 
 // Returns a slice of cells with leading whitespace cells removed
-func TrimSpaceLeft(cells []Cell) []Cell {
+func TrimSpaceLeft(cells []StyledRune) []StyledRune {
 	for i := 0; i < len(cells); i++ {
 		cell := cells[i]
 		if !unicode.IsSpace(cell.Rune) {
@@ -49,7 +51,7 @@ func TrimSpaceLeft(cells []Cell) []Cell {
 	}
 
 	// All whitespace, return empty
-	return []Cell{}
+	return []StyledRune{}
 }
 
 func Printable(char rune) bool {
