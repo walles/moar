@@ -20,16 +20,22 @@ func NewStyledRune(rune rune, style Style) StyledRune {
 	}
 }
 
-func (cell StyledRune) String() string {
-	return fmt.Sprint("rune='", string(cell.Rune), "' ", cell.Style)
+func (styledRune StyledRune) String() string {
+	return fmt.Sprint("rune='", string(styledRune.Rune), "' ", styledRune.Style)
+}
+
+// How many screen cells will this rune cover? Most runes cover one, but some
+// like '午' will cover two.
+func (styledRune StyledRune) Width() int {
+	return 1
 }
 
 // Returns a slice of cells with trailing whitespace cells removed
-func TrimSpaceRight(cells []StyledRune) []StyledRune {
-	for i := len(cells) - 1; i >= 0; i-- {
-		cell := cells[i]
+func TrimSpaceRight(runes []StyledRune) []StyledRune {
+	for i := len(runes) - 1; i >= 0; i-- {
+		cell := runes[i]
 		if !unicode.IsSpace(cell.Rune) {
-			return cells[0 : i+1]
+			return runes[0 : i+1]
 		}
 
 		// That was a space, keep looking
@@ -40,11 +46,11 @@ func TrimSpaceRight(cells []StyledRune) []StyledRune {
 }
 
 // Returns a slice of cells with leading whitespace cells removed
-func TrimSpaceLeft(cells []StyledRune) []StyledRune {
-	for i := 0; i < len(cells); i++ {
-		cell := cells[i]
+func TrimSpaceLeft(runes []StyledRune) []StyledRune {
+	for i := 0; i < len(runes); i++ {
+		cell := runes[i]
 		if !unicode.IsSpace(cell.Rune) {
-			return cells[i:]
+			return runes[i:]
 		}
 
 		// That was a space, keep looking

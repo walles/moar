@@ -36,3 +36,8 @@ func TestTrimSpaceRight(t *testing.T) {
 		),
 		[]StyledRune{{Rune: 'x'}}))
 }
+
+func TestRuneWidth(t *testing.T) {
+	assert.Equal(t, NewStyledRune('x', Style{}).Width(), 1)
+	assert.Equal(t, NewStyledRune('午', Style{}).Width(), 2)
+}
