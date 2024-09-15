@@ -3,6 +3,8 @@ package twin
 import (
 	"fmt"
 	"unicode"
+
+	"github.com/rivo/uniseg"
 )
 
 // StyledRune is a rune with a style to be written to a one or more cells on the
@@ -27,7 +29,7 @@ func (styledRune StyledRune) String() string {
 // How many screen cells will this rune cover? Most runes cover one, but some
 // like '午' will cover two.
 func (styledRune StyledRune) Width() int {
-	return 1
+	return uniseg.StringWidth(string(styledRune.Rune))
 }
 
 // Returns a slice of cells with trailing whitespace cells removed
