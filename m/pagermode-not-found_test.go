@@ -7,8 +7,6 @@ import (
 	"gotest.tools/v3/assert"
 )
 
-//revive:disable:empty-block
-
 // Repro for not-found part of https://github.com/walles/moar/issues/182
 func TestNotFoundFindPrevious(t *testing.T) {
 	reader := NewReaderFromText("TestNotFoundFindPrevious", "apa\nbepa\ncepa\ndepa")

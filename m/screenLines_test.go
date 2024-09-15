@@ -11,7 +11,7 @@ import (
 	"gotest.tools/v3/assert"
 )
 
-//revive:disable:empty-block
+// NOTE: You can find related tests in pager_test.go.
 
 func testHorizontalCropping(t *testing.T, contents string, firstIndex int, lastIndex int, expected string, expectedOverflow overflowState) {
 	pager := NewPager(nil)

@@ -19,7 +19,7 @@ import (
 	"gotest.tools/v3/assert"
 )
 
-//revive:disable:empty-block
+// NOTE: You can find related tests in screenLines_test.go.
 
 const blueBackgroundClearToEol0 = "\x1b[44m\x1b[0K" // With 0 before the K, should clear to EOL
 const blueBackgroundClearToEol = "\x1b[44m\x1b[K"   // No 0 before the K, should also clear to EOL
