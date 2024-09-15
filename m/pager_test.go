@@ -70,12 +70,8 @@ func TestFgColorRendering(t *testing.T) {
 }
 
 func TestPageEmpty(t *testing.T) {
-	reader := NewReaderFromText("", "")
-
-	firstRowCells := startPaging(t, reader).GetRow(0)
-
 	// "---" is the eofSpinner of pager.go
-	assert.Equal(t, "---", rowToString(firstRowCells))
+	assert.Equal(t, "---", renderTextLine(""))
 }
 
 func TestBrokenUtf8(t *testing.T) {
