@@ -61,6 +61,15 @@ func TestCreateScreenLineChopWideCharLeft(t *testing.T) {
 	testHorizontalCropping(t, "上午下", 6, 10, "<", didFit)
 }
 
+func TestCreateScreenLineChopWideCharRight(t *testing.T) {
+	testHorizontalCropping(t, "上午下", 0, 6, "上午下", didOverflow)
+	testHorizontalCropping(t, "上午下", 0, 5, "上午>", didOverflow)
+	testHorizontalCropping(t, "上午下", 0, 4, "上 >", didOverflow)
+	testHorizontalCropping(t, "上午下", 0, 3, "上>", didOverflow)
+	testHorizontalCropping(t, "上午下", 0, 2, " >", didOverflow)
+	testHorizontalCropping(t, "上午下", 0, 1, ">", didOverflow)
+}
+
 func TestEmpty(t *testing.T) {
 	pager := Pager{
 		screen: twin.NewFakeScreen(99, 10),
