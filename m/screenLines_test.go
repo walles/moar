@@ -53,12 +53,12 @@ func TestCreateScreenLineCanAlmostScrollBoth(t *testing.T) {
 
 func TestCreateScreenLineChopWideCharLeft(t *testing.T) {
 	testHorizontalCropping(t, "上午下", 0, 10, "上午下", didFit)
-	testHorizontalCropping(t, "上午下", 1, 10, "<午下", didFit)
-	testHorizontalCropping(t, "上午下", 2, 10, "< 下", didFit)
-	testHorizontalCropping(t, "上午下", 3, 10, "<下", didFit)
-	testHorizontalCropping(t, "上午下", 4, 10, "<", didFit)
-	testHorizontalCropping(t, "上午下", 5, 10, "<", didFit)
-	testHorizontalCropping(t, "上午下", 6, 10, "<", didFit)
+	testHorizontalCropping(t, "上午下", 1, 10, "<午下", didOverflow)
+	testHorizontalCropping(t, "上午下", 2, 10, "< 下", didOverflow)
+	testHorizontalCropping(t, "上午下", 3, 10, "<下", didOverflow)
+	testHorizontalCropping(t, "上午下", 4, 10, "<", didOverflow)
+	testHorizontalCropping(t, "上午下", 5, 10, "<", didOverflow)
+	testHorizontalCropping(t, "上午下", 6, 10, "<", didOverflow)
 }
 
 func TestCreateScreenLineChopWideCharRight(t *testing.T) {
