@@ -581,8 +581,8 @@ func joinUints(ints []uint) string {
 // index points to either 38 or 48 in that string
 //
 // This method will return:
-// * The first index in the string that this function did not consume
-// * A color value that can be applied to a style
+//   - The first index in the string that this function did not consume
+//   - A color value that can be applied to a style
 func consumeCompositeColor(numbers []uint, index int) (int, *twin.Color, error) {
 	baseIndex := index
 	if numbers[index] != 38 && numbers[index] != 48 && numbers[index] != 58 {

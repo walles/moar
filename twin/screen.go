@@ -103,16 +103,11 @@ type UnixScreen struct {
 // Example event: "\x1b[<65;127;41M"
 //
 // Where:
-//
-// * "\x1b[<" says this is a mouse event
-//
-// * "65" says this is Wheel Up. "64" would be Wheel Down.
-//
-// * "127" is the column number on screen, "1" is the first column.
-//
-// * "41" is the row number on screen, "1" is the first row.
-//
-// * "M" marks the end of the mouse event.
+//   - "\x1b[<" says this is a mouse event
+//   - "65" says this is Wheel Up. "64" would be Wheel Down.
+//   - "127" is the column number on screen, "1" is the first column.
+//   - "41" is the row number on screen, "1" is the first row.
+//   - "M" marks the end of the mouse event.
 var mouseEventRegex = regexp.MustCompile("^\x1b\\[<([0-9]+);([0-9]+);([0-9]+)M")
 
 // NewScreen() requires Close() to be called after you are done with your new

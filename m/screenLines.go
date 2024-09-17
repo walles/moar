@@ -257,9 +257,9 @@ func (p *Pager) renderLine(line *Line, lineNumber linenumbers.LineNumber, scroll
 }
 
 // Take a rendered line and decorate as needed:
-// * Line number, or leading whitespace for wrapped lines
-// * Scroll left indicator
-// * Scroll right indicator
+//   - Line number, or leading whitespace for wrapped lines
+//   - Scroll left indicator
+//   - Scroll right indicator
 func (p *Pager) decorateLine(lineNumberToShow *linenumbers.LineNumber, contents []twin.StyledRune, scrollPosition scrollPositionInternal) ([]twin.StyledRune, overflowState) {
 	width, _ := p.screen.Size()
 	newLine := make([]twin.StyledRune, 0, width)
@@ -267,25 +267,82 @@ func (p *Pager) decorateLine(lineNumberToShow *linenumbers.LineNumber, contents 
 	newLine = append(newLine, createLinePrefix(lineNumberToShow, numberPrefixLength)...)
 	overflow := didFit
 
-	startColumn := p.leftColumnZeroBased
-	if startColumn < len(contents) {
-		endColumn := p.leftColumnZeroBased + (width - numberPrefixLength)
-		if endColumn > len(contents) {
-			endColumn = len(contents)
+	// Find the first and last fully visible runes.
+	var firstVisibleRuneIndex *int
+	lastVisibleRuneIndex := -1
+	screenColumn := numberPrefixLength // Zero based
+	lastVisibleScrenColumn := p.leftColumnZeroBased + width - 1
+	cutOffRuneToTheLeft := false
+	cutOffRuneToTheRight := false
+	canScrollRight := false
+	for i, char := range contents {
+		if firstVisibleRuneIndex == nil && screenColumn >= p.leftColumnZeroBased {
+			// Found the first fully visible rune
+			firstVisibleRuneIndex = &i
+			if i > 0 && contents[i-1].Width() > 1 {
+				// We had to cut a rune in half at the start
+				cutOffRuneToTheLeft = true
+			}
 		}
 
-		newLine = append(newLine, contents[startColumn:endColumn]...)
+		screenReached := firstVisibleRuneIndex != nil
+		beforeRightEdge := screenColumn+char.Width()-1 <= lastVisibleScrenColumn
+		if screenReached {
+			if beforeRightEdge {
+				// This rune is fully visible
+				lastVisibleRuneIndex = i
+			} else {
+				// We're just outside the screen on the right
+				canScrollRight = true
+
+				if char.Width() > 1 {
+					// We have to cut this rune in half
+					cutOffRuneToTheRight = true
+				}
+
+				// Search done, we're off the right edge
+				break
+			}
+		}
+
+		screenColumn += char.Width()
+	}
+
+	// Prepend a space if we had to cut a rune in half at the start
+	if cutOffRuneToTheLeft {
+		newLine = append([]twin.StyledRune{twin.NewStyledRune(' ', p.ScrollLeftHint.Style)}, newLine...)
+	}
+
+	// Add the visible runes
+	if firstVisibleRuneIndex != nil {
+		newLine = append(newLine, contents[*firstVisibleRuneIndex:lastVisibleRuneIndex+1]...)
+	}
+
+	// Append a space if we had to cut a rune in half at the end
+	if cutOffRuneToTheRight {
+		newLine = append(newLine, twin.NewStyledRune(' ', p.ScrollRightHint.Style))
 	}
 
 	// Add scroll left indicator
-	if p.leftColumnZeroBased > 0 && len(contents) > 0 {
+	canScrollLeft := p.leftColumnZeroBased > 0
+	if canScrollLeft && len(contents) > 0 {
 		if len(newLine) == 0 {
-			// Don't panic on short lines, this new Cell will be
-			// overwritten with '<' right after this if statement
-			newLine = append(newLine, twin.StyledRune{})
+			// Make room for the scroll left indicator
+			newLine = make([]twin.StyledRune, 1)
 		}
 
-		// Add can-scroll-left marker
+		if newLine[0].Width() > 1 {
+			// Replace the first rune with two spaces so we can replace the
+			// leftmost cell with a scroll left indicator. First, convert to one
+			// space...
+			newLine[0] = twin.NewStyledRune(' ', p.ScrollLeftHint.Style)
+			// ...then prepend another space:
+			newLine = append([]twin.StyledRune{twin.NewStyledRune(' ', p.ScrollLeftHint.Style)}, newLine...)
+
+			// Prepending ref: https://stackoverflow.com/a/53737602/473672
+		}
+
+		// Set can-scroll-left marker
 		newLine[0] = p.ScrollLeftHint
 
 		// We're scrolled right, meaning everything is not visible on screen
@@ -293,8 +350,17 @@ func (p *Pager) decorateLine(lineNumberToShow *linenumbers.LineNumber, contents 
 	}
 
 	// Add scroll right indicator
-	if len(contents)+numberPrefixLength-p.leftColumnZeroBased > width {
-		newLine[width-1] = p.ScrollRightHint
+	if canScrollRight {
+		if newLine[len(newLine)-1].Width() > 1 {
+			// Replace the last rune with two spaces so we can replace the
+			// rightmost cell with a scroll right indicator. First, convert to one
+			// space...
+			newLine[len(newLine)-1] = twin.NewStyledRune(' ', p.ScrollRightHint.Style)
+			// ...then append another space:
+			newLine = append(newLine, twin.NewStyledRune(' ', p.ScrollRightHint.Style))
+		}
+
+		newLine[len(newLine)-1] = p.ScrollRightHint
 
 		// Some text is out of bounds to the right
 		overflow = didOverflow

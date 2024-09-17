@@ -59,6 +59,7 @@ func TestCreateScreenLineChopWideCharLeft(t *testing.T) {
 	testHorizontalCropping(t, "上午下", 4, 10, "<", didOverflow)
 	testHorizontalCropping(t, "上午下", 5, 10, "<", didOverflow)
 	testHorizontalCropping(t, "上午下", 6, 10, "<", didOverflow)
+	testHorizontalCropping(t, "上午下", 7, 10, "<", didOverflow)
 }
 
 func TestCreateScreenLineChopWideCharRight(t *testing.T) {
