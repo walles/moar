@@ -283,7 +283,7 @@ func (p *Pager) decorateLine(lineNumberToShow *linenumbers.LineNumber, contents 
 			// iteration of the loop.
 			copyOfI := i
 			firstVisibleRuneIndex = &copyOfI
-			if i > 0 && contents[i-1].Width() > 1 {
+			if i > 0 && screenColumn > p.leftColumnZeroBased && contents[i-1].Width() > 1 {
 				// We had to cut a rune in half at the start
 				cutOffRuneToTheLeft = true
 			}
