@@ -13,12 +13,12 @@ import (
 
 // NOTE: You can find related tests in pager_test.go.
 
-func testHorizontalCropping(t *testing.T, contents string, firstIndex int, lastIndex int, expected string, expectedOverflow overflowState) {
+func testHorizontalCropping(t *testing.T, contents string, firstVisibleColumn int, lastVisibleColumn int, expected string, expectedOverflow overflowState) {
 	pager := NewPager(nil)
 	pager.ShowLineNumbers = false
 
-	pager.screen = twin.NewFakeScreen(1+lastIndex-firstIndex, 99)
-	pager.leftColumnZeroBased = firstIndex
+	pager.screen = twin.NewFakeScreen(1+lastVisibleColumn-firstVisibleColumn, 99)
+	pager.leftColumnZeroBased = firstVisibleColumn
 	pager.scrollPosition = newScrollPosition("testHorizontalCropping")
 
 	lineContents := NewLine(contents)
@@ -64,11 +64,11 @@ func TestCreateScreenLineChopWideCharLeft(t *testing.T) {
 
 func TestCreateScreenLineChopWideCharRight(t *testing.T) {
 	testHorizontalCropping(t, "上午下", 0, 6, "上午下", didFit)
-	testHorizontalCropping(t, "上午下", 0, 5, "上午>", didOverflow)
-	testHorizontalCropping(t, "上午下", 0, 4, "上 >", didOverflow)
-	testHorizontalCropping(t, "上午下", 0, 3, "上>", didOverflow)
-	testHorizontalCropping(t, "上午下", 0, 2, " >", didOverflow)
-	testHorizontalCropping(t, "上午下", 0, 1, ">", didOverflow)
+	testHorizontalCropping(t, "上午下", 0, 5, "上午下", didFit)
+	testHorizontalCropping(t, "上午下", 0, 4, "上午>", didOverflow)
+	testHorizontalCropping(t, "上午下", 0, 3, "上 >", didOverflow)
+	testHorizontalCropping(t, "上午下", 0, 2, "上>", didOverflow)
+	testHorizontalCropping(t, "上午下", 0, 1, " >", didOverflow)
 }
 
 func TestEmpty(t *testing.T) {
