@@ -277,8 +277,12 @@ func (p *Pager) decorateLine(lineNumberToShow *linenumbers.LineNumber, contents 
 	canScrollRight := false
 	for i, char := range contents {
 		if firstVisibleRuneIndex == nil && screenColumn >= p.leftColumnZeroBased {
-			// Found the first fully visible rune
-			firstVisibleRuneIndex = &i
+			// Found the first fully visible rune. We need to point to a copy of
+			// our loop variable, not the loop variable itself. Just pointing to
+			// i, will make firstVisibleRuneIndex point to a new value for every
+			// iteration of the loop.
+			copyOfI := i
+			firstVisibleRuneIndex = &copyOfI
 			if i > 0 && contents[i-1].Width() > 1 {
 				// We had to cut a rune in half at the start
 				cutOffRuneToTheLeft = true
