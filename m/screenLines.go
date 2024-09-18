@@ -271,7 +271,7 @@ func (p *Pager) decorateLine(lineNumberToShow *linenumbers.LineNumber, contents 
 	var firstVisibleRuneIndex *int
 	lastVisibleRuneIndex := -1
 	screenColumn := numberPrefixLength // Zero based
-	lastVisibleScrenColumn := p.leftColumnZeroBased + width - 1
+	lastVisibleScreenColumn := p.leftColumnZeroBased + width - 1
 	cutOffRuneToTheLeft := false
 	cutOffRuneToTheRight := false
 	canScrollRight := false
@@ -290,7 +290,8 @@ func (p *Pager) decorateLine(lineNumberToShow *linenumbers.LineNumber, contents 
 		}
 
 		screenReached := firstVisibleRuneIndex != nil
-		beforeRightEdge := screenColumn+char.Width()-1 <= lastVisibleScrenColumn
+		currentCharRightEdge := screenColumn + char.Width() - 1
+		beforeRightEdge := currentCharRightEdge <= lastVisibleScreenColumn
 		if screenReached {
 			if beforeRightEdge {
 				// This rune is fully visible
@@ -299,7 +300,8 @@ func (p *Pager) decorateLine(lineNumberToShow *linenumbers.LineNumber, contents 
 				// We're just outside the screen on the right
 				canScrollRight = true
 
-				if char.Width() > 1 {
+				currentCharLeftEdge := screenColumn
+				if currentCharLeftEdge <= lastVisibleScreenColumn {
 					// We have to cut this rune in half
 					cutOffRuneToTheRight = true
 				}
