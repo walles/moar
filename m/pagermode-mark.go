@@ -13,8 +13,7 @@ func (m PagerModeMark) drawFooter(_ string, _ string) {
 
 	pos := 0
 	for _, token := range "Press any key to label your mark: " {
-		p.screen.SetCell(pos, height-1, twin.NewStyledRune(token, twin.StyleDefault))
-		pos++
+		pos += p.screen.SetCell(pos, height-1, twin.NewStyledRune(token, twin.StyleDefault))
 	}
 
 	// Add a cursor

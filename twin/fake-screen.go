@@ -40,24 +40,26 @@ func (screen *FakeScreen) Clear() {
 	}
 }
 
-func (screen *FakeScreen) SetCell(column int, row int, cell StyledRune) {
+func (screen *FakeScreen) SetCell(column int, row int, cell StyledRune) int {
 	// This method's contents has been copied from UnixScreen.Clear()
 
 	if column < 0 {
-		return
+		return cell.Width()
 	}
 	if row < 0 {
-		return
+		return cell.Width()
 	}
 
 	width, height := screen.Size()
 	if column >= width {
-		return
+		return cell.Width()
 	}
 	if row >= height {
-		return
+		return cell.Width()
 	}
 	screen.cells[row][column] = cell
+
+	return cell.Width()
 }
 
 func (screen *FakeScreen) Show() {

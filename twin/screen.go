@@ -36,7 +36,8 @@ type Screen interface {
 
 	Clear()
 
-	SetCell(column int, row int, cell StyledRune)
+	// Returns the width of the rune just added, in number of columns
+	SetCell(column int, row int, cell StyledRune) int
 
 	// Render our contents into the terminal window
 	Show()
@@ -622,22 +623,24 @@ func parseTerminalBgColorResponse(responseBytes []byte) *Color {
 	return &color
 }
 
-func (screen *UnixScreen) SetCell(column int, row int, cell StyledRune) {
+func (screen *UnixScreen) SetCell(column int, row int, cell StyledRune) int {
 	if column < 0 {
-		return
+		return cell.Width()
 	}
 	if row < 0 {
-		return
+		return cell.Width()
 	}
 
 	width, height := screen.Size()
 	if column >= width {
-		return
+		return cell.Width()
 	}
 	if row >= height {
-		return
+		return cell.Width()
 	}
 	screen.cells[row][column] = cell
+
+	return cell.Width()
 }
 
 func (screen *UnixScreen) Clear() {

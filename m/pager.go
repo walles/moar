@@ -210,12 +210,11 @@ func (p *Pager) setFooter(footer string) {
 
 	pos := 0
 	for _, token := range footer {
-		p.screen.SetCell(pos, height-1, twin.NewStyledRune(token, statusbarStyle))
-		pos++
+		pos += p.screen.SetCell(pos, height-1, twin.NewStyledRune(token, statusbarStyle))
 	}
 
-	for ; pos < width; pos++ {
-		p.screen.SetCell(pos, height-1, twin.NewStyledRune(' ', statusbarStyle))
+	for pos < width {
+		pos += p.screen.SetCell(pos, height-1, twin.NewStyledRune(' ', statusbarStyle))
 	}
 }
 

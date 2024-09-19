@@ -42,8 +42,9 @@ func (p *Pager) redraw(spinner string) overflowState {
 	renderedScreenLines, statusText, overflow := p.renderScreenLines()
 	for screenLineNumber, row := range renderedScreenLines {
 		lastUpdatedScreenLineNumber = screenLineNumber
-		for column, cell := range row {
-			p.screen.SetCell(column, lastUpdatedScreenLineNumber, cell)
+		column := 0
+		for _, cell := range row {
+			column += p.screen.SetCell(column, lastUpdatedScreenLineNumber, cell)
 		}
 	}
 
@@ -55,8 +56,9 @@ func (p *Pager) redraw(spinner string) overflowState {
 		eofSpinner = "---"
 	}
 	spinnerLine := textstyles.StyledRunesFromString("", _EofMarkerFormat+eofSpinner, nil).StyledRunes
-	for column, cell := range spinnerLine {
-		p.screen.SetCell(column, lastUpdatedScreenLineNumber+1, cell)
+	column := 0
+	for _, cell := range spinnerLine {
+		column += p.screen.SetCell(column, lastUpdatedScreenLineNumber+1, cell)
 	}
 
 	p.mode.drawFooter(statusText, spinner)
