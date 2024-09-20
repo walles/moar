@@ -672,7 +672,7 @@ func TestPageWideChars(t *testing.T) {
 	const monospaced24cells = monospaced16cells + monospaced8cells
 
 	// Cut the line in the middle of a wide character
-	const monospaced18cells = monospaced16cells + "午"
+	const monospaced18cells = monospaced16cells + "上"
 	assert.Equal(t, monospaced18cells+" >", renderTextLine(monospaced24cells))
 
 	// Just the right length, no cutting
