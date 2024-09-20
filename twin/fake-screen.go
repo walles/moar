@@ -88,5 +88,5 @@ func (screen *FakeScreen) Events() chan Event {
 }
 
 func (screen *FakeScreen) GetRow(row int) []StyledRune {
-	return screen.cells[row]
+	return withoutHiddenRunes(screen.cells[row], screen.width)
 }

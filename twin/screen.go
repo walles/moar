@@ -654,9 +654,33 @@ func (screen *UnixScreen) Clear() {
 	}
 }
 
+// A cell is considered hidden if it's preceded by a wide character that spans
+// multiple columns.
+//
+// Also, if the last cell on the screen is a wide character that would span the
+// screen border, it will be considered hidden as well.
+func withoutHiddenRunes(runes []StyledRune, screenWidth int) []StyledRune {
+	result := make([]StyledRune, 0, len(runes))
+	renderedWidth := 0
+	for _, char := range runes {
+		charWidth := char.Width()
+		if renderedWidth+charWidth > screenWidth {
+			// This character would span the screen border
+			break
+		}
+
+		result = append(result, char)
+		renderedWidth += charWidth
+	}
+
+	return result
+}
+
 // Returns the rendered line, plus how many information carrying cells went into
 // it
-func renderLine(row []StyledRune, terminalColorCount ColorCount) (string, int) {
+func renderLine(row []StyledRune, screenWidth int, terminalColorCount ColorCount) (string, int) {
+	row = withoutHiddenRunes(row, screenWidth)
+
 	// Strip trailing whitespace
 	lastSignificantCellIndex := len(row) - 1
 	for ; lastSignificantCellIndex >= 0; lastSignificantCellIndex-- {
@@ -722,8 +746,9 @@ func (screen *UnixScreen) showNLines(height int, clearFirst bool) {
 		builder.WriteString("\x1b[1;1H")
 	}
 
+	screenWidth, _ := screen.Size()
 	for row := 0; row < height; row++ {
-		rendered, lineLength := renderLine(screen.cells[row], screen.terminalColorCount)
+		rendered, lineLength := renderLine(screen.cells[row], screenWidth, screen.terminalColorCount)
 		builder.WriteString(rendered)
 
 		wasLastLine := row == (height - 1)
