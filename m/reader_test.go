@@ -17,8 +17,6 @@ import (
 	"gotest.tools/v3/assert"
 )
 
-//revive:disable:empty-block
-
 const samplesDir = "../sample-files"
 
 func testGetLineCount(t *testing.T, reader *Reader) {

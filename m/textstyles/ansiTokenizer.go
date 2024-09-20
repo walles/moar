@@ -30,9 +30,9 @@ const _TabSize = 4
 
 const BACKSPACE = '\b'
 
-type CellsWithTrailer struct {
-	Cells   []twin.Cell
-	Trailer twin.Style
+type StyledRunesWithTrailer struct {
+	StyledRunes []twin.StyledRune
+	Trailer     twin.Style
 }
 
 func isPlain(s string) bool {
@@ -110,13 +110,13 @@ func WithoutFormatting(s string, lineNumber *linenumbers.LineNumber) string {
 //
 // The prefix will be prepended to the string before parsing. The lineNumber is
 // used for error reporting.
-func CellsFromString(prefix string, s string, lineNumber *linenumbers.LineNumber) CellsWithTrailer {
+func StyledRunesFromString(prefix string, s string, lineNumber *linenumbers.LineNumber) StyledRunesWithTrailer {
 	manPageHeading := manPageHeadingFromString(s)
 	if manPageHeading != nil {
 		return *manPageHeading
 	}
 
-	var cells []twin.Cell
+	var cells []twin.StyledRune
 
 	// Specs: https://en.wikipedia.org/wiki/ANSI_escape_code#3-bit_and_4-bit
 	styleUnprintable := twin.StyleDefault.WithBackground(twin.NewColor16(1)).WithForeground(twin.NewColor16(7))
@@ -127,7 +127,7 @@ func CellsFromString(prefix string, s string, lineNumber *linenumbers.LineNumber
 
 			case '\x09': // TAB
 				for {
-					cells = append(cells, twin.Cell{
+					cells = append(cells, twin.StyledRune{
 						Rune:  ' ',
 						Style: style,
 					})
@@ -140,12 +140,12 @@ func CellsFromString(prefix string, s string, lineNumber *linenumbers.LineNumber
 
 			case '�': // Go's broken-UTF8 marker
 				if UnprintableStyle == UnprintableStyleHighlight {
-					cells = append(cells, twin.Cell{
+					cells = append(cells, twin.StyledRune{
 						Rune:  '?',
 						Style: styleUnprintable,
 					})
 				} else if UnprintableStyle == UnprintableStyleWhitespace {
-					cells = append(cells, twin.Cell{
+					cells = append(cells, twin.StyledRune{
 						Rune:  '?',
 						Style: twin.StyleDefault,
 					})
@@ -154,7 +154,7 @@ func CellsFromString(prefix string, s string, lineNumber *linenumbers.LineNumber
 				}
 
 			case BACKSPACE:
-				cells = append(cells, twin.Cell{
+				cells = append(cells, twin.StyledRune{
 					Rune:  '<',
 					Style: styleUnprintable,
 				})
@@ -162,12 +162,12 @@ func CellsFromString(prefix string, s string, lineNumber *linenumbers.LineNumber
 			default:
 				if !twin.Printable(token.Rune) {
 					if UnprintableStyle == UnprintableStyleHighlight {
-						cells = append(cells, twin.Cell{
+						cells = append(cells, twin.StyledRune{
 							Rune:  '?',
 							Style: styleUnprintable,
 						})
 					} else if UnprintableStyle == UnprintableStyleWhitespace {
-						cells = append(cells, twin.Cell{
+						cells = append(cells, twin.StyledRune{
 							Rune:  ' ',
 							Style: twin.StyleDefault,
 						})
@@ -181,14 +181,14 @@ func CellsFromString(prefix string, s string, lineNumber *linenumbers.LineNumber
 		}
 	})
 
-	return CellsWithTrailer{
-		Cells:   cells,
-		Trailer: trailer,
+	return StyledRunesWithTrailer{
+		StyledRunes: cells,
+		Trailer:     trailer,
 	}
 }
 
 // Consume 'x<x', where '<' is backspace and the result is a bold 'x'
-func consumeBold(runes []rune, index int) (int, *twin.Cell) {
+func consumeBold(runes []rune, index int) (int, *twin.StyledRune) {
 	if index+2 >= len(runes) {
 		// Not enough runes left for a bold
 		return index, nil
@@ -205,14 +205,14 @@ func consumeBold(runes []rune, index int) (int, *twin.Cell) {
 	}
 
 	// We have a match!
-	return index + 3, &twin.Cell{
+	return index + 3, &twin.StyledRune{
 		Rune:  runes[index],
 		Style: ManPageBold,
 	}
 }
 
 // Consume '_<x', where '<' is backspace and the result is an underlined 'x'
-func consumeUnderline(runes []rune, index int) (int, *twin.Cell) {
+func consumeUnderline(runes []rune, index int) (int, *twin.StyledRune) {
 	if index+2 >= len(runes) {
 		// Not enough runes left for a underline
 		return index, nil
@@ -229,7 +229,7 @@ func consumeUnderline(runes []rune, index int) (int, *twin.Cell) {
 	}
 
 	// We have a match!
-	return index + 3, &twin.Cell{
+	return index + 3, &twin.StyledRune{
 		Rune:  runes[index+2],
 		Style: ManPageUnderline,
 	}
@@ -238,7 +238,7 @@ func consumeUnderline(runes []rune, index int) (int, *twin.Cell) {
 // Consume '+<+<o<o' / '+<o', where '<' is backspace and the result is a unicode bullet.
 //
 // Used on man pages, try "man printf" on macOS for one example.
-func consumeBullet(runes []rune, index int) (int, *twin.Cell) {
+func consumeBullet(runes []rune, index int) (int, *twin.StyledRune) {
 	patterns := [][]byte{[]byte("+\bo"), []byte("+\b+\bo\bo")}
 	for _, pattern := range patterns {
 		if index+len(pattern) > len(runes) {
@@ -259,7 +259,7 @@ func consumeBullet(runes []rune, index int) (int, *twin.Cell) {
 		}
 
 		// We have a match!
-		return index + len(pattern), &twin.Cell{
+		return index + len(pattern), &twin.StyledRune{
 			Rune:  '•', // Unicode bullet point
 			Style: twin.StyleDefault,
 		}
@@ -293,7 +293,7 @@ func runesFromStyledString(styledString _StyledString) string {
 	return returnMe.String()
 }
 
-func tokensFromStyledString(styledString _StyledString) []twin.Cell {
+func tokensFromStyledString(styledString _StyledString) []twin.StyledRune {
 	runes := []rune(styledString.String)
 
 	hasBackspace := false
@@ -304,11 +304,11 @@ func tokensFromStyledString(styledString _StyledString) []twin.Cell {
 		}
 	}
 
-	tokens := make([]twin.Cell, 0, len(runes))
+	tokens := make([]twin.StyledRune, 0, len(runes))
 	if !hasBackspace {
 		// Shortcut when there's no backspace based formatting to worry about
 		for _, runeValue := range runes {
-			tokens = append(tokens, twin.Cell{
+			tokens = append(tokens, twin.StyledRune{
 				Rune:  runeValue,
 				Style: styledString.Style,
 			})
@@ -339,7 +339,7 @@ func tokensFromStyledString(styledString _StyledString) []twin.Cell {
 			continue
 		}
 
-		tokens = append(tokens, twin.Cell{
+		tokens = append(tokens, twin.StyledRune{
 			Rune:  runes[index],
 			Style: styledString.Style,
 		})
@@ -581,8 +581,8 @@ func joinUints(ints []uint) string {
 // index points to either 38 or 48 in that string
 //
 // This method will return:
-// * The first index in the string that this function did not consume
-// * A color value that can be applied to a style
+//   - The first index in the string that this function did not consume
+//   - A color value that can be applied to a style
 func consumeCompositeColor(numbers []uint, index int) (int, *twin.Color, error) {
 	baseIndex := index
 	if numbers[index] != 38 && numbers[index] != 48 && numbers[index] != 58 {

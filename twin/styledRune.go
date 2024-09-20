@@ -3,53 +3,63 @@ package twin
 import (
 	"fmt"
 	"unicode"
+
+	"github.com/rivo/uniseg"
 )
 
-// Cell is a rune with a style to be written to a cell on screen
-type Cell struct {
+// StyledRune is a rune with a style to be written to a one or more cells on the
+// screen. Note that a StyledRune may use more than one cell on the screen ('午'
+// for example).
+type StyledRune struct {
 	Rune  rune
 	Style Style
 }
 
-func NewCell(rune rune, style Style) Cell {
-	return Cell{
+func NewStyledRune(rune rune, style Style) StyledRune {
+	return StyledRune{
 		Rune:  rune,
 		Style: style,
 	}
 }
 
-func (cell Cell) String() string {
-	return fmt.Sprint("rune='", string(cell.Rune), "' ", cell.Style)
+func (styledRune StyledRune) String() string {
+	return fmt.Sprint("rune='", string(styledRune.Rune), "' ", styledRune.Style)
+}
+
+// How many screen cells will this rune cover? Most runes cover one, but some
+// like '午' will cover two.
+func (styledRune StyledRune) Width() int {
+	return uniseg.StringWidth(string(styledRune.Rune))
 }
 
 // Returns a slice of cells with trailing whitespace cells removed
-func TrimSpaceRight(cells []Cell) []Cell {
-	for i := len(cells) - 1; i >= 0; i-- {
-		cell := cells[i]
+func TrimSpaceRight(runes []StyledRune) []StyledRune {
+	for i := len(runes) - 1; i >= 0; i-- {
+		cell := runes[i]
 		if !unicode.IsSpace(cell.Rune) {
-			return cells[0 : i+1]
+			return runes[0 : i+1]
 		}
 
 		// That was a space, keep looking
 	}
 
 	// All whitespace, return empty
-	return []Cell{}
+	return []StyledRune{}
 }
 
 // Returns a slice of cells with leading whitespace cells removed
-func TrimSpaceLeft(cells []Cell) []Cell {
-	for i := 0; i < len(cells); i++ {
-		cell := cells[i]
+func TrimSpaceLeft(runes []StyledRune) []StyledRune {
+	for i := 0; i < len(runes); i++ {
+		cell := runes[i]
 		if !unicode.IsSpace(cell.Rune) {
-			return cells[i:]
+			return runes[i:]
 		}
 
 		// That was a space, keep looking
 	}
 
 	// All whitespace, return empty
-	return []Cell{}
+	return []StyledRune{}
 }
 
 func Printable(char rune) bool {

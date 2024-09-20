@@ -6,24 +6,24 @@ import (
 	"github.com/walles/moar/twin"
 )
 
-func manPageHeadingFromString(s string) *CellsWithTrailer {
+func manPageHeadingFromString(s string) *StyledRunesWithTrailer {
 	// For great performance, first check the string without allocating any
 	// memory.
-	if !parseManPageHeading(s, func(_ twin.Cell) {}) {
+	if !parseManPageHeading(s, func(_ twin.StyledRune) {}) {
 		return nil
 	}
 
-	cells := make([]twin.Cell, 0, len(s)/2)
-	ok := parseManPageHeading(s, func(cell twin.Cell) {
+	cells := make([]twin.StyledRune, 0, len(s)/2)
+	ok := parseManPageHeading(s, func(cell twin.StyledRune) {
 		cells = append(cells, cell)
 	})
 	if !ok {
 		panic("man page heading state changed")
 	}
 
-	return &CellsWithTrailer{
-		Cells:   cells,
-		Trailer: twin.StyleDefault,
+	return &StyledRunesWithTrailer{
+		StyledRunes: cells,
+		Trailer:     twin.StyleDefault,
 	}
 }
 
@@ -36,7 +36,7 @@ func manPageHeadingFromString(s string) *CellsWithTrailer {
 // A man page heading is all caps. Also, each character is encoded as
 // char+backspace+char, where both chars need to be the same. Whitespace is an
 // exception, they can be not bold.
-func parseManPageHeading(s string, reportCell func(twin.Cell)) bool {
+func parseManPageHeading(s string, reportStyledRune func(twin.StyledRune)) bool {
 	if len(s) < 3 {
 		// We don't want to match empty strings. Also, strings of length 1 and 2
 		// cannot be man page headings since "char+backspace+char" is 3 bytes.
@@ -78,7 +78,7 @@ func parseManPageHeading(s string, reportCell func(twin.Cell)) bool {
 
 			if unicode.IsSpace(firstChar) {
 				// Whitespace is an exception, it can be not bold
-				reportCell(twin.Cell{Rune: firstChar, Style: ManPageHeading})
+				reportStyledRune(twin.StyledRune{Rune: firstChar, Style: ManPageHeading})
 
 				// Assume what we got was a new first char
 				firstChar = char
@@ -105,7 +105,7 @@ func parseManPageHeading(s string, reportCell func(twin.Cell)) bool {
 				return false
 			}
 
-			reportCell(twin.Cell{Rune: char, Style: ManPageHeading})
+			reportStyledRune(twin.StyledRune{Rune: char, Style: ManPageHeading})
 			state = stateExpectingFirstChar
 
 		default:

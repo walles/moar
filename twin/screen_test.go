@@ -54,7 +54,7 @@ func TestConsumeEncodedEventWithNoInput(t *testing.T) {
 }
 
 func TestRenderLine(t *testing.T) {
-	row := []Cell{
+	row := []StyledRune{
 		{
 			Rune:  '<',
 			Style: StyleDefault.WithAttr(AttrReverse),
@@ -78,7 +78,7 @@ func TestRenderLine(t *testing.T) {
 }
 
 func TestRenderLineEmpty(t *testing.T) {
-	row := []Cell{}
+	row := []StyledRune{}
 
 	rendered, count := renderLine(row, ColorCount16)
 	assert.Equal(t, count, 0)
@@ -89,7 +89,7 @@ func TestRenderLineEmpty(t *testing.T) {
 }
 
 func TestRenderLineLastReversed(t *testing.T) {
-	row := []Cell{
+	row := []StyledRune{
 		{
 			Rune:  '<',
 			Style: StyleDefault.WithAttr(AttrReverse),
@@ -107,7 +107,7 @@ func TestRenderLineLastReversed(t *testing.T) {
 }
 
 func TestRenderLineLastNonSpace(t *testing.T) {
-	row := []Cell{
+	row := []StyledRune{
 		{
 			Rune:  'X',
 			Style: StyleDefault,
@@ -124,7 +124,7 @@ func TestRenderLineLastNonSpace(t *testing.T) {
 }
 
 func TestRenderLineLastReversedPlusTrailingSpace(t *testing.T) {
-	row := []Cell{
+	row := []StyledRune{
 		{
 			Rune:  '<',
 			Style: StyleDefault.WithAttr(AttrReverse),
@@ -146,7 +146,7 @@ func TestRenderLineLastReversedPlusTrailingSpace(t *testing.T) {
 }
 
 func TestRenderLineOnlyTrailingSpaces(t *testing.T) {
-	row := []Cell{
+	row := []StyledRune{
 		{
 			Rune:  ' ',
 			Style: StyleDefault,
@@ -166,7 +166,7 @@ func TestRenderLineOnlyTrailingSpaces(t *testing.T) {
 }
 
 func TestRenderLineLastReversedSpaces(t *testing.T) {
-	row := []Cell{
+	row := []StyledRune{
 		{
 			Rune:  ' ',
 			Style: StyleDefault.WithAttr(AttrReverse),
@@ -184,7 +184,7 @@ func TestRenderLineLastReversedSpaces(t *testing.T) {
 }
 
 func TestRenderLineNonPrintable(t *testing.T) {
-	row := []Cell{
+	row := []StyledRune{
 		{
 			Rune: '',
 		},
@@ -204,7 +204,7 @@ func TestRenderLineNonPrintable(t *testing.T) {
 
 func TestRenderHyperlinkAtEndOfLine(t *testing.T) {
 	url := "https://example.com/"
-	row := []Cell{
+	row := []StyledRune{
 		{
 			Rune:  '*',
 			Style: StyleDefault.WithHyperlink(&url),
@@ -221,7 +221,7 @@ func TestRenderHyperlinkAtEndOfLine(t *testing.T) {
 
 func TestMultiCharHyperlink(t *testing.T) {
 	url := "https://example.com/"
-	row := []Cell{
+	row := []StyledRune{
 		{
 			Rune:  '-',
 			Style: StyleDefault.WithHyperlink(&url),

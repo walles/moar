@@ -365,15 +365,15 @@ func parseUnprintableStyle(styleOption string) (textstyles.UnprintableStyleT, er
 	return 0, fmt.Errorf("Good ones are highlight or whitespace")
 }
 
-func parseScrollHint(scrollHint string) (twin.Cell, error) {
+func parseScrollHint(scrollHint string) (twin.StyledRune, error) {
 	scrollHint = strings.ReplaceAll(scrollHint, "ESC", "\x1b")
 	hintAsLine := m.NewLine(scrollHint)
-	parsedTokens := hintAsLine.HighlightedTokens("", nil, nil).Cells
+	parsedTokens := hintAsLine.HighlightedTokens("", nil, nil).StyledRunes
 	if len(parsedTokens) == 1 {
 		return parsedTokens[0], nil
 	}
 
-	return twin.Cell{}, fmt.Errorf("Expected exactly one (optionally highlighted) character. For example: 'ESC[2m…'")
+	return twin.StyledRune{}, fmt.Errorf("Expected exactly one (optionally highlighted) character. For example: 'ESC[2m…'")
 }
 
 func parseShiftAmount(shiftAmount string) (uint, error) {
@@ -574,10 +574,10 @@ func pagerFromArgs(
 	unprintableStyle := flagSetFunc(flagSet, "render-unprintable", textstyles.UnprintableStyleHighlight,
 		"How unprintable characters are rendered: highlight or whitespace", parseUnprintableStyle)
 	scrollLeftHint := flagSetFunc(flagSet, "scroll-left-hint",
-		twin.NewCell('<', twin.StyleDefault.WithAttr(twin.AttrReverse)),
+		twin.NewStyledRune('<', twin.StyleDefault.WithAttr(twin.AttrReverse)),
 		"Shown when view can scroll left. One character with optional ANSI highlighting.", parseScrollHint)
 	scrollRightHint := flagSetFunc(flagSet, "scroll-right-hint",
-		twin.NewCell('>', twin.StyleDefault.WithAttr(twin.AttrReverse)),
+		twin.NewStyledRune('>', twin.StyleDefault.WithAttr(twin.AttrReverse)),
 		"Shown when view can scroll right. One character with optional ANSI highlighting.", parseScrollHint)
 	shift := flagSetFunc(flagSet, "shift", 16, "Horizontal scroll `amount` >=1, defaults to 16", parseShiftAmount)
 	mouseMode := flagSetFunc(

@@ -7,13 +7,13 @@ package twin
 type FakeScreen struct {
 	width  int
 	height int
-	cells  [][]Cell
+	cells  [][]StyledRune
 }
 
 func NewFakeScreen(width int, height int) *FakeScreen {
-	rows := make([][]Cell, height)
+	rows := make([][]StyledRune, height)
 	for i := 0; i < height; i++ {
-		rows[i] = make([]Cell, width)
+		rows[i] = make([]StyledRune, width)
 	}
 
 	return &FakeScreen{
@@ -30,7 +30,7 @@ func (screen *FakeScreen) Close() {
 func (screen *FakeScreen) Clear() {
 	// This method's contents has been copied from UnixScreen.Clear()
 
-	empty := NewCell(' ', StyleDefault)
+	empty := NewStyledRune(' ', StyleDefault)
 
 	width, height := screen.Size()
 	for row := 0; row < height; row++ {
@@ -40,24 +40,33 @@ func (screen *FakeScreen) Clear() {
 	}
 }
 
-func (screen *FakeScreen) SetCell(column int, row int, cell Cell) {
+func (screen *FakeScreen) SetCell(column int, row int, styledRune StyledRune) int {
 	// This method's contents has been copied from UnixScreen.Clear()
 
 	if column < 0 {
-		return
+		return styledRune.Width()
 	}
 	if row < 0 {
-		return
+		return styledRune.Width()
 	}
 
 	width, height := screen.Size()
 	if column >= width {
-		return
+		return styledRune.Width()
 	}
 	if row >= height {
-		return
+		return styledRune.Width()
 	}
-	screen.cells[row][column] = cell
+
+	if column+styledRune.Width() > width {
+		// This cell is too wide for the screen, write a space instead
+		screen.cells[row][column] = NewStyledRune(' ', styledRune.Style)
+		return styledRune.Width()
+	}
+
+	screen.cells[row][column] = styledRune
+
+	return styledRune.Width()
 }
 
 func (screen *FakeScreen) Show() {
@@ -85,6 +94,6 @@ func (screen *FakeScreen) Events() chan Event {
 	return nil
 }
 
-func (screen *FakeScreen) GetRow(row int) []Cell {
-	return screen.cells[row]
+func (screen *FakeScreen) GetRow(row int) []StyledRune {
+	return withoutHiddenRunes(screen.cells[row])
 }

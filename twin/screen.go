@@ -36,7 +36,8 @@ type Screen interface {
 
 	Clear()
 
-	SetCell(column int, row int, cell Cell)
+	// Returns the width of the rune just added, in number of columns
+	SetCell(column int, row int, styledRune StyledRune) int
 
 	// Render our contents into the terminal window
 	Show()
@@ -80,7 +81,7 @@ type interruptableReader interface {
 type UnixScreen struct {
 	widthAccessFromSizeOnly  int // Access from Size() method only
 	heightAccessFromSizeOnly int // Access from Size() method only
-	cells                    [][]Cell
+	cells                    [][]StyledRune
 
 	// Note that the type here doesn't matter, we only want to know whether or
 	// not this channel has been signalled
@@ -103,16 +104,11 @@ type UnixScreen struct {
 // Example event: "\x1b[<65;127;41M"
 //
 // Where:
-//
-// * "\x1b[<" says this is a mouse event
-//
-// * "65" says this is Wheel Up. "64" would be Wheel Down.
-//
-// * "127" is the column number on screen, "1" is the first column.
-//
-// * "41" is the row number on screen, "1" is the first row.
-//
-// * "M" marks the end of the mouse event.
+//   - "\x1b[<" says this is a mouse event
+//   - "65" says this is Wheel Up. "64" would be Wheel Down.
+//   - "127" is the column number on screen, "1" is the first column.
+//   - "41" is the row number on screen, "1" is the first row.
+//   - "M" marks the end of the mouse event.
 var mouseEventRegex = regexp.MustCompile("^\x1b\\[<([0-9]+);([0-9]+);([0-9]+)M")
 
 // NewScreen() requires Close() to be called after you are done with your new
@@ -556,9 +552,9 @@ func (screen *UnixScreen) Size() (width int, height int) {
 		return screen.widthAccessFromSizeOnly, screen.heightAccessFromSizeOnly
 	}
 
-	newCells := make([][]Cell, height)
+	newCells := make([][]StyledRune, height)
 	for rowNumber := 0; rowNumber < height; rowNumber++ {
-		newCells[rowNumber] = make([]Cell, width)
+		newCells[rowNumber] = make([]StyledRune, width)
 	}
 
 	// FIXME: Copy any existing contents over to the new, resized screen array
@@ -627,26 +623,35 @@ func parseTerminalBgColorResponse(responseBytes []byte) *Color {
 	return &color
 }
 
-func (screen *UnixScreen) SetCell(column int, row int, cell Cell) {
+func (screen *UnixScreen) SetCell(column int, row int, styledRune StyledRune) int {
 	if column < 0 {
-		return
+		return styledRune.Width()
 	}
 	if row < 0 {
-		return
+		return styledRune.Width()
 	}
 
 	width, height := screen.Size()
 	if column >= width {
-		return
+		return styledRune.Width()
 	}
 	if row >= height {
-		return
+		return styledRune.Width()
 	}
-	screen.cells[row][column] = cell
+
+	if column+styledRune.Width() > width {
+		// This cell is too wide for the screen, write a space instead
+		screen.cells[row][column] = NewStyledRune(' ', styledRune.Style)
+		return styledRune.Width()
+	}
+
+	screen.cells[row][column] = styledRune
+
+	return styledRune.Width()
 }
 
 func (screen *UnixScreen) Clear() {
-	empty := NewCell(' ', StyleDefault)
+	empty := NewStyledRune(' ', StyleDefault)
 
 	width, height := screen.Size()
 	for row := 0; row < height; row++ {
@@ -656,9 +661,28 @@ func (screen *UnixScreen) Clear() {
 	}
 }
 
+// A cell is considered hidden if it's preceded by a wide character that spans
+// multiple columns.
+func withoutHiddenRunes(runes []StyledRune) []StyledRune {
+	result := make([]StyledRune, 0, len(runes))
+
+	for i := 0; i < len(runes); i++ {
+		if i > 0 && runes[i-1].Width() == 2 {
+			// This is a hidden rune
+			continue
+		}
+
+		result = append(result, runes[i])
+	}
+
+	return result
+}
+
 // Returns the rendered line, plus how many information carrying cells went into
 // it
-func renderLine(row []Cell, terminalColorCount ColorCount) (string, int) {
+func renderLine(row []StyledRune, terminalColorCount ColorCount) (string, int) {
+	row = withoutHiddenRunes(row)
+
 	// Strip trailing whitespace
 	lastSignificantCellIndex := len(row) - 1
 	for ; lastSignificantCellIndex >= 0; lastSignificantCellIndex-- {

@@ -22,7 +22,7 @@ type renderedLine struct {
 	// will have a wrapIndex of 1.
 	wrapIndex int
 
-	cells []twin.Cell
+	cells []twin.StyledRune
 
 	// Used for rendering clear-to-end-of-line control sequences:
 	// https://en.wikipedia.org/wiki/ANSI_escape_code#EL
@@ -38,12 +38,13 @@ func (p *Pager) redraw(spinner string) overflowState {
 	p.longestLineLength = 0
 
 	lastUpdatedScreenLineNumber := -1
-	var renderedScreenLines [][]twin.Cell
+	var renderedScreenLines [][]twin.StyledRune
 	renderedScreenLines, statusText, overflow := p.renderScreenLines()
 	for screenLineNumber, row := range renderedScreenLines {
 		lastUpdatedScreenLineNumber = screenLineNumber
-		for column, cell := range row {
-			p.screen.SetCell(column, lastUpdatedScreenLineNumber, cell)
+		column := 0
+		for _, cell := range row {
+			column += p.screen.SetCell(column, lastUpdatedScreenLineNumber, cell)
 		}
 	}
 
@@ -54,9 +55,10 @@ func (p *Pager) redraw(spinner string) overflowState {
 		// This happens when we're done
 		eofSpinner = "---"
 	}
-	spinnerLine := textstyles.CellsFromString("", _EofMarkerFormat+eofSpinner, nil).Cells
-	for column, cell := range spinnerLine {
-		p.screen.SetCell(column, lastUpdatedScreenLineNumber+1, cell)
+	spinnerLine := textstyles.StyledRunesFromString("", _EofMarkerFormat+eofSpinner, nil).StyledRunes
+	column := 0
+	for _, cell := range spinnerLine {
+		column += p.screen.SetCell(column, lastUpdatedScreenLineNumber+1, cell)
 	}
 
 	p.mode.drawFooter(statusText, spinner)
@@ -71,14 +73,14 @@ func (p *Pager) redraw(spinner string) overflowState {
 //
 // The lines returned by this method are decorated with horizontal scroll
 // markers and line numbers and are ready to be output to the screen.
-func (p *Pager) renderScreenLines() (lines [][]twin.Cell, statusText string, overflow overflowState) {
+func (p *Pager) renderScreenLines() (lines [][]twin.StyledRune, statusText string, overflow overflowState) {
 	renderedLines, statusText, overflow := p.renderLines()
 	if len(renderedLines) == 0 {
 		return
 	}
 
 	// Construct the screen lines to return
-	screenLines := make([][]twin.Cell, 0, len(renderedLines))
+	screenLines := make([][]twin.StyledRune, 0, len(renderedLines))
 	for _, renderedLine := range renderedLines {
 		screenLines = append(screenLines, renderedLine.cells)
 
@@ -90,7 +92,7 @@ func (p *Pager) renderScreenLines() (lines [][]twin.Cell, statusText string, ove
 		screenWidth, _ := p.screen.Size()
 		for len(screenLines[len(screenLines)-1]) < screenWidth {
 			screenLines[len(screenLines)-1] =
-				append(screenLines[len(screenLines)-1], twin.NewCell(' ', renderedLine.trailer))
+				append(screenLines[len(screenLines)-1], twin.NewStyledRune(' ', renderedLine.trailer))
 		}
 	}
 
@@ -214,14 +216,14 @@ func (p *Pager) renderLines() ([]renderedLine, string, overflowState) {
 // indent, and to (optionally) render the line number.
 func (p *Pager) renderLine(line *Line, lineNumber linenumbers.LineNumber, scrollPosition scrollPositionInternal) ([]renderedLine, overflowState) {
 	highlighted := line.HighlightedTokens(p.linePrefix, p.searchPattern, &lineNumber)
-	var wrapped [][]twin.Cell
+	var wrapped [][]twin.StyledRune
 	overflow := didFit
 	if p.WrapLongLines {
 		width, _ := p.screen.Size()
-		wrapped = wrapLine(width-numberPrefixLength(p, scrollPosition), highlighted.Cells)
+		wrapped = wrapLine(width-numberPrefixLength(p, scrollPosition), highlighted.StyledRunes)
 	} else {
 		// All on one line
-		wrapped = [][]twin.Cell{highlighted.Cells}
+		wrapped = [][]twin.StyledRune{highlighted.StyledRunes}
 	}
 
 	if len(wrapped) > 1 {
@@ -257,35 +259,98 @@ func (p *Pager) renderLine(line *Line, lineNumber linenumbers.LineNumber, scroll
 }
 
 // Take a rendered line and decorate as needed:
-// * Line number, or leading whitespace for wrapped lines
-// * Scroll left indicator
-// * Scroll right indicator
-func (p *Pager) decorateLine(lineNumberToShow *linenumbers.LineNumber, contents []twin.Cell, scrollPosition scrollPositionInternal) ([]twin.Cell, overflowState) {
+//   - Line number, or leading whitespace for wrapped lines
+//   - Scroll left indicator
+//   - Scroll right indicator
+func (p *Pager) decorateLine(lineNumberToShow *linenumbers.LineNumber, contents []twin.StyledRune, scrollPosition scrollPositionInternal) ([]twin.StyledRune, overflowState) {
 	width, _ := p.screen.Size()
-	newLine := make([]twin.Cell, 0, width)
+	newLine := make([]twin.StyledRune, 0, width)
 	numberPrefixLength := numberPrefixLength(p, scrollPosition)
 	newLine = append(newLine, createLinePrefix(lineNumberToShow, numberPrefixLength)...)
 	overflow := didFit
 
-	startColumn := p.leftColumnZeroBased
-	if startColumn < len(contents) {
-		endColumn := p.leftColumnZeroBased + (width - numberPrefixLength)
-		if endColumn > len(contents) {
-			endColumn = len(contents)
+	// Find the first and last fully visible runes.
+	var firstVisibleRuneIndex *int
+	lastVisibleRuneIndex := -1
+	screenColumn := numberPrefixLength // Zero based
+	lastVisibleScreenColumn := p.leftColumnZeroBased + width - 1
+	cutOffRuneToTheLeft := false
+	cutOffRuneToTheRight := false
+	canScrollRight := false
+	for i, char := range contents {
+		if firstVisibleRuneIndex == nil && screenColumn >= p.leftColumnZeroBased {
+			// Found the first fully visible rune. We need to point to a copy of
+			// our loop variable, not the loop variable itself. Just pointing to
+			// i, will make firstVisibleRuneIndex point to a new value for every
+			// iteration of the loop.
+			copyOfI := i
+			firstVisibleRuneIndex = &copyOfI
+			if i > 0 && screenColumn > p.leftColumnZeroBased && contents[i-1].Width() > 1 {
+				// We had to cut a rune in half at the start
+				cutOffRuneToTheLeft = true
+			}
 		}
 
-		newLine = append(newLine, contents[startColumn:endColumn]...)
+		screenReached := firstVisibleRuneIndex != nil
+		currentCharRightEdge := screenColumn + char.Width() - 1
+		beforeRightEdge := currentCharRightEdge <= lastVisibleScreenColumn
+		if screenReached {
+			if beforeRightEdge {
+				// This rune is fully visible
+				lastVisibleRuneIndex = i
+			} else {
+				// We're just outside the screen on the right
+				canScrollRight = true
+
+				currentCharLeftEdge := screenColumn
+				if currentCharLeftEdge <= lastVisibleScreenColumn {
+					// We have to cut this rune in half
+					cutOffRuneToTheRight = true
+				}
+
+				// Search done, we're off the right edge
+				break
+			}
+		}
+
+		screenColumn += char.Width()
+	}
+
+	// Prepend a space if we had to cut a rune in half at the start
+	if cutOffRuneToTheLeft {
+		newLine = append([]twin.StyledRune{twin.NewStyledRune(' ', p.ScrollLeftHint.Style)}, newLine...)
+	}
+
+	// Add the visible runes
+	if firstVisibleRuneIndex != nil {
+		newLine = append(newLine, contents[*firstVisibleRuneIndex:lastVisibleRuneIndex+1]...)
+	}
+
+	// Append a space if we had to cut a rune in half at the end
+	if cutOffRuneToTheRight {
+		newLine = append(newLine, twin.NewStyledRune(' ', p.ScrollRightHint.Style))
 	}
 
 	// Add scroll left indicator
-	if p.leftColumnZeroBased > 0 && len(contents) > 0 {
+	canScrollLeft := p.leftColumnZeroBased > 0
+	if canScrollLeft && len(contents) > 0 {
 		if len(newLine) == 0 {
-			// Don't panic on short lines, this new Cell will be
-			// overwritten with '<' right after this if statement
-			newLine = append(newLine, twin.Cell{})
+			// Make room for the scroll left indicator
+			newLine = make([]twin.StyledRune, 1)
 		}
 
-		// Add can-scroll-left marker
+		if newLine[0].Width() > 1 {
+			// Replace the first rune with two spaces so we can replace the
+			// leftmost cell with a scroll left indicator. First, convert to one
+			// space...
+			newLine[0] = twin.NewStyledRune(' ', p.ScrollLeftHint.Style)
+			// ...then prepend another space:
+			newLine = append([]twin.StyledRune{twin.NewStyledRune(' ', p.ScrollLeftHint.Style)}, newLine...)
+
+			// Prepending ref: https://stackoverflow.com/a/53737602/473672
+		}
+
+		// Set can-scroll-left marker
 		newLine[0] = p.ScrollLeftHint
 
 		// We're scrolled right, meaning everything is not visible on screen
@@ -293,8 +358,17 @@ func (p *Pager) decorateLine(lineNumberToShow *linenumbers.LineNumber, contents 
 	}
 
 	// Add scroll right indicator
-	if len(contents)+numberPrefixLength-p.leftColumnZeroBased > width {
-		newLine[width-1] = p.ScrollRightHint
+	if canScrollRight {
+		if newLine[len(newLine)-1].Width() > 1 {
+			// Replace the last rune with two spaces so we can replace the
+			// rightmost cell with a scroll right indicator. First, convert to one
+			// space...
+			newLine[len(newLine)-1] = twin.NewStyledRune(' ', p.ScrollRightHint.Style)
+			// ...then append another space:
+			newLine = append(newLine, twin.NewStyledRune(' ', p.ScrollRightHint.Style))
+		}
+
+		newLine[len(newLine)-1] = p.ScrollRightHint
 
 		// Some text is out of bounds to the right
 		overflow = didOverflow
@@ -306,15 +380,15 @@ func (p *Pager) decorateLine(lineNumberToShow *linenumbers.LineNumber, contents 
 // Generate a line number prefix of the given length.
 //
 // Can be empty or all-whitespace depending on parameters.
-func createLinePrefix(lineNumber *linenumbers.LineNumber, numberPrefixLength int) []twin.Cell {
+func createLinePrefix(lineNumber *linenumbers.LineNumber, numberPrefixLength int) []twin.StyledRune {
 	if numberPrefixLength == 0 {
-		return []twin.Cell{}
+		return []twin.StyledRune{}
 	}
 
-	lineNumberPrefix := make([]twin.Cell, 0, numberPrefixLength)
+	lineNumberPrefix := make([]twin.StyledRune, 0, numberPrefixLength)
 	if lineNumber == nil {
 		for len(lineNumberPrefix) < numberPrefixLength {
-			lineNumberPrefix = append(lineNumberPrefix, twin.Cell{Rune: ' '})
+			lineNumberPrefix = append(lineNumberPrefix, twin.StyledRune{Rune: ' '})
 		}
 		return lineNumberPrefix
 	}
@@ -331,7 +405,7 @@ func createLinePrefix(lineNumber *linenumbers.LineNumber, numberPrefixLength int
 			break
 		}
 
-		lineNumberPrefix = append(lineNumberPrefix, twin.NewCell(digit, lineNumbersStyle))
+		lineNumberPrefix = append(lineNumberPrefix, twin.NewStyledRune(digit, lineNumbersStyle))
 	}
 
 	return lineNumberPrefix

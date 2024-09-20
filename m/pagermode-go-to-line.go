@@ -21,12 +21,11 @@ func (m *PagerModeGotoLine) drawFooter(_ string, _ string) {
 
 	pos := 0
 	for _, token := range "Go to line number: " + m.gotoLineString {
-		p.screen.SetCell(pos, height-1, twin.NewCell(token, twin.StyleDefault))
-		pos++
+		pos += p.screen.SetCell(pos, height-1, twin.NewStyledRune(token, twin.StyleDefault))
 	}
 
 	// Add a cursor
-	p.screen.SetCell(pos, height-1, twin.NewCell(' ', twin.StyleDefault.WithAttr(twin.AttrReverse)))
+	p.screen.SetCell(pos, height-1, twin.NewStyledRune(' ', twin.StyleDefault.WithAttr(twin.AttrReverse)))
 }
 
 func (m *PagerModeGotoLine) onKey(key twin.KeyCode) {

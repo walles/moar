@@ -25,8 +25,8 @@ func TestHighlightedTokensWithManPageHeading(t *testing.T) {
 	line := NewLine(manPageHeading)
 	highlighted := line.HighlightedTokens(prefix, nil, nil)
 
-	assert.Equal(t, len(highlighted.Cells), len(headingText))
-	for i, cell := range highlighted.Cells {
+	assert.Equal(t, len(highlighted.StyledRunes), len(headingText))
+	for i, cell := range highlighted.StyledRunes {
 		assert.Equal(t, cell.Rune, rune(headingText[i]))
 		assert.Equal(t, cell.Style, textstyles.ManPageHeading)
 	}

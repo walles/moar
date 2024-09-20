@@ -11,28 +11,33 @@ func TestTrimSpaceRight(t *testing.T) {
 	// Empty
 	assert.Assert(t, reflect.DeepEqual(
 		TrimSpaceRight(
-			[]Cell{},
+			[]StyledRune{},
 		),
-		[]Cell{}))
+		[]StyledRune{}))
 
 	// Single non-space
 	assert.Assert(t, reflect.DeepEqual(
 		TrimSpaceRight(
-			[]Cell{{Rune: 'x'}},
+			[]StyledRune{{Rune: 'x'}},
 		),
-		[]Cell{{Rune: 'x'}}))
+		[]StyledRune{{Rune: 'x'}}))
 
 	// Single space
 	assert.Assert(t, reflect.DeepEqual(
 		TrimSpaceRight(
-			[]Cell{{Rune: ' '}},
+			[]StyledRune{{Rune: ' '}},
 		),
-		[]Cell{}))
+		[]StyledRune{}))
 
 	// Non-space plus space
 	assert.Assert(t, reflect.DeepEqual(
 		TrimSpaceRight(
-			[]Cell{{Rune: 'x'}, {Rune: ' '}},
+			[]StyledRune{{Rune: 'x'}, {Rune: ' '}},
 		),
-		[]Cell{{Rune: 'x'}}))
+		[]StyledRune{{Rune: 'x'}}))
+}
+
+func TestRuneWidth(t *testing.T) {
+	assert.Equal(t, NewStyledRune('x', Style{}).Width(), 1)
+	assert.Equal(t, NewStyledRune('午', Style{}).Width(), 2)
 }

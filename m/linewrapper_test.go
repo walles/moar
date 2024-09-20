@@ -4,15 +4,17 @@ import (
 	"reflect"
 	"testing"
 
+	"gotest.tools/v3/assert"
+
 	"github.com/walles/moar/twin"
 )
 
-func tokenize(input string) []twin.Cell {
+func tokenize(input string) []twin.StyledRune {
 	line := NewLine(input)
-	return line.HighlightedTokens("", nil, nil).Cells
+	return line.HighlightedTokens("", nil, nil).StyledRunes
 }
 
-func rowsToString(cellLines [][]twin.Cell) string {
+func rowsToString(cellLines [][]twin.StyledRune) string {
 	returnMe := ""
 	for _, cellLine := range cellLines {
 		lineString := ""
@@ -29,11 +31,11 @@ func rowsToString(cellLines [][]twin.Cell) string {
 	return returnMe
 }
 
-func assertWrap(t *testing.T, input string, width int, wrappedLines ...string) {
+func assertWrap(t *testing.T, input string, widthInScreenCells int, wrappedLines ...string) {
 	toWrap := tokenize(input)
-	actual := wrapLine(width, toWrap)
+	actual := wrapLine(widthInScreenCells, toWrap)
 
-	expected := [][]twin.Cell{}
+	expected := [][]twin.StyledRune{}
 	for _, wrappedLine := range wrappedLines {
 		expected = append(expected, tokenize(wrappedLine))
 	}
@@ -42,8 +44,8 @@ func assertWrap(t *testing.T, input string, width int, wrappedLines ...string) {
 		return
 	}
 
-	t.Errorf("When wrapping <%s> at width %d:\n--Expected--\n%s\n\n--Actual--\n%s",
-		input, width, rowsToString(expected), rowsToString(actual))
+	t.Errorf("When wrapping <%s> at cell count %d:\n--Expected--\n%s\n\n--Actual--\n%s",
+		input, widthInScreenCells, rowsToString(expected), rowsToString(actual))
 }
 
 func TestEnoughRoomNoWrapping(t *testing.T) {
@@ -81,6 +83,8 @@ func TestWordWrap(t *testing.T) {
 	assertWrap(t, "abc 123", 4, "abc", "123")
 	assertWrap(t, "abc 123", 3, "abc", "123")
 	assertWrap(t, "abc 123", 2, "ab", "c", "12", "3")
+
+	assertWrap(t, "here's the last line", 10, "here's the", "last line")
 }
 
 func TestWordWrapUrl(t *testing.T) {
@@ -108,4 +112,22 @@ func TestWordWrapMarkdownLink(t *testing.T) {
 
 	// This doesn't look great, room for tuning!
 	assertWrap(t, "[something](http://apa/bepa)", 10, "[something", "]", "(http://ap", "a/bepa)")
+}
+
+func TestWordWrapWideChars(t *testing.T) {
+	// The width is in cells, and there are wide chars in here using multiple cells.
+	assertWrap(t, "x上午y", 6, "x上午y")
+	assertWrap(t, "x上午y", 5, "x上午", "y")
+	assertWrap(t, "x上午y", 4, "x上", "午y")
+	assertWrap(t, "x上午y", 3, "x上", "午y")
+	assertWrap(t, "x上午y", 2, "x", "上", "午", "y")
+}
+
+func TestGetWrapCountWideChars(t *testing.T) {
+	line := tokenize("x上午y")
+	assert.Equal(t, getWrapCount(line, 5), 3)
+	assert.Equal(t, getWrapCount(line, 4), 2)
+	assert.Equal(t, getWrapCount(line, 3), 2)
+	assert.Equal(t, getWrapCount(line, 2), 1)
+	assert.Equal(t, getWrapCount(line, 1), 1)
 }
