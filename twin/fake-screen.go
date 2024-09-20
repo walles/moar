@@ -40,26 +40,33 @@ func (screen *FakeScreen) Clear() {
 	}
 }
 
-func (screen *FakeScreen) SetCell(column int, row int, cell StyledRune) int {
+func (screen *FakeScreen) SetCell(column int, row int, styledRune StyledRune) int {
 	// This method's contents has been copied from UnixScreen.Clear()
 
 	if column < 0 {
-		return cell.Width()
+		return styledRune.Width()
 	}
 	if row < 0 {
-		return cell.Width()
+		return styledRune.Width()
 	}
 
 	width, height := screen.Size()
 	if column >= width {
-		return cell.Width()
+		return styledRune.Width()
 	}
 	if row >= height {
-		return cell.Width()
+		return styledRune.Width()
 	}
-	screen.cells[row][column] = cell
 
-	return cell.Width()
+	if column+styledRune.Width() > width {
+		// This cell is too wide for the screen, write a space instead
+		screen.cells[row][column] = NewStyledRune(' ', styledRune.Style)
+		return styledRune.Width()
+	}
+
+	screen.cells[row][column] = styledRune
+
+	return styledRune.Width()
 }
 
 func (screen *FakeScreen) Show() {
@@ -88,5 +95,5 @@ func (screen *FakeScreen) Events() chan Event {
 }
 
 func (screen *FakeScreen) GetRow(row int) []StyledRune {
-	return withoutHiddenRunes(screen.cells[row], screen.width)
+	return withoutHiddenRunes(screen.cells[row])
 }

@@ -37,7 +37,7 @@ type Screen interface {
 	Clear()
 
 	// Returns the width of the rune just added, in number of columns
-	SetCell(column int, row int, cell StyledRune) int
+	SetCell(column int, row int, styledRune StyledRune) int
 
 	// Render our contents into the terminal window
 	Show()
@@ -623,24 +623,31 @@ func parseTerminalBgColorResponse(responseBytes []byte) *Color {
 	return &color
 }
 
-func (screen *UnixScreen) SetCell(column int, row int, cell StyledRune) int {
+func (screen *UnixScreen) SetCell(column int, row int, styledRune StyledRune) int {
 	if column < 0 {
-		return cell.Width()
+		return styledRune.Width()
 	}
 	if row < 0 {
-		return cell.Width()
+		return styledRune.Width()
 	}
 
 	width, height := screen.Size()
 	if column >= width {
-		return cell.Width()
+		return styledRune.Width()
 	}
 	if row >= height {
-		return cell.Width()
+		return styledRune.Width()
 	}
-	screen.cells[row][column] = cell
 
-	return cell.Width()
+	if column+styledRune.Width() > width {
+		// This cell is too wide for the screen, write a space instead
+		screen.cells[row][column] = NewStyledRune(' ', styledRune.Style)
+		return styledRune.Width()
+	}
+
+	screen.cells[row][column] = styledRune
+
+	return styledRune.Width()
 }
 
 func (screen *UnixScreen) Clear() {
@@ -656,21 +663,16 @@ func (screen *UnixScreen) Clear() {
 
 // A cell is considered hidden if it's preceded by a wide character that spans
 // multiple columns.
-//
-// Also, if the last cell on the screen is a wide character that would span the
-// screen border, it will be considered hidden as well.
-func withoutHiddenRunes(runes []StyledRune, screenWidth int) []StyledRune {
+func withoutHiddenRunes(runes []StyledRune) []StyledRune {
 	result := make([]StyledRune, 0, len(runes))
-	renderedWidth := 0
-	for _, char := range runes {
-		charWidth := char.Width()
-		if renderedWidth+charWidth > screenWidth {
-			// This character would span the screen border
-			break
+
+	for i := 0; i < len(runes); i++ {
+		if i > 0 && runes[i-1].Width() == 2 {
+			// This is a hidden rune
+			continue
 		}
 
-		result = append(result, char)
-		renderedWidth += charWidth
+		result = append(result, runes[i])
 	}
 
 	return result
@@ -678,8 +680,8 @@ func withoutHiddenRunes(runes []StyledRune, screenWidth int) []StyledRune {
 
 // Returns the rendered line, plus how many information carrying cells went into
 // it
-func renderLine(row []StyledRune, screenWidth int, terminalColorCount ColorCount) (string, int) {
-	row = withoutHiddenRunes(row, screenWidth)
+func renderLine(row []StyledRune, terminalColorCount ColorCount) (string, int) {
+	row = withoutHiddenRunes(row)
 
 	// Strip trailing whitespace
 	lastSignificantCellIndex := len(row) - 1
@@ -746,9 +748,8 @@ func (screen *UnixScreen) showNLines(height int, clearFirst bool) {
 		builder.WriteString("\x1b[1;1H")
 	}
 
-	screenWidth, _ := screen.Size()
 	for row := 0; row < height; row++ {
-		rendered, lineLength := renderLine(screen.cells[row], screenWidth, screen.terminalColorCount)
+		rendered, lineLength := renderLine(screen.cells[row], screen.terminalColorCount)
 		builder.WriteString(rendered)
 
 		wasLastLine := row == (height - 1)
