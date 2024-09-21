@@ -36,7 +36,12 @@ type Screen interface {
 
 	Clear()
 
-	// Returns the width of the rune just added, in number of columns
+	// Returns the width of the rune just added, in number of columns.
+	//
+	// Note that if you set a wide rune (like '午') in one column, then whatever
+	// you put in the next column will be hidden by the wide rune. A wide rune
+	// in the last screen column will be replaced by a space, to prevent it from
+	// overflowing onto the next line.
 	SetCell(column int, row int, styledRune StyledRune) int
 
 	// Render our contents into the terminal window
