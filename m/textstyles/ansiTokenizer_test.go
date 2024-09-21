@@ -61,6 +61,11 @@ func TestTokenize(t *testing.T) {
 			assert.NilError(t, err)
 
 			fileScanner := bufio.NewScanner(fileReader)
+
+			// Upping the buffer like this (from a default of 64kb) makes the
+			// tests go faster
+			fileScanner.Buffer(make([]byte, 1024*1024), 1024*1024)
+
 			var lineNumber *linenumbers.LineNumber
 			for fileScanner.Scan() {
 				line := fileScanner.Text()
