@@ -233,6 +233,26 @@ func TestCodeHighlightingIncludes(t *testing.T) {
 	assertRunesEqual(t, firstIncludeLine[0], secondIncludeLine[0])
 }
 
+func TestCsvEscapedNewline(t *testing.T) {
+	reader, err := NewReaderFromFilename("../sample-files/corner-cases.csv", *styles.Get("native"), formatters.TTY16m, nil)
+	assert.NilError(t, err)
+	assert.NilError(t, reader._wait())
+
+	screen := startPaging(t, reader)
+
+	lastRuneOfFirstRow := screen.GetRow(0)[14]
+	firstRuneOfSecondRow := screen.GetRow(1)[0]
+
+	// Verify we're looking at the right runes
+	assert.Equal(t, lastRuneOfFirstRow.Rune, ':')   // Line ends with "...newline:"
+	assert.Equal(t, firstRuneOfSecondRow.Rune, 'q') // Line starts with "quote:"
+
+	// The sample file's first line ends with an escaped newline, and the lexer
+	// token continues on the next line. So the style at the start of the second
+	// line must match the style at the end of the first line.
+	assert.Equal(t, firstRuneOfSecondRow.Style, lastRuneOfFirstRow.Style)
+}
+
 func TestUnicodePrivateUse(t *testing.T) {
 	// This character lives in a Private Use Area:
 	// https://codepoints.net/U+f244
