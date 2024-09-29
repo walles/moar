@@ -2,6 +2,8 @@ module github.com/walles/moar
 
 go 1.20
 
+replace github.com/alecthomas/chroma/v2 => ../chroma
+
 require (
 	github.com/alecthomas/chroma/v2 v2.12.0
 	github.com/google/go-cmp v0.5.9
@@ -16,6 +18,6 @@ require (
 )
 
 require (
-	github.com/dlclark/regexp2 v1.10.0 // indirect
+	github.com/dlclark/regexp2 v1.11.4 // indirect
 	github.com/stretchr/testify v1.7.0 // indirect
 )
