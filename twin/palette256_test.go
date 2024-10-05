@@ -9,9 +9,9 @@ import (
 func TestColorRgbFirst16(t *testing.T) {
 	r, g, b := color256ToRGB(5)
 
-	assert.Equal(t, r, uint8(0x80))
+	assert.Equal(t, r, uint8(0xaa))
 	assert.Equal(t, g, uint8(0x00))
-	assert.Equal(t, b, uint8(0x80))
+	assert.Equal(t, b, uint8(0xaa))
 }
 
 func TestColorToRgbInTheGrey(t *testing.T) {
