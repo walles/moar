@@ -60,6 +60,9 @@ Moar is used as the default pager by:
 
 ## Using [Homebrew](https://brew.sh/)
 
+**Both macOS and Linux** users can use Homebrew to install. See below for distro
+specific instructions.
+
 ```sh
 brew install moar
 ```
@@ -96,12 +99,12 @@ More info [here](https://aur.archlinux.org/packages/moar-git).
 
 ## Debian / Ubuntu
 
-Nobody has stepped up and packaged `moar` for Debian.
+Nobody has stepped up to maintain `moar` for Debian.
 
-If you want to [package `moar` for
+If you want to [maintain the `moar` packaging for
 Debian](https://github.com/walles/moar/issues/137), that would be very welcome!
 
-Otherwise read on for manual install instructions.
+Otherwise use Homebrew (see above) or read on for manual install instructions.
 
 ## Manual Install
 
