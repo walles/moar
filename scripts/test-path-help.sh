@@ -21,7 +21,8 @@ ln -s "$MOAR" "$WORKDIR/moar"
 echo "moar" >"$WORKDIR/expected"
 
 # Extract suggested PAGER value from moar --help
-PATH="$WORKDIR" PAGER="" moar --help | grep "export PAGER" | sed -E 's/.*=//' >"$WORKDIR/actual"
+unset PAGER
+PATH="$WORKDIR" PAGER="" moar --help | grep "PAGER" | grep -v "is empty" | sed -E 's/.*PAGER[= ]//' >"$WORKDIR/actual"
 
 # Ensure it matches the symlink we have in $PATH
 cd "$WORKDIR"

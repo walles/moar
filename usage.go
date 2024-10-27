@@ -182,7 +182,6 @@ func printUsage(flagSet *flag.FlagSet, colors twin.ColorCount) {
 		fmt.Print(envSection)
 	}
 
-	// We're not the default pager
 	printSetDefaultPagerHelp(colors)
 
 	fmt.Println()
@@ -194,6 +193,7 @@ func printUsage(flagSet *flag.FlagSet, colors twin.ColorCount) {
 	fmt.Println("    \tImmediately scroll to line 1234")
 }
 
+// If $PAGER isn't pointing to us, print a help text on how to set it.
 func printSetDefaultPagerHelp(colors twin.ColorCount) {
 	absMoarPath, err := absLookPath(os.Args[0])
 	if err != nil {
@@ -207,15 +207,32 @@ func printSetDefaultPagerHelp(colors twin.ColorCount) {
 	}
 
 	if absPagerValue == absMoarPath {
+		// We're already the default pager
 		return
 	}
 
 	fmt.Println()
 	fmt.Println(heading("Making moar Your Default Pager", colors))
-	fmt.Println("  Put the following line in your ~/.bashrc, ~/.bash_profile or ~/.zshrc")
-	fmt.Println("  and moar will be used as the default pager in all new terminal windows:")
-	fmt.Println()
-	fmt.Printf("     export PAGER=%s\n", getMoarPath())
+
+	shellIsFish := strings.HasSuffix(os.Getenv("SHELL"), "fish")
+	shellIsPowershell := len(os.Getenv("PSModulePath")) > 0
+
+	if shellIsFish {
+		fmt.Println("  Write this command at your prompt:")
+		fmt.Println()
+		fmt.Printf("     set -Ux PAGER %s\n", getMoarPath())
+	} else if shellIsPowershell {
+		fmt.Println("  Put the following line in your $PROFILE file (\"echo $PROFILE\" to find it)")
+		fmt.Println("  and moar will be used as the default pager in all new terminal windows:")
+		fmt.Println()
+		fmt.Printf("     $env:PAGER = \"%s\"\n", getMoarPath())
+	} else {
+		// I don't know how to identify bash / zsh, put generic instructions here
+		fmt.Println("  Put the following line in your ~/.bashrc, ~/.bash_profile or ~/.zshrc")
+		fmt.Println("  and moar will be used as the default pager in all new terminal windows:")
+		fmt.Println()
+		fmt.Printf("     export PAGER=%s\n", getMoarPath())
+	}
 }
 
 // "moar" if we're in the $PATH, otherwise an absolute path
