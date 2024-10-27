@@ -182,24 +182,8 @@ func printUsage(flagSet *flag.FlagSet, colors twin.ColorCount) {
 		fmt.Print(envSection)
 	}
 
-	absMoarPath, err := absLookPath(os.Args[0])
-	if err == nil {
-		absPagerValue, err := absLookPath(os.Getenv("PAGER"))
-		if err != nil {
-			absPagerValue = ""
-		}
-		if absPagerValue != absMoarPath {
-			// We're not the default pager
-			fmt.Println()
-			fmt.Println(heading("Making moar Your Default Pager", colors))
-			fmt.Println("  Put the following line in your ~/.bashrc, ~/.bash_profile or ~/.zshrc")
-			fmt.Println("  and moar will be used as the default pager in all new terminal windows:")
-			fmt.Println()
-			fmt.Printf("     export PAGER=%s\n", getMoarPath())
-		}
-	} else {
-		log.Warn("Unable to find moar binary ", err)
-	}
+	// We're not the default pager
+	printSetDefaultPagerHelp(colors)
 
 	fmt.Println()
 	fmt.Println(heading("Options", colors))
@@ -208,6 +192,30 @@ func printUsage(flagSet *flag.FlagSet, colors twin.ColorCount) {
 
 	fmt.Println("  +1234")
 	fmt.Println("    \tImmediately scroll to line 1234")
+}
+
+func printSetDefaultPagerHelp(colors twin.ColorCount) {
+	absMoarPath, err := absLookPath(os.Args[0])
+	if err != nil {
+		log.Warn("Unable to find moar binary ", err)
+		return
+	}
+
+	absPagerValue, err := absLookPath(os.Getenv("PAGER"))
+	if err != nil {
+		absPagerValue = ""
+	}
+
+	if absPagerValue == absMoarPath {
+		return
+	}
+
+	fmt.Println()
+	fmt.Println(heading("Making moar Your Default Pager", colors))
+	fmt.Println("  Put the following line in your ~/.bashrc, ~/.bash_profile or ~/.zshrc")
+	fmt.Println("  and moar will be used as the default pager in all new terminal windows:")
+	fmt.Println()
+	fmt.Printf("     export PAGER=%s\n", getMoarPath())
 }
 
 // "moar" if we're in the $PATH, otherwise an absolute path
