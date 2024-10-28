@@ -531,6 +531,18 @@ func NewReaderFromFilename(filename string, style chroma.Style, formatter chroma
 	return mReader, nil
 }
 
+func textAsString(reader *Reader) string {
+	reader.Lock()
+	defer reader.Unlock()
+
+	text := strings.Builder{}
+	for _, line := range reader.lines {
+		text.WriteString(line.raw)
+		text.WriteString("\n")
+	}
+	return text.String()
+}
+
 // We expect this to be executed in a goroutine
 func highlightFromMemory(reader *Reader, style chroma.Style, formatter chroma.Formatter, lexer chroma.Lexer) {
 	defer func() {
@@ -555,14 +567,7 @@ func highlightFromMemory(reader *Reader, style chroma.Style, formatter chroma.Fo
 	}
 	reader.Unlock()
 
-	textBuilder := strings.Builder{}
-	reader.Lock()
-	for _, line := range reader.lines {
-		textBuilder.WriteString(line.raw)
-		textBuilder.WriteString("\n")
-	}
-	reader.Unlock()
-	text := textBuilder.String()
+	text := textAsString(reader)
 
 	if lexer == nil && json.Valid([]byte(text)) {
 		log.Debug("Buffer is valid JSON, highlighting as JSON")
