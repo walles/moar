@@ -533,14 +533,31 @@ func NewReaderFromFilename(filename string, style chroma.Style, formatter chroma
 
 func textAsString(reader *Reader) string {
 	reader.Lock()
-	defer reader.Unlock()
 
 	text := strings.Builder{}
 	for _, line := range reader.lines {
 		text.WriteString(line.raw)
 		text.WriteString("\n")
 	}
-	return text.String()
+	result := text.String()
+	reader.Unlock()
+
+	jsonMap := make(map[string](interface{}))
+	err := json.Unmarshal([]byte(result), &jsonMap)
+	if err != nil {
+		// Not JSON, return the text as-is
+		return result
+	}
+
+	// Pretty print the JSON
+	prettyJSON, err := json.MarshalIndent(jsonMap, "", "  ")
+	if err != nil {
+		log.Debug("Failed to pretty print JSON: ", err)
+		return result
+	}
+
+	log.Debug("JSON input pretty printed")
+	return string(prettyJSON)
 }
 
 // We expect this to be executed in a goroutine

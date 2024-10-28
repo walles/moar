@@ -322,6 +322,20 @@ func TestReadTextDone(t *testing.T) {
 	assert.NilError(t, testMe._wait())
 }
 
+// JSON should be auto detected and formatted
+func TestFormatJson(t *testing.T) {
+	jsonStream := strings.NewReader(`{"key": "value"}`)
+	testMe := NewReaderFromStream("JSON test", jsonStream, *styles.Get("Native"), formatters.TTY, nil)
+
+	assert.NilError(t, testMe._wait())
+
+	lines, _ := testMe.GetLines(linenumbers.LineNumber{}, 10)
+	assert.Equal(t, lines.lines[0].Plain(nil), "{")
+	assert.Equal(t, lines.lines[1].Plain(nil), `  "key": "value"`)
+	assert.Equal(t, lines.lines[2].Plain(nil), "}")
+	assert.Equal(t, len(lines.lines), 3)
+}
+
 // If people keep appending to the currently opened file we should display those
 // changes.
 func TestReadUpdatingFile(t *testing.T) {
