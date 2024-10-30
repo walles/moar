@@ -684,8 +684,9 @@ func withoutHiddenRunes(runes []StyledRune) []StyledRune {
 }
 
 // Returns the rendered line, plus how many information carrying cells went into
-// it
-func renderLine(row []StyledRune, terminalColorCount ColorCount) (string, int) {
+// it. The width is used to decide whether or not to clear to EOL at the end of
+// the line.
+func renderLine(row []StyledRune, width int, terminalColorCount ColorCount) (string, int) {
 	row = withoutHiddenRunes(row)
 
 	// Strip trailing whitespace
@@ -727,24 +728,30 @@ func renderLine(row []StyledRune, terminalColorCount ColorCount) (string, int) {
 		builder.WriteRune(runeToWrite)
 	}
 
-	// Clear to end of line
-	// https://en.wikipedia.org/wiki/ANSI_escape_code#CSI_(Control_Sequence_Introducer)_sequences
-	builder.WriteString(StyleDefault.RenderUpdateFrom(lastStyle, terminalColorCount))
-	builder.WriteString("\x1b[K")
+	if len(row) < width {
+		// Clear to end of line
+		// https://en.wikipedia.org/wiki/ANSI_escape_code#CSI_(Control_Sequence_Introducer)_sequences
+		//
+		// Note that we can't do this if we're one the last screen column:
+		// https://github.com/microsoft/terminal/issues/18115#issuecomment-2448054645
+		builder.WriteString(StyleDefault.RenderUpdateFrom(lastStyle, terminalColorCount))
+		builder.WriteString("\x1b[K")
+	}
 
 	return builder.String(), len(row)
 }
 
 func (screen *UnixScreen) Show() {
-	_, height := screen.Size()
-	screen.showNLines(height, true)
+	width, height := screen.Size()
+	screen.showNLines(width, height, true)
 }
 
 func (screen *UnixScreen) ShowNLines(height int) {
-	screen.showNLines(height, false)
+	width, _ := screen.Size()
+	screen.showNLines(width, height, false)
 }
 
-func (screen *UnixScreen) showNLines(height int, clearFirst bool) {
+func (screen *UnixScreen) showNLines(width int, height int, clearFirst bool) {
 	var builder strings.Builder
 
 	if clearFirst {
@@ -754,7 +761,7 @@ func (screen *UnixScreen) showNLines(height int, clearFirst bool) {
 	}
 
 	for row := 0; row < height; row++ {
-		rendered, lineLength := renderLine(screen.cells[row], screen.terminalColorCount)
+		rendered, lineLength := renderLine(screen.cells[row], width, screen.terminalColorCount)
 		builder.WriteString(rendered)
 
 		wasLastLine := row == (height - 1)
