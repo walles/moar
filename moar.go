@@ -462,13 +462,13 @@ func pagerFromArgs(
 	var reader *m.Reader
 	if stdinIsRedirected {
 		// Display input pipe contents
-		reader = m.NewReaderFromStreamWithoutStyle("", os.Stdin, formatter, m.ReaderOptions{Lexer: *lexer})
+		reader = m.NewReaderFromStream("", os.Stdin, formatter, m.ReaderOptions{Lexer: *lexer})
 	} else {
 		// Display the input file contents
 		if len(flagSet.Args()) != 1 {
 			panic("Invariant broken: Expected exactly one filename")
 		}
-		reader, err = m.NewReaderFromFilenameWithoutStyle(flagSet.Args()[0], formatter, m.ReaderOptions{Lexer: *lexer})
+		reader, err = m.NewReaderFromFilename(flagSet.Args()[0], formatter, m.ReaderOptions{Lexer: *lexer})
 		if err != nil {
 			return nil, nil, chroma.Style{}, nil, err
 		}
