@@ -165,7 +165,7 @@ func TestCodeHighlighting(t *testing.T) {
 		panic("Getting current filename failed")
 	}
 
-	reader, err := NewReaderFromFilename(filename, *styles.Get("native"), formatters.TTY16m, nil)
+	reader, err := NewReaderFromFilename(filename, *styles.Get("native"), formatters.TTY16m, ReaderOptions{})
 	assert.NilError(t, err)
 	assert.NilError(t, reader._wait())
 
@@ -191,7 +191,7 @@ func TestCodeHighlighting(t *testing.T) {
 
 func TestCodeHighlight_compressed(t *testing.T) {
 	// Same as TestCodeHighlighting but with "compressed-markdown.md.gz"
-	reader, err := NewReaderFromFilename("../sample-files/compressed-markdown.md.gz", *styles.Get("native"), formatters.TTY16m, nil)
+	reader, err := NewReaderFromFilename("../sample-files/compressed-markdown.md.gz", *styles.Get("native"), formatters.TTY16m, ReaderOptions{})
 	assert.NilError(t, err)
 	assert.NilError(t, reader._wait())
 
@@ -221,7 +221,7 @@ func TestCodeHighlight_compressed(t *testing.T) {
 // Sample file sysctl.h from:
 // https://github.com/fastfetch-cli/fastfetch/blob/f9597eba39d6afd278eeca2f2972f73a7e54f111/src/common/sysctl.h
 func TestCodeHighlightingIncludes(t *testing.T) {
-	reader, err := NewReaderFromFilename("../sample-files/sysctl.h", *styles.Get("native"), formatters.TTY16m, nil)
+	reader, err := NewReaderFromFilename("../sample-files/sysctl.h", *styles.Get("native"), formatters.TTY16m, ReaderOptions{})
 	assert.NilError(t, err)
 	assert.NilError(t, reader._wait())
 
@@ -541,7 +541,7 @@ func TestPageSamples(t *testing.T) {
 				}
 			}()
 
-			myReader := NewReaderFromStream(fileName, file, chroma.Style{}, nil, nil)
+			myReader := NewReaderFromStream(fileName, file, chroma.Style{}, nil, ReaderOptions{})
 			assert.NilError(t, myReader._wait())
 
 			pager := NewPager(myReader)

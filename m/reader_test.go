@@ -143,7 +143,7 @@ func (r *Reader) _wait() error {
 
 func TestGetLines(t *testing.T) {
 	for _, file := range getTestFiles(t) {
-		reader, err := NewReaderFromFilename(file, *styles.Get("native"), formatters.TTY16m, nil)
+		reader, err := NewReaderFromFilename(file, *styles.Get("native"), formatters.TTY16m, ReaderOptions{})
 		if err != nil {
 			t.Errorf("Error opening file <%s>: %s", file, err.Error())
 			continue
@@ -197,7 +197,7 @@ func testHighlightingLineCount(t *testing.T, filenameWithPath string) {
 	}
 
 	// Then load the same file using one of our Readers
-	reader, err := NewReaderFromFilename(filenameWithPath, *styles.Get("native"), formatters.TTY16m, nil)
+	reader, err := NewReaderFromFilename(filenameWithPath, *styles.Get("native"), formatters.TTY16m, ReaderOptions{})
 	assert.NilError(t, err)
 	err = reader._wait()
 	assert.NilError(t, err)
@@ -208,7 +208,7 @@ func testHighlightingLineCount(t *testing.T, filenameWithPath string) {
 
 func TestGetLongLine(t *testing.T) {
 	file := "../sample-files/very-long-line.txt"
-	reader, err := NewReaderFromFilename(file, *styles.Get("native"), formatters.TTY16m, nil)
+	reader, err := NewReaderFromFilename(file, *styles.Get("native"), formatters.TTY16m, ReaderOptions{})
 	assert.NilError(t, err)
 	assert.NilError(t, reader._wait())
 
@@ -253,7 +253,7 @@ func TestStatusText(t *testing.T) {
 	testStatusText(t, linenumbers.LineNumber{}, linenumbers.LineNumber{}, 1, "1 line  100%")
 
 	// Test with filename
-	testMe, err := NewReaderFromFilename(samplesDir+"/empty", *styles.Get("native"), formatters.TTY16m, nil)
+	testMe, err := NewReaderFromFilename(samplesDir+"/empty", *styles.Get("native"), formatters.TTY16m, ReaderOptions{})
 	assert.NilError(t, err)
 	assert.NilError(t, testMe._wait())
 
@@ -267,7 +267,7 @@ func TestStatusText(t *testing.T) {
 
 func testCompressedFile(t *testing.T, filename string) {
 	filenameWithPath := path.Join(samplesDir, filename)
-	reader, e := NewReaderFromFilename(filenameWithPath, *styles.Get("native"), formatters.TTY16m, nil)
+	reader, e := NewReaderFromFilename(filenameWithPath, *styles.Get("native"), formatters.TTY16m, ReaderOptions{})
 	if e != nil {
 		t.Errorf("Error opening file <%s>: %s", filenameWithPath, e.Error())
 		panic(e)
@@ -288,7 +288,7 @@ func TestCompressedFiles(t *testing.T) {
 
 func TestReadFileDoneNoHighlighting(t *testing.T) {
 	testMe, err := NewReaderFromFilename(samplesDir+"/empty",
-		*styles.Get("Native"), formatters.TTY, nil)
+		*styles.Get("Native"), formatters.TTY, ReaderOptions{})
 	assert.NilError(t, err)
 
 	assert.NilError(t, testMe._wait())
@@ -296,14 +296,14 @@ func TestReadFileDoneNoHighlighting(t *testing.T) {
 
 func TestReadFileDoneYesHighlighting(t *testing.T) {
 	testMe, err := NewReaderFromFilename("reader_test.go",
-		*styles.Get("Native"), formatters.TTY, nil)
+		*styles.Get("Native"), formatters.TTY, ReaderOptions{})
 	assert.NilError(t, err)
 
 	assert.NilError(t, testMe._wait())
 }
 
 func TestReadStreamDoneNoHighlighting(t *testing.T) {
-	testMe := NewReaderFromStream("", strings.NewReader("Johan"), chroma.Style{}, nil, nil)
+	testMe := NewReaderFromStream("", strings.NewReader("Johan"), chroma.Style{}, nil, ReaderOptions{})
 
 	assert.NilError(t, testMe._wait())
 }
@@ -311,7 +311,7 @@ func TestReadStreamDoneNoHighlighting(t *testing.T) {
 func TestReadStreamDoneYesHighlighting(t *testing.T) {
 	testMe := NewReaderFromStream("",
 		strings.NewReader("Johan"),
-		*styles.Get("Native"), formatters.TTY, lexers.EmacsLisp)
+		*styles.Get("Native"), formatters.TTY, ReaderOptions{Lexer: lexers.EmacsLisp})
 
 	assert.NilError(t, testMe._wait())
 }
@@ -325,7 +325,7 @@ func TestReadTextDone(t *testing.T) {
 // JSON should be auto detected and formatted
 func TestFormatJson(t *testing.T) {
 	jsonStream := strings.NewReader(`{"key": "value"}`)
-	testMe := NewReaderFromStream("JSON test", jsonStream, *styles.Get("Native"), formatters.TTY, nil)
+	testMe := NewReaderFromStream("JSON test", jsonStream, *styles.Get("Native"), formatters.TTY, ReaderOptions{})
 
 	assert.NilError(t, testMe._wait())
 
@@ -349,7 +349,7 @@ func TestReadUpdatingFile(t *testing.T) {
 	assert.NilError(t, err)
 
 	// Start a reader on that file
-	testMe, err := NewReaderFromFilename(file.Name(), *styles.Get("native"), formatters.TTY16m, nil)
+	testMe, err := NewReaderFromFilename(file.Name(), *styles.Get("native"), formatters.TTY16m, ReaderOptions{})
 	assert.NilError(t, err)
 
 	// Wait for the reader to finish reading
@@ -422,7 +422,7 @@ func TestReadUpdatingFile_InitiallyEmpty(t *testing.T) {
 	defer os.Remove(file.Name())
 
 	// Start a reader on that file
-	testMe, err := NewReaderFromFilename(file.Name(), *styles.Get("native"), formatters.TTY16m, nil)
+	testMe, err := NewReaderFromFilename(file.Name(), *styles.Get("native"), formatters.TTY16m, ReaderOptions{})
 	assert.NilError(t, err)
 
 	// Wait for the reader to finish reading
@@ -467,7 +467,7 @@ func TestReadUpdatingFile_HalfLine(t *testing.T) {
 	assert.NilError(t, err)
 
 	// Start a reader on that file
-	testMe, err := NewReaderFromFilename(file.Name(), *styles.Get("native"), formatters.TTY16m, nil)
+	testMe, err := NewReaderFromFilename(file.Name(), *styles.Get("native"), formatters.TTY16m, ReaderOptions{})
 	assert.NilError(t, err)
 
 	// Wait for the reader to finish reading
@@ -512,7 +512,7 @@ func TestReadUpdatingFile_HalfUtf8(t *testing.T) {
 	assert.NilError(t, err)
 
 	// Start a reader on that file
-	testMe, err := NewReaderFromFilename(file.Name(), *styles.Get("native"), formatters.TTY16m, nil)
+	testMe, err := NewReaderFromFilename(file.Name(), *styles.Get("native"), formatters.TTY16m, ReaderOptions{})
 	assert.NilError(t, err)
 
 	// Wait for the reader to finish reading
@@ -551,7 +551,7 @@ func BenchmarkReaderDone(b *testing.B) {
 	b.ResetTimer()
 	for n := 0; n < b.N; n++ {
 		// This is our longest .go file
-		readMe, err := NewReaderFromFilename(filename, *styles.Get("native"), formatters.TTY16m, nil)
+		readMe, err := NewReaderFromFilename(filename, *styles.Get("native"), formatters.TTY16m, ReaderOptions{})
 		assert.NilError(b, err)
 
 		assert.NilError(b, readMe._wait())
@@ -586,7 +586,7 @@ func BenchmarkReadLargeFile(b *testing.B) {
 
 	b.ResetTimer()
 	for n := 0; n < b.N; n++ {
-		readMe, err := NewReaderFromFilename(largeFileName, *styles.Get("native"), formatters.TTY16m, nil)
+		readMe, err := NewReaderFromFilename(largeFileName, *styles.Get("native"), formatters.TTY16m, ReaderOptions{})
 		assert.NilError(b, err)
 
 		assert.NilError(b, readMe._wait())

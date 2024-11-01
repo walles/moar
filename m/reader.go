@@ -26,6 +26,20 @@ import (
 //revive:disable-next-line:var-naming
 const MAX_HIGHLIGHT_SIZE int64 = 1024 * 1024
 
+type ReaderOptions struct {
+	//// Format JSON input
+	//ShouldFormat bool
+
+	FIXME: Use this rather than taking style as a parameter in this file
+
+	//// If this is nil, you must call reader.SetStyleForHighlighting() later if
+	//// you want highlighting.
+	//Style *chroma.Style
+
+	// If this is set, it will be used as the lexer for highlighting
+	Lexer chroma.Lexer
+}
+
 // Reader reads a file into an array of strings.
 //
 // It does the reading in the background, and it returns parts of the read data
@@ -110,11 +124,11 @@ func (reader *Reader) preAllocLines() {
 	reader.lines = make([]*Line, 0, lineCount)
 }
 
-func (reader *Reader) readStream(stream io.Reader, formatter chroma.Formatter, lexer chroma.Lexer) {
+func (reader *Reader) readStream(stream io.Reader, formatter chroma.Formatter, options ReaderOptions) {
 	reader.consumeLinesFromStream(stream)
 
 	t0 := time.Now()
-	highlightFromMemory(reader, <-reader.highlightingStyle, formatter, lexer)
+	highlightFromMemory(reader, <-reader.highlightingStyle, formatter, options)
 	log.Debug("highlightFromMemory() took ", time.Since(t0))
 
 	reader.done.Store(true)
@@ -307,8 +321,8 @@ func (reader *Reader) tailFile() error {
 
 // Note that you must call reader.SetStyleForHighlighting() after this to get
 // highlighting.
-func NewReaderFromStreamWithoutStyle(name string, reader io.Reader, formatter chroma.Formatter, lexer chroma.Lexer) *Reader {
-	mReader := newReaderFromStream(reader, nil, formatter, lexer)
+func NewReaderFromStreamWithoutStyle(name string, reader io.Reader, formatter chroma.Formatter, options ReaderOptions) *Reader {
+	mReader := newReaderFromStream(reader, nil, formatter, options)
 
 	if len(name) > 0 {
 		mReader.Lock()
@@ -316,7 +330,7 @@ func NewReaderFromStreamWithoutStyle(name string, reader io.Reader, formatter ch
 		mReader.Unlock()
 	}
 
-	if lexer == nil {
+	if options.Lexer == nil {
 		mReader.highlightingDone.Store(true)
 	}
 
@@ -329,8 +343,8 @@ func NewReaderFromStreamWithoutStyle(name string, reader io.Reader, formatter ch
 //
 // If non-empty, the name will be displayed by the pager in the bottom left
 // corner to help the user keep track of what is being paged.
-func NewReaderFromStream(name string, reader io.Reader, style chroma.Style, formatter chroma.Formatter, lexer chroma.Lexer) *Reader {
-	mReader := NewReaderFromStreamWithoutStyle(name, reader, formatter, lexer)
+func NewReaderFromStream(name string, reader io.Reader, style chroma.Style, formatter chroma.Formatter, options ReaderOptions) *Reader {
+	mReader := NewReaderFromStreamWithoutStyle(name, reader, formatter, options)
 	mReader.SetStyleForHighlighting(style)
 	return mReader
 }
@@ -346,7 +360,7 @@ func NewReaderFromStream(name string, reader io.Reader, style chroma.Style, form
 //
 // Note that you must call reader.SetStyleForHighlighting() after this to get
 // highlighting.
-func newReaderFromStream(reader io.Reader, originalFileName *string, formatter chroma.Formatter, lexer chroma.Lexer) *Reader {
+func newReaderFromStream(reader io.Reader, originalFileName *string, formatter chroma.Formatter, options ReaderOptions) *Reader {
 	done := atomic.Bool{}
 	done.Store(false)
 	highlightingDone := atomic.Bool{}
@@ -369,7 +383,7 @@ func newReaderFromStream(reader io.Reader, originalFileName *string, formatter c
 			panicHandler("newReaderFromStream()/readStream()", recover(), debug.Stack())
 		}()
 
-		returnMe.readStream(reader, formatter, lexer)
+		returnMe.readStream(reader, formatter, options)
 	}()
 
 	return &returnMe
@@ -486,7 +500,7 @@ func countLines(filename string) (uint64, error) {
 
 // Note that you must call reader.SetStyleForHighlighting() after this to get
 // highlighting.
-func NewReaderFromFilenameWithoutStyle(filename string, formatter chroma.Formatter, lexer chroma.Lexer) (*Reader, error) {
+func NewReaderFromFilenameWithoutStyle(filename string, formatter chroma.Formatter, options ReaderOptions) (*Reader, error) {
 	fileError := tryOpen(filename)
 	if fileError != nil {
 		return nil, fileError
@@ -497,18 +511,18 @@ func NewReaderFromFilenameWithoutStyle(filename string, formatter chroma.Formatt
 		return nil, err
 	}
 
-	if lexer == nil {
-		lexer = lexers.Match(highlightingFilename)
+	if options.Lexer == nil {
+		options.Lexer = lexers.Match(highlightingFilename)
 	}
 
-	returnMe := newReaderFromStream(stream, &filename, formatter, lexer)
+	returnMe := newReaderFromStream(stream, &filename, formatter, options)
 
 	returnMe.Lock()
 	returnMe.name = &filename
 	returnMe.fileName = &filename
 	returnMe.Unlock()
 
-	if lexer == nil {
+	if options.Lexer == nil {
 		returnMe.highlightingDone.Store(true)
 	}
 
@@ -517,13 +531,13 @@ func NewReaderFromFilenameWithoutStyle(filename string, formatter chroma.Formatt
 
 // NewReaderFromFilename creates a new file reader.
 //
-// If lexer is nil it will be determined from the input file name.
+// If options.Lexer is nil it will be determined from the input file name.
 //
 // The Reader will try to uncompress various compressed file format, and also
 // apply highlighting to the file using Chroma:
 // https://github.com/alecthomas/chroma
-func NewReaderFromFilename(filename string, style chroma.Style, formatter chroma.Formatter, lexer chroma.Lexer) (*Reader, error) {
-	mReader, err := NewReaderFromFilenameWithoutStyle(filename, formatter, lexer)
+func NewReaderFromFilename(filename string, style chroma.Style, formatter chroma.Formatter, options ReaderOptions) (*Reader, error) {
+	mReader, err := NewReaderFromFilenameWithoutStyle(filename, formatter, options)
 	if err != nil {
 		return nil, err
 	}
@@ -561,7 +575,7 @@ func textAsString(reader *Reader) string {
 }
 
 // We expect this to be executed in a goroutine
-func highlightFromMemory(reader *Reader, style chroma.Style, formatter chroma.Formatter, lexer chroma.Lexer) {
+func highlightFromMemory(reader *Reader, style chroma.Style, formatter chroma.Formatter, options ReaderOptions) {
 	defer func() {
 		reader.highlightingDone.Store(true)
 		select {
@@ -586,6 +600,7 @@ func highlightFromMemory(reader *Reader, style chroma.Style, formatter chroma.Fo
 
 	text := textAsString(reader)
 
+	lexer := options.Lexer
 	if lexer == nil && json.Valid([]byte(text)) {
 		log.Debug("Buffer is valid JSON, highlighting as JSON")
 		lexer = lexers.Get("json")
