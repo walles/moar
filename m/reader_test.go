@@ -325,7 +325,14 @@ func TestReadTextDone(t *testing.T) {
 // JSON should be auto detected and formatted
 func TestFormatJson(t *testing.T) {
 	jsonStream := strings.NewReader(`{"key": "value"}`)
-	testMe := NewReaderFromStream("JSON test", jsonStream, formatters.TTY, ReaderOptions{Style: styles.Get("native")})
+	testMe := NewReaderFromStream(
+		"JSON test",
+		jsonStream,
+		formatters.TTY,
+		ReaderOptions{
+			Style:        styles.Get("native"),
+			ShouldFormat: true,
+		})
 
 	assert.NilError(t, testMe._wait())
 
