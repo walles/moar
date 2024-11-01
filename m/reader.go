@@ -27,11 +27,8 @@ import (
 const MAX_HIGHLIGHT_SIZE int64 = 1024 * 1024
 
 type ReaderOptions struct {
-
-	FIXME: Implement ShouldFormat and use it from command line parsing
-
-	//// Format JSON input
-	//ShouldFormat bool
+	// Format JSON input
+	ShouldFormat bool
 
 	// If this is nil, you must call reader.SetStyleForHighlighting() later if
 	// you want highlighting.
@@ -543,7 +540,7 @@ func NewReaderFromFilename(filename string, formatter chroma.Formatter, options 
 	return returnMe, nil
 }
 
-func textAsString(reader *Reader) string {
+func textAsString(reader *Reader, shouldFormat bool) string {
 	reader.Lock()
 
 	text := strings.Builder{}
@@ -553,6 +550,11 @@ func textAsString(reader *Reader) string {
 	}
 	result := text.String()
 	reader.Unlock()
+
+	if !shouldFormat {
+		// Formatting disabled, we're done
+		return result
+	}
 
 	jsonMap := make(map[string](interface{}))
 	err := json.Unmarshal([]byte(result), &jsonMap)
@@ -596,7 +598,7 @@ func highlightFromMemory(reader *Reader, formatter chroma.Formatter, options Rea
 	}
 	reader.Unlock()
 
-	text := textAsString(reader)
+	text := textAsString(reader, options.ShouldFormat)
 
 	if options.Lexer == nil && json.Valid([]byte(text)) {
 		log.Debug("Buffer is valid JSON, highlighting as JSON")
