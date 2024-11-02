@@ -55,6 +55,14 @@ func getWrapCount(line []twin.StyledRune, maxScreenCellsCount int) int {
 			}
 		}
 
+		if cutBeforeThisIndex > 0 {
+			// Break after a hyphen / dash. That's something people do.
+			previousChar := line[cutBeforeThisIndex-1].Rune
+			if previousChar == '-' && char != '-' {
+				canBreakHere = true
+			}
+		}
+
 		if canBreakHere {
 			bestCutPoint = cutBeforeThisIndex
 		}
