@@ -63,7 +63,7 @@ Retain screen contents when exiting moar
 Hide line numbers on startup, press left arrow key to show
 .TP
 \fB\-\-no\-reformat\fR
-Moar will implicitly reformat some input (like JSON). This switch disables that reformatting. Even with this switch, highlighting is still done.
+No effect, exists for backwards compatibility. See --reformat.
 .TP
 \fB\-\-no\-statusbar\fR
 Hide the status bar, toggle with
@@ -71,6 +71,9 @@ Hide the status bar, toggle with
 .TP
 \fB\-\-quit\-if\-one\-screen\fR
 Print input contents without paging if the input fits on one screen
+.TP
+\fB\-\-reformat\fR
+Reformat supported input files (JSON) before showing them.
 .TP
 \fB\-\-render\-unprintable\fR={\fBhighlight\fR | \fBwhitespace\fR}
 How unprintable characters are rendered

@@ -331,7 +331,8 @@ func pagerFromArgs(
 
 	noLineNumbers := flagSet.Bool("no-linenumbers", noLineNumbersDefault(), "Hide line numbers on startup, press left arrow key to show")
 	noStatusBar := flagSet.Bool("no-statusbar", false, "Hide the status bar, toggle with '='")
-	noReFormat := flagSet.Bool("no-reformat", false, "Never reformat the input (but keep highlighting)")
+	reFormat := flagSet.Bool("reformat", false, "Reformat some input files (JSON)")
+	flagSet.Bool("no-reformat", true, "No effect, kept for compatibility. See --reforamat")
 	quitIfOneScreen := flagSet.Bool("quit-if-one-screen", false, "Don't page if contents fits on one screen")
 	noClearOnExit := flagSet.Bool("no-clear-on-exit", false, "Retain screen contents when exiting moar")
 	statusBarStyle := flagSetFunc(flagSet, "statusbar", m.STATUSBAR_STYLE_INVERSE,
@@ -461,7 +462,7 @@ func pagerFromArgs(
 	}
 
 	var reader *m.Reader
-	shouldFormat := !*noReFormat
+	shouldFormat := *reFormat
 	if stdinIsRedirected {
 		// Display input pipe contents
 		reader = m.NewReaderFromStream("", os.Stdin, formatter, m.ReaderOptions{Lexer: *lexer, ShouldFormat: shouldFormat})
