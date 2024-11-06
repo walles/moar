@@ -93,7 +93,10 @@ type InputLines struct {
 //
 // go test -benchmem -benchtime=10s -run='^$' -bench 'ReadLargeFile'
 func (reader *Reader) preAllocLines() {
-	if reader.fileName == nil {
+	reader.Lock()
+	fileName := reader.fileName
+	reader.Unlock()
+	if fileName == nil {
 		return
 	}
 
