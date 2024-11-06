@@ -19,7 +19,7 @@ golangci-lint run --tests=true
 
 # Unit tests
 echo "Running unit tests..."
-go test -timeout 20s ./...
+go test -race -timeout 20s ./...
 
 # Ensure we can cross compile
 # NOTE: Make sure this list matches the one in release.sh

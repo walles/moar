@@ -48,7 +48,12 @@ type Reader struct {
 	sync.Mutex
 
 	lines []*Line
-	name  *string
+
+	// Display name for the buffer. If not set, no buffer name will be shown.
+	//
+	// For files, this will be the file name. For our help text, this will be
+	// "Help". For streams this will generally not be set.
+	name *string
 
 	// If this is set, it will point out the file we are reading from. If this
 	// is not set, we are not reading from a file.
@@ -93,10 +98,7 @@ type InputLines struct {
 //
 // go test -benchmem -benchtime=10s -run='^$' -bench 'ReadLargeFile'
 func (reader *Reader) preAllocLines() {
-	reader.Lock()
-	fileName := reader.fileName
-	reader.Unlock()
-	if fileName == nil {
+	if reader.fileName == nil {
 		return
 	}
 
@@ -372,6 +374,7 @@ func newReaderFromStream(reader io.Reader, originalFileName *string, formatter c
 		// lines while the pager is processing, the pager would miss
 		// the lines added while it was processing.
 		fileName:                originalFileName,
+		name:                    originalFileName,
 		moreLinesAdded:          make(chan bool, 1),
 		maybeDone:               make(chan bool, 1),
 		highlightingStyle:       make(chan chroma.Style, 1),
@@ -526,11 +529,6 @@ func NewReaderFromFilename(filename string, formatter chroma.Formatter, options 
 	}
 
 	returnMe := newReaderFromStream(stream, &filename, formatter, options)
-
-	returnMe.Lock()
-	returnMe.name = &filename
-	returnMe.fileName = &filename
-	returnMe.Unlock()
 
 	if options.Lexer == nil {
 		returnMe.highlightingDone.Store(true)
