@@ -2,6 +2,7 @@ package m
 
 import (
 	"regexp"
+	"sync"
 
 	"github.com/walles/moar/m/linenumbers"
 	"github.com/walles/moar/m/textstyles"
@@ -12,6 +13,7 @@ import (
 type Line struct {
 	raw   string
 	plain *string
+	lock  sync.Mutex
 }
 
 // NewLine creates a new Line from a (potentially ANSI / man page formatted) string
@@ -19,6 +21,7 @@ func NewLine(raw string) Line {
 	return Line{
 		raw:   raw,
 		plain: nil,
+		lock:  sync.Mutex{},
 	}
 }
 
@@ -56,8 +59,14 @@ func (line *Line) HighlightedTokens(linePrefix string, search *regexp.Regexp, li
 
 // Plain returns a plain text representation of the initial string
 func (line *Line) Plain(lineNumber *linenumbers.LineNumber) string {
+	line.lock.Lock()
+	defer line.lock.Unlock()
+
 	if line.plain == nil {
+		line.lock.Unlock()
+		// The computation doesn't need the lock
 		plain := textstyles.WithoutFormatting(line.raw, lineNumber)
+		line.lock.Lock()
 		line.plain = &plain
 	}
 	return *line.plain
