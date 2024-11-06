@@ -19,7 +19,12 @@ golangci-lint run --tests=true
 
 # Unit tests
 echo "Running unit tests..."
-go test -race -timeout 20s ./...
+RACE=-race
+if [ "$GOARCH" == "386" ]; then
+  # -race is not supported on i386
+  RACE=""
+fi
+go test $RACE -timeout 20s ./...
 
 # Ensure we can cross compile
 # NOTE: Make sure this list matches the one in release.sh
