@@ -189,6 +189,35 @@ func TestCodeHighlighting(t *testing.T) {
 	}
 }
 
+func TestDisabledCodeHighlighting(t *testing.T) {
+	_, filename, _, ok := runtime.Caller(0)
+	if !ok {
+		panic("Getting current filename failed")
+	}
+
+	reader, err := NewReaderFromFilename(filename, formatters.TTY16m, ReaderOptions{Style: &chroma.Style{}})
+	assert.NilError(t, err)
+	assert.NilError(t, reader._wait())
+
+	unstyled := twin.StyleDefault
+	var answers = []twin.StyledRune{
+		twin.NewStyledRune('p', unstyled),
+		twin.NewStyledRune('a', unstyled),
+		twin.NewStyledRune('c', unstyled),
+		twin.NewStyledRune('k', unstyled),
+		twin.NewStyledRune('a', unstyled),
+		twin.NewStyledRune('g', unstyled),
+		twin.NewStyledRune('e', unstyled),
+		twin.NewStyledRune(' ', unstyled),
+		twin.NewStyledRune('m', unstyled),
+	}
+
+	contents := startPaging(t, reader).GetRow(0)
+	for pos, expected := range answers {
+		assertRunesEqual(t, expected, contents[pos])
+	}
+}
+
 func TestCodeHighlight_compressed(t *testing.T) {
 	// Same as TestCodeHighlighting but with "compressed-markdown.md.gz"
 	reader, err := NewReaderFromFilename("../sample-files/compressed-markdown.md.gz", formatters.TTY16m, ReaderOptions{Style: styles.Get("native")})

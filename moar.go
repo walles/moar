@@ -338,6 +338,7 @@ func pagerFromArgs(
 	styleOption := flagSetFunc(flagSet,
 		"style", nil,
 		"Highlighting `style` from https://xyproto.github.io/splash/docs/longer/all.html", parseStyleOption)
+	noStyling := flagSet.Bool("no-styling", false, "Disable syntax highlighting")
 	lexer := flagSetFunc(flagSet,
 		"lang", nil,
 		"File contents, used for highlighting. Mime type or file extension (\"html\"). Default is to guess by filename.", parseLexerOption)
@@ -514,7 +515,11 @@ func pagerFromArgs(
 	}
 
 	var style chroma.Style = *styles.Get(defaultDarkTheme)
-	if *styleOption == nil {
+	if *styleOption != nil {
+		style = **styleOption
+	} else if *noStyling {
+		style = chroma.Style{}
+	} else {
 		t0 := time.Now()
 		screen.RequestTerminalBackgroundColor()
 		select {
@@ -544,8 +549,6 @@ func pagerFromArgs(
 		case <-time.After(50 * time.Millisecond):
 			log.Debug("Terminal background color still not detected after ", time.Since(t0), ", giving up")
 		}
-	} else {
-		style = **styleOption
 	}
 	log.Debug("Using style <", style.Name, ">")
 	reader.SetStyleForHighlighting(style)
