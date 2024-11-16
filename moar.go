@@ -341,6 +341,7 @@ func pagerFromArgs(
 	lexer := flagSetFunc(flagSet,
 		"lang", nil,
 		"File contents, used for highlighting. Mime type or file extension (\"html\"). Default is to guess by filename.", parseLexerOption)
+	terminalFg := flagSet.Bool("terminal-fg", false, "Use terminal foreground color rather than style foreground for plain text")
 
 	defaultFormatter, err := parseColorsOption("auto")
 	if err != nil {
@@ -558,6 +559,7 @@ func pagerFromArgs(
 	pager.QuitIfOneScreen = *quitIfOneScreen
 	pager.StatusBarStyle = *statusBarStyle
 	pager.UnprintableStyle = *unprintableStyle
+	pager.WithTerminalFg = *terminalFg
 	pager.ScrollLeftHint = *scrollLeftHint
 	pager.ScrollRightHint = *scrollRightHint
 	pager.SideScrollAmount = int(*shift)

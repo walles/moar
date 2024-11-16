@@ -93,7 +93,8 @@ type Pager struct {
 	// Optional ANSI to prefix each text line with. Initialised using
 	// ChromaStyle and ChromaFormatter. Used for coloring unstyled text lines
 	// based on the Chroma style.
-	linePrefix string
+	linePrefix     string
+	WithTerminalFg bool // If true, don't set linePrefix
 
 	// Length of the longest line displayed. This is used for limiting scrolling to the right.
 	longestLineLength int
@@ -317,7 +318,10 @@ func (p *Pager) StartPaging(screen twin.Screen, chromaStyle *chroma.Style, chrom
 	styleUI(chromaStyle, chromaFormatter, p.StatusBarStyle)
 
 	p.screen = screen
-	p.linePrefix = getLineColorPrefix(chromaStyle, chromaFormatter)
+	if !p.WithTerminalFg {
+		// Use the plain text color from the theme
+		p.linePrefix = getLineColorPrefix(chromaStyle, chromaFormatter)
+	}
 	p.mode = PagerModeViewing{pager: p}
 	p.marks = make(map[rune]scrollPosition)
 

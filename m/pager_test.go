@@ -116,6 +116,30 @@ func startPaging(t *testing.T, reader *Reader) *twin.FakeScreen {
 	return screen
 }
 
+// Set style to "native" and use the TTY16m formatter
+func startPagingWithTerminalFg(t *testing.T, reader *Reader, withTerminalFg bool) *twin.FakeScreen {
+	err := reader._wait()
+	if err != nil {
+		t.Fatalf("Failed waiting for reader: %v", err)
+	}
+
+	screen := twin.NewFakeScreen(20, 10)
+	pager := NewPager(reader)
+	pager.ShowLineNumbers = false
+	pager.WithTerminalFg = withTerminalFg
+
+	// Tell our Pager to quit immediately
+	pager.Quit()
+
+	// Except for just quitting, this also associates our FakeScreen with the Pager
+	pager.StartPaging(screen, styles.Get("native"), &formatters.TTY16m)
+
+	// This makes sure at least one frame gets rendered
+	pager.redraw("")
+
+	return screen
+}
+
 // assertIndexOfFirstX verifies the (zero-based) index of the first 'x'
 func assertIndexOfFirstX(t *testing.T, s string, expectedIndex int) {
 	reader := NewReaderFromText("", s)
@@ -680,6 +704,16 @@ func TestPageWideChars(t *testing.T) {
 
 	// Cut this line after a whide character
 	assert.Equal(t, "x"+monospaced18cells+">", renderTextLine("x"+monospaced24cells))
+}
+
+func TestTerminalFg(t *testing.T) {
+	reader := NewReaderFromText("", "x")
+
+	var styleAnswer = twin.NewStyledRune('x', twin.StyleDefault.WithForeground(twin.NewColor24Bit(0xd0, 0xd0, 0xd0)))
+	var terminalAnswer = twin.NewStyledRune('x', twin.StyleDefault)
+
+	assertRunesEqual(t, styleAnswer, startPagingWithTerminalFg(t, reader, false).GetRow(0)[0])
+	assertRunesEqual(t, terminalAnswer, startPagingWithTerminalFg(t, reader, true).GetRow(0)[0])
 }
 
 func benchmarkSearch(b *testing.B, highlighted bool) {
