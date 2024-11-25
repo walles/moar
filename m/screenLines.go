@@ -55,7 +55,7 @@ func (p *Pager) redraw(spinner string) overflowState {
 		// This happens when we're done
 		eofSpinner = "---"
 	}
-	spinnerLine := textstyles.StyledRunesFromString(twin.StyleDefault, _EofMarkerFormat+eofSpinner, nil).StyledRunes
+	spinnerLine := textstyles.StyledRunesFromString(statusbarStyle, eofSpinner, nil).StyledRunes
 	column := 0
 	for _, cell := range spinnerLine {
 		column += p.screen.SetCell(column, lastUpdatedScreenLineNumber+1, cell)

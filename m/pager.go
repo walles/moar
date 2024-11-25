@@ -109,8 +109,6 @@ type _PreHelpState struct {
 	targetLineNumber    *linenumbers.LineNumber
 }
 
-const _EofMarkerFormat = "\x1b[7m" // Reverse video
-
 var _HelpReader = NewReaderFromText("Help", `
 Welcome to Moar, the nice pager!
 

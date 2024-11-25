@@ -15,6 +15,8 @@ import (
 var standoutStyle *twin.Style
 
 var lineNumbersStyle = twin.StyleDefault.WithAttr(twin.AttrDim)
+
+// Status bar and EOF marker style
 var statusbarStyle = twin.StyleDefault.WithAttr(twin.AttrReverse)
 
 var plainTextStyle = twin.StyleDefault
@@ -139,8 +141,7 @@ func styleUI(chromaStyle *chroma.Style, chromaFormatter *chroma.Formatter, statu
 	if standoutStyle != nil {
 		statusbarStyle = *standoutStyle
 	} else if statusbarOption == STATUSBAR_STYLE_INVERSE {
-		// FIXME: Get this from the Chroma style
-		statusbarStyle = twin.StyleDefault.WithAttr(twin.AttrReverse)
+		statusbarStyle = plainTextStyle.WithAttr(twin.AttrReverse)
 	} else if statusbarOption == STATUSBAR_STYLE_PLAIN {
 		plain := twinStyleFromChroma(chromaStyle, chromaFormatter, chroma.None, false)
 		if plain != nil {
