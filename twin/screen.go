@@ -690,10 +690,33 @@ func renderLine(row []StyledRune, width int, terminalColorCount ColorCount) (str
 	row = withoutHiddenRunes(row)
 
 	// Strip trailing whitespace
+	trailerBg := ColorDefault
+	trailerBgSet := false
 	lastSignificantCellIndex := len(row) - 1
 	for ; lastSignificantCellIndex >= 0; lastSignificantCellIndex-- {
 		lastCell := row[lastSignificantCellIndex]
-		if lastCell.Rune != ' ' || lastCell.Style != StyleDefault {
+		if lastCell.Rune != ' ' {
+			break
+		}
+
+		whiteSpaceBg := lastCell.Style.bg
+		if lastCell.Style.attrs.has(AttrReverse) {
+			// Style is inverted, take the foreground color instead
+			if lastCell.Style.fg == ColorDefault {
+				// We don't know what the default color is in this case, so we
+				// can't use it.
+				break
+			}
+
+			whiteSpaceBg = lastCell.Style.fg
+		}
+
+		if !trailerBgSet {
+			trailerBg = whiteSpaceBg
+			trailerBgSet = true
+		}
+
+		if whiteSpaceBg != trailerBg {
 			break
 		}
 	}
@@ -734,7 +757,7 @@ func renderLine(row []StyledRune, width int, terminalColorCount ColorCount) (str
 		//
 		// Note that we can't do this if we're one the last screen column:
 		// https://github.com/microsoft/terminal/issues/18115#issuecomment-2448054645
-		builder.WriteString(StyleDefault.RenderUpdateFrom(lastStyle, terminalColorCount))
+		builder.WriteString(StyleDefault.WithBackground(trailerBg).RenderUpdateFrom(lastStyle, terminalColorCount))
 		builder.WriteString("\x1b[K")
 	}
 
