@@ -27,11 +27,11 @@ func NewLine(raw string) Line {
 
 // Returns a representation of the string split into styled tokens. Any regexp
 // matches are highlighted. A nil regexp means no highlighting.
-func (line *Line) HighlightedTokens(linePrefix string, search *regexp.Regexp, lineNumber *linenumbers.LineNumber) textstyles.StyledRunesWithTrailer {
+func (line *Line) HighlightedTokens(plainTextStyle twin.Style, search *regexp.Regexp, lineNumber *linenumbers.LineNumber) textstyles.StyledRunesWithTrailer {
 	plain := line.Plain(lineNumber)
 	matchRanges := getMatchRanges(&plain, search)
 
-	fromString := textstyles.StyledRunesFromString(linePrefix, line.raw, lineNumber)
+	fromString := textstyles.StyledRunesFromString(plainTextStyle, line.raw, lineNumber)
 	returnRunes := make([]twin.StyledRune, 0, len(fromString.StyledRunes))
 	for _, token := range fromString.StyledRunes {
 		style := token.Style
@@ -65,7 +65,7 @@ func (line *Line) Plain(lineNumber *linenumbers.LineNumber) string {
 	if line.plain == nil {
 		line.lock.Unlock()
 		// The computation doesn't need the lock
-		plain := textstyles.WithoutFormatting(line.raw, lineNumber)
+		plain := textstyles.WithoutFormatting(plainTextStyle, line.raw, lineNumber)
 		line.lock.Lock()
 		line.plain = &plain
 	}

@@ -14,16 +14,13 @@ func TestHighlightedTokensWithManPageHeading(t *testing.T) {
 
 	headingText := "JOHAN"
 
-	// For man page headings, this prefix should be ignored
-	prefix := "X"
-
 	manPageHeading := ""
 	for _, char := range headingText {
 		manPageHeading += string(char) + "\b" + string(char)
 	}
 
 	line := NewLine(manPageHeading)
-	highlighted := line.HighlightedTokens(prefix, nil, nil)
+	highlighted := line.HighlightedTokens(twin.StyleDefault, nil, nil)
 
 	assert.Equal(t, len(highlighted.StyledRunes), len(headingText))
 	for i, cell := range highlighted.StyledRunes {

@@ -664,21 +664,6 @@ func TestClearToEndOfLine_ClearFromStartScrolledRight(t *testing.T) {
 	assert.DeepEqual(t, actual, expected, cmp.AllowUnexported(twin.Style{}))
 }
 
-func TestGetLineColorPrefix(t *testing.T) {
-	assert.Equal(t,
-		getLineColorPrefix(styles.Registry["gruvbox"], &formatters.TTY16m),
-		"\x1b[38;2;235;219;178m",
-	)
-}
-
-func TestInitStyle256(t *testing.T) {
-	assert.Equal(t,
-		getLineColorPrefix(
-			styles.Registry["catppuccin-macchiato"],
-			&formatters.TTY256), "\x1b[38;5;189m",
-	)
-}
-
 // Render a line of text on our 20 cell wide screen
 func renderTextLine(text string) string {
 	reader := NewReaderFromText("renderTextLine", text)

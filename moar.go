@@ -132,7 +132,7 @@ func parseUnprintableStyle(styleOption string) (textstyles.UnprintableStyleT, er
 func parseScrollHint(scrollHint string) (twin.StyledRune, error) {
 	scrollHint = strings.ReplaceAll(scrollHint, "ESC", "\x1b")
 	hintAsLine := m.NewLine(scrollHint)
-	parsedTokens := hintAsLine.HighlightedTokens("", nil, nil).StyledRunes
+	parsedTokens := hintAsLine.HighlightedTokens(twin.StyleDefault, nil, nil).StyledRunes
 	if len(parsedTokens) == 1 {
 		return parsedTokens[0], nil
 	}

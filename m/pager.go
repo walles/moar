@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"regexp"
 	"runtime/debug"
-	"strings"
 	"time"
 
 	"github.com/alecthomas/chroma/v2"
@@ -90,10 +89,6 @@ type Pager struct {
 	// clear the last line, and show the cursor.
 	DeInit bool
 
-	// Optional ANSI to prefix each text line with. Initialised using
-	// ChromaStyle and ChromaFormatter. Used for coloring unstyled text lines
-	// based on the Chroma style.
-	linePrefix     string
 	WithTerminalFg bool // If true, don't set linePrefix
 
 	// Length of the longest line displayed. This is used for limiting scrolling to the right.
@@ -275,33 +270,6 @@ func (p *Pager) handleScrolledDown() {
 	}
 }
 
-// Return an ANSI SGR sequence to use for plain text. Can be "".
-func getLineColorPrefix(chromaStyle *chroma.Style, chromaFormatter *chroma.Formatter) string {
-	if chromaStyle == nil && chromaFormatter == nil {
-		return ""
-	}
-	if chromaStyle == nil || chromaFormatter == nil {
-		panic("Both ChromaStyle and ChromaFormatter should be set or neither")
-	}
-
-	stringBuilder := strings.Builder{}
-	err := (*chromaFormatter).Format(&stringBuilder, chromaStyle, chroma.Literator(chroma.Token{
-		Type:  chroma.None,
-		Value: "XXX",
-	}))
-	if err != nil {
-		panic(err)
-	}
-
-	formatted := stringBuilder.String()
-	cutoff := strings.Index(formatted, "XXX")
-	if cutoff < 0 {
-		panic("XXX not found in " + formatted)
-	}
-
-	return formatted[:cutoff]
-}
-
 // StartPaging brings up the pager on screen
 func (p *Pager) StartPaging(screen twin.Screen, chromaStyle *chroma.Style, chromaFormatter *chroma.Formatter) {
 	log.Trace("Pager starting")
@@ -315,13 +283,9 @@ func (p *Pager) StartPaging(screen twin.Screen, chromaStyle *chroma.Style, chrom
 
 	textstyles.UnprintableStyle = p.UnprintableStyle
 	consumeLessTermcapEnvs(chromaStyle, chromaFormatter)
-	styleUI(chromaStyle, chromaFormatter, p.StatusBarStyle)
+	styleUI(chromaStyle, chromaFormatter, p.StatusBarStyle, p.WithTerminalFg)
 
 	p.screen = screen
-	if !p.WithTerminalFg {
-		// Use the plain text color from the theme
-		p.linePrefix = getLineColorPrefix(chromaStyle, chromaFormatter)
-	}
 	p.mode = PagerModeViewing{pager: p}
 	p.marks = make(map[rune]scrollPosition)
 

@@ -29,7 +29,7 @@ func TestNextCharLastChar_empty(t *testing.T) {
 
 func collectStyledStrings(s string) ([]_StyledString, twin.Style) {
 	styledStrings := []_StyledString{}
-	trailer := styledStringsFromString(s, nil, func(str string, style twin.Style) {
+	trailer := styledStringsFromString(twin.StyleDefault, s, nil, func(str string, style twin.Style) {
 		styledStrings = append(styledStrings, _StyledString{str, style})
 	})
 	return styledStrings, trailer
@@ -80,4 +80,25 @@ func TestWindowsURL(t *testing.T) {
 	assert.Equal(t, twin.StyleDefault, trailer)
 	assert.Equal(t, 1, len(styledStrings))
 	assert.Equal(t, windowsPath, styledStrings[0].String)
+}
+
+func TestPlainTextColor(t *testing.T) {
+	plainTextStyle := twin.StyleDefault.WithAttr(twin.AttrReverse)
+	styledStrings := []_StyledString{}
+	trailer := styledStringsFromString(plainTextStyle, "a\x1b[33mb\x1b[mc", nil, func(str string, style twin.Style) {
+		styledStrings = append(styledStrings, _StyledString{str, style})
+	})
+
+	assert.Equal(t, 3, len(styledStrings))
+
+	assert.Equal(t, "a", styledStrings[0].String)
+	assert.Equal(t, plainTextStyle, styledStrings[0].Style)
+
+	assert.Equal(t, "b", styledStrings[1].String)
+	assert.Equal(t, plainTextStyle.WithForeground(twin.NewColor16(3)), styledStrings[1].Style)
+
+	assert.Equal(t, "c", styledStrings[2].String)
+	assert.Equal(t, plainTextStyle, styledStrings[2].Style)
+
+	assert.Equal(t, plainTextStyle, trailer)
 }

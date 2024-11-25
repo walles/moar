@@ -55,7 +55,7 @@ func (p *Pager) redraw(spinner string) overflowState {
 		// This happens when we're done
 		eofSpinner = "---"
 	}
-	spinnerLine := textstyles.StyledRunesFromString("", _EofMarkerFormat+eofSpinner, nil).StyledRunes
+	spinnerLine := textstyles.StyledRunesFromString(twin.StyleDefault, _EofMarkerFormat+eofSpinner, nil).StyledRunes
 	column := 0
 	for _, cell := range spinnerLine {
 		column += p.screen.SetCell(column, lastUpdatedScreenLineNumber+1, cell)
@@ -215,7 +215,7 @@ func (p *Pager) renderLines() ([]renderedLine, string, overflowState) {
 // lineNumber and numberPrefixLength are required for knowing how much to
 // indent, and to (optionally) render the line number.
 func (p *Pager) renderLine(line *Line, lineNumber linenumbers.LineNumber, scrollPosition scrollPositionInternal) ([]renderedLine, overflowState) {
-	highlighted := line.HighlightedTokens(p.linePrefix, p.searchPattern, &lineNumber)
+	highlighted := line.HighlightedTokens(plainTextStyle, p.searchPattern, &lineNumber)
 	var wrapped [][]twin.StyledRune
 	overflow := didFit
 	if p.WrapLongLines {
