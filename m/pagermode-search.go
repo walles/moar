@@ -10,14 +10,20 @@ import (
 )
 
 type PagerModeSearch struct {
-	pager *Pager
+	pager     *Pager
+	backwards bool
 }
 
 func (m PagerModeSearch) drawFooter(_ string, _ string) {
 	width, height := m.pager.screen.Size()
 
+	prompt := "Search: "
+	if m.backwards {
+		prompt = "Search backwards: "
+	}
+
 	pos := 0
-	for _, token := range "Search: " + m.pager.searchString {
+	for _, token := range prompt + m.pager.searchString {
 		pos += m.pager.screen.SetCell(pos, height-1, twin.NewStyledRune(token, twin.StyleDefault))
 	}
 
@@ -33,7 +39,11 @@ func (m PagerModeSearch) drawFooter(_ string, _ string) {
 func (m *PagerModeSearch) updateSearchPattern() {
 	m.pager.searchPattern = toPattern(m.pager.searchString)
 
-	m.pager.scrollToSearchHits()
+	if m.backwards {
+		m.pager.scrollToSearchHitsBackwards()
+	} else {
+		m.pager.scrollToSearchHits()
+	}
 
 	// FIXME: If the user is typing, indicate to user if we didn't find anything
 }
