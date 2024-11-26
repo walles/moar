@@ -134,13 +134,13 @@ Moving around
 * SPACE moves down a page
 * < / 'gg' to go to the start of the document
 * > / 'G' to go to the end of the document
-* 'h', 'l' for left and right (as in vim)
 * Half page 'u'p / 'd'own, or CTRL-u / CTRL-d
 * RETURN moves down one line
 
 Searching
 ---------
 * Type / to start searching, then type what you want to find
+* Type ? to search backwards, then type what you want to find
 * Type RETURN to stop searching
 * Find next by typing 'n' (for "next")
 * Find previous by typing SHIFT-N or 'p' (for "previous")

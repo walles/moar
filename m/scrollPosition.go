@@ -61,7 +61,7 @@ func canonicalFromPager(pager *Pager) scrollPositionCanonical {
 	}
 }
 
-// Create a new position, scrolled towards the end of the file
+// Create a new position, scrolled towards the beginning of the file
 func (sp scrollPosition) PreviousLine(scrollDistance int) scrollPosition {
 	return scrollPosition{
 		internalDontTouch: scrollPositionInternal{

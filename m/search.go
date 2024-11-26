@@ -11,6 +11,7 @@ import (
 	"github.com/walles/moar/m/linenumbers"
 )
 
+// Scroll to the next search hit, while the user is typing the search string.
 func (p *Pager) scrollToSearchHits() {
 	if p.searchPattern == nil {
 		// This is not a search
@@ -24,7 +25,13 @@ func (p *Pager) scrollToSearchHits() {
 	}
 
 	firstHitPosition := p.findFirstHit(*lineNumber, nil, false)
-	if firstHitPosition == nil && (*lineNumber != linenumbers.LineNumber{}) {
+	if firstHitPosition == nil {
+		canWrap := (*lineNumber != linenumbers.LineNumber{})
+		if !canWrap {
+			// No match, can't wrap, give up
+			return
+		}
+
 		// Try again from the top
 		firstHitPosition = p.findFirstHit(linenumbers.LineNumber{}, lineNumber, false)
 	}
@@ -39,6 +46,58 @@ func (p *Pager) scrollToSearchHits() {
 	}
 
 	p.scrollPosition = *firstHitPosition
+}
+
+// Scroll backwards to the previous search hit, while the user is typing the
+// search string.
+func (p *Pager) scrollToSearchHitsBackwards() {
+	if p.searchPattern == nil {
+		// This is not a search
+		return
+	}
+
+	// Start at the bottom of the currently visible screen
+	lastVisiblePosition := p.getLastVisiblePosition()
+	if lastVisiblePosition == nil {
+		// No lines to search
+		return
+	}
+	lineNumber := lastVisiblePosition.lineNumber(p)
+	if lineNumber == nil {
+		log.Warn("No line number to search even though we have a last visible position")
+		return
+	}
+
+	firstHitPosition := p.findFirstHit(*lineNumber, nil, true)
+	if firstHitPosition == nil {
+		lastLine := linenumbers.LineNumberFromLength(p.reader.GetLineCount())
+		if lastLine == nil {
+			// In the first part of the search we had some lines to search.
+			// Lines should never go away, so this should never happen.
+			log.Error("Wrapped backwards search had no lines to search")
+			return
+		}
+		canWrap := (*lineNumber != *lastLine)
+		if !canWrap {
+			// No match, can't wrap, give up
+			return
+		}
+
+		// Try again from the bottom
+		firstHitPosition = p.findFirstHit(*lastLine, lineNumber, true)
+	}
+	if firstHitPosition == nil {
+		// No match, give up
+		return
+	}
+
+	if firstHitPosition.isVisible(p) {
+		// Already on-screen, never mind
+		return
+	}
+
+	// Scroll so that the first hit is at the bottom of the screen
+	p.scrollPosition = firstHitPosition.PreviousLine(p.visibleHeight() - 1)
 }
 
 // NOTE: When we search, we do that by looping over the *input lines*, not the

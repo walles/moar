@@ -10,7 +10,7 @@ type PagerModeViewing struct {
 }
 
 func (m PagerModeViewing) drawFooter(statusText string, spinner string) {
-	helpText := "Press 'ESC' / 'q' to exit, '/' to search, '?' for help"
+	helpText := "Press 'ESC' / 'q' to exit, '/' to search, 'h' for help"
 	if m.pager.isShowingHelp {
 		helpText = "Press 'ESC' / 'q' to exit help, '/' to search"
 	}
@@ -79,20 +79,22 @@ func (m PagerModeViewing) onRune(char rune) {
 	case 'v':
 		handleEditingRequest(p)
 
-	case '?':
-		if !p.isShowingHelp {
-			p.preHelpState = &_PreHelpState{
-				reader:              p.reader,
-				scrollPosition:      p.scrollPosition,
-				leftColumnZeroBased: p.leftColumnZeroBased,
-				targetLineNumber:    p.TargetLineNumber,
-			}
-			p.reader = _HelpReader
-			p.scrollPosition = newScrollPosition("Pager scroll position")
-			p.leftColumnZeroBased = 0
-			p.TargetLineNumber = nil
-			p.isShowingHelp = true
+	case 'h':
+		if p.isShowingHelp {
+			break
 		}
+
+		p.preHelpState = &_PreHelpState{
+			reader:              p.reader,
+			scrollPosition:      p.scrollPosition,
+			leftColumnZeroBased: p.leftColumnZeroBased,
+			targetLineNumber:    p.TargetLineNumber,
+		}
+		p.reader = _HelpReader
+		p.scrollPosition = newScrollPosition("Pager scroll position")
+		p.leftColumnZeroBased = 0
+		p.TargetLineNumber = nil
+		p.isShowingHelp = true
 
 	case '=':
 		p.ShowStatusBar = !p.ShowStatusBar
@@ -110,14 +112,6 @@ func (m PagerModeViewing) onRune(char rune) {
 		// Clipping is done in _Redraw()
 		p.scrollPosition = p.scrollPosition.NextLine(1)
 		p.handleScrolledDown()
-
-	case 'l':
-		// vim right
-		p.moveRight(p.SideScrollAmount)
-
-	case 'h':
-		// vim left
-		p.moveRight(-p.SideScrollAmount)
 
 	case '<':
 		p.scrollPosition = newScrollPosition("Pager scroll position")
@@ -147,7 +141,13 @@ func (m PagerModeViewing) onRune(char rune) {
 		p.handleScrolledDown()
 
 	case '/':
-		p.mode = PagerModeSearch{pager: p}
+		p.mode = PagerModeSearch{pager: p, backwards: false}
+		p.TargetLineNumber = nil
+		p.searchString = ""
+		p.searchPattern = nil
+
+	case '?':
+		p.mode = PagerModeSearch{pager: p, backwards: true}
 		p.TargetLineNumber = nil
 		p.searchString = ""
 		p.searchPattern = nil
