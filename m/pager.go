@@ -141,7 +141,7 @@ Searching
 ---------
 * Type / to start searching, then type what you want to find
 * Type ? to search backwards, then type what you want to find
-* Type RETURN to stop searching
+* Type RETURN to stop searching, or ESC to skip back to where the search started
 * Find next by typing 'n' (for "next")
 * Find previous by typing SHIFT-N or 'p' (for "previous")
 * Search is case sensitive if it contains any UPPER CASE CHARACTERS

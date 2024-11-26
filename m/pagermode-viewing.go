@@ -141,13 +141,13 @@ func (m PagerModeViewing) onRune(char rune) {
 		p.handleScrolledDown()
 
 	case '/':
-		p.mode = PagerModeSearch{pager: p, backwards: false}
+		p.mode = PagerModeSearch{pager: p, backwards: false, initialScrollPosition: p.scrollPosition}
 		p.TargetLineNumber = nil
 		p.searchString = ""
 		p.searchPattern = nil
 
 	case '?':
-		p.mode = PagerModeSearch{pager: p, backwards: true}
+		p.mode = PagerModeSearch{pager: p, backwards: true, initialScrollPosition: p.scrollPosition}
 		p.TargetLineNumber = nil
 		p.searchString = ""
 		p.searchPattern = nil

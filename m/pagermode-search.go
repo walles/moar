@@ -10,8 +10,9 @@ import (
 )
 
 type PagerModeSearch struct {
-	pager     *Pager
-	backwards bool
+	pager                 *Pager
+	initialScrollPosition scrollPosition // Pager position before search started
+	backwards             bool
 }
 
 func (m PagerModeSearch) drawFooter(_ string, _ string) {
@@ -101,9 +102,13 @@ func removeLastChar(s string) string {
 
 func (m PagerModeSearch) onKey(key twin.KeyCode) {
 	switch key {
-	case twin.KeyEscape, twin.KeyEnter:
+	case twin.KeyEnter:
 		//nolint:gosimple // The linter's advice is just wrong here
 		m.pager.mode = PagerModeViewing{pager: m.pager}
+
+	case twin.KeyEscape:
+		m.pager.mode = PagerModeViewing{pager: m.pager}
+		m.pager.scrollPosition = m.initialScrollPosition
 
 	case twin.KeyBackspace, twin.KeyDelete:
 		if len(m.pager.searchString) == 0 {
