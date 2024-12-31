@@ -51,6 +51,9 @@ func printProblemsHeader() {
 	fmt.Fprintln(os.Stderr, "GOARCH  :", runtime.GOARCH)
 	fmt.Fprintln(os.Stderr, "Compiler:", runtime.Compiler)
 	fmt.Fprintln(os.Stderr, "NumCPU  :", runtime.NumCPU())
+	fmt.Fprintln(os.Stderr)
+	fmt.Fprintln(os.Stderr, "Stdin  is a terminal:", term.IsTerminal(int(os.Stdin.Fd())))
+	fmt.Fprintln(os.Stderr, "Stdout is a terminal:", term.IsTerminal(int(os.Stdout.Fd())))
 }
 
 func parseLexerOption(lexerOption string) (chroma.Lexer, error) {
