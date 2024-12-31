@@ -542,6 +542,11 @@ func (screen *UnixScreen) Size() (width int, height int) {
 		// Resize logic needed, see below
 	default:
 		// No resize, go with the existing values
+		if screen.widthAccessFromSizeOnly == 0 || screen.heightAccessFromSizeOnly == 0 {
+			panic(fmt.Sprintf("No screen size available, this is a bug: %d x %d",
+				screen.widthAccessFromSizeOnly,
+				screen.heightAccessFromSizeOnly))
+		}
 		return screen.widthAccessFromSizeOnly, screen.heightAccessFromSizeOnly
 	}
 
@@ -549,6 +554,10 @@ func (screen *UnixScreen) Size() (width int, height int) {
 	width, height, err := term.GetSize(int(screen.ttyOut.Fd()))
 	if err != nil {
 		panic(err)
+	}
+
+	if width == 0 || height == 0 {
+		panic(fmt.Sprintf("Got zero screen size: %d x %d", width, height))
 	}
 
 	if screen.widthAccessFromSizeOnly == width && screen.heightAccessFromSizeOnly == height {
