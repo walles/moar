@@ -270,8 +270,8 @@ func (p *Pager) handleScrolledDown() {
 
 // StartPaging brings up the pager on screen
 func (p *Pager) StartPaging(screen twin.Screen, chromaStyle *chroma.Style, chromaFormatter *chroma.Formatter) {
-	log.Trace("Pager starting")
-	defer log.Trace("Pager done")
+	log.Info("Pager starting")
+	defer log.Info("Pager done")
 
 	defer func() {
 		if p.reader.err != nil {
@@ -341,6 +341,8 @@ func (p *Pager) StartPaging(screen twin.Screen, chromaStyle *chroma.Style, chrom
 			screen.Events() <- eventMaybeDone{}
 		}
 	}()
+
+	log.Info("Entering pager main loop...")
 
 	// Main loop
 	spinner := ""
