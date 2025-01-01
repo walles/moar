@@ -69,7 +69,7 @@ func (r *interruptableReaderImpl) read(p []byte) (n int, err error) {
 		closeErr := r.shutdownPipeReader.Close()
 		if closeErr != nil {
 			// This should never happen, but if it does we should log it
-			log.Debug("Failed to close shutdown pipe reader: ", closeErr)
+			log.Info("Failed to close shutdown pipe reader: ", closeErr)
 		}
 
 		err = io.EOF

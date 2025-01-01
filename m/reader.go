@@ -245,7 +245,7 @@ func (reader *Reader) consumeLinesFromStream(stream io.Reader) {
 
 	reader.endsWithNewline = inspectionReader.endedWithNewline
 
-	log.Debug("Stream read in ", time.Since(t0))
+	log.Info("Stream read in ", time.Since(t0))
 }
 
 func (reader *Reader) tailFile() error {
@@ -592,7 +592,7 @@ func highlightFromMemory(reader *Reader, formatter chroma.Formatter, options Rea
 		byteCount += int64(len(line.raw))
 
 		if byteCount > MAX_HIGHLIGHT_SIZE {
-			log.Debug("File too large for highlighting: ", byteCount)
+			log.Info("File too large for highlighting: ", byteCount)
 			reader.Unlock()
 			return
 		}
@@ -602,7 +602,7 @@ func highlightFromMemory(reader *Reader, formatter chroma.Formatter, options Rea
 	text := textAsString(reader, options.ShouldFormat)
 
 	if options.Lexer == nil && json.Valid([]byte(text)) {
-		log.Debug("Buffer is valid JSON, highlighting as JSON")
+		log.Info("Buffer is valid JSON, highlighting as JSON")
 		options.Lexer = lexers.Get("json")
 	}
 

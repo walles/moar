@@ -401,7 +401,7 @@ func (p *Pager) StartPaging(screen twin.Screen, chromaStyle *chroma.Style, chrom
 			// We'll be implicitly redrawn just by taking another lap in the loop
 
 		case twin.EventExit:
-			log.Debug("Got a Twin exit event, exiting")
+			log.Info("Got a Twin exit event, exiting")
 			return
 
 		case eventMoreLinesAvailable:

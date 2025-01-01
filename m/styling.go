@@ -32,7 +32,7 @@ func setStyle(updateMe *twin.Style, envVarName string, fallback *twin.Style) {
 
 	style, err := TermcapToStyle(envValue)
 	if err != nil {
-		log.Debug("Ignoring invalid ", envVarName, ": ", strings.ReplaceAll(envValue, "\x1b", "ESC"), ": ", err)
+		log.Info("Ignoring invalid ", envVarName, ": ", strings.ReplaceAll(envValue, "\x1b", "ESC"), ": ", err)
 		return
 	}
 
@@ -106,7 +106,7 @@ func consumeLessTermcapEnvs(chromaStyle *chroma.Style, chromaFormatter *chroma.F
 		if err == nil {
 			standoutStyle = &style
 		} else {
-			log.Debug("Ignoring invalid LESS_TERMCAP_so: ", strings.ReplaceAll(envValue, "\x1b", "ESC"), ": ", err)
+			log.Info("Ignoring invalid LESS_TERMCAP_so: ", strings.ReplaceAll(envValue, "\x1b", "ESC"), ": ", err)
 		}
 	}
 }

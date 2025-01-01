@@ -211,7 +211,7 @@ func (screen *UnixScreen) Close() {
 		// * https://github.com/walles/moar/issues/145
 		// * https://github.com/walles/moar/issues/149
 		// * https://github.com/walles/moar/issues/150
-		log.Debug("Problem restoring TTY state: ", err)
+		log.Info("Problem restoring TTY state: ", err)
 	}
 }
 
@@ -267,41 +267,49 @@ func terminalHasArrowKeysEmulation() bool {
 
 	// Hyper, tested on macOS, December 14th 2023
 	if os.Getenv("TERM_PROGRAM") == "Hyper" {
+		log.Info("Hyper terminal detected, assuming arrow keys emulation active")
 		return true
 	}
 
 	// Kitty, tested on macOS, December 14th 2023
 	if os.Getenv("KITTY_WINDOW_ID") != "" {
+		log.Info("Kitty terminal detected, assuming arrow keys emulation active")
 		return true
 	}
 
 	// Alacritty, tested on macOS, December 14th 2023
 	if os.Getenv("ALACRITTY_WINDOW_ID") != "" {
+		log.Info("Alacritty terminal detected, assuming arrow keys emulation active")
 		return true
 	}
 
 	// Warp, tested on macOS, December 14th 2023
 	if os.Getenv("TERM_PROGRAM") == "WarpTerminal" {
+		log.Info("Warp terminal detected, assuming arrow keys emulation active")
 		return true
 	}
 
 	// GNOME Terminal, tested on Ubuntu 22.04, December 16th 2023
 	if os.Getenv("GNOME_TERMINAL_SCREEN") != "" {
+		log.Info("GNOME Terminal detected, assuming arrow keys emulation active")
 		return true
 	}
 
 	// Tilix, tested on Ubuntu 22.04, December 16th 2023
 	if os.Getenv("TILIX_ID") != "" {
+		log.Info("Tilix terminal detected, assuming arrow keys emulation active")
 		return true
 	}
 
 	// Konsole, tested on Ubuntu 22.04, December 16th 2023
 	if os.Getenv("KONSOLE_VERSION") != "" {
+		log.Info("Konsole terminal detected, assuming arrow keys emulation active")
 		return true
 	}
 
 	// Terminator, tested on Ubuntu 22.04, December 16th 2023
 	if os.Getenv("TERMINATOR_UUID") != "" {
+		log.Info("Terminator terminal detected, assuming arrow keys emulation active")
 		return true
 	}
 
@@ -309,29 +317,35 @@ func terminalHasArrowKeysEmulation() bool {
 	if os.Getenv("TERM") == "foot" || strings.HasPrefix(os.Getenv("TERM"), "foot-") {
 		// Note that this test isn't very good, somebody could be running Foot
 		// with some other TERM setting. Other suggestions welcome.
+		log.Info("Foot terminal detected, assuming arrow keys emulation active")
 		return true
 	}
 
 	// Wezterm, tested on MacOS 12.6, January 3rd, 2024
 	if os.Getenv("TERM_PROGRAM") == "WezTerm" {
+		log.Info("Wezterm terminal detected, assuming arrow keys emulation active")
 		return true
 	}
 
 	// Rio, tested on macOS 14.3, January 27th, 2024
 	if os.Getenv("TERM_PROGRAM") == "rio" {
+		log.Info("Rio terminal detected, assuming arrow keys emulation active")
 		return true
 	}
 
 	// VSCode 1.89.0, tested on macOS 14.4, May 6th, 2024
 	if os.Getenv("TERM_PROGRAM") == "vscode" {
+		log.Info("VSCode terminal detected, assuming arrow keys emulation active")
 		return true
 	}
 
 	// IntelliJ IDEA CE 2023.2.2, tested on macOS 14.4, May 6th, 2024
 	if os.Getenv("TERM_PROGRAM") == "JetBrains-JediTerm" {
+		log.Info("IntelliJ IDEA terminal detected, assuming arrow keys emulation active")
 		return true
 	}
 
+	log.Info("No known terminal with arrow keys emulation detected, assuming mouse tracking is needed")
 	return false
 }
 
@@ -373,7 +387,7 @@ func (screen *UnixScreen) ShowCursorAt(column int, row int) {
 }
 
 func (screen *UnixScreen) mainLoop() {
-	defer log.Debug("Twin screen main loop done")
+	defer log.Info("Twin screen main loop done")
 
 	// "1400" comes from me trying fling scroll operations on my MacBook
 	// trackpad and looking at the high watermark (logged below).
@@ -391,7 +405,7 @@ func (screen *UnixScreen) mainLoop() {
 			// * https://github.com/walles/moar/issues/145
 			// * https://github.com/walles/moar/issues/149
 			// * https://github.com/walles/moar/issues/150
-			log.Debug("ttyin read error, twin giving up: ", err)
+			log.Info("ttyin read error, twin giving up: ", err)
 
 			screen.events <- EventExit{}
 			return
