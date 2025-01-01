@@ -271,7 +271,6 @@ func (p *Pager) handleScrolledDown() {
 // StartPaging brings up the pager on screen
 func (p *Pager) StartPaging(screen twin.Screen, chromaStyle *chroma.Style, chromaFormatter *chroma.Formatter) {
 	log.Info("Pager starting")
-	defer log.Info("Pager done")
 
 	defer func() {
 		if p.reader.err != nil {

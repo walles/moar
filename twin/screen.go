@@ -387,14 +387,14 @@ func (screen *UnixScreen) ShowCursorAt(column int, row int) {
 }
 
 func (screen *UnixScreen) mainLoop() {
-	defer log.Info("Twin screen main loop done")
-
 	// "1400" comes from me trying fling scroll operations on my MacBook
 	// trackpad and looking at the high watermark (logged below).
 	//
 	// The highest I saw when I tried this was 700 something. 1400 is twice
 	// that, so 1400 should be good.
 	buffer := make([]byte, 1400)
+
+	log.Info("Entering Twin main loop...")
 
 	maxBytesRead := 0
 	expectingTerminalBackgroundColor := true
