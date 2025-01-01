@@ -10,6 +10,7 @@ import (
 	"sync/atomic"
 	"syscall"
 
+	log "github.com/sirupsen/logrus"
 	"golang.org/x/sys/windows"
 	"golang.org/x/term"
 )
@@ -96,6 +97,12 @@ func (screen *UnixScreen) setupTtyInTtyOut() error {
 		screen.restoreTtyInTtyOut() // Error intentionally ignored, report the first one only
 		return fmt.Errorf("failed to set raw mode: %w", err)
 	}
+
+	updatedTerminalState, err := term.GetState(int(screen.ttyIn.Fd()))
+	if err != nil {
+		return err
+	}
+	log.Info("Raw terminal state: ", fmt.Sprintf("%+v", updatedTerminalState))
 
 	screen.ttyOut = os.Stdout
 

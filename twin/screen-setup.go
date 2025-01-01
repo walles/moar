@@ -4,6 +4,7 @@
 package twin
 
 import (
+	"fmt"
 	"io"
 	"os"
 	"os/signal"
@@ -173,6 +174,12 @@ func (screen *UnixScreen) setupTtyInTtyOut() error {
 	if err != nil {
 		return err
 	}
+
+	updatedTerminalState, err := term.GetState(int(screen.ttyIn.Fd()))
+	if err != nil {
+		return err
+	}
+	log.Info("Raw terminal state: ", fmt.Sprintf("%+v", updatedTerminalState))
 
 	screen.ttyOut = os.Stdout
 	return nil
