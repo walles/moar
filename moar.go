@@ -491,7 +491,10 @@ func pagerFromArgs(
 	shouldFormat := *reFormat
 	if stdinIsRedirected {
 		// Display input pipe contents
-		reader = m.NewReaderFromStream("", os.Stdin, formatter, m.ReaderOptions{Lexer: *lexer, ShouldFormat: shouldFormat})
+		reader, err = m.NewReaderFromStream("", os.Stdin, formatter, m.ReaderOptions{Lexer: *lexer, ShouldFormat: shouldFormat})
+		if err != nil {
+			return nil, nil, chroma.Style{}, nil, logsRequested, err
+		}
 	} else {
 		// Display the input file contents
 		if len(flagSet.Args()) != 1 {

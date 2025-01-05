@@ -333,8 +333,12 @@ func (reader *Reader) tailFile() error {
 //
 // Note that you must call reader.SetStyleForHighlighting() after this to get
 // highlighting.
-func NewReaderFromStream(name string, reader io.Reader, formatter chroma.Formatter, options ReaderOptions) *Reader {
-	mReader := newReaderFromStream(reader, nil, formatter, options)
+func NewReaderFromStream(name string, reader io.Reader, formatter chroma.Formatter, options ReaderOptions) (*Reader, error) {
+	zReader, err := ZReader(reader)
+	if err != nil {
+		return nil, err
+	}
+	mReader := newReaderFromStream(zReader, nil, formatter, options)
 
 	if len(name) > 0 {
 		mReader.Lock()
@@ -350,7 +354,7 @@ func NewReaderFromStream(name string, reader io.Reader, formatter chroma.Formatt
 		mReader.SetStyleForHighlighting(*options.Style)
 	}
 
-	return mReader
+	return mReader, nil
 }
 
 // newReaderFromStream creates a new stream reader
@@ -361,6 +365,9 @@ func NewReaderFromStream(name string, reader io.Reader, formatter chroma.Formatt
 // loading performance.
 //
 // If lexer is set, the file will be highlighted after being fully read.
+//
+// Whatever data we get from the reader, that's what we'll have. Or in other
+// words, if the input needs to be decompressed, do that before coming here.
 //
 // Note that you must call reader.SetStyleForHighlighting() after this to get
 // highlighting.

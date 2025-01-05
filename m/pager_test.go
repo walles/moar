@@ -565,7 +565,8 @@ func TestPageSamples(t *testing.T) {
 				}
 			}()
 
-			myReader := NewReaderFromStream(fileName, file, nil, ReaderOptions{Style: &chroma.Style{}})
+			myReader, err := NewReaderFromStream(fileName, file, nil, ReaderOptions{Style: &chroma.Style{}})
+			assert.NilError(t, err)
 			assert.NilError(t, myReader._wait())
 
 			pager := NewPager(myReader)

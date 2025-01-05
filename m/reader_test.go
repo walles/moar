@@ -303,15 +303,17 @@ func TestReadFileDoneYesHighlighting(t *testing.T) {
 }
 
 func TestReadStreamDoneNoHighlighting(t *testing.T) {
-	testMe := NewReaderFromStream("", strings.NewReader("Johan"), nil, ReaderOptions{Style: &chroma.Style{}})
+	testMe, err := NewReaderFromStream("", strings.NewReader("Johan"), nil, ReaderOptions{Style: &chroma.Style{}})
+	assert.NilError(t, err)
 
 	assert.NilError(t, testMe._wait())
 }
 
 func TestReadStreamDoneYesHighlighting(t *testing.T) {
-	testMe := NewReaderFromStream("",
+	testMe, err := NewReaderFromStream("",
 		strings.NewReader("Johan"),
 		formatters.TTY, ReaderOptions{Lexer: lexers.EmacsLisp, Style: styles.Get("native")})
+	assert.NilError(t, err)
 
 	assert.NilError(t, testMe._wait())
 }
@@ -325,7 +327,7 @@ func TestReadTextDone(t *testing.T) {
 // JSON should be auto detected and formatted
 func TestFormatJson(t *testing.T) {
 	jsonStream := strings.NewReader(`{"key": "value"}`)
-	testMe := NewReaderFromStream(
+	testMe, err := NewReaderFromStream(
 		"JSON test",
 		jsonStream,
 		formatters.TTY,
@@ -333,6 +335,7 @@ func TestFormatJson(t *testing.T) {
 			Style:        styles.Get("native"),
 			ShouldFormat: true,
 		})
+	assert.NilError(t, err)
 
 	assert.NilError(t, testMe._wait())
 
