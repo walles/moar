@@ -535,7 +535,7 @@ func NewReaderFromFilename(filename string, formatter chroma.Formatter, options 
 		options.Lexer = lexers.Match(highlightingFilename)
 	}
 
-	returnMe := newReaderFromStream(stream, &filename, formatter, options)
+	returnMe := newReaderFromStream(stream, &highlightingFilename, formatter, options)
 
 	if options.Lexer == nil {
 		returnMe.highlightingDone.Store(true)
