@@ -220,8 +220,8 @@ func (screen *UnixScreen) Events() chan Event {
 }
 
 // Write string to ttyOut, panic on failure, return number of bytes written.
-func (screen *UnixScreen) write(string string) int {
-	bytesWritten, err := screen.ttyOut.Write([]byte(string))
+func (screen *UnixScreen) write(s string) int {
+	bytesWritten, err := screen.ttyOut.Write([]byte(s))
 	if err != nil {
 		panic(err)
 	}

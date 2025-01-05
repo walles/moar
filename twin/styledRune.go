@@ -15,9 +15,9 @@ type StyledRune struct {
 	Style Style
 }
 
-func NewStyledRune(rune rune, style Style) StyledRune {
+func NewStyledRune(char rune, style Style) StyledRune {
 	return StyledRune{
-		Rune:  rune,
+		Rune:  char,
 		Style: style,
 	}
 }
