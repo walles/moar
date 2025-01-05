@@ -175,13 +175,20 @@ func (screen *UnixScreen) setupTtyInTtyOut() error {
 		return err
 	}
 
-	updatedTerminalState, err := term.GetState(int(screen.ttyIn.Fd()))
+	screen.ttyOut = os.Stdout
+
+	ttyInTerminalState, err := term.GetState(int(screen.ttyIn.Fd()))
 	if err != nil {
 		return err
 	}
-	log.Info("Raw terminal state: ", fmt.Sprintf("%+v", updatedTerminalState))
+	log.Info("ttyin terminal state: ", fmt.Sprintf("%+v", ttyInTerminalState))
 
-	screen.ttyOut = os.Stdout
+	ttyOutTerminalState, err := term.GetState(int(screen.ttyOut.Fd()))
+	if err != nil {
+		return err
+	}
+	log.Info("ttyout terminal state: ", fmt.Sprintf("%+v", ttyOutTerminalState))
+
 	return nil
 }
 

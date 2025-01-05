@@ -98,12 +98,6 @@ func (screen *UnixScreen) setupTtyInTtyOut() error {
 		return fmt.Errorf("failed to set raw mode: %w", err)
 	}
 
-	updatedTerminalState, err := term.GetState(int(screen.ttyIn.Fd()))
-	if err != nil {
-		return err
-	}
-	log.Info("Raw terminal state: ", fmt.Sprintf("%+v", updatedTerminalState))
-
 	screen.ttyOut = os.Stdout
 
 	// Enable console colors, from: https://stackoverflow.com/a/52579002
@@ -118,6 +112,18 @@ func (screen *UnixScreen) setupTtyInTtyOut() error {
 		screen.restoreTtyInTtyOut() // Error intentionally ignored, report the first one only
 		return fmt.Errorf("failed to set stdout console mode: %w", err)
 	}
+
+	ttyInTerminalState, err := term.GetState(int(screen.ttyIn.Fd()))
+	if err != nil {
+		return err
+	}
+	log.Info("ttyin terminal state: ", fmt.Sprintf("%+v", ttyInTerminalState))
+
+	ttyOutTerminalState, err := term.GetState(int(screen.ttyOut.Fd()))
+	if err != nil {
+		return err
+	}
+	log.Info("ttyout terminal state: ", fmt.Sprintf("%+v", ttyOutTerminalState))
 
 	return nil
 }
