@@ -610,7 +610,8 @@ func main() {
 			panic(err)
 		}
 
-		os.Exit(1)
+		// We were asked to print logs, and we did. Success!
+		os.Exit(0)
 	}()
 
 	stdinIsRedirected := !term.IsTerminal(int(os.Stdin.Fd()))

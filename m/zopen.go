@@ -91,6 +91,7 @@ func ZOpen(filename string) (io.ReadCloser, string, error) {
 		}{xzReader, file}, strings.TrimSuffix(filename, ".xz"), nil
 	}
 
+	log.Debugf("File is assumed to be uncompressed: %v", filename)
 	return file, filename, nil
 }
 
