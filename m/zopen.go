@@ -45,6 +45,7 @@ func ZOpen(filename string) (io.ReadCloser, string, error) {
 
 	switch {
 	case bytes.HasPrefix(firstBytes, gzipMagic):
+		log.Debugf("File is gzip compressed: %v", filename)
 		reader, err := gzip.NewReader(file)
 		if err != nil {
 			return nil, "", err
@@ -60,12 +61,14 @@ func ZOpen(filename string) (io.ReadCloser, string, error) {
 		return reader, newName, err
 
 	case bytes.HasPrefix(firstBytes, bzip2Magic):
+		log.Debugf("File is bzip2 compressed: %v", filename)
 		return struct {
 			io.Reader
 			io.Closer
 		}{bzip2.NewReader(file), file}, strings.TrimSuffix(filename, ".bz2"), nil
 
 	case bytes.HasPrefix(firstBytes, zstdMagic):
+		log.Debugf("File is zstd compressed: %v", filename)
 		decoder, err := zstd.NewReader(file)
 		if err != nil {
 			return nil, "", err
@@ -76,6 +79,7 @@ func ZOpen(filename string) (io.ReadCloser, string, error) {
 		return decoder.IOReadCloser(), newName, nil
 
 	case bytes.HasPrefix(firstBytes, xzMagic):
+		log.Debugf("File is xz compressed: %v", filename)
 		xzReader, err := xz.NewReader(file)
 		if err != nil {
 			return nil, "", err
