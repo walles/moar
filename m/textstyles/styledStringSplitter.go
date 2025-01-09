@@ -210,15 +210,79 @@ func (s *styledStringSplitter) handleOsc(sequence string) error {
 	return fmt.Errorf("Unhandled OSC sequence")
 }
 
+// Based on https://infra.spec.whatwg.org/#surrogate
+func isSurrogate(char rune) bool {
+	if char >= 0xD800 && char <= 0xDFFF {
+		return true
+	}
+
+	return false
+}
+
+// Non-characters end with 0xfffe or 0xffff, or are in the range 0xFDD0 to 0xFDEF.
+//
+// Based on https://infra.spec.whatwg.org/#noncharacter
+func isNonCharacter(char rune) bool {
+	if char >= 0xFDD0 && char <= 0xFDEF {
+		return true
+	}
+
+	// Non-characters end with 0xfffe or 0xffff
+	if char&0xFFFF == 0xFFFE || char&0xFFFF == 0xFFFF {
+		return true
+	}
+
+	return false
+}
+
+// Based on https://url.spec.whatwg.org/#url-code-points
+func isValidURLChar(char rune) bool {
+	if char == '\\' {
+		// Ref: https://github.com/walles/moar/issues/244#issuecomment-2350908401
+		return true
+	}
+
+	if char == '%' {
+		// Needed for % escapes
+		return true
+	}
+
+	// ASCII alphanumerics
+	if char >= '0' && char <= '9' {
+		return true
+	}
+	if char >= 'A' && char <= 'Z' {
+		return true
+	}
+	if char >= 'a' && char <= 'z' {
+		return true
+	}
+
+	if strings.ContainsRune("!$&'()*+,-./:;=?@_~", char) {
+		return true
+	}
+
+	if char < 0x00a0 {
+		return false
+	}
+
+	if char > 0x10FFFD {
+		return false
+	}
+
+	if isSurrogate(char) {
+		return false
+	}
+
+	if isNonCharacter(char) {
+		return false
+	}
+
+	return true
+}
+
 // We just got ESC]8; and should now read the URL. URLs end with ASCII 7 BEL or ESC \.
 func (s *styledStringSplitter) handleURL() error {
-	// Ref: https://github.com/walles/moar/issues/244#issuecomment-2350908401
-	const windowsURLChars = `\`
-
-	// Valid URL characters.
-	// Ref: https://stackoverflow.com/a/1547940/473672
-	const validChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~:/?#[]@!$&'()*+,;=" + windowsURLChars
-
 	// Points to right after "ESC]8;"
 	urlStartIndex := s.nextByteIndex
 
@@ -256,8 +320,8 @@ func (s *styledStringSplitter) handleURL() error {
 			return nil
 		}
 
-		if !strings.ContainsRune(validChars, char) {
-			return fmt.Errorf("Invalid URL character: %q", char)
+		if !isValidURLChar(char) {
+			return fmt.Errorf("Invalid URL character: <%q>", char)
 		}
 
 		// It's a valid URL char, keep going

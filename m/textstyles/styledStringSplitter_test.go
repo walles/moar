@@ -1,6 +1,7 @@
 package textstyles
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/walles/moar/twin"
@@ -80,6 +81,16 @@ func TestWindowsURL(t *testing.T) {
 	assert.Equal(t, twin.StyleDefault, trailer)
 	assert.Equal(t, 1, len(styledStrings))
 	assert.Equal(t, windowsPath, styledStrings[0].String)
+}
+
+func TestURLWithSpace(t *testing.T) {
+	urlPath := `hello%20there.txt`
+	text := `hello there.txt`
+	styledStrings, trailer := collectStyledStrings("\x1b]8;;file://" + urlPath + "\x07" + text)
+	assert.Equal(t, twin.StyleDefault, trailer)
+	assert.Equal(t, 1, len(styledStrings))
+	assert.Equal(t, text, styledStrings[0].String)
+	assert.Assert(t, strings.Contains(styledStrings[0].Style.String(), "file://"+urlPath))
 }
 
 func TestPlainTextColor(t *testing.T) {

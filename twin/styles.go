@@ -43,10 +43,6 @@ func (style Style) String() string {
 		undelineSuffix = fmt.Sprintf(" underlined with %v", style.underlineColor)
 	}
 
-	if style.attrs == AttrNone {
-		return fmt.Sprint(style.fg, " on ", style.bg, undelineSuffix)
-	}
-
 	attrNames := make([]string, 0)
 	if style.attrs.has(AttrBold) {
 		attrNames = append(attrNames, "bold")
@@ -71,6 +67,10 @@ func (style Style) String() string {
 	}
 	if style.hyperlinkURL != nil {
 		attrNames = append(attrNames, "\""+*style.hyperlinkURL+"\"")
+	}
+
+	if len(attrNames) == 0 {
+		return fmt.Sprint(style.fg, " on ", style.bg, undelineSuffix)
 	}
 
 	return fmt.Sprint(strings.Join(attrNames, " "), " ", style.fg, " on ", style.bg, undelineSuffix)
