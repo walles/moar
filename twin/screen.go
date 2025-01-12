@@ -345,6 +345,12 @@ func terminalHasArrowKeysEmulation() bool {
 		return true
 	}
 
+	// Ghostty 1.0.1, tested on macOS 15.1.1, Jan 12th, 2025
+	if os.Getenv("TERM_PROGRAM") == "ghostty" {
+		log.Info("Ghostty terminal detected, assuming arrow keys emulation active")
+		return true
+	}
+
 	log.Info("No known terminal with arrow keys emulation detected, assuming mouse tracking is needed")
 	return false
 }
