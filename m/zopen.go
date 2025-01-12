@@ -103,7 +103,7 @@ func ZOpen(filename string) (io.ReadCloser, string, error) {
 func ZReader(input io.Reader) (io.Reader, error) {
 	// Read the first 6 bytes to determine the compression type
 	firstBytes := make([]byte, 6)
-	_, err := input.Read(firstBytes)
+	count, err := input.Read(firstBytes)
 	if err != nil {
 		if err == io.EOF {
 			// Stream was empty
@@ -111,6 +111,7 @@ func ZReader(input io.Reader) (io.Reader, error) {
 		}
 		return nil, fmt.Errorf("failed to read stream: %w", err)
 	}
+	firstBytes = firstBytes[:count]
 
 	// Reset input reader to start of stream
 	input = io.MultiReader(bytes.NewReader(firstBytes), input)
