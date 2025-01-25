@@ -365,6 +365,8 @@ func (p *Pager) StartPaging(screen twin.Screen, chromaStyle *chroma.Style, chrom
 					// Without this the line numbers setting ^ won't take effect
 					p.redraw(spinner)
 
+					log.Info("Exiting because of --quit-if-one-screen, we fit on one screen and we're done")
+
 					break
 				}
 			}
