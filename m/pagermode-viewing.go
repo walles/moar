@@ -64,6 +64,10 @@ func (m PagerModeViewing) onKey(keyCode twin.KeyCode) {
 		p.scrollPosition = p.scrollPosition.NextLine(p.visibleHeight())
 		p.handleScrolledDown()
 
+	case twin.KeyAltU:
+		p.searchPattern = nil
+		p.searchString = ""
+
 	default:
 		log.Debugf("Unhandled key event %v", keyCode)
 	}

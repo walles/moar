@@ -18,6 +18,7 @@ const (
 	KeyAltDown
 	KeyAltRight
 	KeyAltLeft
+	KeyAltU
 
 	KeyHome
 	KeyEnd
@@ -61,6 +62,7 @@ var escapeSequenceToKeyCode = map[string]KeyCode{
 	"\x1b\x1b[B": KeyAltDown,  // Alt + down arrow
 	"\x1b\x1b[C": KeyAltRight, // Alt + right arrow
 	"\x1b\x1b[D": KeyAltLeft,  // Alt + left arrow
+	"\x1bu":      KeyAltU,
 
 	"\x1b[H":  KeyHome,
 	"\x1b[F":  KeyEnd,
