@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"path"
+	"path/filepath"
 	"runtime/debug"
 	"strings"
 	"sync"
@@ -641,7 +641,7 @@ func highlightFromMemory(reader *Reader, formatter chroma.Formatter, options Rea
 func (reader *Reader) createStatusUnlocked(lastLine linenumbers.LineNumber) string {
 	prefix := ""
 	if reader.name != nil {
-		prefix = path.Base(*reader.name) + ": "
+		prefix = filepath.Base(*reader.name) + ": "
 	}
 
 	if len(reader.lines) == 0 {
