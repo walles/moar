@@ -544,7 +544,7 @@ func pagerFromArgs(
 				}
 
 			default:
-				log.Debug("Expected terminal background color event but got ", ev, " after ", time.Since(t0), " putting back and giving up")
+				log.Debugf("Expected terminal background color event but got %#v after %s, putting back and giving up", ev, time.Since(t0))
 				screen.Events() <- event
 			}
 
