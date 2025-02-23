@@ -437,7 +437,9 @@ func (screen *UnixScreen) mainLoop() {
 				}
 				continue
 			}
+			// Not valid
 			incompleteResponse = nil
+			expectingTerminalBackgroundColor = false
 		}
 
 		// We only expect this on entry, it's requested right before we start
@@ -629,6 +631,7 @@ func parseTerminalBgColorResponse(responseBytes []byte) (*Color, bool) {
 
 	isComplete := strings.HasSuffix(response, suffix1) || strings.HasSuffix(response, suffix2)
 	if !isComplete && (len(responseBytes) < len(sampleResponse1) || len(responseBytes) < len(sampleResponse2)) {
+		log.Debug("Terminal bg color response received so far: ", response)
 		return nil, true // Incomplete but valid
 	}
 
