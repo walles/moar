@@ -419,16 +419,11 @@ func (screen *UnixScreen) mainLoop() {
 		}
 
 		if expectingTerminalBackgroundColor {
-			if len(incompleteResponse) > 0 {
-				buffer = append(incompleteResponse, buffer[:count]...)
-				count += len(incompleteResponse)
-				incompleteResponse = nil
-			}
-
+			incompleteResponse = append(incompleteResponse, buffer[:count]...)
 			// This is the response to our background color request
-			bg, complete, valid := parseTerminalBgColorResponse(buffer[0:count])
+			bg, valid := parseTerminalBgColorResponse(incompleteResponse)
 			if valid {
-				if complete {
+				if bg != nil {
 					select {
 					case screen.events <- EventTerminalBackgroundDetected{Color: *bg}:
 						// Yay
@@ -438,9 +433,7 @@ func (screen *UnixScreen) mainLoop() {
 						log.Debugf("Unable to post terminal background color detected event")
 					}
 					expectingTerminalBackgroundColor = false
-				} else {
-					incompleteResponse = make([]byte, count)
-					copy(incompleteResponse, buffer[:count])
+					incompleteResponse = nil
 				}
 				continue
 			} else {
@@ -621,7 +614,7 @@ func (screen *UnixScreen) RequestTerminalBackgroundColor() {
 	fmt.Println("\x1b]11;?\x07")
 }
 
-func parseTerminalBgColorResponse(responseBytes []byte) (*Color, bool, bool) {
+func parseTerminalBgColorResponse(responseBytes []byte) (*Color, bool) {
 	prefix := "\x1b]11;rgb:"
 	suffix1 := "\x07"
 	suffix2 := "\x1b\\"
@@ -631,23 +624,18 @@ func parseTerminalBgColorResponse(responseBytes []byte) (*Color, bool, bool) {
 	response := string(responseBytes)
 	if !strings.HasPrefix(response, prefix) {
 		log.Debug("Got unexpected prefix in bg color response from terminal: ", string(responseBytes))
-		return nil, false, false // Invalid
+		return nil, false // Invalid
 	}
 	response = strings.TrimPrefix(response, prefix)
 
 	isComplete := strings.HasSuffix(response, suffix1) || strings.HasSuffix(response, suffix2)
-	if !isComplete && len(responseBytes) < (func() int {
-		if len(sampleResponse1) < len(sampleResponse2) {
-			return len(sampleResponse1)
-		}
-		return len(sampleResponse2)
-	}()) {
-		return nil, false, true // Incomplete but valid
+	if !isComplete && (len(responseBytes) < len(sampleResponse1) || len(responseBytes) < len(sampleResponse2)) {
+		return nil, true // Incomplete but valid
 	}
 
 	if !isComplete {
 		log.Debug("Got unexpected suffix in bg color response from terminal: ", string(responseBytes))
-		return nil, false, false // Invalid
+		return nil, false // Invalid
 	}
 	response = strings.TrimSuffix(response, suffix1)
 	response = strings.TrimSuffix(response, suffix2)
@@ -656,24 +644,24 @@ func parseTerminalBgColorResponse(responseBytes []byte) (*Color, bool, bool) {
 	red, err := strconv.ParseUint(response[0:4], 16, 16)
 	if err != nil {
 		log.Debug("Failed parsing red in bg color response from terminal: ", string(responseBytes), ": ", err)
-		return nil, false, false // Invalid
+		return nil, false // Invalid
 	}
 
 	green, err := strconv.ParseUint(response[5:9], 16, 16)
 	if err != nil {
 		log.Debug("Failed parsing green in bg color response from terminal: ", string(responseBytes), ": ", err)
-		return nil, false, false // Invalid
+		return nil, false // Invalid
 	}
 
 	blue, err := strconv.ParseUint(response[10:14], 16, 16)
 	if err != nil {
 		log.Debug("Failed parsing blue in bg color response from terminal: ", string(responseBytes), ": ", err)
-		return nil, false, false // Invalid
+		return nil, false // Invalid
 	}
 
 	color := NewColor24Bit(uint8(red/256), uint8(green/256), uint8(blue/256))
 
-	return &color, true, true // Valid
+	return &color, true // Valid
 }
 
 func (screen *UnixScreen) SetCell(column int, row int, styledRune StyledRune) int {
