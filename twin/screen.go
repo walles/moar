@@ -436,9 +436,8 @@ func (screen *UnixScreen) mainLoop() {
 					incompleteResponse = nil
 				}
 				continue
-			} else {
-				incompleteResponse = nil
 			}
+			incompleteResponse = nil
 		}
 
 		// We only expect this on entry, it's requested right before we start
