@@ -439,7 +439,6 @@ func (screen *UnixScreen) mainLoop() {
 			}
 			// Not valid
 			incompleteResponse = nil
-			expectingTerminalBackgroundColor = false
 		}
 
 		// We only expect this on entry, it's requested right before we start
