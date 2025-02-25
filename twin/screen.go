@@ -437,13 +437,11 @@ func (screen *UnixScreen) mainLoop() {
 				}
 				continue
 			}
-			// Not valid
+
+			// Not valid, give up
+			expectingTerminalBackgroundColor = false
 			incompleteResponse = nil
 		}
-
-		// We only expect this on entry, it's requested right before we start
-		// the main loop in NewScreenWithMouseModeAndColorCount().
-		expectingTerminalBackgroundColor = false
 
 		if count > maxBytesRead {
 			maxBytesRead = count
