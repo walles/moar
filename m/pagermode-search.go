@@ -103,7 +103,6 @@ func removeLastChar(s string) string {
 func (m PagerModeSearch) onKey(key twin.KeyCode) {
 	switch key {
 	case twin.KeyEnter:
-		//nolint:gosimple // The linter's advice is just wrong here
 		m.pager.mode = PagerModeViewing{pager: m.pager}
 
 	case twin.KeyEscape:
@@ -119,7 +118,6 @@ func (m PagerModeSearch) onKey(key twin.KeyCode) {
 		m.updateSearchPattern()
 
 	case twin.KeyUp, twin.KeyDown, twin.KeyPgUp, twin.KeyPgDown:
-		//nolint:gosimple // The linter's advice is just wrong here
 		m.pager.mode = PagerModeViewing{pager: m.pager}
 		m.pager.mode.onKey(key)
 
