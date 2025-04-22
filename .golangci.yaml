@@ -1,5 +1,13 @@
+version: "2"
 linters:
   enable:
-    - gofmt
     - revive
     - usestdlibvars
+  settings:
+    revive:
+      rules:
+        - name: "exported"
+          disabled: true
+formatters:
+  enable:
+    - gofmt
