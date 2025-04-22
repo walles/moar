@@ -37,5 +37,5 @@ func (m PagerModeMark) onKey(key twin.KeyCode) {
 
 func (m PagerModeMark) onRune(char rune) {
 	m.pager.marks[char] = m.pager.scrollPosition
-	m.pager.mode = PagerModeViewing{pager: m.pager}
+	m.pager.mode = PagerModeViewing(m)
 }

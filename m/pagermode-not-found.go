@@ -11,7 +11,7 @@ func (m PagerModeNotFound) drawFooter(_ string, _ string) {
 }
 
 func (m PagerModeNotFound) onKey(key twin.KeyCode) {
-	m.pager.mode = PagerModeViewing{pager: m.pager}
+	m.pager.mode = PagerModeViewing(m)
 	m.pager.mode.onKey(key)
 }
 
@@ -27,7 +27,7 @@ func (m PagerModeNotFound) onRune(char rune) {
 		m.pager.scrollToPreviousSearchHit()
 
 	default:
-		m.pager.mode = PagerModeViewing{pager: m.pager}
+		m.pager.mode = PagerModeViewing(m)
 		m.pager.mode.onRune(char)
 	}
 }
