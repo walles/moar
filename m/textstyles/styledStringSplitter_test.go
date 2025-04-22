@@ -113,3 +113,25 @@ func TestPlainTextColor(t *testing.T) {
 
 	assert.Equal(t, plainTextStyle, trailer)
 }
+
+// Ignore G0 charset resets (`ESC(B`). They are output by "tput sgr0" on at
+// least TERM=xterm-256color.
+//
+// Ref:
+//   - https://github.com/walles/moar/issues/276
+//   - https://www.xfree86.org/4.8.0/ctlseqs.html (look for "Designate G0" and
+//     "USASCII")
+func TestRestoreG0CharSet(t *testing.T) {
+	styledStrings, trailer := collectStyledStrings("\x1b(Bhello")
+	assert.Equal(t, twin.StyleDefault, trailer)
+	assert.Equal(t, 1, len(styledStrings))
+	assert.Equal(t, "hello", styledStrings[0].String)
+	assert.Equal(t, twin.StyleDefault, styledStrings[0].Style)
+}
+
+func TestUnsupportedG0CharSet(t *testing.T) {
+	styledStrings, trailer := collectStyledStrings("\x1b(Xhello")
+	assert.Equal(t, twin.StyleDefault, trailer)
+	assert.Equal(t, 1, len(styledStrings))
+	assert.Equal(t, "(Xhello", styledStrings[0].String)
+}

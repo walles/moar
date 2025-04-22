@@ -121,6 +121,10 @@ func (s *styledStringSplitter) handleEscape() error {
 		// Got the start of a CSI or an OSC sequence
 		return s.consumeControlSequence(char)
 	}
+	if char == '(' {
+		// Designate G0 charset: https://www.xfree86.org/4.8.0/ctlseqs.html
+		return s.consumeG0Charset()
+	}
 
 	return fmt.Errorf("Unhandled Fe sequence ESC%c", char)
 }
@@ -153,6 +157,18 @@ func (s *styledStringSplitter) consumeControlSequence(charAfterEsc rune) error {
 		endIndexExclusive := s.nextByteIndex
 		return s.handleCompleteControlSequence(charAfterEsc, s.input[startIndex:endIndexExclusive])
 	}
+}
+
+func (s *styledStringSplitter) consumeG0Charset() error {
+	// First char after "ESC("
+	char := s.nextChar()
+	if char == 'B' {
+		// G0 charset is now "B" (ASCII)
+		s.startNewPart(s.plainTextStyle)
+		return nil
+	}
+
+	return fmt.Errorf("Unhandled G0 charset: %c", char)
 }
 
 // If the whole CSI sequence is ESC[33m, you should call this function with just
