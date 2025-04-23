@@ -14,8 +14,8 @@ import (
 func assertEncode(t *testing.T, incomingString string, expectedEvent Event, expectedRemainder string) {
 	actualEvent, actualRemainder := consumeEncodedEvent(incomingString)
 
-	message := strings.Replace(incomingString, "\x1b", "ESC", -1)
-	message = strings.Replace(message, "\r", "RET", -1)
+	message := strings.ReplaceAll(incomingString, "\x1b", "ESC")
+	message = strings.ReplaceAll(message, "\r", "RET")
 
 	assert.Assert(t, actualEvent != nil,
 		"Input: %s Result: %#v Expected: %#v", message, "nil", expectedEvent)
