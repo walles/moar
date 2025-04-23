@@ -127,18 +127,18 @@ func getTestFiles(t *testing.T) []string {
 }
 
 // Wait for reader to finish reading and highlighting. Used by tests.
-func (r *Reader) _wait() error {
+func (reader *Reader) _wait() error {
 	// Wait for our goroutine to finish
 	//revive:disable-next-line:empty-block
-	for !r.done.Load() {
+	for !reader.done.Load() {
 	}
 	//revive:disable-next-line:empty-block
-	for !r.highlightingDone.Load() {
+	for !reader.highlightingDone.Load() {
 	}
 
-	r.Lock()
-	defer r.Unlock()
-	return r.err
+	reader.Lock()
+	defer reader.Unlock()
+	return reader.err
 }
 
 func TestGetLines(t *testing.T) {
@@ -352,7 +352,7 @@ func TestReadUpdatingFile(t *testing.T) {
 	// Make a temp file containing one line of text, ending with a newline
 	file, err := os.CreateTemp("", "moar-TestReadUpdatingFile-*.txt")
 	assert.NilError(t, err)
-	defer os.Remove(file.Name())
+	defer os.Remove(file.Name()) //nolint:errcheck
 
 	const firstLineString = "First line\n"
 	_, err = file.WriteString(firstLineString)
@@ -429,7 +429,7 @@ func TestReadUpdatingFile_InitiallyEmpty(t *testing.T) {
 	// Make a temp file containing one line of text, ending with a newline
 	file, err := os.CreateTemp("", "moar-TestReadUpdatingFile_NoNewlineAtEOF-*.txt")
 	assert.NilError(t, err)
-	defer os.Remove(file.Name())
+	defer os.Remove(file.Name()) //nolint:errcheck
 
 	// Start a reader on that file
 	testMe, err := NewReaderFromFilename(file.Name(), formatters.TTY16m, ReaderOptions{Style: styles.Get("native")})
@@ -471,7 +471,7 @@ func TestReadUpdatingFile_HalfLine(t *testing.T) {
 	// Make a temp file containing one line of text, ending with a newline
 	file, err := os.CreateTemp("", "moar-TestReadUpdatingFile-*.txt")
 	assert.NilError(t, err)
-	defer os.Remove(file.Name())
+	defer os.Remove(file.Name()) //nolint:errcheck
 
 	_, err = file.WriteString("Start")
 	assert.NilError(t, err)
@@ -515,7 +515,7 @@ func TestReadUpdatingFile_HalfUtf8(t *testing.T) {
 	// Make a temp file containing one line of text, ending with a newline
 	file, err := os.CreateTemp("", "moar-TestReadUpdatingFile-*.txt")
 	assert.NilError(t, err)
-	defer os.Remove(file.Name())
+	defer os.Remove(file.Name()) //nolint:errcheck
 
 	// Write "h" and half an "ä" to the file
 	_, err = file.Write([]byte("här"[0:2]))
