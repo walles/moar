@@ -19,7 +19,12 @@ func dumpToTempFile(reader *Reader) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	defer tempFile.Close()
+	defer func() {
+		err = tempFile.Close()
+		if err != nil {
+			log.Warn("Failed to close temp file: ", err)
+		}
+	}()
 
 	log.Debug("Dumping contents into: ", tempFile.Name())
 

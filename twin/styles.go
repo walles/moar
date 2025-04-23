@@ -160,48 +160,48 @@ func (style Style) WithUnderlineColor(color Color) Style {
 // one.
 //
 //revive:disable-next-line:receiver-naming
-func (current Style) RenderUpdateFrom(previous Style, terminalColorCount ColorCount) string {
-	if current == previous {
+func (style Style) RenderUpdateFrom(previous Style, terminalColorCount ColorCount) string {
+	if style == previous {
 		// Shortcut for the common case
 		return ""
 	}
 
 	hadHyperlink := previous.hyperlinkURL != nil && *previous.hyperlinkURL != ""
-	if current == StyleDefault && !hadHyperlink {
+	if style == StyleDefault && !hadHyperlink {
 		return "\x1b[m"
 	}
 
 	var builder strings.Builder
-	if current.fg != previous.fg {
-		builder.WriteString(current.fg.ansiString(colorTypeForeground, terminalColorCount))
+	if style.fg != previous.fg {
+		builder.WriteString(style.fg.ansiString(colorTypeForeground, terminalColorCount))
 	}
 
-	if current.bg != previous.bg {
-		builder.WriteString(current.bg.ansiString(colorTypeBackground, terminalColorCount))
+	if style.bg != previous.bg {
+		builder.WriteString(style.bg.ansiString(colorTypeBackground, terminalColorCount))
 	}
 
-	if current.underlineColor != previous.underlineColor {
-		builder.WriteString(current.underlineColor.ansiString(colorTypeUnderline, terminalColorCount))
+	if style.underlineColor != previous.underlineColor {
+		builder.WriteString(style.underlineColor.ansiString(colorTypeUnderline, terminalColorCount))
 	}
 
 	// Handle AttrDim / AttrBold changes
 	previousBoldDim := previous.attrs & (AttrBold | AttrDim)
-	currentBoldDim := current.attrs & (AttrBold | AttrDim)
+	currentBoldDim := style.attrs & (AttrBold | AttrDim)
 	if currentBoldDim != previousBoldDim {
 		if previousBoldDim != 0 {
 			builder.WriteString("\x1b[22m") // Reset to neither bold nor dim
 		}
-		if current.attrs.has(AttrBold) {
+		if style.attrs.has(AttrBold) {
 			builder.WriteString("\x1b[1m")
 		}
-		if current.attrs.has(AttrDim) {
+		if style.attrs.has(AttrDim) {
 			builder.WriteString("\x1b[2m")
 		}
 	}
 
 	// Handle AttrBlink changes
-	if current.attrs.has(AttrBlink) != previous.attrs.has(AttrBlink) {
-		if current.attrs.has(AttrBlink) {
+	if style.attrs.has(AttrBlink) != previous.attrs.has(AttrBlink) {
+		if style.attrs.has(AttrBlink) {
 			builder.WriteString("\x1b[5m")
 		} else {
 			builder.WriteString("\x1b[25m")
@@ -209,8 +209,8 @@ func (current Style) RenderUpdateFrom(previous Style, terminalColorCount ColorCo
 	}
 
 	// Handle AttrReverse changes
-	if current.attrs.has(AttrReverse) != previous.attrs.has(AttrReverse) {
-		if current.attrs.has(AttrReverse) {
+	if style.attrs.has(AttrReverse) != previous.attrs.has(AttrReverse) {
+		if style.attrs.has(AttrReverse) {
 			builder.WriteString("\x1b[7m")
 		} else {
 			builder.WriteString("\x1b[27m")
@@ -218,8 +218,8 @@ func (current Style) RenderUpdateFrom(previous Style, terminalColorCount ColorCo
 	}
 
 	// Handle AttrUnderline changes
-	if current.attrs.has(AttrUnderline) != previous.attrs.has(AttrUnderline) {
-		if current.attrs.has(AttrUnderline) {
+	if style.attrs.has(AttrUnderline) != previous.attrs.has(AttrUnderline) {
+		if style.attrs.has(AttrUnderline) {
 			builder.WriteString("\x1b[4m")
 		} else {
 			builder.WriteString("\x1b[24m")
@@ -227,8 +227,8 @@ func (current Style) RenderUpdateFrom(previous Style, terminalColorCount ColorCo
 	}
 
 	// Handle AttrItalic changes
-	if current.attrs.has(AttrItalic) != previous.attrs.has(AttrItalic) {
-		if current.attrs.has(AttrItalic) {
+	if style.attrs.has(AttrItalic) != previous.attrs.has(AttrItalic) {
+		if style.attrs.has(AttrItalic) {
 			builder.WriteString("\x1b[3m")
 		} else {
 			builder.WriteString("\x1b[23m")
@@ -236,18 +236,18 @@ func (current Style) RenderUpdateFrom(previous Style, terminalColorCount ColorCo
 	}
 
 	// Handle AttrStrikeThrough changes
-	if current.attrs.has(AttrStrikeThrough) != previous.attrs.has(AttrStrikeThrough) {
-		if current.attrs.has(AttrStrikeThrough) {
+	if style.attrs.has(AttrStrikeThrough) != previous.attrs.has(AttrStrikeThrough) {
+		if style.attrs.has(AttrStrikeThrough) {
 			builder.WriteString("\x1b[9m")
 		} else {
 			builder.WriteString("\x1b[29m")
 		}
 	}
 
-	if current.hyperlinkURL != previous.hyperlinkURL {
+	if style.hyperlinkURL != previous.hyperlinkURL {
 		newURL := ""
-		if current.hyperlinkURL != nil {
-			newURL = *current.hyperlinkURL
+		if style.hyperlinkURL != nil {
+			newURL = *style.hyperlinkURL
 		}
 
 		previousURL := ""

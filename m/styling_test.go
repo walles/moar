@@ -28,7 +28,7 @@ func TestTwinStyleFromChroma(t *testing.T) {
 }
 
 func TestSetStyle(t *testing.T) {
-	os.Setenv("MOAR_TEST_STYLE", "\x1b[1;31m")
+	assert.NilError(t, os.Setenv("MOAR_TEST_STYLE", "\x1b[1;31m"))
 	style := twin.StyleDefault
 	setStyle(&style, "MOAR_TEST_STYLE", nil)
 

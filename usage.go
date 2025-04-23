@@ -101,9 +101,9 @@ func renderPlainEnvVar(envVarName string) string {
 }
 
 func printCommandline(output io.Writer) {
-	fmt.Fprintln(output, "Commandline: moar", strings.Join(os.Args[1:], " "))
-	fmt.Fprintf(output, "Environment: MOAR=\"%v\"\n", os.Getenv("MOAR"))
-	fmt.Fprintln(output)
+	fmt.Fprintln(output, "Commandline: moar", strings.Join(os.Args[1:], " ")) //nolint:errcheck
+	fmt.Fprintf(output, "Environment: MOAR=\"%v\"\n", os.Getenv("MOAR"))      //nolint:errcheck
+	fmt.Fprintln(output)                                                      //nolint:errcheck
 }
 
 func heading(text string, colors twin.ColorCount) string {

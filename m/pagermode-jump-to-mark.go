@@ -68,8 +68,7 @@ func (m PagerModeJumpToMark) onKey(key twin.KeyCode) {
 
 func (m PagerModeJumpToMark) onRune(char rune) {
 	if len(m.pager.marks) == 0 && char == 'm' {
-		//nolint:gosimple // The linter's advice is just wrong here
-		m.pager.mode = PagerModeMark{pager: m.pager}
+		m.pager.mode = PagerModeMark(m)
 		return
 	}
 
@@ -78,6 +77,5 @@ func (m PagerModeJumpToMark) onRune(char rune) {
 		m.pager.scrollPosition = destination
 	}
 
-	//nolint:gosimple // The linter's advice is just wrong here
-	m.pager.mode = PagerModeViewing{pager: m.pager}
+	m.pager.mode = PagerModeViewing(m)
 }

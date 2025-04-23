@@ -523,7 +523,7 @@ func pagerFromArgs(
 		return nil, nil, chroma.Style{}, nil, logsRequested, nil
 	}
 
-	var style chroma.Style = *styles.Get(defaultDarkTheme)
+	var style = *styles.Get(defaultDarkTheme)
 	if *styleOption == nil {
 		t0 := time.Now()
 		screen.RequestTerminalBackgroundColor()

@@ -313,11 +313,7 @@ func (p *Pager) StartPaging(screen twin.Screen, chromaStyle *chroma.Style, chrom
 		// Spin the spinner as long as contents is still loading
 		spinnerFrames := [...]string{"/.\\", "-o-", "\\O/", "| |"}
 		spinnerIndex := 0
-		for {
-			if p.reader.done.Load() {
-				break
-			}
-
+		for !p.reader.done.Load() {
 			screen.Events() <- eventSpinnerUpdate{spinnerFrames[spinnerIndex]}
 			spinnerIndex++
 			if spinnerIndex >= len(spinnerFrames) {
