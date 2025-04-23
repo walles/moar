@@ -133,5 +133,5 @@ func TestUnsupportedG0CharSet(t *testing.T) {
 	styledStrings, trailer := collectStyledStrings("\x1b(Xhello")
 	assert.Equal(t, twin.StyleDefault, trailer)
 	assert.Equal(t, 1, len(styledStrings))
-	assert.Equal(t, "(Xhello", styledStrings[0].String)
+	assert.Equal(t, "\x1b(Xhello", styledStrings[0].String)
 }

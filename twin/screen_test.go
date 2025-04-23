@@ -67,14 +67,14 @@ func TestRenderLine(t *testing.T) {
 
 	rendered, count := renderLine(row, 33, ColorCount16)
 	assert.Equal(t, count, 2)
-	reset := "[m"
-	reversed := "[7m"
-	notReversed := "[27m"
-	dim := "[2m"
-	clearToEol := "[K"
+	reset := "\x1b[m"
+	reversed := "\x1b[7m"
+	notReversed := "\x1b[27m"
+	dim := "\x1b[2m"
+	clearToEol := "\x1b[K"
 	assert.Equal(t,
-		strings.ReplaceAll(rendered, "", "ESC"),
-		strings.ReplaceAll(reset+reversed+"<"+dim+notReversed+"f"+reset+clearToEol, "", "ESC"))
+		strings.ReplaceAll(rendered, "\x1b", "ESC"),
+		strings.ReplaceAll(reset+reversed+"<"+dim+notReversed+"f"+reset+clearToEol, "\x1b", "ESC"))
 }
 
 func TestRenderLineEmpty(t *testing.T) {
@@ -98,12 +98,12 @@ func TestRenderLineLastReversed(t *testing.T) {
 
 	rendered, count := renderLine(row, 33, ColorCount16)
 	assert.Equal(t, count, 1)
-	reset := "[m"
-	reversed := "[7m"
-	clearToEol := "[K"
+	reset := "\x1b[m"
+	reversed := "\x1b[7m"
+	clearToEol := "\x1b[K"
 	assert.Equal(t,
-		strings.ReplaceAll(rendered, "", "ESC"),
-		strings.ReplaceAll(reset+reversed+"<"+reset+clearToEol, "", "ESC"))
+		strings.ReplaceAll(rendered, "\x1b", "ESC"),
+		strings.ReplaceAll(reset+reversed+"<"+reset+clearToEol, "\x1b", "ESC"))
 }
 
 func TestRenderLineLastNonSpace(t *testing.T) {
@@ -116,11 +116,11 @@ func TestRenderLineLastNonSpace(t *testing.T) {
 
 	rendered, count := renderLine(row, 33, ColorCount16)
 	assert.Equal(t, count, 1)
-	reset := "[m"
-	clearToEol := "[K"
+	reset := "\x1b[m"
+	clearToEol := "\x1b[K"
 	assert.Equal(t,
-		strings.ReplaceAll(rendered, "", "ESC"),
-		strings.ReplaceAll(reset+"X"+clearToEol, "", "ESC"))
+		strings.ReplaceAll(rendered, "\x1b", "ESC"),
+		strings.ReplaceAll(reset+"X"+clearToEol, "\x1b", "ESC"))
 }
 
 func TestRenderLineLastReversedPlusTrailingSpace(t *testing.T) {
@@ -137,12 +137,12 @@ func TestRenderLineLastReversedPlusTrailingSpace(t *testing.T) {
 
 	rendered, count := renderLine(row, 33, ColorCount16)
 	assert.Equal(t, count, 1)
-	reset := "[m"
-	reversed := "[7m"
-	clearToEol := "[K"
+	reset := "\x1b[m"
+	reversed := "\x1b[7m"
+	clearToEol := "\x1b[K"
 	assert.Equal(t,
-		strings.ReplaceAll(rendered, "", "ESC"),
-		strings.ReplaceAll(reset+reversed+"<"+reset+clearToEol, "", "ESC"))
+		strings.ReplaceAll(rendered, "\x1b", "ESC"),
+		strings.ReplaceAll(reset+reversed+"<"+reset+clearToEol, "\x1b", "ESC"))
 }
 
 func TestRenderLineOnlyTrailingSpaces(t *testing.T) {
@@ -175,31 +175,31 @@ func TestRenderLineLastReversedSpaces(t *testing.T) {
 
 	rendered, count := renderLine(row, 33, ColorCount16)
 	assert.Equal(t, count, 1)
-	reset := "[m"
-	reversed := "[7m"
-	clearToEol := "[K"
+	reset := "\x1b[m"
+	reversed := "\x1b[7m"
+	clearToEol := "\x1b[K"
 	assert.Equal(t,
-		strings.ReplaceAll(rendered, "", "ESC"),
-		strings.ReplaceAll(reset+reversed+" "+reset+clearToEol, "", "ESC"))
+		strings.ReplaceAll(rendered, "\x1b", "ESC"),
+		strings.ReplaceAll(reset+reversed+" "+reset+clearToEol, "\x1b", "ESC"))
 }
 
 func TestRenderLineNonPrintable(t *testing.T) {
 	row := []StyledRune{
 		{
-			Rune: '',
+			Rune: '\x1b',
 		},
 	}
 
 	rendered, count := renderLine(row, 33, ColorCount16)
 	assert.Equal(t, count, 1)
-	reset := "[m"
-	white := "[37m"
-	redBg := "[41m"
-	bold := "[1m"
-	clearToEol := "[K"
+	reset := "\x1b[m"
+	white := "\x1b[37m"
+	redBg := "\x1b[41m"
+	bold := "\x1b[1m"
+	clearToEol := "\x1b[K"
 	assert.Equal(t,
-		strings.ReplaceAll(rendered, "", "ESC"),
-		strings.ReplaceAll(reset+white+redBg+bold+"?"+reset+clearToEol, "", "ESC"))
+		strings.ReplaceAll(rendered, "\x1b", "ESC"),
+		strings.ReplaceAll(reset+white+redBg+bold+"?"+reset+clearToEol, "\x1b", "ESC"))
 }
 
 func TestRenderHyperlinkAtEndOfLine(t *testing.T) {
@@ -215,7 +215,7 @@ func TestRenderHyperlinkAtEndOfLine(t *testing.T) {
 	assert.Equal(t, count, 1)
 
 	assert.Equal(t,
-		strings.ReplaceAll(rendered, "", "ESC"),
+		strings.ReplaceAll(rendered, "\x1b", "ESC"),
 		`ESC[mESC]8;;`+url+`ESC\*ESC]8;;ESC\ESC[K`)
 }
 
@@ -240,7 +240,7 @@ func TestMultiCharHyperlink(t *testing.T) {
 	assert.Equal(t, count, 3)
 
 	assert.Equal(t,
-		strings.ReplaceAll(rendered, "", "ESC"),
+		strings.ReplaceAll(rendered, "\x1b", "ESC"),
 		`ESC[mESC]8;;`+url+`ESC\-X-ESC]8;;ESC\ESC[K`)
 }
 
@@ -258,14 +258,14 @@ func TestRenderLineFullWidth(t *testing.T) {
 	assert.Equal(t, count, 2)
 
 	assert.Equal(t,
-		strings.ReplaceAll(rendered, "", "ESC"),
+		strings.ReplaceAll(rendered, "\x1b", "ESC"),
 		"ESC[mxy", "Expected no clear-to-EOL at the end of a full-width line")
 
 	rendered, count = renderLine(row, 3, ColorCount16)
 	assert.Equal(t, count, 2)
 
 	assert.Equal(t,
-		strings.ReplaceAll(rendered, "", "ESC"),
+		strings.ReplaceAll(rendered, "\x1b", "ESC"),
 		"ESC[mxyESC[K", "Expected clear-to-EOL at the end of a full-width line")
 }
 
