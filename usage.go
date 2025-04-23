@@ -15,6 +15,32 @@ import (
 	"github.com/walles/moar/twin"
 )
 
+const flags_usage = `      --colors value              Highlighting palette size: 8, 16, 256, 16M, auto
+      --debug                     Print debug logs after exiting
+  -f, --follow                    Follow piped input just like "tail -f"
+  -l, --lang value                File contents, used for highlighting. Mime type or extension ("html"). Default is to guess by filename.
+      --mousemode mode            Mouse mode: auto, select or scroll: https://github.com/walles/moar/blob/master/MOUSE.md
+      --no-clear-on-exit          Retain screen contents when exiting moar
+      --no-linenumbers            Hide line numbers on startup, press left arrow key to show
+      --no-reformat               No effect, kept for compatibility. See --reformat (default true)
+      --no-statusbar              Hide the status bar, toggle with '='
+  -F, --quit-if-one-screen        Don't page if contents fits on one screen
+      --reformat                  Reformat some input files (JSON)
+      --render-unprintable value  How unprintable characters are rendered: highlight or whitespace
+      --scroll-left-hint value    Shown when view can scroll left. One character with optional ANSI highlighting.
+      --scroll-right-hint value   Shown when view can scroll right. One character with optional ANSI highlighting.
+      --shift amount              Horizontal scroll amount >= 1, defaults to 16
+      --statusbar style           Status bar style: inverse, plain or bold
+      --style style               Highlighting style from https://xyproto.github.io/splash/docs/longer/all.html
+      --terminal-fg               Use terminal foreground color rather than style foreground for plain text
+      --trace                     Print trace logs after exiting
+  -w, --wrap                      Wrap long lines
+
+  +1234                           Immediately scroll to line 1234
+
+  -h, --help                      Show this help text
+  -V, --version                   Print the moar version number`
+
 func renderLessTermcapEnvVar(envVarName string, description string, colors twin.ColorCount) string {
 	value := os.Getenv(envVarName)
 	if len(value) == 0 {
@@ -187,10 +213,7 @@ func printUsage(flagSet *flag.FlagSet, colors twin.ColorCount) {
 	fmt.Println()
 	fmt.Println(heading("Options", colors))
 
-	flagSet.PrintDefaults()
-
-	fmt.Println("  +1234")
-	fmt.Println("    \tImmediately scroll to line 1234")
+	fmt.Println(flags_usage)
 }
 
 // If $PAGER isn't pointing to us, print a help text on how to set it.
