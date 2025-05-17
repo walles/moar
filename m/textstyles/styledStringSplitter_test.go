@@ -42,17 +42,17 @@ func collectStyledStrings(s string) ([]_StyledString, twin.Style) {
 // https://gitlab.freedesktop.org/Per_Bothner/specifications/blob/master/proposals/semantic-prompts.md
 func TestIgnorePromptHints(t *testing.T) {
 	// From an e-mail I got titled "moar question: "--RAW-CONTROL-CHARS" equivalent"
-	styledStrings, trailer := collectStyledStrings("\x1b]133;A\x1b\\hello")
+	styledStrings, trailer := collectStyledStrings("hell\x1b]133;A\x1b\\o")
 	assert.Equal(t, twin.StyleDefault, trailer)
 	assert.Equal(t, 1, len(styledStrings))
 	assert.Equal(t, "hello", styledStrings[0].String)
 	assert.Equal(t, twin.StyleDefault, styledStrings[0].Style)
 
 	// C rather than A, different end-of-sequence, should also be ignored
-	styledStrings, trailer = collectStyledStrings("\x1b]133;C\x07hello")
+	styledStrings, trailer = collectStyledStrings("ass\x1b]133;C\x07ertion")
 	assert.Equal(t, twin.StyleDefault, trailer)
 	assert.Equal(t, 1, len(styledStrings))
-	assert.Equal(t, "hello", styledStrings[0].String)
+	assert.Equal(t, "assertion", styledStrings[0].String)
 	assert.Equal(t, twin.StyleDefault, styledStrings[0].Style)
 }
 

@@ -117,10 +117,16 @@ func (s *styledStringSplitter) handleRune(char rune) {
 
 func (s *styledStringSplitter) handleEscape() error {
 	char := s.nextChar()
-	if char == '[' || char == ']' {
-		// Got the start of a CSI or an OSC sequence
-		return s.consumeControlSequence(char)
+	if char == '[' {
+		// Got the start of a CSI sequence
+		return s.consumeControlSequence()
 	}
+
+	if char == ']' {
+		// Got the start of an OSC sequence
+		return s.consumeOsc()
+	}
+
 	if char == '(' {
 		// Designate G0 charset: https://www.xfree86.org/4.8.0/ctlseqs.html
 		return s.consumeG0Charset()
@@ -129,7 +135,8 @@ func (s *styledStringSplitter) handleEscape() error {
 	return fmt.Errorf("Unhandled Fe sequence ESC%c", char)
 }
 
-func (s *styledStringSplitter) consumeControlSequence(charAfterEsc rune) error {
+// Consume a control sequence up until it ends
+func (s *styledStringSplitter) consumeControlSequence() error {
 	// Points to right after "ESC["
 	startIndex := s.nextByteIndex
 
@@ -144,18 +151,12 @@ func (s *styledStringSplitter) consumeControlSequence(charAfterEsc rune) error {
 		// https://en.wikipedia.org/wiki/ANSI_escape_code#CSI_(Control_Sequence_Introducer)_sequences
 		if char >= 0x30 && char <= 0x3f {
 			// Sequence still in progress
-
-			if charAfterEsc == ']' && s.input[startIndex:s.nextByteIndex] == "8;;" {
-				// Special case, here comes the URL
-				return s.handleURL()
-			}
-
 			continue
 		}
 
 		// The end, handle what we got
 		endIndexExclusive := s.nextByteIndex
-		return s.handleCompleteControlSequence(charAfterEsc, s.input[startIndex:endIndexExclusive])
+		return s.handleCompleteControlSequence(s.input[startIndex:endIndexExclusive])
 	}
 }
 
@@ -173,15 +174,7 @@ func (s *styledStringSplitter) consumeG0Charset() error {
 
 // If the whole CSI sequence is ESC[33m, you should call this function with just
 // "33m".
-func (s *styledStringSplitter) handleCompleteControlSequence(charAfterEsc rune, sequence string) error {
-	if charAfterEsc == ']' {
-		return s.handleOsc(sequence)
-	}
-
-	if charAfterEsc != '[' {
-		return fmt.Errorf("Unexpected charAfterEsc: %c", charAfterEsc)
-	}
-
+func (s *styledStringSplitter) handleCompleteControlSequence(sequence string) error {
 	if sequence == "K" || sequence == "0K" {
 		// Clear to end of line
 		s.trailer = s.inProgressStyle
@@ -204,21 +197,48 @@ func (s *styledStringSplitter) handleCompleteControlSequence(charAfterEsc rune, 
 	return fmt.Errorf("Unhandled CSI type %q", lastChar)
 }
 
-// Expects an OSC sequence as argument. Also consumes the terminator, which is
-// what followed the sequence.
-func (s *styledStringSplitter) handleOsc(sequence string) error {
-	// First, verify that the end of the sequence is a valid OSC terminator, and
-	// return an error if it isn't.
-	endMarker := s.nextChar()
-	if endMarker != '\x1b' && endMarker != '\x07' {
-		return fmt.Errorf("Expected ESC \\ or BEL after OSC, got %q", endMarker)
-	}
-	if endMarker == '\x1b' {
-		if s.nextChar() != '\\' {
-			return fmt.Errorf("Expected ESC \\ or BEL after OSC, got ESC %q", s.lastChar())
+// Consume an OSC sequence up until it ends
+func (s *styledStringSplitter) consumeOsc() error {
+	// Points to right after "ESC]"
+	startIndex := s.nextByteIndex
+
+	// We're looking for a letter to end the CSI sequence
+	for {
+		char := s.nextChar()
+		if char == -1 {
+			return fmt.Errorf("Line ended in the middle of an OSC sequence")
+		}
+
+		if char == '\a' {
+			// Got the end of the OSC sequence
+			return s.handleOsc(s.input[startIndex:s.previousByteIndex])
+		}
+
+		if char == esc {
+			escIndex := s.previousByteIndex
+			afterEsc := s.nextChar()
+			if afterEsc == '\\' {
+				// Got the end of the OSC sequence
+				return s.handleOsc(s.input[startIndex:escIndex])
+			}
+
+			if afterEsc == -1 {
+				return fmt.Errorf("Line ended while ending an OSC sequence")
+			}
+
+			return fmt.Errorf("Expected OSC sequence to end with BEL or ESC \\ but got ESC %q", afterEsc)
+		}
+
+		if s.input[startIndex:s.nextByteIndex] == "8;;" {
+			// Special case, here comes an URL
+			return s.handleURL()
 		}
 	}
+}
 
+// Expects an OSC sequence as argument. The terminator is not included, what we
+// get here is just the payload.
+func (s *styledStringSplitter) handleOsc(sequence string) error {
 	if strings.HasPrefix(sequence, "133;") && len(sequence) == len("133;A") {
 		// Got ESC]133;X, where "X" could be anything. These are prompt hints,
 		// and rendering those makes no sense. We should just ignore them:
