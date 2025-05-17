@@ -204,23 +204,26 @@ func (s *styledStringSplitter) handleCompleteControlSequence(charAfterEsc rune, 
 	return fmt.Errorf("Unhandled CSI type %q", lastChar)
 }
 
+// Expects an OSC sequence as argument. Also consumes the terminator, which is
+// what followed the sequence.
 func (s *styledStringSplitter) handleOsc(sequence string) error {
+	// First, verify that the end of the sequence is a valid OSC terminator, and
+	// return an error if it isn't.
+	endMarker := s.nextChar()
+	if endMarker != '\x1b' && endMarker != '\x07' {
+		return fmt.Errorf("Expected ESC \\ or BEL after OSC, got %q", endMarker)
+	}
+	if endMarker == '\x1b' {
+		if s.nextChar() != '\\' {
+			return fmt.Errorf("Expected ESC \\ or BEL after OSC, got ESC %q", s.lastChar())
+		}
+	}
+
 	if strings.HasPrefix(sequence, "133;") && len(sequence) == len("133;A") {
 		// Got ESC]133;X, where "X" could be anything. These are prompt hints,
 		// and rendering those makes no sense. We should just ignore them:
 		// https://gitlab.freedesktop.org/Per_Bothner/specifications/blob/master/proposals/semantic-prompts.md
-		endMarker := s.nextChar()
-		if endMarker == '\x07' {
-			return nil
-		}
-
-		if endMarker == esc {
-			if s.nextChar() == '\\' {
-				return nil
-			}
-
-			return fmt.Errorf("Expected ESC \\ after ESC]133;X, got %q", s.lastChar())
-		}
+		return nil
 	}
 
 	return fmt.Errorf("Unhandled OSC sequence")
