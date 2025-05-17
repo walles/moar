@@ -56,6 +56,19 @@ func TestIgnorePromptHints(t *testing.T) {
 	assert.Equal(t, twin.StyleDefault, styledStrings[0].Style)
 }
 
+// We should ignore OSC queries. They are any sequence ending with a question
+// mark, and expect some response from the terminal. We are not a terminal, so we
+// ignore them.
+//
+// Ref: https://github.com/walles/moar/issues/279
+func TestIgnoreQueries(t *testing.T) {
+	styledStrings, trailer := collectStyledStrings("\x1b]11;?\x1b\\hello")
+	assert.Equal(t, twin.StyleDefault, trailer)
+	assert.Equal(t, 1, len(styledStrings))
+	assert.Equal(t, "hello", styledStrings[0].String)
+	assert.Equal(t, twin.StyleDefault, styledStrings[0].Style)
+}
+
 // Unsure why colon separated colors exist, but the fact is that a number of
 // things emit colon separated SGR codes. And numerous terminals accept them
 // (search page for "delimiter"): https://github.com/kovidgoyal/kitty/issues/7

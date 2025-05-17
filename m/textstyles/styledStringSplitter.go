@@ -246,6 +246,13 @@ func (s *styledStringSplitter) handleOsc(sequence string) error {
 		return nil
 	}
 
+	if strings.HasSuffix(sequence, "?") {
+		// OSC query, we don't intend to answer those, just ignore them.
+		//
+		// Ref: https://github.com/walles/moar/issues/279
+		return nil
+	}
+
 	return fmt.Errorf("Unhandled OSC sequence")
 }
 
