@@ -194,6 +194,13 @@ func (s *styledStringSplitter) handleCompleteControlSequence(sequence string) er
 		return nil
 	}
 
+	if lastChar == 'n' {
+		// Device status report, expects us to respond, just ignore them.
+		//
+		// Ref: https://vt100.net/docs/vt510-rm/DSR.html
+		return nil
+	}
+
 	return fmt.Errorf("Unhandled CSI type %q", lastChar)
 }
 
