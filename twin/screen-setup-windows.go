@@ -9,6 +9,7 @@ import (
 	"os"
 	"sync/atomic"
 	"syscall"
+	"time"
 
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/sys/windows"
@@ -69,8 +70,30 @@ func (screen *UnixScreen) setupSigwinchNotification() {
 	screen.sigwinch = make(chan int, 1)
 	screen.sigwinch <- 0 // Trigger initial screen size query
 
-	// No SIGWINCH handling on Windows for now, contributions welcome, see
-	// sigwinch.go for inspiration.
+	go func() {
+		var lastWidth, lastHeight int
+		for {
+			time.Sleep(100 * time.Millisecond)
+
+			width, height, err := term.GetSize(int(screen.ttyOut.Fd()))
+			if err != nil {
+				log.Debug("Failed to get terminal size: ", err)
+				continue
+			}
+
+			if width == lastWidth && height == lastHeight {
+				// No change, skip notification
+				continue
+			}
+
+			lastWidth, lastHeight = width, height
+			select {
+			case screen.sigwinch <- 0:
+			default:
+				// Channel already has a notification, skip
+			}
+		}
+	}()
 }
 
 func (screen *UnixScreen) setupTtyInTtyOut() error {
