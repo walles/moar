@@ -112,6 +112,8 @@ func newInterruptableReader(base *os.File) (interruptableReader, error) {
 	return &reader, nil
 }
 
+// Subscribe to SIGWINCH signals. Compared to polling, this will reduce power
+// usage in the absence of window resizes.
 func (screen *UnixScreen) setupSigwinchNotification() {
 	screen.sigwinch = make(chan int, 1)
 	screen.sigwinch <- 0 // Trigger initial screen size query
