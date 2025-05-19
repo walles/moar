@@ -92,11 +92,25 @@ func (screen *UnixScreen) setupSigwinchNotification() {
 			}
 
 			lastWidth, lastHeight = width, height
+
 			select {
 			case screen.sigwinch <- 0:
+				// Screen.Size() method notified about resize
 			default:
-				// Channel already has a notification, skip
+				// Notification already pending, never mind
 			}
+
+			// Notify client app.
+			select {
+			case screen.events <- EventResize{}:
+				// Event delivered
+			default:
+				// This likely means that the user isn't processing events
+				// quickly enough. Maybe the user's queue will get flooded if
+				// the window is resized too quickly?
+				log.Warn("Unable to deliver EventResize, event queue full")
+			}
+
 		}
 	}()
 }
