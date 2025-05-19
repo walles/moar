@@ -246,7 +246,7 @@ func (screen *UnixScreen) hideCursor(hide bool) {
 	}
 }
 
-// Tell both screen.Size() and the client app about that the window was resized
+// Tell both screen.Size() and the client app that the window was resized
 func (screen *UnixScreen) onWindowResized() {
 	select {
 	case screen.sigwinch <- 0:

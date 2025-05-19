@@ -67,6 +67,8 @@ func newInterruptableReader(base *os.File) (interruptableReader, error) {
 	return &interruptableReaderImpl{base: base}, nil
 }
 
+// Poll for terminal size changes. No SIGWINCH on Windows, this is apparently
+// the way.
 func (screen *UnixScreen) setupSigwinchNotification() {
 	screen.sigwinch = make(chan int, 1)
 	screen.sigwinch <- 0 // Trigger initial screen size query
