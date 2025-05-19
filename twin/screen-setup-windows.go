@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"runtime/debug"
 	"sync/atomic"
 	"syscall"
 	"time"
@@ -71,6 +72,10 @@ func (screen *UnixScreen) setupSigwinchNotification() {
 	screen.sigwinch <- 0 // Trigger initial screen size query
 
 	go func() {
+		defer func() {
+			panicHandler("setupSigwinchNotification()", recover(), debug.Stack())
+		}()
+
 		var lastWidth, lastHeight int
 		for {
 			time.Sleep(100 * time.Millisecond)
