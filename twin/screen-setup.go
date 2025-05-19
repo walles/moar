@@ -112,6 +112,8 @@ func newInterruptableReader(base *os.File) (interruptableReader, error) {
 	return &reader, nil
 }
 
+// Subscribe to SIGWINCH signals. Compared to polling, this will reduce power
+// usage in the absence of window resizes.
 func (screen *UnixScreen) setupSigwinchNotification() {
 	screen.sigwinch = make(chan int, 1)
 	screen.sigwinch <- 0 // Trigger initial screen size query
@@ -127,23 +129,7 @@ func (screen *UnixScreen) setupSigwinchNotification() {
 			// Await window resize signal
 			<-sigwinch
 
-			select {
-			case screen.sigwinch <- 0:
-				// Screen.Size() method notified about resize
-			default:
-				// Notification already pending, never mind
-			}
-
-			// Notify client app.
-			select {
-			case screen.events <- EventResize{}:
-				// Event delivered
-			default:
-				// This likely means that the user isn't processing events
-				// quickly enough. Maybe the user's queue will get flooded if
-				// the window is resized too quickly?
-				log.Warn("Unable to deliver EventResize, event queue full")
-			}
+			screen.onWindowResized()
 		}
 	}()
 }

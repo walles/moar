@@ -246,6 +246,27 @@ func (screen *UnixScreen) hideCursor(hide bool) {
 	}
 }
 
+// Tell both screen.Size() and the client app that the window was resized
+func (screen *UnixScreen) onWindowResized() {
+	select {
+	case screen.sigwinch <- 0:
+		// Screen.Size() method notified about resize
+	default:
+		// Notification already pending, never mind
+	}
+
+	// Notify client app.
+	select {
+	case screen.events <- EventResize{}:
+		// Event delivered
+	default:
+		// This likely means that the user isn't processing events
+		// quickly enough. Maybe the user's queue will get flooded if
+		// the window is resized too quickly?
+		log.Warn("Unable to deliver EventResize, event queue full")
+	}
+}
+
 // Some terminals convert mouse events to key events making scrolling better
 // without our built-in mouse support, and some do not.
 //

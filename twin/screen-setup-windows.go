@@ -7,8 +7,10 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"runtime/debug"
 	"sync/atomic"
 	"syscall"
+	"time"
 
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/sys/windows"
@@ -65,12 +67,37 @@ func newInterruptableReader(base *os.File) (interruptableReader, error) {
 	return &interruptableReaderImpl{base: base}, nil
 }
 
+// Poll for terminal size changes. No SIGWINCH on Windows, this is apparently
+// the way.
 func (screen *UnixScreen) setupSigwinchNotification() {
 	screen.sigwinch = make(chan int, 1)
 	screen.sigwinch <- 0 // Trigger initial screen size query
 
-	// No SIGWINCH handling on Windows for now, contributions welcome, see
-	// sigwinch.go for inspiration.
+	go func() {
+		defer func() {
+			panicHandler("setupSigwinchNotification()", recover(), debug.Stack())
+		}()
+
+		var lastWidth, lastHeight int
+		for {
+			time.Sleep(100 * time.Millisecond)
+
+			width, height, err := term.GetSize(int(screen.ttyOut.Fd()))
+			if err != nil {
+				log.Debug("Failed to get terminal size: ", err)
+				continue
+			}
+
+			if width == lastWidth && height == lastHeight {
+				// No change, skip notification
+				continue
+			}
+
+			lastWidth, lastHeight = width, height
+
+			screen.onWindowResized()
+		}
+	}()
 }
 
 func (screen *UnixScreen) setupTtyInTtyOut() error {
