@@ -564,15 +564,15 @@ func textAsString(reader *Reader, shouldFormat bool) string {
 		return result
 	}
 
-	jsonMap := make(map[string](interface{}))
-	err := json.Unmarshal([]byte(result), &jsonMap)
+	var jsonData interface{}
+	err := json.Unmarshal([]byte(result), &jsonData)
 	if err != nil {
 		// Not JSON, return the text as-is
 		return result
 	}
 
 	// Pretty print the JSON
-	prettyJSON, err := json.MarshalIndent(jsonMap, "", "  ")
+	prettyJSON, err := json.MarshalIndent(jsonData, "", "  ")
 	if err != nil {
 		log.Debug("Failed to pretty print JSON: ", err)
 		return result
