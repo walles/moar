@@ -24,6 +24,8 @@ Doing the right thing includes:
   to your search terms, just like in Emacs
 - [Regexp](http://en.wikipedia.org/wiki/Regular_expression#Basic_concepts)
   search if your search string is a valid regexp
+- **Snappy UI** even on slow / large input by reading input in the background
+  and using multi-threaded search
 - Supports displaying ANSI color coded texts (like the output from
   `git diff` [| `riff`](https://github.com/walles/riff) for example)
 - Supports UTF-8 input and output
