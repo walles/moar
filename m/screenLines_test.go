@@ -13,7 +13,7 @@ import (
 
 // NOTE: You can find related tests in pager_test.go.
 
-func testHorizontalCropping(t *testing.T, contents string, firstVisibleColumn int, lastVisibleColumn int, expected string, expectedOverflow overflowState) {
+func testHorizontalCropping(t *testing.T, contents string, firstVisibleColumn int, lastVisibleColumn int, expected string) {
 	pager := NewPager(nil)
 	pager.ShowLineNumbers = false
 
@@ -22,53 +22,52 @@ func testHorizontalCropping(t *testing.T, contents string, firstVisibleColumn in
 	pager.scrollPosition = newScrollPosition("testHorizontalCropping")
 
 	lineContents := NewLine(contents)
-	screenLine, didOverflow := pager.renderLine(&lineContents, linenumbers.LineNumber{}, pager.scrollPosition.internalDontTouch)
+	screenLine := pager.renderLine(&lineContents, linenumbers.LineNumber{}, pager.scrollPosition.internalDontTouch)
 	assert.Equal(t, rowToString(screenLine[0].cells), expected)
-	assert.Equal(t, didOverflow, expectedOverflow)
 }
 
 func TestCreateScreenLine(t *testing.T) {
-	testHorizontalCropping(t, "abc", 0, 10, "abc", didFit)
+	testHorizontalCropping(t, "abc", 0, 10, "abc")
 }
 
 func TestCreateScreenLineCanScrollLeft(t *testing.T) {
-	testHorizontalCropping(t, "abc", 1, 10, "<c", didOverflow)
+	testHorizontalCropping(t, "abc", 1, 10, "<c")
 }
 
 func TestCreateScreenLineCanScrollRight(t *testing.T) {
-	testHorizontalCropping(t, "abc", 0, 1, "a>", didOverflow)
+	testHorizontalCropping(t, "abc", 0, 1, "a>")
 }
 
 func TestCreateScreenLineCanAlmostScrollRight(t *testing.T) {
-	testHorizontalCropping(t, "abc", 0, 2, "abc", didFit)
+	testHorizontalCropping(t, "abc", 0, 2, "abc")
 }
 
 func TestCreateScreenLineCanScrollBoth(t *testing.T) {
-	testHorizontalCropping(t, "abcde", 1, 3, "<c>", didOverflow)
+	testHorizontalCropping(t, "abcde", 1, 3, "<c>")
 }
 
 func TestCreateScreenLineCanAlmostScrollBoth(t *testing.T) {
-	testHorizontalCropping(t, "abcd", 1, 3, "<cd", didOverflow)
+	testHorizontalCropping(t, "abcd", 1, 3, "<cd")
 }
 
 func TestCreateScreenLineChopWideCharLeft(t *testing.T) {
-	testHorizontalCropping(t, "上午下", 0, 10, "上午下", didFit)
-	testHorizontalCropping(t, "上午下", 1, 10, "<午下", didOverflow)
-	testHorizontalCropping(t, "上午下", 2, 10, "< 下", didOverflow)
-	testHorizontalCropping(t, "上午下", 3, 10, "<下", didOverflow)
-	testHorizontalCropping(t, "上午下", 4, 10, "<", didOverflow)
-	testHorizontalCropping(t, "上午下", 5, 10, "<", didOverflow)
-	testHorizontalCropping(t, "上午下", 6, 10, "<", didOverflow)
-	testHorizontalCropping(t, "上午下", 7, 10, "<", didOverflow)
+	testHorizontalCropping(t, "上午下", 0, 10, "上午下")
+	testHorizontalCropping(t, "上午下", 1, 10, "<午下")
+	testHorizontalCropping(t, "上午下", 2, 10, "< 下")
+	testHorizontalCropping(t, "上午下", 3, 10, "<下")
+	testHorizontalCropping(t, "上午下", 4, 10, "<")
+	testHorizontalCropping(t, "上午下", 5, 10, "<")
+	testHorizontalCropping(t, "上午下", 6, 10, "<")
+	testHorizontalCropping(t, "上午下", 7, 10, "<")
 }
 
 func TestCreateScreenLineChopWideCharRight(t *testing.T) {
-	testHorizontalCropping(t, "上午下", 0, 6, "上午下", didFit)
-	testHorizontalCropping(t, "上午下", 0, 5, "上午下", didFit)
-	testHorizontalCropping(t, "上午下", 0, 4, "上午>", didOverflow)
-	testHorizontalCropping(t, "上午下", 0, 3, "上 >", didOverflow)
-	testHorizontalCropping(t, "上午下", 0, 2, "上>", didOverflow)
-	testHorizontalCropping(t, "上午下", 0, 1, " >", didOverflow)
+	testHorizontalCropping(t, "上午下", 0, 6, "上午下")
+	testHorizontalCropping(t, "上午下", 0, 5, "上午下")
+	testHorizontalCropping(t, "上午下", 0, 4, "上午>")
+	testHorizontalCropping(t, "上午下", 0, 3, "上 >")
+	testHorizontalCropping(t, "上午下", 0, 2, "上>")
+	testHorizontalCropping(t, "上午下", 0, 1, " >")
 }
 
 func TestEmpty(t *testing.T) {
@@ -81,11 +80,10 @@ func TestEmpty(t *testing.T) {
 		scrollPosition: newScrollPosition("TestEmpty"),
 	}
 
-	rendered, statusText, overflow := pager.renderScreenLines()
+	rendered, statusText := pager.renderScreenLines()
 	assert.Equal(t, len(rendered), 0)
 	assert.Equal(t, "test: <empty>", statusText)
 	assert.Assert(t, pager.lineNumber() == nil)
-	assert.Equal(t, overflow, didFit)
 }
 
 // Repro case for a search bug discovered in v1.9.8.
@@ -98,7 +96,7 @@ func TestSearchHighlight(t *testing.T) {
 		searchPattern: regexp.MustCompile("\""),
 	}
 
-	rendered, overflow := pager.renderLine(&line, linenumbers.LineNumber{}, pager.scrollPosition.internalDontTouch)
+	rendered := pager.renderLine(&line, linenumbers.LineNumber{}, pager.scrollPosition.internalDontTouch)
 	assert.DeepEqual(t, []renderedLine{
 		{
 			inputLine: linenumbers.LineNumber{},
@@ -115,7 +113,6 @@ func TestSearchHighlight(t *testing.T) {
 		cmp.AllowUnexported(renderedLine{}),
 		cmp.AllowUnexported(linenumbers.LineNumber{}),
 	)
-	assert.Equal(t, overflow, didFit)
 }
 
 func TestOverflowDown(t *testing.T) {
@@ -132,13 +129,12 @@ func TestOverflowDown(t *testing.T) {
 		scrollPosition: *scrollPositionFromLineNumber("TestOverflowDown", linenumbers.LineNumberFromOneBased(42)),
 	}
 
-	rendered, statusText, overflow := pager.renderScreenLines()
+	rendered, statusText := pager.renderScreenLines()
 	assert.Equal(t, len(rendered), 1)
 	assert.Equal(t, "hej", rowToString(rendered[0]))
 	assert.Equal(t, "test: 1 line  100%", statusText)
 	assert.Assert(t, pager.lineNumber().IsZero())
 	assert.Equal(t, pager.deltaScreenLines(), 0)
-	assert.Equal(t, overflow, didFit)
 }
 
 func TestOverflowUp(t *testing.T) {
@@ -154,13 +150,12 @@ func TestOverflowUp(t *testing.T) {
 		// NOTE: scrollPosition intentionally not initialized
 	}
 
-	rendered, statusText, overflow := pager.renderScreenLines()
+	rendered, statusText := pager.renderScreenLines()
 	assert.Equal(t, len(rendered), 1)
 	assert.Equal(t, "hej", rowToString(rendered[0]))
 	assert.Equal(t, "test: 1 line  100%", statusText)
 	assert.Assert(t, pager.lineNumber().IsZero())
 	assert.Equal(t, pager.deltaScreenLines(), 0)
-	assert.Equal(t, overflow, didFit)
 }
 
 func TestWrapping(t *testing.T) {
@@ -220,6 +215,6 @@ func TestOneLineTerminal(t *testing.T) {
 		ShowStatusBar: true,
 	}
 
-	rendered, _, _ := pager.renderScreenLines()
+	rendered, _ := pager.renderScreenLines()
 	assert.Equal(t, len(rendered), 0)
 }

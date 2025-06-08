@@ -102,7 +102,7 @@ func (si *scrollPositionInternal) handleNegativeDeltaScreenLines(pager *Pager) {
 		// Render the previous line
 		previousLineNumber := si.lineNumber.NonWrappingAdd(-1)
 		previousLine := pager.reader.GetLine(previousLineNumber)
-		previousSubLines, _ := pager.renderLine(previousLine, previousLineNumber, *si)
+		previousSubLines := pager.renderLine(previousLine, previousLineNumber, *si)
 
 		// Adjust lineNumber and deltaScreenLines to move up into the previous
 		// screen line
@@ -132,14 +132,14 @@ func (si *scrollPositionInternal) handlePositiveDeltaScreenLines(pager *Pager) {
 			if line == nil {
 				panic(fmt.Errorf("Last line is nil"))
 			}
-			subLines, _ := pager.renderLine(line, *si.lineNumber, *si)
+			subLines := pager.renderLine(line, *si.lineNumber, *si)
 
 			// ... and go to the bottom of that.
 			si.deltaScreenLines = len(subLines) - 1
 			return
 		}
 
-		subLines, _ := pager.renderLine(line, *si.lineNumber, *si)
+		subLines := pager.renderLine(line, *si.lineNumber, *si)
 		if si.deltaScreenLines < len(subLines) {
 			// Sublines are within bounds!
 			return
@@ -167,7 +167,7 @@ func (si *scrollPositionInternal) emptyBottomLinesCount(pager *Pager) int {
 			break
 		}
 
-		subLines, _ := pager.renderLine(line, lineNumber, *si)
+		subLines := pager.renderLine(line, lineNumber, *si)
 		unclaimedViewportLines -= len(subLines)
 		if unclaimedViewportLines <= 0 {
 			return 0
@@ -335,7 +335,7 @@ func (p *Pager) isScrolledToEnd() bool {
 	}
 	lastInputLineNumber := *linenumbers.LineNumberFromLength(inputLineCount)
 
-	visibleLines, _, _ := p.renderLines()
+	visibleLines, _ := p.renderLines()
 	lastVisibleLine := visibleLines[len(visibleLines)-1]
 	if lastVisibleLine.inputLine != lastInputLineNumber {
 		// Last input line is not on the screen
@@ -345,7 +345,7 @@ func (p *Pager) isScrolledToEnd() bool {
 	// Last line is on screen, now we need to figure out whether we can see all
 	// of it
 	lastInputLine := p.reader.GetLine(lastInputLineNumber)
-	lastInputLineRendered, _ := p.renderLine(lastInputLine, lastInputLineNumber, p.scrollPosition.internalDontTouch)
+	lastInputLineRendered := p.renderLine(lastInputLine, lastInputLineNumber, p.scrollPosition.internalDontTouch)
 	lastRenderedSubLine := lastInputLineRendered[len(lastInputLineRendered)-1]
 
 	// If the last visible subline is the same as the last possible subline then
@@ -355,7 +355,7 @@ func (p *Pager) isScrolledToEnd() bool {
 
 // Returns nil if there are no lines
 func (p *Pager) getLastVisiblePosition() *scrollPosition {
-	renderedLines, _, _ := p.renderLines()
+	renderedLines, _ := p.renderLines()
 	if len(renderedLines) == 0 {
 		return nil
 	}

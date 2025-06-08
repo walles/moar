@@ -344,14 +344,16 @@ func (p *Pager) StartPaging(screen twin.Screen, chromaStyle *chroma.Style, chrom
 	for !p.quit {
 		if len(screen.Events()) == 0 {
 			// Nothing more to process for now, redraw the screen
-			overflow := p.redraw(spinner)
+			p.redraw(spinner)
 
 			// Ref:
 			// https://github.com/gwsw/less/blob/ff8869aa0485f7188d942723c9fb50afb1892e62/command.c#L828-L831
-			if p.QuitIfOneScreen && overflow == didFit && !p.isShowingHelp {
-				// Do the slow (atomic) checks only if the fast ones (no locking
-				// required) passed
-				if p.reader.done.Load() && p.reader.highlightingDone.Load() {
+			//
+			// Note that we do the slow (atomic) checks only if the fast ones (no locking
+			// required) passed
+			if p.QuitIfOneScreen && !p.isShowingHelp && p.reader.done.Load() && p.reader.highlightingDone.Load() {
+				width, height := p.screen.Size()
+				if fitsOnOneScreen(p.reader, width, height) {
 					// Ref:
 					// https://github.com/walles/moar/issues/113#issuecomment-1368294132
 					p.ShowLineNumbers = false // Requires a redraw to take effect, see below
@@ -432,12 +434,28 @@ func (p *Pager) StartPaging(screen twin.Screen, chromaStyle *chroma.Style, chrom
 	}
 }
 
+func fitsOnOneScreen(reader *Reader, width int, height int) bool {
+	if reader.GetLineCount() > height-1 {
+		return false
+	}
+
+	lines := reader.GetLines(linenumbers.LineNumberFromZeroBased(0), reader.GetLineCount())
+	for _, line := range lines.lines {
+		rendered := line.HighlightedTokens(twin.StyleDefault, nil, nil).StyledRunes
+		if len(rendered) > width {
+			// This line is too long to fit on one screen line, no fit
+			return false
+		}
+	}
+	return true
+}
+
 // After the pager has exited and the normal screen has been restored, you can
 // call this method to print the pager contents to screen again, faking
 // "leaving" pager contents on screen after exit.
 func (p *Pager) ReprintAfterExit() error {
 	// Figure out how many screen lines are used by pager contents
-	renderedScreenLines, _, _ := p.renderScreenLines()
+	renderedScreenLines, _ := p.renderScreenLines()
 	screenLinesCount := len(renderedScreenLines)
 
 	_, screenHeight := p.screen.Size()

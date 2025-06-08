@@ -8,13 +8,6 @@ import (
 	"github.com/walles/moar/twin"
 )
 
-type overflowState bool
-
-const (
-	didFit      overflowState = false
-	didOverflow overflowState = true
-)
-
 type renderedLine struct {
 	inputLine linenumbers.LineNumber
 
@@ -33,13 +26,13 @@ type renderedLine struct {
 
 // Refresh the whole pager display, both contents lines and the status line at
 // the bottom
-func (p *Pager) redraw(spinner string) overflowState {
+func (p *Pager) redraw(spinner string) {
 	p.screen.Clear()
 	p.longestLineLength = 0
 
 	lastUpdatedScreenLineNumber := -1
 	var renderedScreenLines [][]twin.StyledRune
-	renderedScreenLines, statusText, overflow := p.renderScreenLines()
+	renderedScreenLines, statusText := p.renderScreenLines()
 	for screenLineNumber, row := range renderedScreenLines {
 		lastUpdatedScreenLineNumber = screenLineNumber
 		column := 0
@@ -64,7 +57,6 @@ func (p *Pager) redraw(spinner string) overflowState {
 	p.mode.drawFooter(statusText, spinner)
 
 	p.screen.Show()
-	return overflow
 }
 
 // Render screen lines into an array of lines consisting of Cells.
@@ -73,8 +65,8 @@ func (p *Pager) redraw(spinner string) overflowState {
 //
 // The lines returned by this method are decorated with horizontal scroll
 // markers and line numbers and are ready to be output to the screen.
-func (p *Pager) renderScreenLines() (lines [][]twin.StyledRune, statusText string, overflow overflowState) {
-	renderedLines, statusText, overflow := p.renderLines()
+func (p *Pager) renderScreenLines() (lines [][]twin.StyledRune, statusText string) {
+	renderedLines, statusText := p.renderLines()
 	if len(renderedLines) == 0 {
 		return
 	}
@@ -96,7 +88,7 @@ func (p *Pager) renderScreenLines() (lines [][]twin.StyledRune, statusText strin
 		}
 	}
 
-	return screenLines, statusText, overflow
+	return screenLines, statusText
 }
 
 // Render all lines that should go on the screen.
@@ -109,10 +101,8 @@ func (p *Pager) renderScreenLines() (lines [][]twin.StyledRune, statusText strin
 // The maximum number of lines returned by this method is limited by the screen
 // height. If the status line is visible, you'll get at most one less than the
 // screen height from this method.
-func (p *Pager) renderLines() ([]renderedLine, string, overflowState) {
+func (p *Pager) renderLines() ([]renderedLine, string) {
 	wantedLineCount := p.visibleHeight()
-
-	screenOverflow := didFit
 
 	var lineNumber linenumbers.LineNumber
 	if p.lineNumber() != nil {
@@ -124,19 +114,10 @@ func (p *Pager) renderLines() ([]renderedLine, string, overflowState) {
 		lineNumber = linenumbers.LineNumber{}
 	}
 
-	if !lineNumber.IsZero() {
-		// We're scrolled down, meaning everything is not visible on screen
-		screenOverflow = didOverflow
-	}
-
-	inputLines, readerOverflow := p.reader.GetLines(lineNumber, wantedLineCount)
+	inputLines := p.reader.GetLines(lineNumber, wantedLineCount)
 	if inputLines.lines == nil {
 		// Empty input, empty output
-		return []renderedLine{}, inputLines.statusText, didFit
-	}
-	if readerOverflow == didOverflow {
-		// This is not the whole input
-		screenOverflow = didOverflow
+		return []renderedLine{}, inputLines.statusText
 	}
 
 	allLines := make([]renderedLine, 0)
@@ -144,11 +125,7 @@ func (p *Pager) renderLines() ([]renderedLine, string, overflowState) {
 
 		lineNumber := inputLines.firstLine.NonWrappingAdd(lineIndex)
 
-		rendering, lineOverflow := p.renderLine(line, lineNumber, p.scrollPosition.internalDontTouch)
-		if lineOverflow == didOverflow {
-			// Everything did not fit
-			screenOverflow = didOverflow
-		}
+		rendering := p.renderLine(line, lineNumber, p.scrollPosition.internalDontTouch)
 
 		var onScreenLength int
 		for i := 0; i < len(rendering); i++ {
@@ -190,21 +167,16 @@ func (p *Pager) renderLines() ([]renderedLine, string, overflowState) {
 		panic(fmt.Errorf("scrollPosition %#v not found in allLines size %d",
 			p.scrollPosition, len(allLines)))
 	}
-	if firstVisibleIndex != 0 {
-		// We're scrolled down, meaning everything is not visible on screen
-		screenOverflow = didOverflow
-	}
 
 	// Drop the lines that should go above the screen
 	allLines = allLines[firstVisibleIndex:]
 
 	if len(allLines) <= wantedLineCount {
 		// Screen has enough room for everything, return everything
-		return allLines, inputLines.statusText, screenOverflow
+		return allLines, inputLines.statusText
 	}
 
-	screenOverflow = didOverflow
-	return allLines[0:wantedLineCount], inputLines.statusText, screenOverflow
+	return allLines[0:wantedLineCount], inputLines.statusText
 }
 
 // Render one input line into one or more screen lines.
@@ -214,20 +186,15 @@ func (p *Pager) renderLines() ([]renderedLine, string, overflowState) {
 //
 // lineNumber and numberPrefixLength are required for knowing how much to
 // indent, and to (optionally) render the line number.
-func (p *Pager) renderLine(line *Line, lineNumber linenumbers.LineNumber, scrollPosition scrollPositionInternal) ([]renderedLine, overflowState) {
+func (p *Pager) renderLine(line *Line, lineNumber linenumbers.LineNumber, scrollPosition scrollPositionInternal) []renderedLine {
 	highlighted := line.HighlightedTokens(plainTextStyle, p.searchPattern, &lineNumber)
 	var wrapped [][]twin.StyledRune
-	overflow := didFit
 	if p.WrapLongLines {
 		width, _ := p.screen.Size()
 		wrapped = wrapLine(width-numberPrefixLength(p, scrollPosition), highlighted.StyledRunes)
 	} else {
 		// All on one line
 		wrapped = [][]twin.StyledRune{highlighted.StyledRunes}
-	}
-
-	if len(wrapped) > 1 {
-		overflow = didOverflow
 	}
 
 	rendered := make([]renderedLine, 0)
@@ -237,10 +204,7 @@ func (p *Pager) renderLine(line *Line, lineNumber linenumbers.LineNumber, scroll
 			visibleLineNumber = nil
 		}
 
-		decorated, localOverflow := p.decorateLine(visibleLineNumber, inputLinePart, scrollPosition)
-		if localOverflow == didOverflow {
-			overflow = didOverflow
-		}
+		decorated := p.decorateLine(visibleLineNumber, inputLinePart, scrollPosition)
 
 		rendered = append(rendered, renderedLine{
 			inputLine: lineNumber,
@@ -255,19 +219,18 @@ func (p *Pager) renderLine(line *Line, lineNumber linenumbers.LineNumber, scroll
 		rendered[len(rendered)-1].trailer = highlighted.Trailer
 	}
 
-	return rendered, overflow
+	return rendered
 }
 
 // Take a rendered line and decorate as needed:
 //   - Line number, or leading whitespace for wrapped lines
 //   - Scroll left indicator
 //   - Scroll right indicator
-func (p *Pager) decorateLine(lineNumberToShow *linenumbers.LineNumber, contents []twin.StyledRune, scrollPosition scrollPositionInternal) ([]twin.StyledRune, overflowState) {
+func (p *Pager) decorateLine(lineNumberToShow *linenumbers.LineNumber, contents []twin.StyledRune, scrollPosition scrollPositionInternal) []twin.StyledRune {
 	width, _ := p.screen.Size()
 	newLine := make([]twin.StyledRune, 0, width)
 	numberPrefixLength := numberPrefixLength(p, scrollPosition)
 	newLine = append(newLine, createLinePrefix(lineNumberToShow, numberPrefixLength)...)
-	overflow := didFit
 
 	// Find the first and last fully visible runes.
 	var firstVisibleRuneIndex *int
@@ -352,9 +315,6 @@ func (p *Pager) decorateLine(lineNumberToShow *linenumbers.LineNumber, contents 
 
 		// Set can-scroll-left marker
 		newLine[0] = p.ScrollLeftHint
-
-		// We're scrolled right, meaning everything is not visible on screen
-		overflow = didOverflow
 	}
 
 	// Add scroll right indicator
@@ -369,12 +329,9 @@ func (p *Pager) decorateLine(lineNumberToShow *linenumbers.LineNumber, contents 
 		}
 
 		newLine[len(newLine)-1] = p.ScrollRightHint
-
-		// Some text is out of bounds to the right
-		overflow = didOverflow
 	}
 
-	return newLine, overflow
+	return newLine
 }
 
 // Generate a line number prefix of the given length.

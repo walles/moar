@@ -693,20 +693,19 @@ func (reader *Reader) GetLine(lineNumber linenumbers.LineNumber) *Line {
 // didOverflow otherwise.
 //
 //revive:disable-next-line:unexported-return
-func (reader *Reader) GetLines(firstLine linenumbers.LineNumber, wantedLineCount int) (*InputLines, overflowState) {
+func (reader *Reader) GetLines(firstLine linenumbers.LineNumber, wantedLineCount int) *InputLines {
 	reader.Lock()
 	defer reader.Unlock()
 	return reader.getLinesUnlocked(firstLine, wantedLineCount)
 }
 
-func (reader *Reader) getLinesUnlocked(firstLine linenumbers.LineNumber, wantedLineCount int) (*InputLines, overflowState) {
+func (reader *Reader) getLinesUnlocked(firstLine linenumbers.LineNumber, wantedLineCount int) *InputLines {
 	if len(reader.lines) == 0 || wantedLineCount == 0 {
 		return &InputLines{
-				lines:      nil,
-				firstLine:  firstLine,
-				statusText: reader.createStatusUnlocked(firstLine),
-			},
-			didFit // Empty files always fit
+			lines:      nil,
+			firstLine:  firstLine,
+			statusText: reader.createStatusUnlocked(firstLine),
+		}
 	}
 
 	lastLine := firstLine.NonWrappingAdd(wantedLineCount - 1)
@@ -724,17 +723,12 @@ func (reader *Reader) getLinesUnlocked(firstLine linenumbers.LineNumber, wantedL
 	}
 
 	returnLines := reader.lines[firstLine.AsZeroBased() : lastLine.AsZeroBased()+1]
-	overflow := didFit
-	if len(returnLines) != len(reader.lines) {
-		overflow = didOverflow // We're not returning all available lines
-	}
 
 	return &InputLines{
-			lines:      returnLines,
-			firstLine:  firstLine,
-			statusText: reader.createStatusUnlocked(lastLine),
-		},
-		overflow
+		lines:      returnLines,
+		firstLine:  firstLine,
+		statusText: reader.createStatusUnlocked(lastLine),
+	}
 }
 
 func (reader *Reader) PumpToStdout() {
@@ -742,7 +736,7 @@ func (reader *Reader) PumpToStdout() {
 	firstNotPrintedLine := linenumbers.LineNumberFromOneBased(1)
 
 	drainLines := func() bool {
-		lines, _ := reader.GetLines(firstNotPrintedLine, wantedLineCount)
+		lines := reader.GetLines(firstNotPrintedLine, wantedLineCount)
 
 		// Print the lines we got
 		printed := false
