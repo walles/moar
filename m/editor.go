@@ -167,12 +167,17 @@ func handleEditingRequest(p *Pager) {
 		log.Info("'v' pressed, launching editor: ", commandWithArgs)
 		command := exec.Command(commandWithArgs[0], commandWithArgs[1:]...)
 
-		// Since os.Stdin might come from a pipe, we can't trust that. Instead,
-		// we tell the editor to read from os.Stdout, which points to the
-		// terminal as well.
-		//
-		// Tested on macOS and Linux, works like a charm.
-		command.Stdin = os.Stdout // <- YES, WE SHOULD ASSIGN STDOUT TO STDIN
+		if runtime.GOOS == "windows" {
+			// Don't touch command.Stdin on Windows:
+			// https://github.com/walles/moar/issues/281#issuecomment-2953384726
+		} else {
+			// Since os.Stdin might come from a pipe, we can't trust that. Instead,
+			// we tell the editor to read from os.Stdout, which points to the
+			// terminal as well.
+			//
+			// Tested on macOS and Linux, works like a charm.
+			command.Stdin = os.Stdout // <- YES, WE SHOULD ASSIGN STDOUT TO STDIN
+		}
 
 		command.Stdout = os.Stdout
 		command.Stderr = os.Stderr
