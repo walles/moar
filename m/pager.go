@@ -435,7 +435,11 @@ func (p *Pager) StartPaging(screen twin.Screen, chromaStyle *chroma.Style, chrom
 }
 
 func fitsOnOneScreen(reader *Reader, width int, height int) bool {
-	if reader.GetLineCount() > height-1 {
+	// We want two extra lines. One (prompt line) at the top, to show that
+	// everything fit, and one (prompt line) at the bottom so that nothing
+	// scrolls off screen.
+	extraLines := 2
+	if reader.GetLineCount() > height-extraLines {
 		return false
 	}
 
