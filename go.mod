@@ -1,9 +1,11 @@
 module github.com/walles/moar
 
-go 1.20
+go 1.22
+
+toolchain go1.24.4
 
 require (
-	github.com/alecthomas/chroma/v2 v2.14.1-0.20241114084538-539d03125465
+	github.com/alecthomas/chroma/v2 v2.18.1-0.20250607032210-6ffb4659a458
 	github.com/google/go-cmp v0.5.9
 	github.com/klauspost/compress v1.17.4
 	github.com/rivo/uniseg v0.4.7
@@ -16,6 +18,6 @@ require (
 )
 
 require (
-	github.com/dlclark/regexp2 v1.11.4 // indirect
+	github.com/dlclark/regexp2 v1.11.5 // indirect
 	github.com/stretchr/testify v1.7.0 // indirect
 )
