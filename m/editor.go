@@ -29,8 +29,10 @@ func dumpToTempFile(reader *Reader) (string, error) {
 	log.Debug("Dumping contents into: ", tempFile.Name())
 
 	lines := reader.GetLines(linenumbers.LineNumber{}, math.MaxInt)
-	for _, line := range lines.lines {
-		_, err := tempFile.WriteString(line.raw + "\n")
+	for index, line := range lines.lines {
+		lineNumber := linenumbers.LineNumberFromZeroBased(index)
+		toWrite := line.Plain(&lineNumber)
+		_, err := tempFile.WriteString(toWrite + "\n")
 		if err != nil {
 			return "", err
 		}
