@@ -559,15 +559,15 @@ func textAsString(reader *Reader, shouldFormat bool) string {
 	result := text.String()
 	reader.Unlock()
 
-	if !shouldFormat {
-		// Formatting disabled, we're done
-		return result
-	}
-
-	var jsonData interface{}
+	var jsonData any
 	err := json.Unmarshal([]byte(result), &jsonData)
 	if err != nil {
 		// Not JSON, return the text as-is
+		return result
+	}
+
+	if !shouldFormat {
+		log.Info("Try the --reformat flag for automatic JSON reformatting")
 		return result
 	}
 
@@ -578,7 +578,7 @@ func textAsString(reader *Reader, shouldFormat bool) string {
 		return result
 	}
 
-	log.Debug("JSON input pretty printed")
+	log.Debug("Got the --reformat flag, reformatted JSON input")
 	return string(prettyJSON)
 }
 
