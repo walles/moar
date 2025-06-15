@@ -3,7 +3,9 @@ package m
 import (
 	"bufio"
 	"bytes"
+	"encoding/csv"
 	"encoding/json"
+	"encoding/xml"
 	"fmt"
 	"io"
 	"os"
@@ -582,6 +584,17 @@ func textAsString(reader *Reader, shouldFormat bool) string {
 	return string(prettyJSON)
 }
 
+func isCsv(text string) bool {
+	csvReader := csv.NewReader(strings.NewReader(text))
+	_, err := csvReader.ReadAll()
+	return err == nil
+}
+
+func isXml(text string) bool {
+	err := xml.Unmarshal([]byte(text), new(any))
+	return err == nil
+}
+
 // We expect this to be executed in a goroutine
 func highlightFromMemory(reader *Reader, formatter chroma.Formatter, options ReaderOptions) {
 	defer func() {
@@ -608,9 +621,20 @@ func highlightFromMemory(reader *Reader, formatter chroma.Formatter, options Rea
 
 	text := textAsString(reader, options.ShouldFormat)
 
+	if len(text) == 0 {
+		log.Debug("Buffer is empty, not highlighting")
+		return
+	}
+
 	if options.Lexer == nil && json.Valid([]byte(text)) {
 		log.Info("Buffer is valid JSON, highlighting as JSON")
 		options.Lexer = lexers.Get("json")
+	} else if options.Lexer == nil && isCsv(text) {
+		log.Info("Buffer is valid CSV, highlighting as CSV")
+		options.Lexer = lexers.Get("csv")
+	} else if options.Lexer == nil && isXml(text) {
+		log.Info("Buffer is valid XML, highlighting as XML")
+		options.Lexer = lexers.Get("xml")
 	}
 
 	if options.Lexer == nil {
