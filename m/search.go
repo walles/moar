@@ -100,15 +100,6 @@ func (p *Pager) scrollToSearchHitsBackwards() {
 	p.scrollPosition = firstHitPosition.PreviousLine(p.visibleHeight() - 1)
 }
 
-func (p *Pager) updateFilter() {
-	if p.searchPattern == nil {
-		// We are not filtering, never mind
-		return
-	}
-
-	log.Error("Filtering not implemented, fix!")
-}
-
 // NOTE: When we search, we do that by looping over the *input lines*, not the
 // screen lines. That's why startPosition is a LineNumber rather than a
 // scrollPosition.

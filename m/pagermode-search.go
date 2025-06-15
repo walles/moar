@@ -55,8 +55,6 @@ func (m *PagerModeSearch) updateSearchPattern() {
 		m.pager.scrollToSearchHitsBackwards()
 	} else if m.mode == SearchModeForward {
 		m.pager.scrollToSearchHits()
-	} else if m.mode == SearchModeFilter {
-		m.pager.updateFilter()
 	}
 }
 

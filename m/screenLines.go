@@ -114,6 +114,8 @@ func (p *Pager) renderLines() ([]renderedLine, string) {
 		lineNumber = linenumbers.LineNumber{}
 	}
 
+	FIXME: If we are filtering, get matching lines only from the reader
+
 	inputLines := p.reader.GetLines(lineNumber, wantedLineCount)
 	if inputLines.lines == nil {
 		// Empty input, empty output
