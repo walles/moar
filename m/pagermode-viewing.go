@@ -153,7 +153,7 @@ func (m PagerModeViewing) onRune(char rune) {
 		p.searchPattern = nil
 
 	case '&':
-		p.mode = PagerModeSearch{pager: p, mode: SearchModeFilter, initialScrollPosition: p.scrollPosition}
+		p.mode = &PagerModeFilter{pager: p}
 		p.TargetLineNumber = nil
 		p.searchString = ""
 		p.searchPattern = nil
