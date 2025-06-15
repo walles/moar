@@ -215,10 +215,10 @@ func TestGetLongLine(t *testing.T) {
 	assert.Equal(t, len(lines.lines), 1)
 
 	line := lines.lines[0]
-	assert.Assert(t, strings.HasPrefix(line.Plain(nil), "1 2 3 4"), "<%s>", line)
-	assert.Assert(t, strings.HasSuffix(line.Plain(nil), "0123456789"), line)
+	assert.Assert(t, strings.HasPrefix(line.Plain(), "1 2 3 4"), "<%s>", line)
+	assert.Assert(t, strings.HasSuffix(line.Plain(), "0123456789"), line)
 
-	assert.Equal(t, len(line.Plain(nil)), 100021)
+	assert.Equal(t, len(line.Plain()), 100021)
 }
 
 func getReaderWithLineCount(totalLines int) *Reader {
@@ -267,7 +267,7 @@ func testCompressedFile(t *testing.T, filename string) {
 	assert.NilError(t, reader._wait())
 
 	lines := reader.GetLines(linenumbers.LineNumber{}, 5)
-	assert.Equal(t, lines.lines[0].Plain(nil), "This is a compressed file", "%s", filename)
+	assert.Equal(t, lines.lines[0].Plain(), "This is a compressed file", "%s", filename)
 }
 
 func TestCompressedFiles(t *testing.T) {
@@ -332,9 +332,9 @@ func TestFormatJson(t *testing.T) {
 	assert.NilError(t, testMe._wait())
 
 	lines := testMe.GetLines(linenumbers.LineNumber{}, 10)
-	assert.Equal(t, lines.lines[0].Plain(nil), "{")
-	assert.Equal(t, lines.lines[1].Plain(nil), `  "key": "value"`)
-	assert.Equal(t, lines.lines[2].Plain(nil), "}")
+	assert.Equal(t, lines.lines[0].Plain(), "{")
+	assert.Equal(t, lines.lines[1].Plain(), `  "key": "value"`)
+	assert.Equal(t, lines.lines[2].Plain(), "}")
 	assert.Equal(t, len(lines.lines), 3)
 }
 
@@ -353,11 +353,11 @@ func TestFormatJsonArray(t *testing.T) {
 	assert.NilError(t, testMe._wait())
 
 	lines := testMe.GetLines(linenumbers.LineNumber{}, 10)
-	assert.Equal(t, lines.lines[0].Plain(nil), "[")
-	assert.Equal(t, lines.lines[1].Plain(nil), "  {")
-	assert.Equal(t, lines.lines[2].Plain(nil), `    "key": "value"`)
-	assert.Equal(t, lines.lines[3].Plain(nil), "  }")
-	assert.Equal(t, lines.lines[4].Plain(nil), "]")
+	assert.Equal(t, lines.lines[0].Plain(), "[")
+	assert.Equal(t, lines.lines[1].Plain(), "  {")
+	assert.Equal(t, lines.lines[2].Plain(), `    "key": "value"`)
+	assert.Equal(t, lines.lines[3].Plain(), "  }")
+	assert.Equal(t, lines.lines[4].Plain(), "]")
 	assert.Equal(t, len(lines.lines), 5)
 }
 
@@ -385,7 +385,7 @@ func TestReadUpdatingFile(t *testing.T) {
 	allLines := testMe.GetLines(linenumbers.LineNumber{}, 10)
 	assert.Equal(t, len(allLines.lines), 1)
 	assert.Equal(t, testMe.GetLineCount(), 1)
-	assert.Equal(t, allLines.lines[0].Plain(nil), "First line")
+	assert.Equal(t, allLines.lines[0].Plain(), "First line")
 
 	// Append a line to the file
 	const secondLineString = "Second line\n"
@@ -405,8 +405,8 @@ func TestReadUpdatingFile(t *testing.T) {
 	allLines = testMe.GetLines(linenumbers.LineNumber{}, 10)
 	assert.Equal(t, len(allLines.lines), 2, "Expected two lines after adding a second one, got %d", len(allLines.lines))
 	assert.Equal(t, testMe.GetLineCount(), 2)
-	assert.Equal(t, allLines.lines[0].Plain(nil), "First line")
-	assert.Equal(t, allLines.lines[1].Plain(nil), "Second line")
+	assert.Equal(t, allLines.lines[0].Plain(), "First line")
+	assert.Equal(t, allLines.lines[1].Plain(), "Second line")
 
 	assert.Equal(t, int(testMe.bytesCount), len([]byte(firstLineString+secondLineString)))
 
@@ -429,9 +429,9 @@ func TestReadUpdatingFile(t *testing.T) {
 	allLines = testMe.GetLines(linenumbers.LineNumber{}, 10)
 	assert.Equal(t, len(allLines.lines), 3, "Expected three lines after adding a third one, got %d", len(allLines.lines))
 	assert.Equal(t, testMe.GetLineCount(), 3)
-	assert.Equal(t, allLines.lines[0].Plain(nil), "First line")
-	assert.Equal(t, allLines.lines[1].Plain(nil), "Second line")
-	assert.Equal(t, allLines.lines[2].Plain(nil), "Third line")
+	assert.Equal(t, allLines.lines[0].Plain(), "First line")
+	assert.Equal(t, allLines.lines[1].Plain(), "Second line")
+	assert.Equal(t, allLines.lines[2].Plain(), "Third line")
 
 	assert.Equal(t, int(testMe.bytesCount), len([]byte(firstLineString+secondLineString+thirdLineString)))
 }
@@ -475,7 +475,7 @@ func TestReadUpdatingFile_InitiallyEmpty(t *testing.T) {
 	allLines = testMe.GetLines(linenumbers.LineNumber{}, 10)
 	assert.Equal(t, len(allLines.lines), 1, "Expected one line after adding one, got %d", len(allLines.lines))
 	assert.Equal(t, testMe.GetLineCount(), 1)
-	assert.Equal(t, allLines.lines[0].Plain(nil), "Text")
+	assert.Equal(t, allLines.lines[0].Plain(), "Text")
 }
 
 // If people keep appending to the currently opened file we should display those
@@ -517,7 +517,7 @@ func TestReadUpdatingFile_HalfLine(t *testing.T) {
 	allLines := testMe.GetLines(linenumbers.LineNumber{}, 10)
 	assert.Equal(t, len(allLines.lines), 1, "Still expecting one line, got %d", len(allLines.lines))
 	assert.Equal(t, testMe.GetLineCount(), 1)
-	assert.Equal(t, allLines.lines[0].Plain(nil), "Start, end")
+	assert.Equal(t, allLines.lines[0].Plain(), "Start, end")
 
 	assert.Equal(t, int(testMe.bytesCount), len([]byte("Start, end\n")))
 }
@@ -561,7 +561,7 @@ func TestReadUpdatingFile_HalfUtf8(t *testing.T) {
 	allLines := testMe.GetLines(linenumbers.LineNumber{}, 10)
 	assert.Equal(t, len(allLines.lines), 1, "Still expecting one line, got %d", len(allLines.lines))
 	assert.Equal(t, testMe.GetLineCount(), 1)
-	assert.Equal(t, allLines.lines[0].Plain(nil), "här")
+	assert.Equal(t, allLines.lines[0].Plain(), "här")
 
 	assert.Equal(t, int(testMe.bytesCount), len([]byte("här")))
 }

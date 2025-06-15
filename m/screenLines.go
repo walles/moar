@@ -123,11 +123,8 @@ func (p *Pager) renderLines() ([]renderedLine, string) {
 	}
 
 	allLines := make([]renderedLine, 0)
-	for lineIndex, line := range inputLines.lines {
-
-		lineNumber := inputLines.firstLine.NonWrappingAdd(lineIndex)
-
-		rendering := p.renderLine(line, lineNumber, p.scrollPosition.internalDontTouch)
+	for _, line := range inputLines.lines {
+		rendering := p.renderLine(line, p.scrollPosition.internalDontTouch)
 
 		var onScreenLength int
 		for i := 0; i < len(rendering); i++ {
@@ -188,8 +185,8 @@ func (p *Pager) renderLines() ([]renderedLine, string) {
 //
 // lineNumber and numberPrefixLength are required for knowing how much to
 // indent, and to (optionally) render the line number.
-func (p *Pager) renderLine(line *Line, lineNumber linenumbers.LineNumber, scrollPosition scrollPositionInternal) []renderedLine {
-	highlighted := line.HighlightedTokens(plainTextStyle, p.searchPattern, &lineNumber)
+func (p *Pager) renderLine(line *NumberedLine, scrollPosition scrollPositionInternal) []renderedLine {
+	highlighted := line.HighlightedTokens(plainTextStyle, p.searchPattern)
 	var wrapped [][]twin.StyledRune
 	if p.WrapLongLines {
 		width, _ := p.screen.Size()
@@ -201,7 +198,7 @@ func (p *Pager) renderLine(line *Line, lineNumber linenumbers.LineNumber, scroll
 
 	rendered := make([]renderedLine, 0)
 	for wrapIndex, inputLinePart := range wrapped {
-		visibleLineNumber := &lineNumber
+		visibleLineNumber := &line.number
 		if wrapIndex > 0 {
 			visibleLineNumber = nil
 		}
@@ -209,7 +206,7 @@ func (p *Pager) renderLine(line *Line, lineNumber linenumbers.LineNumber, scroll
 		decorated := p.decorateLine(visibleLineNumber, inputLinePart, scrollPosition)
 
 		rendered = append(rendered, renderedLine{
-			inputLine: lineNumber,
+			inputLine: line.number,
 			wrapIndex: wrapIndex,
 			cells:     decorated,
 		})

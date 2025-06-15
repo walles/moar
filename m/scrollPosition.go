@@ -102,7 +102,10 @@ func (si *scrollPositionInternal) handleNegativeDeltaScreenLines(pager *Pager) {
 		// Render the previous line
 		previousLineNumber := si.lineNumber.NonWrappingAdd(-1)
 		previousLine := pager.reader.GetLine(previousLineNumber)
-		previousSubLines := pager.renderLine(previousLine, previousLineNumber, *si)
+		previousSubLines := pager.renderLine(&NumberedLine{
+			number: previousLineNumber,
+			line:   previousLine,
+		}, *si)
 
 		// Adjust lineNumber and deltaScreenLines to move up into the previous
 		// screen line
@@ -132,14 +135,20 @@ func (si *scrollPositionInternal) handlePositiveDeltaScreenLines(pager *Pager) {
 			if line == nil {
 				panic(fmt.Errorf("Last line is nil"))
 			}
-			subLines := pager.renderLine(line, *si.lineNumber, *si)
+			subLines := pager.renderLine(&NumberedLine{
+				number: *si.lineNumber,
+				line:   line,
+			}, *si)
 
 			// ... and go to the bottom of that.
 			si.deltaScreenLines = len(subLines) - 1
 			return
 		}
 
-		subLines := pager.renderLine(line, *si.lineNumber, *si)
+		subLines := pager.renderLine(&NumberedLine{
+			number: *si.lineNumber,
+			line:   line,
+		}, *si)
 		if si.deltaScreenLines < len(subLines) {
 			// Sublines are within bounds!
 			return
@@ -167,7 +176,10 @@ func (si *scrollPositionInternal) emptyBottomLinesCount(pager *Pager) int {
 			break
 		}
 
-		subLines := pager.renderLine(line, lineNumber, *si)
+		subLines := pager.renderLine(&NumberedLine{
+			number: lineNumber,
+			line:   line,
+		}, *si)
 		unclaimedViewportLines -= len(subLines)
 		if unclaimedViewportLines <= 0 {
 			return 0
@@ -345,7 +357,10 @@ func (p *Pager) isScrolledToEnd() bool {
 	// Last line is on screen, now we need to figure out whether we can see all
 	// of it
 	lastInputLine := p.reader.GetLine(lastInputLineNumber)
-	lastInputLineRendered := p.renderLine(lastInputLine, lastInputLineNumber, p.scrollPosition.internalDontTouch)
+	lastInputLineRendered := p.renderLine(&NumberedLine{
+		number: lastInputLineNumber,
+		line:   lastInputLine,
+	}, p.scrollPosition.internalDontTouch)
 	lastRenderedSubLine := lastInputLineRendered[len(lastInputLineRendered)-1]
 
 	// If the last visible subline is the same as the last possible subline then

@@ -443,7 +443,7 @@ func fitsOnOneScreen(reader *Reader, width int, height int) bool {
 
 	lines := reader.GetLines(linenumbers.LineNumberFromZeroBased(0), reader.GetLineCount())
 	for _, line := range lines.lines {
-		rendered := line.HighlightedTokens(twin.StyleDefault, nil, nil).StyledRunes
+		rendered := line.HighlightedTokens(twin.StyleDefault, nil).StyledRunes
 		if len(rendered) > width {
 			// This line is too long to fit on one screen line, no fit
 			return false
