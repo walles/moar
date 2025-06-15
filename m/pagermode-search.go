@@ -14,6 +14,7 @@ type SearchMode int
 const (
 	SearchModeForward SearchMode = iota
 	SearchModeBackward
+	SearchModeFilter // Ref: https://github.com/walles/moar/issues/230
 )
 
 type PagerModeSearch struct {
@@ -28,6 +29,9 @@ func (m PagerModeSearch) drawFooter(_ string, _ string) {
 	prompt := "Search: "
 	if m.mode == SearchModeBackward {
 		prompt = "Search backwards: "
+	}
+	if m.mode == SearchModeFilter {
+		prompt = "Filter: "
 	}
 
 	pos := 0
@@ -49,11 +53,11 @@ func (m *PagerModeSearch) updateSearchPattern() {
 
 	if m.mode == SearchModeBackward {
 		m.pager.scrollToSearchHitsBackwards()
-	} else {
+	} else if m.mode == SearchModeForward {
 		m.pager.scrollToSearchHits()
+	} else if m.mode == SearchModeFilter {
+		m.pager.updateFilter()
 	}
-
-	// FIXME: If the user is typing, indicate to user if we didn't find anything
 }
 
 // toPattern compiles a search string into a pattern.
@@ -111,10 +115,16 @@ func (m PagerModeSearch) onKey(key twin.KeyCode) {
 	switch key {
 	case twin.KeyEnter:
 		m.pager.mode = PagerModeViewing{pager: m.pager}
+		if m.mode == SearchModeFilter {
+			m.pager.searchPattern = nil
+		}
 
 	case twin.KeyEscape:
 		m.pager.mode = PagerModeViewing{pager: m.pager}
 		m.pager.scrollPosition = m.initialScrollPosition
+		if m.mode == SearchModeFilter {
+			m.pager.searchPattern = nil
+		}
 
 	case twin.KeyBackspace, twin.KeyDelete:
 		if len(m.pager.searchString) == 0 {
@@ -125,8 +135,14 @@ func (m PagerModeSearch) onKey(key twin.KeyCode) {
 		m.updateSearchPattern()
 
 	case twin.KeyUp, twin.KeyDown, twin.KeyPgUp, twin.KeyPgDown:
-		m.pager.mode = PagerModeViewing{pager: m.pager}
-		m.pager.mode.onKey(key)
+		viewing := PagerModeViewing{pager: m.pager}
+		if m.mode != SearchModeFilter {
+			// When searching, up / down keys cancel search mode
+			m.pager.mode = viewing
+		}
+
+		// Scroll up / down
+		viewing.onKey(key)
 
 	default:
 		log.Debugf("Unhandled search key event %v", key)
