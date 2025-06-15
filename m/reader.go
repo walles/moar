@@ -85,7 +85,7 @@ type Reader struct {
 
 // InputLines contains a number of lines from the reader, plus metadata
 type InputLines struct {
-	lines []*Line
+	lines []*NumberedLine
 
 	// Line number of the first line returned
 	firstLine linenumbers.LineNumber
@@ -741,7 +741,15 @@ func (reader *Reader) getLinesUnlocked(firstLine linenumbers.LineNumber, wantedL
 		return reader.getLinesUnlocked(firstLine, firstLine.CountLinesTo(lastLine))
 	}
 
-	returnLines := reader.lines[firstLine.AsZeroBased() : lastLine.AsZeroBased()+1]
+	notNumberedReturnLines := reader.lines[firstLine.AsZeroBased() : lastLine.AsZeroBased()+1]
+	returnLines := make([]*NumberedLine, 0, len(notNumberedReturnLines))
+	for index, line := range notNumberedReturnLines {
+		lineNumber := firstLine.NonWrappingAdd(index)
+		returnLines = append(returnLines, &NumberedLine{
+			number: lineNumber,
+			line:   line,
+		})
+	}
 
 	return &InputLines{
 		lines:      returnLines,
@@ -765,7 +773,7 @@ func (reader *Reader) PumpToStdout() {
 				continue
 			}
 
-			fmt.Println(line.raw)
+			fmt.Println(line.line.raw)
 			printed = true
 			firstNotPrintedLine = lineNumber.NonWrappingAdd(1)
 		}
