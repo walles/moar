@@ -614,12 +614,17 @@ func highlightFromMemory(reader *Reader, formatter chroma.Formatter, options Rea
 	}
 
 	if options.Lexer == nil {
-		log.Debug("No lexer set for highlighting")
+		log.Debug("No lexer set, not highlighting")
 		return
 	}
 
 	if options.Style == nil {
-		log.Debug("No style set for highlighting")
+		log.Debug("No style set, not highlighting")
+		return
+	}
+
+	if formatter == nil {
+		log.Debug("No formatter set, not highlighting")
 		return
 	}
 

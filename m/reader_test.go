@@ -37,12 +37,10 @@ func testGetLineCount(t *testing.T, reader *Reader) {
 		t.Error("Error counting lines of", *reader.name, err)
 	}
 
-	if strings.HasSuffix(*reader.name, "/line-without-newline.txt") {
-		// "wc -l" thinks this file contains zero lines
-		wcLineCount = 1
-	} else if strings.HasSuffix(*reader.name, "/two-lines-no-trailing-newline.txt") {
-		// "wc -l" thinks this file contains one line
-		wcLineCount = 2
+	// wc -l under-counts by 1 if the file doesn't end in a newline
+	rawBytes, err := os.ReadFile(*reader.name)
+	if err == nil && len(rawBytes) > 0 && rawBytes[len(rawBytes)-1] != '\n' {
+		wcLineCount++
 	}
 
 	if reader.GetLineCount() != wcLineCount {
