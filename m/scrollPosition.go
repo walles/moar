@@ -105,7 +105,7 @@ func (si *scrollPositionInternal) handleNegativeDeltaScreenLines(pager *Pager) {
 		previousSubLines := pager.renderLine(&NumberedLine{
 			number: previousLineNumber,
 			line:   previousLine,
-		}, *si)
+		}, pager.getLineNumberPrefixLength(previousLineNumber))
 
 		// Adjust lineNumber and deltaScreenLines to move up into the previous
 		// screen line
@@ -126,6 +126,14 @@ func (si *scrollPositionInternal) handleNegativeDeltaScreenLines(pager *Pager) {
 // This method will not do any screen-height based clipping, so it could be that
 // the position is too far down to display after this returns.
 func (si *scrollPositionInternal) handlePositiveDeltaScreenLines(pager *Pager) {
+	maxPrefixLength := 0
+	allPossibleLines := pager.reader.GetLines(*si.lineNumber, pager.visibleHeight())
+	if allPossibleLines.lines != nil && len(allPossibleLines.lines) > 0 {
+		lastPossibleLine := allPossibleLines.lines[len(allPossibleLines.lines)-1]
+		lastPossibleLineNumber := lastPossibleLine.number
+		maxPrefixLength = pager.getLineNumberPrefixLength(lastPossibleLineNumber)
+	}
+
 	for {
 		line := pager.reader.GetLine(*si.lineNumber)
 		if line == nil {
@@ -138,7 +146,7 @@ func (si *scrollPositionInternal) handlePositiveDeltaScreenLines(pager *Pager) {
 			subLines := pager.renderLine(&NumberedLine{
 				number: *si.lineNumber,
 				line:   line,
-			}, *si)
+			}, pager.getLineNumberPrefixLength(*si.lineNumber))
 
 			// ... and go to the bottom of that.
 			si.deltaScreenLines = len(subLines) - 1
@@ -148,7 +156,7 @@ func (si *scrollPositionInternal) handlePositiveDeltaScreenLines(pager *Pager) {
 		subLines := pager.renderLine(&NumberedLine{
 			number: *si.lineNumber,
 			line:   line,
-		}, *si)
+		}, maxPrefixLength)
 		if si.deltaScreenLines < len(subLines) {
 			// Sublines are within bounds!
 			return
@@ -163,11 +171,18 @@ func (si *scrollPositionInternal) handlePositiveDeltaScreenLines(pager *Pager) {
 // This method assumes si contains a canonical position
 func (si *scrollPositionInternal) emptyBottomLinesCount(pager *Pager) int {
 	unclaimedViewportLines := pager.visibleHeight()
+	if pager.reader.GetLineCount() == 0 {
+		// No lines available, so all viewport lines are unclaimed
+		return unclaimedViewportLines
+	}
 
 	// Start counting where the current input line begins
 	unclaimedViewportLines += si.deltaScreenLines
 
 	lineNumber := *si.lineNumber
+
+	lastLineNumber := *linenumbers.LineNumberFromLength(pager.reader.GetLineCount())
+	lastLineNumberWidth := pager.getLineNumberPrefixLength(lastLineNumber)
 
 	for {
 		line := pager.reader.GetLine(lineNumber)
@@ -179,7 +194,7 @@ func (si *scrollPositionInternal) emptyBottomLinesCount(pager *Pager) int {
 		subLines := pager.renderLine(&NumberedLine{
 			number: lineNumber,
 			line:   line,
-		}, *si)
+		}, lastLineNumberWidth)
 		unclaimedViewportLines -= len(subLines)
 		if unclaimedViewportLines <= 0 {
 			return 0
@@ -360,7 +375,7 @@ func (p *Pager) isScrolledToEnd() bool {
 	lastInputLineRendered := p.renderLine(&NumberedLine{
 		number: lastInputLineNumber,
 		line:   lastInputLine,
-	}, p.scrollPosition.internalDontTouch)
+	}, p.getLineNumberPrefixLength(lastInputLineNumber))
 	lastRenderedSubLine := lastInputLineRendered[len(lastInputLineRendered)-1]
 
 	// If the last visible subline is the same as the last possible subline then
@@ -383,44 +398,4 @@ func (p *Pager) getLastVisiblePosition() *scrollPosition {
 			deltaScreenLines: lastRenderedLine.wrapIndex,
 		},
 	}
-}
-
-func numberPrefixLength(pager *Pager, scrollPosition scrollPositionInternal) int {
-	// This method used to live in screenLines.go, but I moved it here because
-	// it touches scroll position internals.
-
-	if !pager.ShowLineNumbers {
-		return 0
-	}
-
-	maxPossibleLineNumber := *linenumbers.LineNumberFromLength(pager.reader.GetLineCount())
-
-	// This is an approximation assuming we don't do any wrapping. Finding the
-	// real answer while wrapping requires rendering, which requires the real
-	// answer and so on, so we do an approximation here to save us from
-	// recursion.
-	//
-	// Let's improve on demand.
-	var lineNumber linenumbers.LineNumber
-	// Ref: https://github.com/walles/moar/issues/198
-	if scrollPosition.lineNumber != nil {
-		lineNumber = *scrollPosition.lineNumber
-	}
-	maxVisibleLineNumber := lineNumber.NonWrappingAdd(
-		scrollPosition.deltaScreenLines +
-			pager.visibleHeight() - 1)
-	if maxVisibleLineNumber.IsAfter(maxPossibleLineNumber) {
-		maxVisibleLineNumber = maxPossibleLineNumber
-	}
-
-	// Count the length of the last line number
-	numberPrefixLength := len(maxVisibleLineNumber.Format()) + 1
-	if numberPrefixLength < 4 {
-		// 4 = space for 3 digits followed by one whitespace
-		//
-		// https://github.com/walles/moar/issues/38
-		numberPrefixLength = 4
-	}
-
-	return numberPrefixLength
 }

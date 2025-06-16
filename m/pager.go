@@ -198,6 +198,17 @@ func (p *Pager) visibleHeight() int {
 	return height
 }
 
+// How many cells are needed for this line number?
+//
+// Returns 0 if line numbers are disabled.
+func (p *Pager) getLineNumberPrefixLength(lineNumber linenumbers.LineNumber) int {
+	if !p.ShowLineNumbers {
+		return 0
+	}
+
+	return len(lineNumber.Format()) + 1 // +1 for the space after the line number
+}
+
 // Draw the footer string at the bottom using the status bar style
 func (p *Pager) setFooter(footer string) {
 	width, height := p.screen.Size()
