@@ -9,7 +9,8 @@ import (
 )
 
 type renderedLine struct {
-	inputLine linenumbers.LineNumber
+	// Which line in the input stream is this?
+	inputLineNumber linenumbers.LineNumber
 
 	// If an input line has been wrapped into two, the part on the second line
 	// will have a wrapIndex of 1.
@@ -151,16 +152,18 @@ func (p *Pager) renderLines() ([]renderedLine, string) {
 	// Find which index in allLines the user wants to see at the top of the
 	// screen
 	firstVisibleIndex := -1 // Not found
+	currentLineNumber := inputLines.firstLine
 	for index, line := range allLines {
 		if p.lineNumber() == nil {
 			// Expected zero lines but got some anyway, grab the first one!
 			firstVisibleIndex = index
 			break
 		}
-		if line.inputLine == *p.lineNumber() && line.wrapIndex == p.deltaScreenLines() {
+		if currentLineNumber == *p.lineNumber() && line.wrapIndex == p.deltaScreenLines() {
 			firstVisibleIndex = index
 			break
 		}
+		currentLineNumber = currentLineNumber.NonWrappingAdd(1)
 	}
 	if firstVisibleIndex == -1 {
 		panic(fmt.Errorf("scrollPosition %#v not found in allLines size %d",
@@ -206,9 +209,9 @@ func (p *Pager) renderLine(line *NumberedLine, scrollPosition scrollPositionInte
 		decorated := p.decorateLine(visibleLineNumber, inputLinePart, scrollPosition)
 
 		rendered = append(rendered, renderedLine{
-			inputLine: line.number,
-			wrapIndex: wrapIndex,
-			cells:     decorated,
+			inputLineNumber: line.number,
+			wrapIndex:       wrapIndex,
+			cells:           decorated,
 		})
 	}
 
