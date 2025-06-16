@@ -118,14 +118,17 @@ func (p *Pager) renderLines() ([]renderedLine, string) {
 	FIXME: If we are filtering, get matching lines only from the reader
 
 	inputLines := p.reader.GetLines(lineNumber, wantedLineCount)
-	if inputLines.lines == nil {
+	if inputLines.lines == nil || len(inputLines.lines) == 0 {
 		// Empty input, empty output
 		return []renderedLine{}, inputLines.statusText
 	}
 
+	lastVisibleLineNumber := inputLines.lines[len(inputLines.lines)-1].number
+	numberPrefixLength := len(lastVisibleLineNumber.Format()) + 1 // +1 for the space after the number
+
 	allLines := make([]renderedLine, 0)
 	for _, line := range inputLines.lines {
-		rendering := p.renderLine(line, p.scrollPosition.internalDontTouch)
+		rendering := p.renderLine(line, numberPrefixLength)
 
 		var onScreenLength int
 		for i := 0; i < len(rendering); i++ {
@@ -188,12 +191,12 @@ func (p *Pager) renderLines() ([]renderedLine, string) {
 //
 // lineNumber and numberPrefixLength are required for knowing how much to
 // indent, and to (optionally) render the line number.
-func (p *Pager) renderLine(line *NumberedLine, scrollPosition scrollPositionInternal) []renderedLine {
+func (p *Pager) renderLine(line *NumberedLine, numberPrefixLength int) []renderedLine {
 	highlighted := line.HighlightedTokens(plainTextStyle, p.searchPattern)
 	var wrapped [][]twin.StyledRune
 	if p.WrapLongLines {
 		width, _ := p.screen.Size()
-		wrapped = wrapLine(width-numberPrefixLength(p, scrollPosition), highlighted.StyledRunes)
+		wrapped = wrapLine(width-numberPrefixLength, highlighted.StyledRunes)
 	} else {
 		// All on one line
 		wrapped = [][]twin.StyledRune{highlighted.StyledRunes}
@@ -206,7 +209,7 @@ func (p *Pager) renderLine(line *NumberedLine, scrollPosition scrollPositionInte
 			visibleLineNumber = nil
 		}
 
-		decorated := p.decorateLine(visibleLineNumber, inputLinePart, scrollPosition)
+		decorated := p.decorateLine(visibleLineNumber, numberPrefixLength, inputLinePart)
 
 		rendered = append(rendered, renderedLine{
 			inputLineNumber: line.number,
@@ -228,10 +231,9 @@ func (p *Pager) renderLine(line *NumberedLine, scrollPosition scrollPositionInte
 //   - Line number, or leading whitespace for wrapped lines
 //   - Scroll left indicator
 //   - Scroll right indicator
-func (p *Pager) decorateLine(lineNumberToShow *linenumbers.LineNumber, contents []twin.StyledRune, scrollPosition scrollPositionInternal) []twin.StyledRune {
+func (p *Pager) decorateLine(lineNumberToShow *linenumbers.LineNumber, numberPrefixLength int, contents []twin.StyledRune) []twin.StyledRune {
 	width, _ := p.screen.Size()
 	newLine := make([]twin.StyledRune, 0, width)
-	numberPrefixLength := numberPrefixLength(p, scrollPosition)
 	newLine = append(newLine, createLinePrefix(lineNumberToShow, numberPrefixLength)...)
 
 	// Find the first and last fully visible runes.
