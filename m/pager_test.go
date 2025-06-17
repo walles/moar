@@ -593,9 +593,9 @@ func TestPageSamples(t *testing.T) {
 			firstPagerLine = strings.TrimSuffix(firstPagerLine, ">")
 
 			assert.Assert(t,
-				strings.HasPrefix(firstReaderLine.Plain(nil), firstPagerLine),
+				strings.HasPrefix(firstReaderLine.Plain(), firstPagerLine),
 				"\nreader line = <%s>\npager line  = <%s>",
-				firstReaderLine.Plain(nil), firstPagerLine,
+				firstReaderLine.Plain(), firstPagerLine,
 			)
 		})
 	}
