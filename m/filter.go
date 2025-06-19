@@ -3,10 +3,6 @@ package m
 import "github.com/walles/moar/m/linenumbers"
 
 func (p *Pager) GetFilteredLines() *InputLines {
-	// FIXME: If we are filtering, get only the matching lines
-
-	wantedLineCount := p.visibleHeight()
-
 	var lineNumber linenumbers.LineNumber
 	if p.lineNumber() != nil {
 		lineNumber = *p.lineNumber()
@@ -17,5 +13,9 @@ func (p *Pager) GetFilteredLines() *InputLines {
 		lineNumber = linenumbers.LineNumber{}
 	}
 
-	return p.reader.GetLines(lineNumber, wantedLineCount)
+	if _, ok := p.mode.(*PagerModeFilter); !ok {
+		return getFilteredLines(lineNumber, p.visibleHeight())
+	}
+
+	return p.reader.GetLines(lineNumber, p.visibleHeight())
 }
