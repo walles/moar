@@ -206,7 +206,16 @@ func (p *Pager) getLineNumberPrefixLength(lineNumber linenumbers.LineNumber) int
 		return 0
 	}
 
-	return len(lineNumber.Format()) + 1 // +1 for the space after the line number
+	length := len(lineNumber.Format()) + 1 // +1 for the space after the line number
+
+	if length < 4 {
+		// 4 = space for 3 digits followed by one whitespace
+		//
+		// https://github.com/walles/moar/issues/38
+		return 4
+	}
+
+	return length
 }
 
 // Draw the footer string at the bottom using the status bar style
