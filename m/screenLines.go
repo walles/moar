@@ -103,21 +103,7 @@ func (p *Pager) renderScreenLines() (lines [][]twin.StyledRune, statusText strin
 // height. If the status line is visible, you'll get at most one less than the
 // screen height from this method.
 func (p *Pager) renderLines() ([]renderedLine, string) {
-	wantedLineCount := p.visibleHeight()
-
-	var lineNumber linenumbers.LineNumber
-	if p.lineNumber() != nil {
-		lineNumber = *p.lineNumber()
-	} else {
-		// No lines to show, line number doesn't matter, pick anything. But we
-		// still want one so that we can get the status text from the reader
-		// below.
-		lineNumber = linenumbers.LineNumber{}
-	}
-
-	FIXME: If we are filtering, get matching lines only from the reader
-
-	inputLines := p.reader.GetLines(lineNumber, wantedLineCount)
+	inputLines := p.GetFilteredLines()
 	if inputLines.lines == nil || len(inputLines.lines) == 0 {
 		// Empty input, empty output
 		return []renderedLine{}, inputLines.statusText
@@ -131,7 +117,7 @@ func (p *Pager) renderLines() ([]renderedLine, string) {
 		rendering := p.renderLine(line, numberPrefixLength)
 
 		var onScreenLength int
-		for i := 0; i < len(rendering); i++ {
+		for i := range rendering {
 			trimmedLen := len(twin.TrimSpaceRight(rendering[i].cells))
 			if trimmedLen > onScreenLength {
 				onScreenLength = trimmedLen
@@ -176,6 +162,7 @@ func (p *Pager) renderLines() ([]renderedLine, string) {
 	// Drop the lines that should go above the screen
 	allLines = allLines[firstVisibleIndex:]
 
+	wantedLineCount := p.visibleHeight()
 	if len(allLines) <= wantedLineCount {
 		// Screen has enough room for everything, return everything
 		return allLines, inputLines.statusText
