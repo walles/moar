@@ -125,7 +125,7 @@ func (si *scrollPositionInternal) handleNegativeDeltaScreenLines(pager *Pager) {
 func (si *scrollPositionInternal) handlePositiveDeltaScreenLines(pager *Pager) {
 	maxPrefixLength := 0
 	allPossibleLines := pager.reader.GetLines(*si.lineNumber, pager.visibleHeight())
-	if allPossibleLines.lines != nil && len(allPossibleLines.lines) > 0 {
+	if len(allPossibleLines.lines) > 0 {
 		lastPossibleLine := allPossibleLines.lines[len(allPossibleLines.lines)-1]
 		lastPossibleLineNumber := lastPossibleLine.number
 		maxPrefixLength = pager.getLineNumberPrefixLength(lastPossibleLineNumber)

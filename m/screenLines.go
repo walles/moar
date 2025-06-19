@@ -104,7 +104,7 @@ func (p *Pager) renderScreenLines() (lines [][]twin.StyledRune, statusText strin
 // screen height from this method.
 func (p *Pager) renderLines() ([]renderedLine, string) {
 	inputLines := p.GetFilteredLines()
-	if inputLines.lines == nil || len(inputLines.lines) == 0 {
+	if len(inputLines.lines) == 0 {
 		// Empty input, empty output
 		return []renderedLine{}, inputLines.statusText
 	}
