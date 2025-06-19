@@ -110,7 +110,7 @@ func (p *Pager) renderLines() ([]renderedLine, string) {
 	}
 
 	lastVisibleLineNumber := inputLines.lines[len(inputLines.lines)-1].number
-	numberPrefixLength := len(lastVisibleLineNumber.Format()) + 1 // +1 for the space after the number
+	numberPrefixLength := p.getLineNumberPrefixLength(lastVisibleLineNumber)
 
 	allLines := make([]renderedLine, 0)
 	for _, line := range inputLines.lines {
