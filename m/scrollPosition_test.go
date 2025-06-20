@@ -13,7 +13,7 @@ import (
 const screenHeight = 60
 
 // Repro for: https://github.com/walles/moar/issues/166
-func testCanonicalize1000(t *testing.T, withStatusBar bool, currentStartLine linemetadata.Number, lastVisibleLine linemetadata.Number) {
+func testCanonicalize1000(t *testing.T, withStatusBar bool, currentStartLine linemetadata.Index, lastVisibleLine linemetadata.Index) {
 	pager := Pager{}
 	pager.screen = twin.NewFakeScreen(100, screenHeight)
 	pager.reader = NewReaderFromText("test", strings.Repeat("a\n", 2000))
@@ -43,8 +43,8 @@ func TestCanonicalize1000WithStatusBar(t *testing.T) {
 	for startLine := 0; startLine < 1500; startLine++ {
 		t.Run(fmt.Sprint("startLine=", startLine), func(t *testing.T) {
 			testCanonicalize1000(t, true,
-				linemetadata.NumberFromZeroBased(startLine),
-				linemetadata.NumberFromZeroBased(startLine+screenHeight-2),
+				linemetadata.IndexFromZeroBased(startLine),
+				linemetadata.IndexFromZeroBased(startLine+screenHeight-2),
 			)
 		})
 	}
@@ -54,8 +54,8 @@ func TestCanonicalize1000WithoutStatusBar(t *testing.T) {
 	for startLine := 0; startLine < 1500; startLine++ {
 		t.Run(fmt.Sprint("startLine=", startLine), func(t *testing.T) {
 			testCanonicalize1000(t, true,
-				linemetadata.NumberFromZeroBased(startLine),
-				linemetadata.NumberFromZeroBased(startLine+screenHeight-1),
+				linemetadata.IndexFromZeroBased(startLine),
+				linemetadata.IndexFromZeroBased(startLine+screenHeight-1),
 			)
 		})
 	}
