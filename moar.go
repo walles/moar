@@ -229,7 +229,7 @@ func tryOpen(filename string) error {
 // line number, and returns the remaining args.
 //
 // Returns nil on no target line number specified.
-func getTargetLineNumber(args []string) (*linemetadata.Number, []string) {
+func getTargetLineNumber(args []string) (*linemetadata.Index, []string) {
 	for i, arg := range args {
 		if !strings.HasPrefix(arg, "+") {
 			continue
@@ -252,7 +252,7 @@ func getTargetLineNumber(args []string) (*linemetadata.Number, []string) {
 		remainingArgs = append(remainingArgs, args[:i]...)
 		remainingArgs = append(remainingArgs, args[i+1:]...)
 
-		returnMe := linemetadata.NumberFromOneBased(int(lineNumber))
+		returnMe := linemetadata.IndexFromOneBased(int(lineNumber))
 		return &returnMe, remainingArgs
 	}
 
@@ -575,7 +575,7 @@ func pagerFromArgs(
 
 	pager.TargetLineNumber = targetLineNumber
 	if *follow && pager.TargetLineNumber == nil {
-		reallyHigh := linemetadata.NumberMax()
+		reallyHigh := linemetadata.IndexMax()
 		pager.TargetLineNumber = &reallyHigh
 	}
 

@@ -14,6 +14,13 @@ func (i Index) Index() int {
 	return i.index
 }
 
+func IndexFromZeroBased(zeroBased int) Index {
+	if zeroBased < 0 {
+		panic(fmt.Errorf("zero-based line indices must be at least 0, got %d", zeroBased))
+	}
+	return Index{index: zeroBased}
+}
+
 func IndexFromOneBased(oneBased int) Index {
 	if oneBased < 1 {
 		panic(fmt.Errorf("one-based line indices must be at least 1, got %d", oneBased))

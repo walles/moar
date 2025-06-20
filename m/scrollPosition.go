@@ -335,7 +335,7 @@ func (p *Pager) scrollToEnd() {
 		//
 		// Otherwise, if we're already aiming for some place, don't overwrite
 		// that.
-		maxLineNumber := linemetadata.NumberMax()
+		maxLineNumber := linemetadata.IndexMax()
 		p.TargetLineNumber = &maxLineNumber
 	}
 }
@@ -348,7 +348,7 @@ func (p *Pager) isScrolledToEnd() bool {
 		// No lines available, which means we can't scroll any further down
 		return true
 	}
-	lastInputLineNumber := *linemetadata.NumberFromLength(inputLineCount)
+	lastInputLineNumber := *linemetadata.IndexFromLength(inputLineCount)
 
 	visibleLines, _ := p.renderLines()
 	lastVisibleLine := visibleLines[len(visibleLines)-1]
