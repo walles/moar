@@ -675,7 +675,7 @@ func (reader *Reader) createStatusUnlocked(lastLine lines.Index) string {
 
 	return fmt.Sprintf("%s%s lines  %d%%",
 		prefix,
-		lines.LineIndexFromLength(len(reader.lines)).Format(),
+		lines.IndexFromLength(len(reader.lines)).Format(),
 		percent)
 }
 
@@ -727,7 +727,7 @@ func (reader *Reader) getLinesUnlocked(firstLine lines.Index, wantedLineCount in
 	lastLine := firstLine.NonWrappingAdd(wantedLineCount - 1)
 
 	// Prevent reading past the end of the available lines
-	maxLineNumber := *lines.LineNumberFromLength(len(reader.lines))
+	maxLineNumber := *lines.IndexFromLength(len(reader.lines))
 	if lastLine.IsAfter(maxLineNumber) {
 		lastLine = maxLineNumber
 
@@ -757,7 +757,7 @@ func (reader *Reader) getLinesUnlocked(firstLine lines.Index, wantedLineCount in
 
 func (reader *Reader) PumpToStdout() {
 	const wantedLineCount = 100
-	firstNotPrintedLine := lines.LineNumberFromOneBased(1)
+	firstNotPrintedLine := lines.NumberFromOneBased(1)
 
 	drainLines := func() bool {
 		lines := reader.GetLines(firstNotPrintedLine, wantedLineCount)

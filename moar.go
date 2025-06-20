@@ -252,7 +252,7 @@ func getTargetLineNumber(args []string) (*lines.Number, []string) {
 		remainingArgs = append(remainingArgs, args[:i]...)
 		remainingArgs = append(remainingArgs, args[i+1:]...)
 
-		returnMe := lines.LineNumberFromOneBased(int(lineNumber))
+		returnMe := lines.NumberFromOneBased(int(lineNumber))
 		return &returnMe, remainingArgs
 	}
 

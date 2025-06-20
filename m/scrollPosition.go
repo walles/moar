@@ -135,7 +135,7 @@ func (si *scrollPositionInternal) handlePositiveDeltaScreenLines(pager *Pager) {
 		line := pager.reader.GetLine(*si.lineNumber)
 		if line == nil {
 			// Out of bounds downwards, get the last line...
-			si.lineNumber = lines.LineIndexFromLength(pager.reader.GetLineCount())
+			si.lineNumber = lines.IndexFromLength(pager.reader.GetLineCount())
 			line = pager.reader.GetLine(*si.lineNumber)
 			if line == nil {
 				panic(fmt.Errorf("Last line is nil"))
@@ -320,7 +320,7 @@ func (p *Pager) scrollToEnd() {
 	if inputLineCount == 0 {
 		return
 	}
-	lastInputLineNumber := *lines.LineIndexFromLength(inputLineCount)
+	lastInputLineNumber := *lines.IndexFromLength(inputLineCount)
 
 	lastInputLine := p.reader.GetLine(lastInputLineNumber)
 

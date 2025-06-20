@@ -23,14 +23,14 @@ func (l Number) AsZeroBased() int {
 	return l.number
 }
 
-func LineNumberFromOneBased(oneBased int) Number {
+func NumberFromOneBased(oneBased int) Number {
 	if oneBased < 1 {
 		panic(fmt.Errorf("one-based line numbers must be at least 1, got %d", oneBased))
 	}
 	return Number{number: oneBased - 1}
 }
 
-func LineNumberFromZeroBased(zeroBased int) Number {
+func NumberFromZeroBased(zeroBased int) Number {
 	if zeroBased < 0 {
 		panic(fmt.Errorf("zero-based line numbers must be at least 0, got %d", zeroBased))
 	}
@@ -57,15 +57,15 @@ func LineNumberFromLength(length int) *Number {
 func (l Number) NonWrappingAdd(offset int) Number {
 	if offset > 0 {
 		if l.AsZeroBased() > math.MaxInt-offset {
-			return LineNumberFromZeroBased(math.MaxInt)
+			return NumberFromZeroBased(math.MaxInt)
 		}
 	} else {
 		if l.AsZeroBased() < -offset {
-			return LineNumberFromZeroBased(0)
+			return NumberFromZeroBased(0)
 		}
 	}
 
-	return LineNumberFromZeroBased(l.number + offset)
+	return NumberFromZeroBased(l.number + offset)
 }
 
 func (l Number) Format() string {
