@@ -19,7 +19,7 @@ import (
 	"golang.org/x/term"
 
 	"github.com/walles/moar/m"
-	"github.com/walles/moar/m/linenumbers"
+	"github.com/walles/moar/m/lines"
 	"github.com/walles/moar/m/textstyles"
 	"github.com/walles/moar/twin"
 )
@@ -229,7 +229,7 @@ func tryOpen(filename string) error {
 // line number, and returns the remaining args.
 //
 // Returns nil on no target line number specified.
-func getTargetLineNumber(args []string) (*linenumbers.LineNumber, []string) {
+func getTargetLineNumber(args []string) (*lines.Number, []string) {
 	for i, arg := range args {
 		if !strings.HasPrefix(arg, "+") {
 			continue
@@ -252,7 +252,7 @@ func getTargetLineNumber(args []string) (*linenumbers.LineNumber, []string) {
 		remainingArgs = append(remainingArgs, args[:i]...)
 		remainingArgs = append(remainingArgs, args[i+1:]...)
 
-		returnMe := linenumbers.LineNumberFromOneBased(int(lineNumber))
+		returnMe := lines.LineNumberFromOneBased(int(lineNumber))
 		return &returnMe, remainingArgs
 	}
 
@@ -575,7 +575,7 @@ func pagerFromArgs(
 
 	pager.TargetLineNumber = targetLineNumber
 	if *follow && pager.TargetLineNumber == nil {
-		reallyHigh := linenumbers.LineNumberMax()
+		reallyHigh := lines.LineNumberMax()
 		pager.TargetLineNumber = &reallyHigh
 	}
 

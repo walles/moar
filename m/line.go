@@ -4,7 +4,7 @@ import (
 	"regexp"
 	"sync"
 
-	"github.com/walles/moar/m/linenumbers"
+	"github.com/walles/moar/m/lines"
 	"github.com/walles/moar/m/textstyles"
 	"github.com/walles/moar/twin"
 )
@@ -27,7 +27,7 @@ func NewLine(raw string) Line {
 
 // Returns a representation of the string split into styled tokens. Any regexp
 // matches are highlighted. A nil regexp means no highlighting.
-func (line *Line) HighlightedTokens(plainTextStyle twin.Style, search *regexp.Regexp, lineNumber *linenumbers.LineNumber) textstyles.StyledRunesWithTrailer {
+func (line *Line) HighlightedTokens(plainTextStyle twin.Style, search *regexp.Regexp, lineNumber *lines.Number) textstyles.StyledRunesWithTrailer {
 	plain := line.Plain(lineNumber)
 	matchRanges := getMatchRanges(&plain, search)
 
@@ -58,7 +58,7 @@ func (line *Line) HighlightedTokens(plainTextStyle twin.Style, search *regexp.Re
 }
 
 // Plain returns a plain text representation of the initial string
-func (line *Line) Plain(lineNumber *linenumbers.LineNumber) string {
+func (line *Line) Plain(lineNumber *lines.Number) string {
 	line.lock.Lock()
 	defer line.lock.Unlock()
 

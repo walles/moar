@@ -13,7 +13,7 @@ import (
 	"github.com/alecthomas/chroma/v2/lexers"
 	"github.com/alecthomas/chroma/v2/styles"
 	"github.com/google/go-cmp/cmp"
-	"github.com/walles/moar/m/linenumbers"
+	"github.com/walles/moar/m/lines"
 	"github.com/walles/moar/m/textstyles"
 	"github.com/walles/moar/twin"
 	"gotest.tools/v3/assert"
@@ -336,7 +336,7 @@ func TestFindFirstHitSimple(t *testing.T) {
 
 	pager.searchPattern = toPattern("AB")
 
-	hit := pager.findFirstHit(linenumbers.LineNumber{}, nil, false)
+	hit := pager.findFirstHit(lines.Number{}, nil, false)
 	assert.Assert(t, hit.internalDontTouch.lineNumber.IsZero())
 	assert.Equal(t, hit.internalDontTouch.deltaScreenLines, 0)
 }
@@ -350,7 +350,7 @@ func TestFindFirstHitAnsi(t *testing.T) {
 
 	pager.searchPattern = toPattern("AB")
 
-	hit := pager.findFirstHit(linenumbers.LineNumber{}, nil, false)
+	hit := pager.findFirstHit(lines.Number{}, nil, false)
 	assert.Assert(t, hit.internalDontTouch.lineNumber.IsZero())
 	assert.Equal(t, hit.internalDontTouch.deltaScreenLines, 0)
 }
@@ -364,7 +364,7 @@ func TestFindFirstHitNoMatch(t *testing.T) {
 
 	pager.searchPattern = toPattern("this pattern should not be found")
 
-	hit := pager.findFirstHit(linenumbers.LineNumber{}, nil, false)
+	hit := pager.findFirstHit(lines.Number{}, nil, false)
 	assert.Assert(t, hit == nil)
 }
 
@@ -376,7 +376,7 @@ func TestFindFirstHitNoMatchBackwards(t *testing.T) {
 	assert.NilError(t, pager.reader._wait())
 
 	pager.searchPattern = toPattern("this pattern should not be found")
-	theEnd := *linenumbers.LineNumberFromLength(reader.GetLineCount())
+	theEnd := *lines.LineNumberFromLength(reader.GetLineCount())
 
 	hit := pager.findFirstHit(theEnd, nil, true)
 	assert.Assert(t, hit == nil)
@@ -583,7 +583,7 @@ func TestPageSamples(t *testing.T) {
 			pager.StartPaging(screen, nil, nil)
 			pager.redraw("")
 
-			firstReaderLine := myReader.GetLine(linenumbers.LineNumber{})
+			firstReaderLine := myReader.GetLine(lines.Number{})
 			if firstReaderLine == nil {
 				return
 			}
@@ -743,7 +743,7 @@ func benchmarkSearch(b *testing.B, highlighted bool) {
 	b.ResetTimer()
 
 	// This test will search through all the N copies we made of our file
-	hit := pager.findFirstHit(linenumbers.LineNumber{}, nil, false)
+	hit := pager.findFirstHit(lines.Number{}, nil, false)
 
 	if hit != nil {
 		panic(fmt.Errorf("This test is meant to scan the whole file without finding anything"))

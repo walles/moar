@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/walles/moar/m/linenumbers"
+	"github.com/walles/moar/m/lines"
 	"github.com/walles/moar/twin"
 )
 
@@ -49,7 +49,7 @@ func isPlain(s string) bool {
 	return true
 }
 
-func WithoutFormatting(plainTextStyle twin.Style, s string, lineNumber *linenumbers.LineNumber) string {
+func WithoutFormatting(plainTextStyle twin.Style, s string, lineNumber *lines.Number) string {
 	if isPlain(s) {
 		return s
 	}
@@ -110,7 +110,7 @@ func WithoutFormatting(plainTextStyle twin.Style, s string, lineNumber *linenumb
 //
 // The prefix will be prepended to the string before parsing. The lineNumber is
 // used for error reporting.
-func StyledRunesFromString(plainTextStyle twin.Style, s string, lineNumber *linenumbers.LineNumber) StyledRunesWithTrailer {
+func StyledRunesFromString(plainTextStyle twin.Style, s string, lineNumber *lines.Number) StyledRunesWithTrailer {
 	manPageHeading := manPageHeadingFromString(s)
 	if manPageHeading != nil {
 		return *manPageHeading

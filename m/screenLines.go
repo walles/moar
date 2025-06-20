@@ -3,14 +3,14 @@ package m
 import (
 	"fmt"
 
-	"github.com/walles/moar/m/linenumbers"
+	"github.com/walles/moar/m/lines"
 	"github.com/walles/moar/m/textstyles"
 	"github.com/walles/moar/twin"
 )
 
 type renderedLine struct {
 	// Which line in the input stream is this?
-	inputLineNumber linenumbers.LineNumber
+	inputLineNumber lines.Number
 
 	// If an input line has been wrapped into two, the part on the second line
 	// will have a wrapIndex of 1.
@@ -218,7 +218,7 @@ func (p *Pager) renderLine(line *NumberedLine, numberPrefixLength int) []rendere
 //   - Line number, or leading whitespace for wrapped lines
 //   - Scroll left indicator
 //   - Scroll right indicator
-func (p *Pager) decorateLine(lineNumberToShow *linenumbers.LineNumber, numberPrefixLength int, contents []twin.StyledRune) []twin.StyledRune {
+func (p *Pager) decorateLine(lineNumberToShow *lines.Number, numberPrefixLength int, contents []twin.StyledRune) []twin.StyledRune {
 	width, _ := p.screen.Size()
 	newLine := make([]twin.StyledRune, 0, width)
 	newLine = append(newLine, createLinePrefix(lineNumberToShow, numberPrefixLength)...)
@@ -328,7 +328,7 @@ func (p *Pager) decorateLine(lineNumberToShow *linenumbers.LineNumber, numberPre
 // Generate a line number prefix of the given length.
 //
 // Can be empty or all-whitespace depending on parameters.
-func createLinePrefix(lineNumber *linenumbers.LineNumber, numberPrefixLength int) []twin.StyledRune {
+func createLinePrefix(lineNumber *lines.Number, numberPrefixLength int) []twin.StyledRune {
 	if numberPrefixLength == 0 {
 		return []twin.StyledRune{}
 	}

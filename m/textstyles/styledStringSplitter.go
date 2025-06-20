@@ -6,7 +6,7 @@ import (
 	"unicode/utf8"
 
 	log "github.com/sirupsen/logrus"
-	"github.com/walles/moar/m/linenumbers"
+	"github.com/walles/moar/m/lines"
 	"github.com/walles/moar/twin"
 )
 
@@ -14,7 +14,7 @@ const esc = '\x1b'
 
 type styledStringSplitter struct {
 	input          string
-	lineNumber     *linenumbers.LineNumber
+	lineNumber     *lines.Number
 	plainTextStyle twin.Style
 
 	nextByteIndex     int
@@ -30,7 +30,7 @@ type styledStringSplitter struct {
 }
 
 // Returns the style of the line's trailer
-func styledStringsFromString(plainTextStyle twin.Style, s string, lineNumber *linenumbers.LineNumber, callback func(string, twin.Style)) twin.Style {
+func styledStringsFromString(plainTextStyle twin.Style, s string, lineNumber *lines.Number, callback func(string, twin.Style)) twin.Style {
 	if !strings.ContainsAny(s, "\x1b") {
 		// This shortcut makes BenchmarkPlainTextSearch() perform a lot better
 		callback(s, plainTextStyle)

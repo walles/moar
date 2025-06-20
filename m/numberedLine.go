@@ -3,13 +3,13 @@ package m
 import (
 	"regexp"
 
-	"github.com/walles/moar/m/linenumbers"
+	"github.com/walles/moar/m/lines"
 	"github.com/walles/moar/m/textstyles"
 	"github.com/walles/moar/twin"
 )
 
 type NumberedLine struct {
-	number linenumbers.LineNumber
+	number lines.Number
 	line   *Line
 }
 
