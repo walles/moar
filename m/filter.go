@@ -14,7 +14,7 @@ func (p *Pager) GetFilteredLines() *InputLines {
 	}
 
 	if _, ok := p.mode.(*PagerModeFilter); !ok {
-		return getFilteredLines(lineNumber, p.visibleHeight())
+		// FIXME: return getFilteredLines(lineNumber, p.visibleHeight())
 	}
 
 	return p.reader.GetLines(lineNumber, p.visibleHeight())
