@@ -696,14 +696,17 @@ func (reader *Reader) GetLineCount() int {
 }
 
 // GetLine gets a line. If the requested line number is out of bounds, nil is returned.
-func (reader *Reader) GetLine(lineNumber linemetadata.Number) *NumberedLine {
+func (reader *Reader) GetLine(index linemetadata.Index) *NumberedLine {
 	reader.Lock()
 	defer reader.Unlock()
 
-	if lineNumber.AsOneBased() > len(reader.lines) {
+	if index.IsWithinLength(len(reader.lines)) {
 		return nil
 	}
-	return &NumberedLine{number: lineNumber, line: reader.lines[lineNumber.AsZeroBased()]}
+	return &NumberedLine{
+		number: linemetadata.NumberFromZeroBased(index.Index()),
+		line:   reader.lines[index.Index()],
+	}
 }
 
 // GetLines gets the indicated lines from the input
@@ -741,7 +744,7 @@ func (reader *Reader) getLinesUnlocked(firstLine linemetadata.Index, wantedLineC
 	notNumberedReturnLines := reader.lines[firstLine.Index() : lastLine.Index()+1]
 	returnLines := make([]*NumberedLine, 0, len(notNumberedReturnLines))
 	for index, line := range notNumberedReturnLines {
-		lineNumber := linemetadata.NumberFromZeroBased(firstLine.Index()).NonWrappingAdd(index)
+		lineNumber := linemetadata.NumberFromZeroBased(firstLine.NonWrappingAdd(index).Index())
 		returnLines = append(returnLines, &NumberedLine{
 			number: lineNumber,
 			line:   line,

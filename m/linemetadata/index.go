@@ -76,3 +76,10 @@ func (i Index) CountLinesTo(next Index) int {
 func (i Index) IsZero() bool {
 	return i.index == 0
 }
+
+func (i Index) IsWithinLength(length int) bool {
+	if length < 0 {
+		panic(fmt.Errorf("line count must be at least 0, got %d", length))
+	}
+	return i.index >= 0 && i.index < length
+}
