@@ -16,7 +16,7 @@ func (i Index) Index() int {
 
 // Set the line index to the last line of a file with the given number of lines
 // in it. Or nil if the line count is 0.
-func LineIndexFromLength(length int) *Index {
+func IndexFromLength(length int) *Index {
 	if length == 0 {
 		return nil
 	}
@@ -50,6 +50,15 @@ func (i Index) IsBefore(other Index) bool {
 
 func (i Index) IsAfter(other Index) bool {
 	return i.index > other.index
+}
+
+// If both indices are the same this method will return 1.
+func (i Index) CountLinesTo(next Index) int {
+	if i.index > next.index {
+		panic(fmt.Errorf("line indices must be ordered, got %s-%s", i.Format(), next.Format()))
+	}
+
+	return 1 + next.index - i.index
 }
 
 func (i Index) IsZero() bool {

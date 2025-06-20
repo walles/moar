@@ -461,7 +461,7 @@ func fitsOnOneScreen(reader *Reader, width int, height int) bool {
 		return false
 	}
 
-	lines := reader.GetLines(lines.LineNumberFromZeroBased(0), reader.GetLineCount())
+	lines := reader.GetLines(lines.NumberFromZeroBased(0), reader.GetLineCount())
 	for _, line := range lines.lines {
 		rendered := line.HighlightedTokens(twin.StyleDefault, nil).StyledRunes
 		if len(rendered) > width {

@@ -234,11 +234,11 @@ func testStatusText(t *testing.T, fromLine lines.Number, toLine lines.Number, to
 }
 
 func TestStatusText(t *testing.T) {
-	testStatusText(t, lines.Number{}, lines.LineNumberFromOneBased(10), 20, "20 lines  50%")
-	testStatusText(t, lines.Number{}, lines.LineNumberFromOneBased(5), 5, "5 lines  100%")
+	testStatusText(t, lines.Number{}, lines.NumberFromOneBased(10), 20, "20 lines  50%")
+	testStatusText(t, lines.Number{}, lines.NumberFromOneBased(5), 5, "5 lines  100%")
 	testStatusText(t,
-		lines.LineNumberFromOneBased(998),
-		lines.LineNumberFromOneBased(999),
+		lines.NumberFromOneBased(998),
+		lines.NumberFromOneBased(999),
 		1000,
 		"1000 lines  99%")
 
