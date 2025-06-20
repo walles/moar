@@ -1,4 +1,4 @@
-package lines
+package linemetadata
 
 import (
 	"fmt"
@@ -12,6 +12,18 @@ type Index struct {
 
 func (i Index) Index() int {
 	return i.index
+}
+
+func IndexFromOneBased(oneBased int) Index {
+	if oneBased < 1 {
+		panic(fmt.Errorf("one-based line indices must be at least 1, got %d", oneBased))
+	}
+	return Index{index: oneBased - 1}
+}
+
+// The highest possible line index
+func IndexMax() Index {
+	return Index{index: math.MaxInt}
 }
 
 // Set the line index to the last line of a file with the given number of lines

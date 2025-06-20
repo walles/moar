@@ -1,4 +1,4 @@
-package lines
+package linemetadata
 
 import (
 	"fmt"
@@ -38,13 +38,13 @@ func NumberFromZeroBased(zeroBased int) Number {
 }
 
 // The highest possible line number
-func LineNumberMax() Number {
+func NumberMax() Number {
 	return Number{number: math.MaxInt}
 }
 
 // Set the line number to the last line of a file with the given number of lines
 // in it. Or nil if the line count is 0.
-func LineNumberFromLength(length int) *Number {
+func NumberFromLength(length int) *Number {
 	if length == 0 {
 		return nil
 	}
