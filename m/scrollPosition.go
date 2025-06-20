@@ -3,7 +3,7 @@ package m
 import (
 	"fmt"
 
-	"github.com/walles/moar/m/lines"
+	"github.com/walles/moar/m/linemetadata"
 )
 
 // Please create using newScrollPosition(name)
@@ -25,7 +25,7 @@ func newScrollPosition(name string) scrollPosition {
 type scrollPositionInternal struct {
 	// Index into the array of visible input lines, or nil if nothing has been
 	// read yet or there are no lines.
-	lineNumber *lines.Index
+	lineNumber *linemetadata.Index
 
 	// Scroll this many screen lines before rendering. Can be negative.
 	deltaScreenLines int
@@ -43,8 +43,8 @@ type scrollPositionCanonical struct {
 	showStatusBar   bool // From pager
 	wrapLongLines   bool // From pager
 
-	lineNumber       *lines.Index // From scrollPositionInternal
-	deltaScreenLines int          // From scrollPositionInternal
+	lineNumber       *linemetadata.Index // From scrollPositionInternal
+	deltaScreenLines int                 // From scrollPositionInternal
 }
 
 func canonicalFromPager(pager *Pager) scrollPositionCanonical {
@@ -86,7 +86,7 @@ func (sp scrollPosition) NextLine(scrollDistance int) scrollPosition {
 // Create a new position, scrolled to the given line number
 //
 //revive:disable-next-line:unexported-return
-func NewScrollPositionFromLineNumber(lineNumber lines.Index, name string) scrollPosition {
+func NewScrollPositionFromLineNumber(lineNumber linemetadata.Index, name string) scrollPosition {
 	return scrollPosition{
 		internalDontTouch: scrollPositionInternal{
 			name:             name,
@@ -135,7 +135,7 @@ func (si *scrollPositionInternal) handlePositiveDeltaScreenLines(pager *Pager) {
 		line := pager.reader.GetLine(*si.lineNumber)
 		if line == nil {
 			// Out of bounds downwards, get the last line...
-			si.lineNumber = lines.IndexFromLength(pager.reader.GetLineCount())
+			si.lineNumber = linemetadata.IndexFromLength(pager.reader.GetLineCount())
 			line = pager.reader.GetLine(*si.lineNumber)
 			if line == nil {
 				panic(fmt.Errorf("Last line is nil"))
@@ -172,7 +172,7 @@ func (si *scrollPositionInternal) emptyBottomLinesCount(pager *Pager) int {
 
 	lineNumber := *si.lineNumber
 
-	lastLineNumber := *lines.LineNumberFromLength(pager.reader.GetLineCount())
+	lastLineNumber := *linemetadata.NumberFromLength(pager.reader.GetLineCount())
 	lastLineNumberWidth := pager.getLineNumberPrefixLength(lastLineNumber)
 
 	for {
@@ -263,7 +263,7 @@ func (si *scrollPositionInternal) canonicalize(pager *Pager) {
 
 	if si.lineNumber == nil {
 		// We have lines, but no line number, start at the top
-		si.lineNumber = &lines.Index{}
+		si.lineNumber = &linemetadata.Index{}
 	}
 
 	si.handleNegativeDeltaScreenLines(pager)
@@ -278,7 +278,7 @@ func (si *scrollPositionInternal) canonicalize(pager *Pager) {
 	}
 }
 
-func scrollPositionFromLineNumber(name string, lineNumber lines.Index) *scrollPosition {
+func scrollPositionFromLineNumber(name string, lineNumber linemetadata.Index) *scrollPosition {
 	return &scrollPosition{
 		internalDontTouch: scrollPositionInternal{
 			name:       name,
@@ -288,13 +288,13 @@ func scrollPositionFromLineNumber(name string, lineNumber lines.Index) *scrollPo
 }
 
 // Line number in the input stream, or nil if nothing has been read
-func (p *Pager) lineNumber() *lines.Index {
+func (p *Pager) lineNumber() *linemetadata.Index {
 	p.scrollPosition.internalDontTouch.canonicalize(p)
 	return p.scrollPosition.internalDontTouch.lineNumber
 }
 
 // Line number in the input stream, or nil if nothing has been read
-func (sp *scrollPosition) lineNumber(pager *Pager) *lines.Index {
+func (sp *scrollPosition) lineNumber(pager *Pager) *linemetadata.Index {
 	sp.internalDontTouch.canonicalize(pager)
 	return sp.internalDontTouch.lineNumber
 }
@@ -320,7 +320,7 @@ func (p *Pager) scrollToEnd() {
 	if inputLineCount == 0 {
 		return
 	}
-	lastInputLineNumber := *lines.IndexFromLength(inputLineCount)
+	lastInputLineNumber := *linemetadata.IndexFromLength(inputLineCount)
 
 	lastInputLine := p.reader.GetLine(lastInputLineNumber)
 
@@ -335,7 +335,7 @@ func (p *Pager) scrollToEnd() {
 		//
 		// Otherwise, if we're already aiming for some place, don't overwrite
 		// that.
-		maxLineNumber := lines.LineNumberMax()
+		maxLineNumber := linemetadata.NumberMax()
 		p.TargetLineNumber = &maxLineNumber
 	}
 }
@@ -348,7 +348,7 @@ func (p *Pager) isScrolledToEnd() bool {
 		// No lines available, which means we can't scroll any further down
 		return true
 	}
-	lastInputLineNumber := *lines.LineNumberFromLength(inputLineCount)
+	lastInputLineNumber := *linemetadata.NumberFromLength(inputLineCount)
 
 	visibleLines, _ := p.renderLines()
 	lastVisibleLine := visibleLines[len(visibleLines)-1]

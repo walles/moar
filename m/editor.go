@@ -9,7 +9,7 @@ import (
 	"strings"
 
 	log "github.com/sirupsen/logrus"
-	"github.com/walles/moar/m/lines"
+	"github.com/walles/moar/m/linemetadata"
 )
 
 // Dump the reader lines into a read-only temp file and return the absolute file
@@ -28,7 +28,7 @@ func dumpToTempFile(reader *Reader) (string, error) {
 
 	log.Debug("Dumping contents into: ", tempFile.Name())
 
-	lines := reader.GetLines(lines.Number{}, math.MaxInt)
+	lines := reader.GetLines(linemetadata.Number{}, math.MaxInt)
 	for _, line := range lines.lines {
 		toWrite := line.Plain()
 		_, err := tempFile.WriteString(toWrite + "\n")

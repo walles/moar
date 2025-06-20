@@ -8,7 +8,7 @@ import (
 
 	"github.com/alecthomas/chroma/v2"
 	log "github.com/sirupsen/logrus"
-	"github.com/walles/moar/m/lines"
+	"github.com/walles/moar/m/linemetadata"
 	"github.com/walles/moar/m/textstyles"
 	"github.com/walles/moar/twin"
 )
@@ -83,7 +83,7 @@ type Pager struct {
 
 	// If non-nil, scroll to this line number as soon as possible. Set this
 	// value to LineNumberMax() to follow the end of the input (tail).
-	TargetLineNumber *lines.Number
+	TargetLineNumber *linemetadata.Number
 
 	// If true, pager will clear the screen on return. If false, pager will
 	// clear the last line, and show the cursor.
@@ -106,7 +106,7 @@ type _PreHelpState struct {
 	reader              *Reader
 	scrollPosition      scrollPosition
 	leftColumnZeroBased int
-	targetLineNumber    *lines.Number
+	targetLineNumber    *linemetadata.Number
 }
 
 var _HelpReader = NewReaderFromText("Help", `
@@ -201,7 +201,7 @@ func (p *Pager) visibleHeight() int {
 // How many cells are needed for this line number?
 //
 // Returns 0 if line numbers are disabled.
-func (p *Pager) getLineNumberPrefixLength(lineNumber lines.Number) int {
+func (p *Pager) getLineNumberPrefixLength(lineNumber linemetadata.Number) int {
 	if !p.ShowLineNumbers {
 		return 0
 	}
@@ -281,7 +281,7 @@ func (p *Pager) handleScrolledUp() {
 func (p *Pager) handleScrolledDown() {
 	if p.isScrolledToEnd() {
 		// Follow output
-		reallyHigh := lines.LineNumberMax()
+		reallyHigh := linemetadata.NumberMax()
 		p.TargetLineNumber = &reallyHigh
 	} else {
 		p.TargetLineNumber = nil
@@ -428,7 +428,7 @@ func (p *Pager) StartPaging(screen twin.Screen, chromaStyle *chroma.Style, chrom
 		case eventMoreLinesAvailable:
 			if p.TargetLineNumber != nil {
 				// The user wants to scroll down to a specific line number
-				if lines.LineNumberFromLength(p.reader.GetLineCount()).IsBefore(*p.TargetLineNumber) {
+				if linemetadata.NumberFromLength(p.reader.GetLineCount()).IsBefore(*p.TargetLineNumber) {
 					// Not there yet, keep scrolling
 					p.scrollToEnd()
 				} else {
@@ -461,7 +461,7 @@ func fitsOnOneScreen(reader *Reader, width int, height int) bool {
 		return false
 	}
 
-	lines := reader.GetLines(lines.NumberFromZeroBased(0), reader.GetLineCount())
+	lines := reader.GetLines(linemetadata.NumberFromZeroBased(0), reader.GetLineCount())
 	for _, line := range lines.lines {
 		rendered := line.HighlightedTokens(twin.StyleDefault, nil).StyledRunes
 		if len(rendered) > width {

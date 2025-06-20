@@ -1,4 +1,4 @@
-package lines
+package linemetadata
 
 import (
 	"math"
@@ -35,9 +35,9 @@ func TestLineNumberFormatting(t *testing.T) {
 	assert.Equal(t, "10_000_000", NumberFromOneBased(10000000).Format())
 }
 
-func TestLineNumberFromLength(t *testing.T) {
+func TestNumberFromLength(t *testing.T) {
 	// If the file has one line then the last zero based line number is 0.
-	fromLength := LineNumberFromLength(1)
+	fromLength := NumberFromLength(1)
 	assert.Equal(t, *fromLength, NumberFromZeroBased(0))
 }
 

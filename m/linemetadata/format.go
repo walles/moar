@@ -1,4 +1,4 @@
-package lines
+package linemetadata
 
 import "fmt"
 

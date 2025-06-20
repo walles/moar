@@ -13,7 +13,7 @@ import (
 	"github.com/alecthomas/chroma/v2/formatters"
 	"github.com/alecthomas/chroma/v2/lexers"
 	"github.com/alecthomas/chroma/v2/styles"
-	"github.com/walles/moar/m/lines"
+	"github.com/walles/moar/m/linemetadata"
 	"gotest.tools/v3/assert"
 )
 
@@ -56,7 +56,7 @@ func testGetLineCount(t *testing.T, reader *Reader) {
 }
 
 func testGetLines(t *testing.T, reader *Reader) {
-	lines := reader.GetLines(lines.Number{}, 10)
+	lines := reader.GetLines(linemetadata.Index{}, 10)
 	if len(lines.lines) > 10 {
 		t.Errorf("Asked for 10 lines, got too many: %d", len(lines.lines))
 	}
@@ -68,7 +68,7 @@ func testGetLines(t *testing.T, reader *Reader) {
 	}
 
 	// Test clipping at the end
-	lines = reader.GetLines(lines.LineNumberMax(), 10)
+	lines = reader.GetLines(linemetadata.IndexMax(), 10)
 	if len(lines.lines) != 10 {
 		t.Errorf("Asked for 10 lines but got %d", len(lines.lines))
 		return
@@ -210,8 +210,8 @@ func TestGetLongLine(t *testing.T) {
 	assert.NilError(t, err)
 	assert.NilError(t, reader._wait())
 
-	lines := reader.GetLines(lines.Number{}, 5)
-	assert.Equal(t, lines.firstLine, lines.LineNumber{})
+	lines := reader.GetLines(linemetadata.Index{}, 5)
+	assert.Equal(t, lines.firstLine, linemetadata.Index{})
 	assert.Equal(t, len(lines.lines), 1)
 
 	line := lines.lines[0]
@@ -225,7 +225,7 @@ func getReaderWithLineCount(totalLines int) *Reader {
 	return NewReaderFromText("", strings.Repeat("x\n", totalLines))
 }
 
-func testStatusText(t *testing.T, fromLine lines.Number, toLine lines.Number, totalLines int, expected string) {
+func testStatusText(t *testing.T, fromLine linemetadata.Index, toLine linemetadata.Index, totalLines int, expected string) {
 	testMe := getReaderWithLineCount(totalLines)
 	linesRequested := fromLine.CountLinesTo(toLine)
 	lines := testMe.GetLines(fromLine, linesRequested)
@@ -234,23 +234,23 @@ func testStatusText(t *testing.T, fromLine lines.Number, toLine lines.Number, to
 }
 
 func TestStatusText(t *testing.T) {
-	testStatusText(t, lines.Number{}, lines.NumberFromOneBased(10), 20, "20 lines  50%")
-	testStatusText(t, lines.Number{}, lines.NumberFromOneBased(5), 5, "5 lines  100%")
+	testStatusText(t, linemetadata.Index{}, linemetadata.IndexFromOneBased(10), 20, "20 lines  50%")
+	testStatusText(t, linemetadata.Index{}, linemetadata.IndexFromOneBased(5), 5, "5 lines  100%")
 	testStatusText(t,
-		lines.NumberFromOneBased(998),
-		lines.NumberFromOneBased(999),
+		linemetadata.IndexFromOneBased(998),
+		linemetadata.IndexFromOneBased(999),
 		1000,
 		"1000 lines  99%")
 
-	testStatusText(t, lines.Number{}, lines.Number{}, 0, "<empty>")
-	testStatusText(t, lines.Number{}, lines.Number{}, 1, "1 line  100%")
+	testStatusText(t, linemetadata.Index{}, linemetadata.Index{}, 0, "<empty>")
+	testStatusText(t, linemetadata.Index{}, linemetadata.Index{}, 1, "1 line  100%")
 
 	// Test with filename
 	testMe, err := NewReaderFromFilename(samplesDir+"/empty", formatters.TTY16m, ReaderOptions{Style: styles.Get("native")})
 	assert.NilError(t, err)
 	assert.NilError(t, testMe._wait())
 
-	line := testMe.GetLines(lines.Number{}, 0)
+	line := testMe.GetLines(linemetadata.Index{}, 0)
 	if line.lines != nil {
 		t.Error("line.lines is should have been nil when reading from an empty stream")
 	}
@@ -266,7 +266,7 @@ func testCompressedFile(t *testing.T, filename string) {
 	}
 	assert.NilError(t, reader._wait())
 
-	lines := reader.GetLines(lines.Number{}, 5)
+	lines := reader.GetLines(linemetadata.Index{}, 5)
 	assert.Equal(t, lines.lines[0].Plain(), "This is a compressed file", "%s", filename)
 }
 
@@ -331,7 +331,7 @@ func TestFormatJson(t *testing.T) {
 
 	assert.NilError(t, testMe._wait())
 
-	lines := testMe.GetLines(lines.Number{}, 10)
+	lines := testMe.GetLines(linemetadata.Index{}, 10)
 	assert.Equal(t, lines.lines[0].Plain(), "{")
 	assert.Equal(t, lines.lines[1].Plain(), `  "key": "value"`)
 	assert.Equal(t, lines.lines[2].Plain(), "}")
@@ -352,7 +352,7 @@ func TestFormatJsonArray(t *testing.T) {
 
 	assert.NilError(t, testMe._wait())
 
-	lines := testMe.GetLines(lines.Number{}, 10)
+	lines := testMe.GetLines(linemetadata.Index{}, 10)
 	assert.Equal(t, lines.lines[0].Plain(), "[")
 	assert.Equal(t, lines.lines[1].Plain(), "  {")
 	assert.Equal(t, lines.lines[2].Plain(), `    "key": "value"`)
@@ -382,7 +382,7 @@ func TestReadUpdatingFile(t *testing.T) {
 	assert.Equal(t, len([]byte(firstLineString)), int(testMe.bytesCount))
 
 	// Verify we got the single line
-	allLines := testMe.GetLines(lines.Number{}, 10)
+	allLines := testMe.GetLines(linemetadata.Index{}, 10)
 	assert.Equal(t, len(allLines.lines), 1)
 	assert.Equal(t, testMe.GetLineCount(), 1)
 	assert.Equal(t, allLines.lines[0].Plain(), "First line")
@@ -394,7 +394,7 @@ func TestReadUpdatingFile(t *testing.T) {
 
 	// Give the reader some time to react
 	for i := 0; i < 20; i++ {
-		allLines := testMe.GetLines(lines.Number{}, 10)
+		allLines := testMe.GetLines(linemetadata.Index{}, 10)
 		if len(allLines.lines) == 2 {
 			break
 		}
@@ -402,7 +402,7 @@ func TestReadUpdatingFile(t *testing.T) {
 	}
 
 	// Verify we got the two lines
-	allLines = testMe.GetLines(lines.Number{}, 10)
+	allLines = testMe.GetLines(linemetadata.Index{}, 10)
 	assert.Equal(t, len(allLines.lines), 2, "Expected two lines after adding a second one, got %d", len(allLines.lines))
 	assert.Equal(t, testMe.GetLineCount(), 2)
 	assert.Equal(t, allLines.lines[0].Plain(), "First line")
@@ -418,7 +418,7 @@ func TestReadUpdatingFile(t *testing.T) {
 
 	// Give the reader some time to react
 	for i := 0; i < 20; i++ {
-		allLines = testMe.GetLines(lines.Number{}, 10)
+		allLines = testMe.GetLines(linemetadata.Index{}, 10)
 		if len(allLines.lines) == 3 {
 			break
 		}
@@ -426,7 +426,7 @@ func TestReadUpdatingFile(t *testing.T) {
 	}
 
 	// Verify we got all three lines
-	allLines = testMe.GetLines(lines.Number{}, 10)
+	allLines = testMe.GetLines(linemetadata.Index{}, 10)
 	assert.Equal(t, len(allLines.lines), 3, "Expected three lines after adding a third one, got %d", len(allLines.lines))
 	assert.Equal(t, testMe.GetLineCount(), 3)
 	assert.Equal(t, allLines.lines[0].Plain(), "First line")
@@ -454,7 +454,7 @@ func TestReadUpdatingFile_InitiallyEmpty(t *testing.T) {
 	assert.NilError(t, testMe._wait())
 
 	// Verify no lines
-	allLines := testMe.GetLines(lines.Number{}, 10)
+	allLines := testMe.GetLines(linemetadata.Index{}, 10)
 	assert.Equal(t, len(allLines.lines), 0)
 	assert.Equal(t, testMe.GetLineCount(), 0)
 
@@ -464,7 +464,7 @@ func TestReadUpdatingFile_InitiallyEmpty(t *testing.T) {
 
 	// Give the reader some time to react
 	for i := 0; i < 20; i++ {
-		allLines := testMe.GetLines(lines.Number{}, 10)
+		allLines := testMe.GetLines(linemetadata.Index{}, 10)
 		if len(allLines.lines) == 1 {
 			break
 		}
@@ -472,7 +472,7 @@ func TestReadUpdatingFile_InitiallyEmpty(t *testing.T) {
 	}
 
 	// Verify we got the two lines
-	allLines = testMe.GetLines(lines.Number{}, 10)
+	allLines = testMe.GetLines(linemetadata.Index{}, 10)
 	assert.Equal(t, len(allLines.lines), 1, "Expected one line after adding one, got %d", len(allLines.lines))
 	assert.Equal(t, testMe.GetLineCount(), 1)
 	assert.Equal(t, allLines.lines[0].Plain(), "Text")
@@ -506,7 +506,7 @@ func TestReadUpdatingFile_HalfLine(t *testing.T) {
 
 	// Give the reader some time to react
 	for i := 0; i < 20; i++ {
-		allLines := testMe.GetLines(lines.Number{}, 10)
+		allLines := testMe.GetLines(linemetadata.Index{}, 10)
 		if len(allLines.lines) == 2 {
 			break
 		}
@@ -514,7 +514,7 @@ func TestReadUpdatingFile_HalfLine(t *testing.T) {
 	}
 
 	// Verify we got the two lines
-	allLines := testMe.GetLines(lines.Number{}, 10)
+	allLines := testMe.GetLines(linemetadata.Index{}, 10)
 	assert.Equal(t, len(allLines.lines), 1, "Still expecting one line, got %d", len(allLines.lines))
 	assert.Equal(t, testMe.GetLineCount(), 1)
 	assert.Equal(t, allLines.lines[0].Plain(), "Start, end")
@@ -550,7 +550,7 @@ func TestReadUpdatingFile_HalfUtf8(t *testing.T) {
 
 	// Give the reader some time to react
 	for i := 0; i < 20; i++ {
-		allLines := testMe.GetLines(lines.Number{}, 10)
+		allLines := testMe.GetLines(linemetadata.Index{}, 10)
 		if len(allLines.lines) == 2 {
 			break
 		}
@@ -558,7 +558,7 @@ func TestReadUpdatingFile_HalfUtf8(t *testing.T) {
 	}
 
 	// Verify we got the two lines
-	allLines := testMe.GetLines(lines.Number{}, 10)
+	allLines := testMe.GetLines(linemetadata.Index{}, 10)
 	assert.Equal(t, len(allLines.lines), 1, "Still expecting one line, got %d", len(allLines.lines))
 	assert.Equal(t, testMe.GetLineCount(), 1)
 	assert.Equal(t, allLines.lines[0].Plain(), "här")
