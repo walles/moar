@@ -81,9 +81,9 @@ type Pager struct {
 
 	SideScrollAmount int // Should be positive
 
-	// If non-nil, scroll to this line number as soon as possible. Set this
-	// value to LineNumberMax() to follow the end of the input (tail).
-	TargetLineNumber *linemetadata.Number
+	// If non-nil, scroll to this line index as soon as possible. Set this
+	// value to IndexMax() to follow the end of the input (tail).
+	TargetLineNumber *linemetadata.Index
 
 	// If true, pager will clear the screen on return. If false, pager will
 	// clear the last line, and show the cursor.
@@ -106,7 +106,7 @@ type _PreHelpState struct {
 	reader              *Reader
 	scrollPosition      scrollPosition
 	leftColumnZeroBased int
-	targetLineNumber    *linemetadata.Number
+	targetLineNumber    *linemetadata.Index
 }
 
 var _HelpReader = NewReaderFromText("Help", `
@@ -281,7 +281,7 @@ func (p *Pager) handleScrolledUp() {
 func (p *Pager) handleScrolledDown() {
 	if p.isScrolledToEnd() {
 		// Follow output
-		reallyHigh := linemetadata.NumberMax()
+		reallyHigh := linemetadata.IndexMax()
 		p.TargetLineNumber = &reallyHigh
 	} else {
 		p.TargetLineNumber = nil
@@ -428,7 +428,7 @@ func (p *Pager) StartPaging(screen twin.Screen, chromaStyle *chroma.Style, chrom
 		case eventMoreLinesAvailable:
 			if p.TargetLineNumber != nil {
 				// The user wants to scroll down to a specific line number
-				if linemetadata.NumberFromLength(p.reader.GetLineCount()).IsBefore(*p.TargetLineNumber) {
+				if linemetadata.IndexFromLength(p.reader.GetLineCount()).IsBefore(*p.TargetLineNumber) {
 					// Not there yet, keep scrolling
 					p.scrollToEnd()
 				} else {
@@ -461,7 +461,7 @@ func fitsOnOneScreen(reader *Reader, width int, height int) bool {
 		return false
 	}
 
-	lines := reader.GetLines(linemetadata.NumberFromZeroBased(0), reader.GetLineCount())
+	lines := reader.GetLines(linemetadata.Index{}, reader.GetLineCount())
 	for _, line := range lines.lines {
 		rendered := line.HighlightedTokens(twin.StyleDefault, nil).StyledRunes
 		if len(rendered) > width {
