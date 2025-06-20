@@ -12,7 +12,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	log "github.com/sirupsen/logrus"
 
-	"github.com/walles/moar/m/linenumbers"
+	"github.com/walles/moar/m/lines"
 	"github.com/walles/moar/twin"
 	"gotest.tools/v3/assert"
 )
@@ -66,11 +66,11 @@ func TestTokenize(t *testing.T) {
 			// tests go faster
 			fileScanner.Buffer(make([]byte, 1024*1024), 1024*1024)
 
-			var lineNumber *linenumbers.LineNumber
+			var lineNumber *lines.Number
 			for fileScanner.Scan() {
 				line := fileScanner.Text()
 				if lineNumber == nil {
-					lineNumber = &linenumbers.LineNumber{}
+					lineNumber = &lines.Number{}
 				} else {
 					next := lineNumber.NonWrappingAdd(1)
 					lineNumber = &next

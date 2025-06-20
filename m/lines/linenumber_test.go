@@ -1,4 +1,4 @@
-package linenumbers
+package lines
 
 import (
 	"math"

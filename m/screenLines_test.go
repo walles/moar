@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
-	"github.com/walles/moar/m/linenumbers"
+	"github.com/walles/moar/m/lines"
 	"github.com/walles/moar/twin"
 	"gotest.tools/v3/assert"
 )
@@ -23,7 +23,7 @@ func testHorizontalCropping(t *testing.T, contents string, firstVisibleColumn in
 
 	lineContents := NewLine(contents)
 	numberedLine := NumberedLine{
-		number: linenumbers.LineNumber{},
+		number: lines.Number{},
 		line:   &lineContents,
 	}
 	screenLine := pager.renderLine(&numberedLine, pager.getLineNumberPrefixLength(numberedLine.number))
@@ -101,13 +101,13 @@ func TestSearchHighlight(t *testing.T) {
 	}
 
 	numberedLine := NumberedLine{
-		number: linenumbers.LineNumber{},
+		number: lines.Number{},
 		line:   &line,
 	}
 	rendered := pager.renderLine(&numberedLine, pager.getLineNumberPrefixLength(numberedLine.number))
 	assert.DeepEqual(t, []renderedLine{
 		{
-			inputLineNumber: linenumbers.LineNumber{},
+			inputLineNumber: lines.Number{},
 			wrapIndex:       0,
 			cells: []twin.StyledRune{
 				{Rune: 'x', Style: twin.StyleDefault},
@@ -119,7 +119,7 @@ func TestSearchHighlight(t *testing.T) {
 	}, rendered,
 		cmp.AllowUnexported(twin.Style{}),
 		cmp.AllowUnexported(renderedLine{}),
-		cmp.AllowUnexported(linenumbers.LineNumber{}),
+		cmp.AllowUnexported(lines.Number{}),
 	)
 }
 
@@ -134,7 +134,7 @@ func TestOverflowDown(t *testing.T) {
 		reader: NewReaderFromText("test", "hej"),
 
 		// This value can be anything and should be clipped, that's what we're testing
-		scrollPosition: *scrollPositionFromLineNumber("TestOverflowDown", linenumbers.LineNumberFromOneBased(42)),
+		scrollPosition: *scrollPositionFromLineNumber("TestOverflowDown", lines.LineNumberFromOneBased(42)),
 	}
 
 	rendered, statusText := pager.renderScreenLines()

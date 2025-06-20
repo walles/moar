@@ -15,7 +15,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/walles/moar/m/linenumbers"
+	"github.com/walles/moar/m/lines"
 
 	"github.com/alecthomas/chroma/v2"
 	"github.com/alecthomas/chroma/v2/lexers"
@@ -88,7 +88,7 @@ type InputLines struct {
 	lines []*NumberedLine
 
 	// Line number of the first line returned
-	firstLine linenumbers.LineNumber
+	firstLine lines.Index
 
 	// "monkey.txt: 1-23/45 51%"
 	statusText string
@@ -657,7 +657,7 @@ func highlightFromMemory(reader *Reader, formatter chroma.Formatter, options Rea
 }
 
 // createStatusUnlocked() assumes that its caller is holding the lock
-func (reader *Reader) createStatusUnlocked(lastLine linenumbers.LineNumber) string {
+func (reader *Reader) createStatusUnlocked(lastLine lines.Index) string {
 	prefix := ""
 	if reader.name != nil {
 		prefix = filepath.Base(*reader.name) + ": "
@@ -671,11 +671,11 @@ func (reader *Reader) createStatusUnlocked(lastLine linenumbers.LineNumber) stri
 		return prefix + "1 line  100%"
 	}
 
-	percent := int(100 * float64(lastLine.AsOneBased()) / float64(len(reader.lines)))
+	percent := int(100 * float64(lastLine.Index()+1) / float64(len(reader.lines)))
 
 	return fmt.Sprintf("%s%s lines  %d%%",
 		prefix,
-		linenumbers.LineNumberFromLength(len(reader.lines)).Format(),
+		lines.LineIndexFromLength(len(reader.lines)).Format(),
 		percent)
 }
 
@@ -696,7 +696,7 @@ func (reader *Reader) GetLineCount() int {
 }
 
 // GetLine gets a line. If the requested line number is out of bounds, nil is returned.
-func (reader *Reader) GetLine(lineNumber linenumbers.LineNumber) *NumberedLine {
+func (reader *Reader) GetLine(lineNumber lines.Number) *NumberedLine {
 	reader.Lock()
 	defer reader.Unlock()
 
@@ -709,13 +709,13 @@ func (reader *Reader) GetLine(lineNumber linenumbers.LineNumber) *NumberedLine {
 // GetLines gets the indicated lines from the input
 //
 //revive:disable-next-line:unexported-return
-func (reader *Reader) GetLines(firstLine linenumbers.LineNumber, wantedLineCount int) *InputLines {
+func (reader *Reader) GetLines(firstLine lines.Index, wantedLineCount int) *InputLines {
 	reader.Lock()
 	defer reader.Unlock()
 	return reader.getLinesUnlocked(firstLine, wantedLineCount)
 }
 
-func (reader *Reader) getLinesUnlocked(firstLine linenumbers.LineNumber, wantedLineCount int) *InputLines {
+func (reader *Reader) getLinesUnlocked(firstLine lines.Index, wantedLineCount int) *InputLines {
 	if len(reader.lines) == 0 || wantedLineCount == 0 {
 		return &InputLines{
 			lines:      nil,
@@ -727,7 +727,7 @@ func (reader *Reader) getLinesUnlocked(firstLine linenumbers.LineNumber, wantedL
 	lastLine := firstLine.NonWrappingAdd(wantedLineCount - 1)
 
 	// Prevent reading past the end of the available lines
-	maxLineNumber := *linenumbers.LineNumberFromLength(len(reader.lines))
+	maxLineNumber := *lines.LineNumberFromLength(len(reader.lines))
 	if lastLine.IsAfter(maxLineNumber) {
 		lastLine = maxLineNumber
 
@@ -757,7 +757,7 @@ func (reader *Reader) getLinesUnlocked(firstLine linenumbers.LineNumber, wantedL
 
 func (reader *Reader) PumpToStdout() {
 	const wantedLineCount = 100
-	firstNotPrintedLine := linenumbers.LineNumberFromOneBased(1)
+	firstNotPrintedLine := lines.LineNumberFromOneBased(1)
 
 	drainLines := func() bool {
 		lines := reader.GetLines(firstNotPrintedLine, wantedLineCount)
