@@ -583,7 +583,7 @@ func TestPageSamples(t *testing.T) {
 			pager.StartPaging(screen, nil, nil)
 			pager.redraw("")
 
-			firstReaderLine := myReader.GetLine(linemetadata.Number{})
+			firstReaderLine := myReader.GetLine(linemetadata.Index{})
 			if firstReaderLine == nil {
 				return
 			}
