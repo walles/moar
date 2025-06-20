@@ -5,6 +5,7 @@ import (
 	"math"
 )
 
+// This represents a line number in an input stream
 type LineNumber struct {
 	number int
 }
