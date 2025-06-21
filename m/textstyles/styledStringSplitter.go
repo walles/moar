@@ -14,7 +14,7 @@ const esc = '\x1b'
 
 type styledStringSplitter struct {
 	input          string
-	lineNumber     *linemetadata.Number
+	lineIndex      *linemetadata.Index
 	plainTextStyle twin.Style
 
 	nextByteIndex     int
@@ -30,7 +30,7 @@ type styledStringSplitter struct {
 }
 
 // Returns the style of the line's trailer
-func styledStringsFromString(plainTextStyle twin.Style, s string, lineNumber *linemetadata.Number, callback func(string, twin.Style)) twin.Style {
+func styledStringsFromString(plainTextStyle twin.Style, s string, lineIndex *linemetadata.Index, callback func(string, twin.Style)) twin.Style {
 	if !strings.ContainsAny(s, "\x1b") {
 		// This shortcut makes BenchmarkPlainTextSearch() perform a lot better
 		callback(s, plainTextStyle)
@@ -39,7 +39,7 @@ func styledStringsFromString(plainTextStyle twin.Style, s string, lineNumber *li
 
 	splitter := styledStringSplitter{
 		input:           s,
-		lineNumber:      lineNumber,
+		lineIndex:       lineIndex,
 		plainTextStyle:  plainTextStyle, // How plain text should be styled
 		inProgressStyle: plainTextStyle, // Plain text style until something else comes along
 		callback:        callback,
@@ -85,8 +85,8 @@ func (s *styledStringSplitter) run() {
 			err := s.handleEscape()
 			if err != nil {
 				header := ""
-				if s.lineNumber != nil {
-					header = fmt.Sprintf("Line %s: ", s.lineNumber.Format())
+				if s.lineIndex != nil {
+					header = fmt.Sprintf("Line %s: ", s.lineIndex.Format())
 				}
 
 				failed := s.input[escIndex:s.nextByteIndex]

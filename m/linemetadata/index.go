@@ -59,6 +59,7 @@ func (i Index) NonWrappingAdd(offset int) Index {
 	return Index{index: i.index + offset}
 }
 
+// First line will be formatted as "1".
 func (i Index) Format() string {
 	return formatInt(i.index + 1)
 }

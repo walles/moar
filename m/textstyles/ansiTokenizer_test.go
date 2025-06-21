@@ -66,24 +66,24 @@ func TestTokenize(t *testing.T) {
 			// tests go faster
 			fileScanner.Buffer(make([]byte, 1024*1024), 1024*1024)
 
-			var lineNumber *linemetadata.Number
+			var lineIndex *linemetadata.Index
 			for fileScanner.Scan() {
 				line := fileScanner.Text()
-				if lineNumber == nil {
-					lineNumber = &linemetadata.Number{}
+				if lineIndex == nil {
+					lineIndex = &linemetadata.Index{}
 				} else {
-					next := lineNumber.NonWrappingAdd(1)
-					lineNumber = &next
+					next := lineIndex.NonWrappingAdd(1)
+					lineIndex = &next
 				}
 
 				var loglines strings.Builder
 				log.SetOutput(&loglines)
 
-				tokens := StyledRunesFromString(twin.StyleDefault, line, lineNumber).StyledRunes
-				plainString := WithoutFormatting(twin.StyleDefault, line, lineNumber)
+				tokens := StyledRunesFromString(twin.StyleDefault, line, lineIndex).StyledRunes
+				plainString := WithoutFormatting(twin.StyleDefault, line, lineIndex)
 				if len(tokens) != utf8.RuneCountInString(plainString) {
 					t.Errorf("%s:%s: len(tokens)=%d, len(plainString)=%d for: <%s>",
-						fileName, lineNumber.Format(),
+						fileName, lineIndex.Format(),
 						len(tokens), utf8.RuneCountInString(plainString), line)
 					continue
 				}
@@ -112,8 +112,8 @@ func TestTokenize(t *testing.T) {
 					if !twin.Printable(plainChar) {
 						plainCharString = fmt.Sprint(int(plainChar))
 					}
-					t.Errorf("%s:%d, 0-based column %d: cell char <%s> != plain char <%s>:\nPlain: %s\nCells: %s\n       %s",
-						fileName, lineNumber, index,
+					t.Errorf("%s:%s, 0-based column %d: cell char <%s> != plain char <%s>:\nPlain: %s\nCells: %s\n       %s",
+						fileName, lineIndex.Format(), index,
 						cellCharString, plainCharString,
 						plainString,
 						plainStringFromCells,
