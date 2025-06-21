@@ -727,8 +727,6 @@ func (reader *ReaderImpl) GetLines(firstLine linemetadata.Index, wantedLineCount
 func (reader *ReaderImpl) getLinesUnlocked(firstLine linemetadata.Index, wantedLineCount int) *InputLines {
 	if len(reader.lines) == 0 || wantedLineCount == 0 {
 		return &InputLines{
-			lines:      nil,
-			firstLine:  firstLine,
 			statusText: reader.createStatusUnlocked(firstLine),
 		}
 	}
