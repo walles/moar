@@ -215,13 +215,13 @@ func (sp scrollPosition) isVisible(pager *Pager) bool {
 		panic(fmt.Errorf("Negative incoming deltaScreenLines: %#v", sp.internalDontTouch))
 	}
 
-	if sp.internalDontTouch.lineIndex.IsBefore(*pager.lineNumber()) {
+	if sp.internalDontTouch.lineIndex.IsBefore(*pager.lineIndex()) {
 		// Line number too low, not visible
 		return false
 	}
 
 	lastVisiblePosition := pager.getLastVisiblePosition()
-	if sp.internalDontTouch.lineIndex.IsAfter(*lastVisiblePosition.lineNumber(pager)) {
+	if sp.internalDontTouch.lineIndex.IsAfter(*lastVisiblePosition.lineIndex(pager)) {
 		// Line number too high, not visible
 		return false
 	}
@@ -289,13 +289,13 @@ func scrollPositionFromIndex(name string, index linemetadata.Index) *scrollPosit
 }
 
 // Line index in the input stream, or nil if nothing has been read
-func (p *Pager) lineNumber() *linemetadata.Index {
+func (p *Pager) lineIndex() *linemetadata.Index {
 	p.scrollPosition.internalDontTouch.canonicalize(p)
 	return p.scrollPosition.internalDontTouch.lineIndex
 }
 
 // Line index in the input stream, or nil if nothing has been read
-func (sp *scrollPosition) lineNumber(pager *Pager) *linemetadata.Index {
+func (sp *scrollPosition) lineIndex(pager *Pager) *linemetadata.Index {
 	sp.internalDontTouch.canonicalize(pager)
 	return sp.internalDontTouch.lineIndex
 }

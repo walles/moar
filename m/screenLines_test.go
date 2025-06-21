@@ -86,7 +86,7 @@ func TestEmpty(t *testing.T) {
 	rendered, statusText := pager.renderScreenLines()
 	assert.Equal(t, len(rendered), 0)
 	assert.Equal(t, "test: <empty>", statusText)
-	assert.Assert(t, pager.lineNumber() == nil)
+	assert.Assert(t, pager.lineIndex() == nil)
 }
 
 // Repro case for a search bug discovered in v1.9.8.
@@ -141,7 +141,7 @@ func TestOverflowDown(t *testing.T) {
 	assert.Equal(t, len(rendered), 1)
 	assert.Equal(t, "hej", rowToString(rendered[0]))
 	assert.Equal(t, "test: 1 line  100%", statusText)
-	assert.Assert(t, pager.lineNumber().IsZero())
+	assert.Assert(t, pager.lineIndex().IsZero())
 	assert.Equal(t, pager.deltaScreenLines(), 0)
 }
 
@@ -162,7 +162,7 @@ func TestOverflowUp(t *testing.T) {
 	assert.Equal(t, len(rendered), 1)
 	assert.Equal(t, "hej", rowToString(rendered[0]))
 	assert.Equal(t, "test: 1 line  100%", statusText)
-	assert.Assert(t, pager.lineNumber().IsZero())
+	assert.Assert(t, pager.lineIndex().IsZero())
 	assert.Equal(t, pager.deltaScreenLines(), 0)
 }
 
