@@ -17,7 +17,7 @@ func (p *Pager) scrollToSearchHits() {
 		return
 	}
 
-	lineNumber := p.scrollPosition.lineNumber(p)
+	lineNumber := p.scrollPosition.lineIndex(p)
 	if lineNumber == nil {
 		// No lines to search
 		return
@@ -61,7 +61,7 @@ func (p *Pager) scrollToSearchHitsBackwards() {
 		// No lines to search
 		return
 	}
-	lineNumber := lastVisiblePosition.lineNumber(p)
+	lineNumber := lastVisiblePosition.lineIndex(p)
 	if lineNumber == nil {
 		log.Warn("No line number to search even though we have a last visible position")
 		return
@@ -277,7 +277,7 @@ func (p *Pager) scrollToNextSearchHit() {
 	case p.isViewing():
 		// Start searching on the first line below the bottom of the screen
 		position := p.getLastVisiblePosition().NextLine(1)
-		firstSearchPosition = *position.lineNumber(p)
+		firstSearchPosition = *position.lineIndex(p)
 
 	case p.isNotFound():
 		// Restart searching from the top
@@ -316,7 +316,7 @@ func (p *Pager) scrollToPreviousSearchHit() {
 	case p.isViewing():
 		// Start searching on the first line above the top of the screen
 		position := p.scrollPosition.PreviousLine(1)
-		firstSearchPosition = *position.lineNumber(p)
+		firstSearchPosition = *position.lineIndex(p)
 
 	case p.isNotFound():
 		// Restart searching from the bottom

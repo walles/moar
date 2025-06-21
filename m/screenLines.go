@@ -147,18 +147,16 @@ func (p *Pager) renderLines() ([]renderedLine, string) {
 	// Find which index in allLines the user wants to see at the top of the
 	// screen
 	firstVisibleIndex := -1 // Not found
-	currentLineNumber := inputLines.firstLine
 	for index, line := range allLines {
-		if p.lineNumber() == nil {
+		if p.lineIndex() == nil {
 			// Expected zero lines but got some anyway, grab the first one!
 			firstVisibleIndex = index
 			break
 		}
-		if currentLineNumber == *p.lineNumber() && line.wrapIndex == p.deltaScreenLines() {
+		if line.inputLineIndex == *p.lineIndex() && line.wrapIndex == p.deltaScreenLines() {
 			firstVisibleIndex = index
 			break
 		}
-		currentLineNumber = currentLineNumber.NonWrappingAdd(1)
 	}
 	if firstVisibleIndex == -1 {
 		panic(fmt.Errorf("scrollPosition %#v not found in allLines size %d",
