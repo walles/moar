@@ -433,7 +433,7 @@ func (p *Pager) StartPaging(screen twin.Screen, chromaStyle *chroma.Style, chrom
 					p.scrollToEnd()
 				} else {
 					// We see the target, scroll to it
-					p.scrollPosition = NewScrollPositionFromLineNumber(*p.TargetLineNumber, "goToTargetLineNumber")
+					p.scrollPosition = NewScrollPositionFromIndex(*p.TargetLineNumber, "goToTargetLineNumber")
 					p.TargetLineNumber = nil
 				}
 			}

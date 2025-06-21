@@ -134,7 +134,7 @@ func TestOverflowDown(t *testing.T) {
 		reader: NewReaderFromText("test", "hej"),
 
 		// This value can be anything and should be clipped, that's what we're testing
-		scrollPosition: *scrollPositionFromLineNumber("TestOverflowDown", linemetadata.IndexFromOneBased(42)),
+		scrollPosition: *scrollPositionFromIndex("TestOverflowDown", linemetadata.IndexFromOneBased(42)),
 	}
 
 	rendered, statusText := pager.renderScreenLines()

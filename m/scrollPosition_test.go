@@ -21,7 +21,7 @@ func testCanonicalize1000(t *testing.T, withStatusBar bool, currentStartLine lin
 	pager.ShowStatusBar = withStatusBar
 	pager.scrollPosition = scrollPosition{
 		internalDontTouch: scrollPositionInternal{
-			lineNumber:       &currentStartLine,
+			lineIndex:        &currentStartLine,
 			deltaScreenLines: 0,
 			name:             "findFirstHit",
 			canonicalizing:   false,
@@ -30,7 +30,7 @@ func testCanonicalize1000(t *testing.T, withStatusBar bool, currentStartLine lin
 
 	lastVisiblePosition := scrollPosition{
 		internalDontTouch: scrollPositionInternal{
-			lineNumber:       &lastVisibleLine,
+			lineIndex:        &lastVisibleLine,
 			deltaScreenLines: 0,
 			name:             "Last Visible Position",
 		},
