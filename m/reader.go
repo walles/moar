@@ -710,7 +710,7 @@ func (reader *Reader) GetLine(index linemetadata.Index) *NumberedLine {
 	reader.Lock()
 	defer reader.Unlock()
 
-	if index.IsWithinLength(len(reader.lines)) {
+	if !index.IsWithinLength(len(reader.lines)) {
 		return nil
 	}
 	return &NumberedLine{
