@@ -19,7 +19,7 @@ import (
 
 const samplesDir = "../sample-files"
 
-func testGetLineCount(t *testing.T, reader *Reader) {
+func testGetLineCount(t *testing.T, reader *ReaderImpl) {
 	if strings.Contains(*reader.name, "compressed") {
 		// We are no good at counting lines of compressed files, never mind
 		return
@@ -55,7 +55,7 @@ func testGetLineCount(t *testing.T, reader *Reader) {
 	}
 }
 
-func testGetLines(t *testing.T, reader *Reader) {
+func testGetLines(t *testing.T, reader *ReaderImpl) {
 	lines := reader.GetLines(linemetadata.Index{}, 10)
 	if len(lines.lines) > 10 {
 		t.Errorf("Asked for 10 lines, got too many: %d", len(lines.lines))
@@ -125,7 +125,7 @@ func getTestFiles(t *testing.T) []string {
 }
 
 // Wait for reader to finish reading and highlighting. Used by tests.
-func (reader *Reader) _wait() error {
+func (reader *ReaderImpl) _wait() error {
 	// Wait for our goroutine to finish
 	//revive:disable-next-line:empty-block
 	for !reader.done.Load() {
@@ -221,7 +221,7 @@ func TestGetLongLine(t *testing.T) {
 	assert.Equal(t, len(line.Plain()), 100021)
 }
 
-func getReaderWithLineCount(totalLines int) *Reader {
+func getReaderWithLineCount(totalLines int) *ReaderImpl {
 	return NewReaderFromText("", strings.Repeat("x\n", totalLines))
 }
 

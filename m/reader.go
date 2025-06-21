@@ -39,13 +39,19 @@ type ReaderOptions struct {
 	Lexer chroma.Lexer
 }
 
-// Reader reads a file into an array of strings.
+type Reader interface {
+	GetLineCount() int
+	GetLine(index linemetadata.Index) *NumberedLine
+	GetLines(firstLine linemetadata.Index, wantedLineCount int) *InputLines
+}
+
+// ReaderImpl reads a file into an array of strings.
 //
 // It does the reading in the background, and it returns parts of the read data
 // upon request.
 //
 // This package provides query methods for the struct, no peeking!!
-type Reader struct {
+type ReaderImpl struct {
 	sync.Mutex
 
 	lines []*Line
@@ -98,7 +104,7 @@ type InputLines struct {
 // performance improvement:
 //
 // go test -benchmem -benchtime=10s -run='^$' -bench 'ReadLargeFile'
-func (reader *Reader) preAllocLines() {
+func (reader *ReaderImpl) preAllocLines() {
 	if reader.fileName == nil {
 		return
 	}
@@ -128,7 +134,7 @@ func (reader *Reader) preAllocLines() {
 	reader.lines = make([]*Line, 0, lineCount)
 }
 
-func (reader *Reader) readStream(stream io.Reader, formatter chroma.Formatter, options ReaderOptions) {
+func (reader *ReaderImpl) readStream(stream io.Reader, formatter chroma.Formatter, options ReaderOptions) {
 	reader.consumeLinesFromStream(stream)
 
 	t0 := time.Now()
@@ -153,7 +159,7 @@ func (reader *Reader) readStream(stream io.Reader, formatter chroma.Formatter, o
 
 // This function will update the Reader struct. It is expected to run in a
 // goroutine.
-func (reader *Reader) consumeLinesFromStream(stream io.Reader) {
+func (reader *ReaderImpl) consumeLinesFromStream(stream io.Reader) {
 	reader.preAllocLines()
 
 	inspectionReader := inspectionReader{base: stream}
@@ -249,7 +255,7 @@ func (reader *Reader) consumeLinesFromStream(stream io.Reader) {
 	log.Info("Stream read in ", time.Since(t0))
 }
 
-func (reader *Reader) tailFile() error {
+func (reader *ReaderImpl) tailFile() error {
 	reader.Lock()
 	fileName := reader.fileName
 	reader.Unlock()
@@ -334,7 +340,7 @@ func (reader *Reader) tailFile() error {
 //
 // Note that you must call reader.SetStyleForHighlighting() after this to get
 // highlighting.
-func NewReaderFromStream(name string, reader io.Reader, formatter chroma.Formatter, options ReaderOptions) (*Reader, error) {
+func NewReaderFromStream(name string, reader io.Reader, formatter chroma.Formatter, options ReaderOptions) (*ReaderImpl, error) {
 	zReader, err := ZReader(reader)
 	if err != nil {
 		return nil, err
@@ -372,12 +378,12 @@ func NewReaderFromStream(name string, reader io.Reader, formatter chroma.Formatt
 //
 // Note that you must call reader.SetStyleForHighlighting() after this to get
 // highlighting.
-func newReaderFromStream(reader io.Reader, originalFileName *string, formatter chroma.Formatter, options ReaderOptions) *Reader {
+func newReaderFromStream(reader io.Reader, originalFileName *string, formatter chroma.Formatter, options ReaderOptions) *ReaderImpl {
 	done := atomic.Bool{}
 	done.Store(false)
 	highlightingDone := atomic.Bool{}
 	highlightingDone.Store(false)
-	returnMe := Reader{
+	returnMe := ReaderImpl{
 		// This needs to be size 1. If it would be 0, and we add more
 		// lines while the pager is processing, the pager would miss
 		// the lines added while it was processing.
@@ -409,7 +415,7 @@ func newReaderFromStream(reader io.Reader, originalFileName *string, formatter c
 //
 // Calling _wait() on this Reader will always return immediately, no
 // asynchronous ops will be performed.
-func NewReaderFromText(name string, text string) *Reader {
+func NewReaderFromText(name string, text string) *ReaderImpl {
 	noExternalNewlines := strings.Trim(text, "\n")
 	lines := []*Line{}
 	if len(noExternalNewlines) > 0 {
@@ -422,7 +428,7 @@ func NewReaderFromText(name string, text string) *Reader {
 	done.Store(true)
 	highlightingDone := atomic.Bool{}
 	highlightingDone.Store(true) // No highlighting to do = nothing left = Done!
-	returnMe := &Reader{
+	returnMe := &ReaderImpl{
 		lines:                   lines,
 		done:                    &done,
 		highlightingDone:        &highlightingDone,
@@ -521,7 +527,7 @@ func countLines(filename string) (uint64, error) {
 // The Reader will try to uncompress various compressed file format, and also
 // apply highlighting to the file using Chroma:
 // https://github.com/alecthomas/chroma
-func NewReaderFromFilename(filename string, formatter chroma.Formatter, options ReaderOptions) (*Reader, error) {
+func NewReaderFromFilename(filename string, formatter chroma.Formatter, options ReaderOptions) (*ReaderImpl, error) {
 	fileError := tryOpen(filename)
 	if fileError != nil {
 		return nil, fileError
@@ -549,7 +555,7 @@ func NewReaderFromFilename(filename string, formatter chroma.Formatter, options 
 	return returnMe, nil
 }
 
-func textAsString(reader *Reader, shouldFormat bool) string {
+func textAsString(reader *ReaderImpl, shouldFormat bool) string {
 	reader.Lock()
 
 	text := strings.Builder{}
@@ -589,7 +595,7 @@ func isXml(text string) bool {
 }
 
 // We expect this to be executed in a goroutine
-func highlightFromMemory(reader *Reader, formatter chroma.Formatter, options ReaderOptions) {
+func highlightFromMemory(reader *ReaderImpl, formatter chroma.Formatter, options ReaderOptions) {
 	defer func() {
 		reader.highlightingDone.Store(true)
 		select {
@@ -657,7 +663,7 @@ func highlightFromMemory(reader *Reader, formatter chroma.Formatter, options Rea
 }
 
 // createStatusUnlocked() assumes that its caller is holding the lock
-func (reader *Reader) createStatusUnlocked(lastLine linemetadata.Index) string {
+func (reader *ReaderImpl) createStatusUnlocked(lastLine linemetadata.Index) string {
 	prefix := ""
 	if reader.name != nil {
 		prefix = filepath.Base(*reader.name) + ": "
@@ -683,12 +689,12 @@ func (reader *Reader) createStatusUnlocked(lastLine linemetadata.Index) string {
 //
 // Used for making sudo work:
 // https://github.com/walles/moar/issues/199
-func (reader *Reader) AwaitFirstByte() {
+func (reader *ReaderImpl) AwaitFirstByte() {
 	<-reader.doneWaitingForFirstByte
 }
 
 // GetLineCount returns the number of lines available for viewing
-func (reader *Reader) GetLineCount() int {
+func (reader *ReaderImpl) GetLineCount() int {
 	reader.Lock()
 	defer reader.Unlock()
 
@@ -696,7 +702,7 @@ func (reader *Reader) GetLineCount() int {
 }
 
 // GetLine gets a line. If the requested line number is out of bounds, nil is returned.
-func (reader *Reader) GetLine(index linemetadata.Index) *NumberedLine {
+func (reader *ReaderImpl) GetLine(index linemetadata.Index) *NumberedLine {
 	reader.Lock()
 	defer reader.Unlock()
 
@@ -712,13 +718,13 @@ func (reader *Reader) GetLine(index linemetadata.Index) *NumberedLine {
 // GetLines gets the indicated lines from the input
 //
 //revive:disable-next-line:unexported-return
-func (reader *Reader) GetLines(firstLine linemetadata.Index, wantedLineCount int) *InputLines {
+func (reader *ReaderImpl) GetLines(firstLine linemetadata.Index, wantedLineCount int) *InputLines {
 	reader.Lock()
 	defer reader.Unlock()
 	return reader.getLinesUnlocked(firstLine, wantedLineCount)
 }
 
-func (reader *Reader) getLinesUnlocked(firstLine linemetadata.Index, wantedLineCount int) *InputLines {
+func (reader *ReaderImpl) getLinesUnlocked(firstLine linemetadata.Index, wantedLineCount int) *InputLines {
 	if len(reader.lines) == 0 || wantedLineCount == 0 {
 		return &InputLines{
 			lines:      nil,
@@ -758,7 +764,7 @@ func (reader *Reader) getLinesUnlocked(firstLine linemetadata.Index, wantedLineC
 	}
 }
 
-func (reader *Reader) PumpToStdout() {
+func (reader *ReaderImpl) PumpToStdout() {
 	const wantedLineCount = 100
 	firstNotPrintedLine := linemetadata.Index{}
 
@@ -804,7 +810,7 @@ func (reader *Reader) PumpToStdout() {
 }
 
 // Replace reader contents with the given text and mark as done
-func (reader *Reader) setText(text string) {
+func (reader *ReaderImpl) setText(text string) {
 	lines := []*Line{}
 	for _, lineString := range strings.Split(text, "\n") {
 		line := NewLine(lineString)
@@ -834,6 +840,6 @@ func (reader *Reader) setText(text string) {
 	}
 }
 
-func (reader *Reader) SetStyleForHighlighting(style chroma.Style) {
+func (reader *ReaderImpl) SetStyleForHighlighting(style chroma.Style) {
 	reader.highlightingStyle <- style
 }

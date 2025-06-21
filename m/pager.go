@@ -42,7 +42,7 @@ type eventMaybeDone struct{}
 
 // Pager is the main on-screen pager
 type Pager struct {
-	reader              *Reader
+	reader              *ReaderImpl
 	screen              twin.Screen
 	quit                bool
 	scrollPosition      scrollPosition
@@ -103,7 +103,7 @@ type Pager struct {
 }
 
 type _PreHelpState struct {
-	reader              *Reader
+	reader              *ReaderImpl
 	scrollPosition      scrollPosition
 	leftColumnZeroBased int
 	targetLineNumber    *linemetadata.Index
@@ -163,7 +163,7 @@ Available at https://github.com/walles/moar/.
 `)
 
 // NewPager creates a new Pager with default settings
-func NewPager(r *Reader) *Pager {
+func NewPager(r *ReaderImpl) *Pager {
 	var name string
 	if r == nil || r.name == nil || len(*r.name) == 0 {
 		name = "Pager"
@@ -272,6 +272,11 @@ func (p *Pager) moveRight(delta int) {
 	if p.leftColumnZeroBased > p.longestLineLength {
 		p.leftColumnZeroBased = p.longestLineLength
 	}
+}
+
+func (p *Pager) Reader() Reader {
+	// FIXME: Return a filtering reader here if we are filtering!
+	return p.reader
 }
 
 func (p *Pager) handleScrolledUp() {
@@ -454,7 +459,7 @@ func (p *Pager) StartPaging(screen twin.Screen, chromaStyle *chroma.Style, chrom
 	}
 }
 
-func fitsOnOneScreen(reader *Reader, width int, height int) bool {
+func fitsOnOneScreen(reader *ReaderImpl, width int, height int) bool {
 	// One extra line to account for the status bar
 	extraLines := 1
 	if reader.GetLineCount() > height-extraLines {
