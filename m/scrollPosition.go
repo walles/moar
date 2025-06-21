@@ -102,7 +102,7 @@ func (si *scrollPositionInternal) handleNegativeDeltaScreenLines(pager *Pager) {
 		// Render the previous line
 		previousLineNumber := si.lineNumber.NonWrappingAdd(-1)
 		previousLine := pager.reader.GetLine(previousLineNumber)
-		previousSubLines := pager.renderLine(previousLine, pager.getLineNumberPrefixLength(previousLineNumber))
+		previousSubLines := pager.renderLine(previousLine, si.getMaxNumberPrefixLength(pager))
 
 		// Adjust lineNumber and deltaScreenLines to move up into the previous
 		// screen line
@@ -140,7 +140,7 @@ func (si *scrollPositionInternal) handlePositiveDeltaScreenLines(pager *Pager) {
 			if line == nil {
 				panic(fmt.Errorf("Last line is nil"))
 			}
-			subLines := pager.renderLine(line, pager.getLineNumberPrefixLength(*si.lineNumber))
+			subLines := pager.renderLine(line, si.getMaxNumberPrefixLength(pager))
 
 			// ... and go to the bottom of that.
 			si.deltaScreenLines = len(subLines) - 1
@@ -383,4 +383,29 @@ func (p *Pager) getLastVisiblePosition() *scrollPosition {
 			deltaScreenLines: lastRenderedLine.wrapIndex,
 		},
 	}
+}
+
+func (si *scrollPositionInternal) getMaxNumberPrefixLength(pager *Pager) int {
+	maxPossibleIndex := *linemetadata.IndexFromLength(pager.reader.GetLineCount())
+
+	// This is an approximation assuming we don't do any wrapping. Finding the
+	// real answer while wrapping requires rendering, which requires the real
+	// answer and so on, so we do an approximation here to save us from
+	// recursion.
+	//
+	// Let's improve on demand.
+	var index linemetadata.Index
+	// Ref: https://github.com/walles/moar/issues/198
+	if si.lineNumber != nil {
+		index = *si.lineNumber
+	}
+	maxVisibleIndex := index.NonWrappingAdd(
+		si.deltaScreenLines +
+			pager.visibleHeight() - 1)
+	if maxVisibleIndex.IsAfter(maxPossibleIndex) {
+		maxVisibleIndex = maxPossibleIndex
+	}
+
+	// Count the length of the last line number
+	return pager.getLineNumberPrefixLength(linemetadata.NumberFromZeroBased(maxVisibleIndex.Index()))
 }
