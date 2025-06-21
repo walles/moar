@@ -350,11 +350,10 @@ func (p *Pager) isScrolledToEnd() bool {
 		return true
 	}
 	lastInputLineIndex := *linemetadata.IndexFromLength(inputLineCount)
-	lastInputLineNumber := linemetadata.NumberFromZeroBased(lastInputLineIndex.Index())
 
 	visibleLines, _ := p.renderLines()
 	lastVisibleLine := visibleLines[len(visibleLines)-1]
-	if lastVisibleLine.inputLineNumber != lastInputLineNumber {
+	if lastVisibleLine.inputLineIndex != lastInputLineIndex {
 		// Last input line is not on the screen
 		return false
 	}
@@ -362,6 +361,7 @@ func (p *Pager) isScrolledToEnd() bool {
 	// Last line is on screen, now we need to figure out whether we can see all
 	// of it
 	lastInputLine := p.reader.GetLine(lastInputLineIndex)
+	lastInputLineNumber := linemetadata.NumberFromZeroBased(lastInputLineIndex.Index())
 	lastInputLineRendered := p.renderLine(lastInputLine, p.getLineNumberPrefixLength(lastInputLineNumber))
 	lastRenderedSubLine := lastInputLineRendered[len(lastInputLineRendered)-1]
 
@@ -381,7 +381,7 @@ func (p *Pager) getLastVisiblePosition() *scrollPosition {
 	return &scrollPosition{
 		internalDontTouch: scrollPositionInternal{
 			name:             "Last Visible Position",
-			lineIndex:        &lastRenderedLine.inputLineNumber,
+			lineIndex:        &lastRenderedLine.inputLineIndex,
 			deltaScreenLines: lastRenderedLine.wrapIndex,
 		},
 	}

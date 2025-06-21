@@ -47,9 +47,10 @@ func (m PagerModeSearch) drawFooter(_ string, _ string) {
 func (m *PagerModeSearch) updateSearchPattern() {
 	m.pager.searchPattern = toPattern(m.pager.searchString)
 
-	if m.mode == SearchModeBackward {
+	switch m.mode {
+	case SearchModeBackward:
 		m.pager.scrollToSearchHitsBackwards()
-	} else if m.mode == SearchModeForward {
+	case SearchModeForward:
 		m.pager.scrollToSearchHits()
 	}
 }
