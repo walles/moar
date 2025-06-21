@@ -120,6 +120,7 @@ func TestSearchHighlight(t *testing.T) {
 		cmp.AllowUnexported(twin.Style{}),
 		cmp.AllowUnexported(renderedLine{}),
 		cmp.AllowUnexported(linemetadata.Number{}),
+		cmp.AllowUnexported(linemetadata.Index{}),
 	)
 }
 
