@@ -224,7 +224,7 @@ func (p *Pager) _findFirstHit(startPosition linemetadata.Index, beforePosition *
 
 		lineText := line.Plain()
 		if p.searchPattern.MatchString(lineText) {
-			return scrollPositionFromLineNumber("findFirstHit", searchPosition)
+			return scrollPositionFromIndex("findFirstHit", searchPosition)
 		}
 
 		if backwards {
