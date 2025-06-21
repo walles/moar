@@ -9,14 +9,14 @@ import (
 )
 
 type NumberedLine struct {
-	number linemetadata.Number
-	line   *Line
+	index linemetadata.Index
+	line  *Line
 }
 
 func (nl *NumberedLine) Plain() string {
-	return nl.line.Plain(&nl.number)
+	return nl.line.Plain(&nl.index)
 }
 
 func (nl *NumberedLine) HighlightedTokens(plainTextStyle twin.Style, search *regexp.Regexp) textstyles.StyledRunesWithTrailer {
-	return nl.line.HighlightedTokens(plainTextStyle, search, &nl.number)
+	return nl.line.HighlightedTokens(plainTextStyle, search, &nl.index)
 }

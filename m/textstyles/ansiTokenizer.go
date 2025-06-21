@@ -49,7 +49,7 @@ func isPlain(s string) bool {
 	return true
 }
 
-func WithoutFormatting(plainTextStyle twin.Style, s string, lineNumber *linemetadata.Number) string {
+func WithoutFormatting(plainTextStyle twin.Style, s string, lineIndex *linemetadata.Index) string {
 	if isPlain(s) {
 		return s
 	}
@@ -62,7 +62,7 @@ func WithoutFormatting(plainTextStyle twin.Style, s string, lineNumber *linemeta
 	// runes.
 	stripped.Grow(len(s) * 2)
 
-	styledStringsFromString(plainTextStyle, s, lineNumber, func(str string, style twin.Style) {
+	styledStringsFromString(plainTextStyle, s, lineIndex, func(str string, style twin.Style) {
 		for _, runeValue := range runesFromStyledString(_StyledString{String: str, Style: style}) {
 			switch runeValue {
 
@@ -78,11 +78,12 @@ func WithoutFormatting(plainTextStyle twin.Style, s string, lineNumber *linemeta
 				}
 
 			case '�': // Go's broken-UTF8 marker
-				if UnprintableStyle == UnprintableStyleHighlight {
+				switch UnprintableStyle {
+				case UnprintableStyleHighlight:
 					stripped.WriteRune('?')
-				} else if UnprintableStyle == UnprintableStyleWhitespace {
+				case UnprintableStyleWhitespace:
 					stripped.WriteRune(' ')
-				} else {
+				default:
 					panic(fmt.Errorf("Unsupported unprintable-style: %#v", UnprintableStyle))
 				}
 				runeCount++
@@ -108,9 +109,9 @@ func WithoutFormatting(plainTextStyle twin.Style, s string, lineNumber *linemeta
 
 // Turn a (formatted) string into a series of screen cells
 //
-// The prefix will be prepended to the string before parsing. The lineNumber is
+// The prefix will be prepended to the string before parsing. The lineIndex is
 // used for error reporting.
-func StyledRunesFromString(plainTextStyle twin.Style, s string, lineNumber *linemetadata.Number) StyledRunesWithTrailer {
+func StyledRunesFromString(plainTextStyle twin.Style, s string, lineIndex *linemetadata.Index) StyledRunesWithTrailer {
 	manPageHeading := manPageHeadingFromString(s)
 	if manPageHeading != nil {
 		return *manPageHeading
@@ -121,7 +122,7 @@ func StyledRunesFromString(plainTextStyle twin.Style, s string, lineNumber *line
 	// Specs: https://en.wikipedia.org/wiki/ANSI_escape_code#3-bit_and_4-bit
 	styleUnprintable := twin.StyleDefault.WithBackground(twin.NewColor16(1)).WithForeground(twin.NewColor16(7))
 
-	trailer := styledStringsFromString(plainTextStyle, s, lineNumber, func(str string, style twin.Style) {
+	trailer := styledStringsFromString(plainTextStyle, s, lineIndex, func(str string, style twin.Style) {
 		for _, token := range tokensFromStyledString(_StyledString{String: str, Style: style}) {
 			switch token.Rune {
 
@@ -139,17 +140,18 @@ func StyledRunesFromString(plainTextStyle twin.Style, s string, lineNumber *line
 				}
 
 			case '�': // Go's broken-UTF8 marker
-				if UnprintableStyle == UnprintableStyleHighlight {
+				switch UnprintableStyle {
+				case UnprintableStyleHighlight:
 					cells = append(cells, twin.StyledRune{
 						Rune:  '?',
 						Style: styleUnprintable,
 					})
-				} else if UnprintableStyle == UnprintableStyleWhitespace {
+				case UnprintableStyleWhitespace:
 					cells = append(cells, twin.StyledRune{
 						Rune:  '?',
 						Style: twin.StyleDefault,
 					})
-				} else {
+				default:
 					panic(fmt.Errorf("Unsupported unprintable-style: %#v", UnprintableStyle))
 				}
 
@@ -161,17 +163,18 @@ func StyledRunesFromString(plainTextStyle twin.Style, s string, lineNumber *line
 
 			default:
 				if !twin.Printable(token.Rune) {
-					if UnprintableStyle == UnprintableStyleHighlight {
+					switch UnprintableStyle {
+					case UnprintableStyleHighlight:
 						cells = append(cells, twin.StyledRune{
 							Rune:  '?',
 							Style: styleUnprintable,
 						})
-					} else if UnprintableStyle == UnprintableStyleWhitespace {
+					case UnprintableStyleWhitespace:
 						cells = append(cells, twin.StyledRune{
 							Rune:  ' ',
 							Style: twin.StyleDefault,
 						})
-					} else {
+					default:
 						panic(fmt.Errorf("Unsupported unprintable-style: %#v", UnprintableStyle))
 					}
 					continue

@@ -109,7 +109,8 @@ func (p *Pager) renderLines() ([]renderedLine, string) {
 		return []renderedLine{}, inputLines.statusText
 	}
 
-	lastVisibleLineNumber := inputLines.lines[len(inputLines.lines)-1].number
+	lastVisibleLineIndex := inputLines.lines[len(inputLines.lines)-1].index
+	lastVisibleLineNumber := linemetadata.NumberFromZeroBased(lastVisibleLineIndex.Index())
 	numberPrefixLength := p.getLineNumberPrefixLength(lastVisibleLineNumber)
 
 	allLines := make([]renderedLine, 0)
@@ -191,7 +192,8 @@ func (p *Pager) renderLine(line *NumberedLine, numberPrefixLength int) []rendere
 
 	rendered := make([]renderedLine, 0)
 	for wrapIndex, inputLinePart := range wrapped {
-		visibleLineNumber := &line.number
+		lineNumber := linemetadata.NumberFromZeroBased(line.index.Index())
+		visibleLineNumber := &lineNumber
 		if wrapIndex > 0 {
 			visibleLineNumber = nil
 		}
@@ -199,7 +201,7 @@ func (p *Pager) renderLine(line *NumberedLine, numberPrefixLength int) []rendere
 		decorated := p.decorateLine(visibleLineNumber, numberPrefixLength, inputLinePart)
 
 		rendered = append(rendered, renderedLine{
-			inputLineNumber: line.number,
+			inputLineNumber: lineNumber,
 			wrapIndex:       wrapIndex,
 			cells:           decorated,
 		})

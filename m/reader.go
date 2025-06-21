@@ -704,8 +704,8 @@ func (reader *Reader) GetLine(index linemetadata.Index) *NumberedLine {
 		return nil
 	}
 	return &NumberedLine{
-		number: linemetadata.NumberFromZeroBased(index.Index()),
-		line:   reader.lines[index.Index()],
+		index: index,
+		line:  reader.lines[index.Index()],
 	}
 }
 
@@ -743,11 +743,11 @@ func (reader *Reader) getLinesUnlocked(firstLine linemetadata.Index, wantedLineC
 
 	notNumberedReturnLines := reader.lines[firstLine.Index() : lastLine.Index()+1]
 	returnLines := make([]*NumberedLine, 0, len(notNumberedReturnLines))
-	for index, line := range notNumberedReturnLines {
-		lineNumber := linemetadata.NumberFromZeroBased(firstLine.NonWrappingAdd(index).Index())
+	for loopIndex, line := range notNumberedReturnLines {
+		lineIndex := firstLine.NonWrappingAdd(loopIndex)
 		returnLines = append(returnLines, &NumberedLine{
-			number: lineNumber,
-			line:   line,
+			index: lineIndex,
+			line:  line,
 		})
 	}
 
