@@ -9,8 +9,13 @@ import (
 )
 
 type renderedLine struct {
-	// Which line in the input stream is this?
+	// Which number are we supposed to show the user for this line? This
+	// represents a line number in the original input stream.
 	inputLineNumber linemetadata.Number
+
+	// Certain lines are available for viewing. This index is the (zero based)
+	// position of this line among those.
+	inputLineIndex linemetadata.Index
 
 	// If an input line has been wrapped into two, the part on the second line
 	// will have a wrapIndex of 1.
@@ -202,6 +207,7 @@ func (p *Pager) renderLine(line *NumberedLine, numberPrefixLength int) []rendere
 
 		rendered = append(rendered, renderedLine{
 			inputLineNumber: lineNumber,
+			inputLineIndex:  line.index,
 			wrapIndex:       wrapIndex,
 			cells:           decorated,
 		})

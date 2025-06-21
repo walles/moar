@@ -107,6 +107,7 @@ func TestSearchHighlight(t *testing.T) {
 	assert.DeepEqual(t, []renderedLine{
 		{
 			inputLineNumber: linemetadata.Number{},
+			inputLineIndex:  linemetadata.Index{},
 			wrapIndex:       0,
 			cells: []twin.StyledRune{
 				{Rune: 'x', Style: twin.StyleDefault},
