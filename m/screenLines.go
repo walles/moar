@@ -108,7 +108,11 @@ func (p *Pager) renderScreenLines() (lines [][]twin.StyledRune, statusText strin
 // height. If the status line is visible, you'll get at most one less than the
 // screen height from this method.
 func (p *Pager) renderLines() ([]renderedLine, string) {
-	inputLines := p.GetFilteredLines()
+	var lineIndex linemetadata.Index
+	if p.lineIndex() != nil {
+		lineIndex = *p.lineIndex()
+	}
+	inputLines := p.Reader().GetLines(lineIndex, p.visibleHeight())
 	if len(inputLines.lines) == 0 {
 		// Empty input, empty output
 		return []renderedLine{}, inputLines.statusText

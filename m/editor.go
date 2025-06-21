@@ -14,7 +14,7 @@ import (
 
 // Dump the reader lines into a read-only temp file and return the absolute file
 // name.
-func dumpToTempFile(reader *Reader) (string, error) {
+func dumpToTempFile(reader *ReaderImpl) (string, error) {
 	tempFile, err := os.CreateTemp("", "moar-contents-")
 	if err != nil {
 		return "", err

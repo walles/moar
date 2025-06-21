@@ -94,7 +94,7 @@ func TestBrokenUtf8(t *testing.T) {
 	}
 }
 
-func startPaging(t *testing.T, reader *Reader) *twin.FakeScreen {
+func startPaging(t *testing.T, reader *ReaderImpl) *twin.FakeScreen {
 	err := reader._wait()
 	if err != nil {
 		t.Fatalf("Failed waiting for reader: %v", err)
@@ -117,7 +117,7 @@ func startPaging(t *testing.T, reader *Reader) *twin.FakeScreen {
 }
 
 // Set style to "native" and use the TTY16m formatter
-func startPagingWithTerminalFg(t *testing.T, reader *Reader, withTerminalFg bool) *twin.FakeScreen {
+func startPagingWithTerminalFg(t *testing.T, reader *ReaderImpl, withTerminalFg bool) *twin.FakeScreen {
 	err := reader._wait()
 	if err != nil {
 		t.Fatalf("Failed waiting for reader: %v", err)

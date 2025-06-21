@@ -488,7 +488,7 @@ func pagerFromArgs(
 		formatter = formatters.TTY16m
 	}
 
-	var reader *m.Reader
+	var reader *m.ReaderImpl
 	shouldFormat := *reFormat
 	if stdinIsRedirected {
 		// Display input pipe contents
