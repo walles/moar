@@ -42,7 +42,7 @@ func (m *PagerModeFilter) onKey(key twin.KeyCode) {
 		m.pager.searchString = removeLastChar(m.pager.searchString)
 		m.pager.searchPattern = toPattern(m.pager.searchString)
 
-	case twin.KeyUp, twin.KeyDown, twin.KeyPgUp, twin.KeyPgDown, twin.KeyRight, twin.KeyLeft, twin.KeyHome, twin.KeyEnd:
+	case twin.KeyUp, twin.KeyDown, twin.KeyRight, twin.KeyLeft, twin.KeyPgUp, twin.KeyPgDown, twin.KeyHome, twin.KeyEnd:
 		viewing := PagerModeViewing{pager: m.pager}
 
 		// Scroll up / down

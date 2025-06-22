@@ -140,9 +140,11 @@ Moving around
 
 Filtering
 ---------
-Type '&' to start filtering, then type your filter expression
+Type '&' to start filtering, then type your filter expression.
 
 While filtering, arrow keys, PageUp, PageDown, Home and End work as usual.
+
+Press 'ESC' or RETURN to exit filtering mode.
 
 Searching
 ---------
