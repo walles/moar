@@ -43,6 +43,7 @@ type eventMaybeDone struct{}
 // Pager is the main on-screen pager
 type Pager struct {
 	reader              *ReaderImpl
+	filteringReader     FilteringReader
 	screen              twin.Screen
 	quit                bool
 	scrollPosition      scrollPosition
@@ -184,6 +185,10 @@ func NewPager(r *ReaderImpl) *Pager {
 	}
 
 	pager.mode = PagerModeViewing{pager: &pager}
+	pager.filteringReader = FilteringReader{
+		backingReader: pager.reader,
+		filterPattern: &pager.searchPattern,
+	}
 
 	return &pager
 }
@@ -276,10 +281,7 @@ func (p *Pager) moveRight(delta int) {
 
 func (p *Pager) Reader() Reader {
 	if _, ok := p.mode.(*PagerModeFilter); ok {
-		return FilteringReader{
-			backingReader: p.reader,
-			filterPattern: p.searchPattern,
-		}
+		return p.filteringReader
 	}
 
 	return p.reader

@@ -12,7 +12,10 @@ import (
 
 type FilteringReader struct {
 	backingReader Reader
-	filterPattern *regexp.Regexp
+
+	// This is a reference to a reference so that we can track changes to the
+	// original pattern, including if it is set to nil.
+	filterPattern **regexp.Regexp
 }
 
 func (f FilteringReader) getAllLines() []*NumberedLine {
@@ -20,8 +23,9 @@ func (f FilteringReader) getAllLines() []*NumberedLine {
 
 	allBaseLines := f.backingReader.GetLines(linemetadata.Index{}, math.MaxInt)
 	resultIndex := 0
+	filterPattern := *f.filterPattern
 	for _, line := range allBaseLines.lines {
-		if f.filterPattern != nil && len(f.filterPattern.String()) > 0 && !f.filterPattern.MatchString(line.line.Plain(&line.index)) {
+		if filterPattern != nil && len(filterPattern.String()) > 0 && !filterPattern.MatchString(line.line.Plain(&line.index)) {
 			// We have a pattern but it doesn't match
 			continue
 		}
