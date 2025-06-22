@@ -16,11 +16,11 @@ type FilteringReader struct {
 }
 
 var mockSingleLine = &NumberedLine{
-	number: linemetadata.NumberFromOneBased(5),
+	number: linemetadata.NumberFromOneBased(123456),
 
 	index: linemetadata.IndexFromZeroBased(0),
 	line: &Line{
-		raw:  "This is dummy response line from the filtering reader",
+		raw:  "Dummy line from the filtering reader",
 		lock: sync.Mutex{},
 	},
 }
