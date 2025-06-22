@@ -2,7 +2,7 @@ package m
 
 import (
 	"math"
-	"slices"
+	"regexp"
 
 	"github.com/walles/moar/m/linemetadata"
 )
@@ -12,44 +12,68 @@ import (
 
 type FilteringReader struct {
 	backingReader Reader
+	filterPattern *regexp.Regexp
 }
 
-var greenIndices = []linemetadata.Index{
-	linemetadata.IndexFromZeroBased(0),
-	linemetadata.IndexFromZeroBased(99),
-	linemetadata.IndexFromZeroBased(199),
-	linemetadata.IndexFromZeroBased(299),
-}
-
-func (f FilteringReader) GetLineCount() int {
-	return len(f.GetLines(linemetadata.Index{}, math.MaxInt).lines)
-}
-
-func (f FilteringReader) GetLine(index linemetadata.Index) *NumberedLine {
-	allLines := f.GetLines(linemetadata.Index{}, math.MaxInt)
-	if index.Index() < 0 || index.Index() >= len(allLines.lines) {
-		return nil
-	}
-	return allLines.lines[index.Index()]
-}
-
-func (f FilteringReader) GetLines(firstLine linemetadata.Index, wantedLineCount int) *InputLines {
+func (f FilteringReader) getAllLines() []*NumberedLine {
 	lines := make([]*NumberedLine, 0)
 
 	allBaseLines := f.backingReader.GetLines(linemetadata.Index{}, math.MaxInt)
-	for i, line := range allBaseLines.lines {
-		if slices.Contains(greenIndices, line.index) {
-			lines = append(lines, &NumberedLine{
-				line:   line.line,
-				index:  linemetadata.IndexFromZeroBased(i),
-				number: line.number,
-			})
+	resultIndex := 0
+	for _, line := range allBaseLines.lines {
+		if f.filterPattern != nil && len(f.filterPattern.String()) > 0 && !f.filterPattern.MatchString(line.line.Plain(&line.index)) {
+			// We have a pattern but it doesn't match
+			continue
+		}
+
+		lines = append(lines, &NumberedLine{
+			line:   line.line,
+			index:  linemetadata.IndexFromZeroBased(resultIndex),
+			number: line.number,
+		})
+		resultIndex++
+	}
+
+	return lines
+}
+
+func (f FilteringReader) GetLineCount() int {
+	return len(f.getAllLines())
+}
+
+func (f FilteringReader) GetLine(index linemetadata.Index) *NumberedLine {
+	allLines := f.getAllLines()
+	if index.Index() < 0 || index.Index() >= len(allLines) {
+		return nil
+	}
+	return allLines[index.Index()]
+}
+
+func (f FilteringReader) GetLines(firstLine linemetadata.Index, wantedLineCount int) *InputLines {
+	lines := f.getAllLines()
+
+	if len(lines) == 0 || wantedLineCount == 0 {
+		return &InputLines{
+			statusText: "No filtered lines",
 		}
 	}
 
+	lastLine := firstLine.NonWrappingAdd(wantedLineCount - 1)
+
+	// Prevent reading past the end of the available lines
+	maxLineNumber := *linemetadata.IndexFromLength(len(lines))
+	if lastLine.IsAfter(maxLineNumber) {
+		lastLine = maxLineNumber
+
+		// If one line was requested, then first and last should be exactly the
+		// same, and we would get there by adding zero.
+		firstLine = lastLine.NonWrappingAdd(1 - wantedLineCount)
+
+		return f.GetLines(firstLine, firstLine.CountLinesTo(lastLine))
+	}
+
 	return &InputLines{
-		lines:      lines[firstLine.Index():],
+		lines:      lines[firstLine.Index() : firstLine.Index()+wantedLineCount],
 		statusText: "Filtered lines",
-		firstLine:  firstLine,
 	}
 }

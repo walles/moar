@@ -42,6 +42,9 @@ type ReaderOptions struct {
 type Reader interface {
 	GetLineCount() int
 	GetLine(index linemetadata.Index) *NumberedLine
+
+	// This method will try to honor wantedLineCount over firstLine. This means
+	// that the returned first line may be different from the requested one.
 	GetLines(firstLine linemetadata.Index, wantedLineCount int) *InputLines
 }
 

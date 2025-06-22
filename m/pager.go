@@ -276,7 +276,10 @@ func (p *Pager) moveRight(delta int) {
 
 func (p *Pager) Reader() Reader {
 	if _, ok := p.mode.(*PagerModeFilter); ok {
-		return FilteringReader{backingReader: p.reader}
+		return FilteringReader{
+			backingReader: p.reader,
+			filterPattern: p.searchPattern,
+		}
 	}
 
 	return p.reader
