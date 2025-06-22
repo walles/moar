@@ -1,7 +1,8 @@
 package m
 
 import (
-	"sync"
+	"math"
+	"slices"
 
 	"github.com/walles/moar/m/linemetadata"
 )
@@ -13,45 +14,42 @@ type FilteringReader struct {
 	backingReader Reader
 }
 
-const mockedLineCount = 333
-
-func (f FilteringReader) GetLineCount() int {
-	return mockedLineCount
+var greenIndices = []linemetadata.Index{
+	linemetadata.IndexFromZeroBased(0),
+	linemetadata.IndexFromZeroBased(99),
+	linemetadata.IndexFromZeroBased(199),
+	linemetadata.IndexFromZeroBased(299),
 }
 
-func (f FilteringReader) getMockedLines() []*NumberedLine {
-	returnMe := make([]*NumberedLine, mockedLineCount)
-	for i := range mockedLineCount {
-		returnMe[i] = &NumberedLine{
-			line: &Line{
-				raw:  "This is a mocked line for testing purposes.",
-				lock: sync.Mutex{},
-			},
-			index:  linemetadata.IndexFromZeroBased(i),
-			number: linemetadata.NumberFromZeroBased(i * 100),
-		}
-	}
-	return returnMe
+func (f FilteringReader) GetLineCount() int {
+	return len(f.GetLines(linemetadata.Index{}, math.MaxInt).lines)
 }
 
 func (f FilteringReader) GetLine(index linemetadata.Index) *NumberedLine {
-	if index.Index() >= mockedLineCount {
+	allLines := f.GetLines(linemetadata.Index{}, math.MaxInt)
+	if index.Index() < 0 || index.Index() >= len(allLines.lines) {
 		return nil
 	}
-
-	return f.getMockedLines()[index.Index()]
+	return allLines.lines[index.Index()]
 }
 
 func (f FilteringReader) GetLines(firstLine linemetadata.Index, wantedLineCount int) *InputLines {
-	if firstLine.Index() >= mockedLineCount {
-		return &InputLines{
-			statusText: "Dummy status text, index out of bounds",
+	lines := make([]*NumberedLine, 0)
+
+	allBaseLines := f.backingReader.GetLines(linemetadata.Index{}, math.MaxInt)
+	for i, line := range allBaseLines.lines {
+		if slices.Contains(greenIndices, line.index) {
+			lines = append(lines, &NumberedLine{
+				line:   line.line,
+				index:  linemetadata.IndexFromZeroBased(i),
+				number: line.number,
+			})
 		}
 	}
 
 	return &InputLines{
-		lines:      f.getMockedLines()[firstLine.Index():],
-		statusText: "Dummy status text, returning single line",
+		lines:      lines[firstLine.Index():],
+		statusText: "Filtered lines",
 		firstLine:  firstLine,
 	}
 }
