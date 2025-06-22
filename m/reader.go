@@ -93,9 +93,6 @@ type ReaderImpl struct {
 type InputLines struct {
 	lines []*NumberedLine
 
-	// Line number of the first line returned
-	firstLine linemetadata.Index
-
 	// "monkey.txt: 1-23/45 51%"
 	statusText string
 }
@@ -759,7 +756,6 @@ func (reader *ReaderImpl) getLinesUnlocked(firstLine linemetadata.Index, wantedL
 
 	return &InputLines{
 		lines:      returnLines,
-		firstLine:  firstLine,
 		statusText: reader.createStatusUnlocked(lastLine),
 	}
 }
@@ -770,11 +766,15 @@ func (reader *ReaderImpl) PumpToStdout() {
 
 	drainLines := func() bool {
 		lines := reader.GetLines(firstNotPrintedLine, wantedLineCount)
+		var firstReturnedIndex linemetadata.Index
+		if len(lines.lines) > 0 {
+			firstReturnedIndex = lines.lines[0].index
+		}
 
 		// Print the lines we got
 		printed := false
 		for index, line := range lines.lines {
-			lineNumber := lines.firstLine.NonWrappingAdd(index)
+			lineNumber := firstReturnedIndex.NonWrappingAdd(index)
 			if lineNumber.IsBefore(firstNotPrintedLine) {
 				continue
 			}

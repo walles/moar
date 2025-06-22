@@ -55,6 +55,10 @@ func testGetLineCount(t *testing.T, reader *ReaderImpl) {
 	}
 }
 
+func firstLine(inputLines *InputLines) linemetadata.Index {
+	return inputLines.lines[0].index
+}
+
 func testGetLines(t *testing.T, reader *ReaderImpl) {
 	lines := reader.GetLines(linemetadata.Index{}, 10)
 	if len(lines.lines) > 10 {
@@ -74,11 +78,11 @@ func testGetLines(t *testing.T, reader *ReaderImpl) {
 		return
 	}
 
-	startOfLastSection := lines.firstLine
+	startOfLastSection := firstLine(lines)
 	lines = reader.GetLines(startOfLastSection, 10)
-	if lines.firstLine != startOfLastSection {
+	if firstLine(lines) != startOfLastSection {
 		t.Errorf("Expected start line %d when asking for the last 10 lines, got %s",
-			startOfLastSection, lines.firstLine.Format())
+			startOfLastSection, firstLine(lines).Format())
 		return
 	}
 	if len(lines.lines) != 10 {
@@ -88,9 +92,9 @@ func testGetLines(t *testing.T, reader *ReaderImpl) {
 	}
 
 	lines = reader.GetLines(startOfLastSection.NonWrappingAdd(1), 10)
-	if lines.firstLine != startOfLastSection {
+	if firstLine(lines) != startOfLastSection {
 		t.Errorf("Expected start line %d when asking for the last+1 10 lines, got %s",
-			startOfLastSection, lines.firstLine.Format())
+			startOfLastSection, firstLine(lines).Format())
 		return
 	}
 	if len(lines.lines) != 10 {
@@ -100,9 +104,9 @@ func testGetLines(t *testing.T, reader *ReaderImpl) {
 	}
 
 	lines = reader.GetLines(startOfLastSection.NonWrappingAdd(-1), 10)
-	if lines.firstLine != startOfLastSection.NonWrappingAdd(-1) {
+	if firstLine(lines) != startOfLastSection.NonWrappingAdd(-1) {
 		t.Errorf("Expected start line %d when asking for the last-1 10 lines, got %s",
-			startOfLastSection, lines.firstLine.Format())
+			startOfLastSection, firstLine(lines).Format())
 		return
 	}
 	if len(lines.lines) != 10 {
@@ -211,7 +215,7 @@ func TestGetLongLine(t *testing.T) {
 	assert.NilError(t, reader._wait())
 
 	lines := reader.GetLines(linemetadata.Index{}, 5)
-	assert.Equal(t, lines.firstLine, linemetadata.Index{})
+	assert.Equal(t, firstLine(lines), linemetadata.Index{})
 	assert.Equal(t, len(lines.lines), 1)
 
 	line := lines.lines[0]
