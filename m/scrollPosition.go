@@ -171,8 +171,17 @@ func (si *scrollPositionInternal) emptyBottomLinesCount(pager *Pager) int {
 
 	lineNumber := *si.lineIndex
 
-	lastLineNumber := *linemetadata.NumberFromLength(pager.Reader().GetLineCount())
-	lastLineNumberWidth := pager.getLineNumberPrefixLength(lastLineNumber)
+	var lastLine NumberedLine
+	lastLineIndex := linemetadata.IndexFromLength(pager.Reader().GetLineCount())
+	if lastLineIndex != nil {
+		maybeLastLine := pager.Reader().GetLine(*lastLineIndex)
+		// This check is needed for the unlikely case that we just reformatted
+		// the input stream and it just lost some lines.
+		if maybeLastLine != nil {
+			lastLine = *maybeLastLine
+		}
+	}
+	lastLineNumberWidth := pager.getLineNumberPrefixLength(lastLine.number)
 
 	for {
 		line := pager.Reader().GetLine(lineNumber)
