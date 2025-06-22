@@ -105,9 +105,8 @@ func TestSearchHighlight(t *testing.T) {
 	rendered := pager.renderLine(&numberedLine, pager.getLineNumberPrefixLength(numberedLine.number))
 	assert.DeepEqual(t, []renderedLine{
 		{
-			inputLineNumber: linemetadata.Number{},
-			inputLineIndex:  linemetadata.Index{},
-			wrapIndex:       0,
+			inputLineIndex: linemetadata.Index{},
+			wrapIndex:      0,
 			cells: []twin.StyledRune{
 				{Rune: 'x', Style: twin.StyleDefault},
 				{Rune: '"', Style: twin.StyleDefault.WithAttr(twin.AttrReverse)},
