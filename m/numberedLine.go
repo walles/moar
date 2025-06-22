@@ -9,8 +9,9 @@ import (
 )
 
 type NumberedLine struct {
-	index linemetadata.Index
-	line  *Line
+	index  linemetadata.Index
+	number linemetadata.Number
+	line   *Line
 }
 
 func (nl *NumberedLine) Plain() string {

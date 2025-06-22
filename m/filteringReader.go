@@ -16,6 +16,8 @@ type FilteringReader struct {
 }
 
 var mockSingleLine = &NumberedLine{
+	number: linemetadata.NumberFromOneBased(5),
+
 	index: linemetadata.IndexFromZeroBased(0),
 	line: &Line{
 		raw:  "This is dummy response line from the filtering reader",

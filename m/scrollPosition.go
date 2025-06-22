@@ -127,9 +127,7 @@ func (si *scrollPositionInternal) handlePositiveDeltaScreenLines(pager *Pager) {
 	allPossibleLines := pager.Reader().GetLines(*si.lineIndex, pager.visibleHeight())
 	if len(allPossibleLines.lines) > 0 {
 		lastPossibleLine := allPossibleLines.lines[len(allPossibleLines.lines)-1]
-		lastPossibleLineIndex := lastPossibleLine.index
-		lastPossibleLineNumber := linemetadata.NumberFromZeroBased(lastPossibleLineIndex.Index())
-		maxPrefixLength = pager.getLineNumberPrefixLength(lastPossibleLineNumber)
+		maxPrefixLength = pager.getLineNumberPrefixLength(lastPossibleLine.number)
 	}
 
 	for {
@@ -361,8 +359,7 @@ func (p *Pager) isScrolledToEnd() bool {
 	// Last line is on screen, now we need to figure out whether we can see all
 	// of it
 	lastInputLine := p.Reader().GetLine(lastInputLineIndex)
-	lastInputLineNumber := linemetadata.NumberFromZeroBased(lastInputLineIndex.Index())
-	lastInputLineRendered := p.renderLine(lastInputLine, p.getLineNumberPrefixLength(lastInputLineNumber))
+	lastInputLineRendered := p.renderLine(lastInputLine, p.getLineNumberPrefixLength(lastInputLine.number))
 	lastRenderedSubLine := lastInputLineRendered[len(lastInputLineRendered)-1]
 
 	// If the last visible subline is the same as the last possible subline then
@@ -408,6 +405,14 @@ func (si *scrollPositionInternal) getMaxNumberPrefixLength(pager *Pager) int {
 		maxVisibleIndex = maxPossibleIndex
 	}
 
+	var number linemetadata.Number
+	lastVisibleLine := pager.Reader().GetLine(maxVisibleIndex)
+
+	// nil can happen when the input stream is empty
+	if lastVisibleLine != nil {
+		number = lastVisibleLine.number
+	}
+
 	// Count the length of the last line number
-	return pager.getLineNumberPrefixLength(linemetadata.NumberFromZeroBased(maxVisibleIndex.Index()))
+	return pager.getLineNumberPrefixLength(number)
 }

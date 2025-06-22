@@ -25,7 +25,7 @@ func testHorizontalCropping(t *testing.T, contents string, firstVisibleColumn in
 	numberedLine := NumberedLine{
 		line: &lineContents,
 	}
-	screenLine := pager.renderLine(&numberedLine, pager.getLineNumberPrefixLength(linemetadata.NumberFromZeroBased(numberedLine.index.Index())))
+	screenLine := pager.renderLine(&numberedLine, pager.getLineNumberPrefixLength(numberedLine.number))
 	assert.Equal(t, rowToString(screenLine[0].cells), expected)
 }
 
@@ -102,8 +102,7 @@ func TestSearchHighlight(t *testing.T) {
 	numberedLine := NumberedLine{
 		line: &line,
 	}
-	lineNumber := linemetadata.NumberFromZeroBased(numberedLine.index.Index())
-	rendered := pager.renderLine(&numberedLine, pager.getLineNumberPrefixLength(lineNumber))
+	rendered := pager.renderLine(&numberedLine, pager.getLineNumberPrefixLength(numberedLine.number))
 	assert.DeepEqual(t, []renderedLine{
 		{
 			inputLineNumber: linemetadata.Number{},
