@@ -186,8 +186,8 @@ func NewPager(r *ReaderImpl) *Pager {
 
 	pager.mode = PagerModeViewing{pager: &pager}
 	pager.filteringReader = FilteringReader{
-		backingReader: pager.reader,
-		filterPattern: &pager.searchPattern,
+		BackingReader: pager.reader,
+		FilterPattern: &pager.searchPattern,
 	}
 
 	return &pager
@@ -281,7 +281,7 @@ func (p *Pager) moveRight(delta int) {
 
 func (p *Pager) Reader() Reader {
 	if _, ok := p.mode.(*PagerModeFilter); ok {
-		return p.filteringReader
+		return &p.filteringReader
 	}
 
 	return p.reader

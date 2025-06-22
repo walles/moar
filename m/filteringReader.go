@@ -3,34 +3,54 @@ package m
 import (
 	"math"
 	"regexp"
+	"time"
 
+	log "github.com/sirupsen/logrus"
 	"github.com/walles/moar/m/linemetadata"
 )
 
-// FIXME: This reader should filter its input lines based on the search query
-// from the pager.
+// Filters lines based on the search query from the pager.
 
 type FilteringReader struct {
-	backingReader Reader
+	BackingReader Reader
 
 	// This is a reference to a reference so that we can track changes to the
 	// original pattern, including if it is set to nil.
-	filterPattern **regexp.Regexp
+	FilterPattern **regexp.Regexp
+
+	// nil means no filtering has happened yet
+	filteredLinesCache *[]*NumberedLine
+
+	// This is what the reader's line count was when we filtered. If the
+	// reader's current line count doesn't match, then our cache needs to be
+	// rebuilt.
+	unfilteredLineCountWhenCaching int
+
+	// This is the pattern that was used when we cached the lines. If it
+	// doesn't match the current pattern, then our cache needs to be rebuilt.
+	filterPatternWhenCaching *regexp.Regexp
 }
 
-func (f FilteringReader) getAllLines() []*NumberedLine {
-	lines := make([]*NumberedLine, 0)
+func (f *FilteringReader) rebuildCache() {
+	t0 := time.Now()
 
-	allBaseLines := f.backingReader.GetLines(linemetadata.Index{}, math.MaxInt)
+	cache := make([]*NumberedLine, 0)
+	filterPattern := *f.FilterPattern
+
+	// Mark cache base conditions
+	f.unfilteredLineCountWhenCaching = f.BackingReader.GetLineCount()
+	f.filterPatternWhenCaching = filterPattern
+
+	// Repopulate the cache
+	allBaseLines := f.BackingReader.GetLines(linemetadata.Index{}, math.MaxInt)
 	resultIndex := 0
-	filterPattern := *f.filterPattern
 	for _, line := range allBaseLines.lines {
 		if filterPattern != nil && len(filterPattern.String()) > 0 && !filterPattern.MatchString(line.line.Plain(&line.index)) {
 			// We have a pattern but it doesn't match
 			continue
 		}
 
-		lines = append(lines, &NumberedLine{
+		cache = append(cache, &NumberedLine{
 			line:   line.line,
 			index:  linemetadata.IndexFromZeroBased(resultIndex),
 			number: line.number,
@@ -38,14 +58,44 @@ func (f FilteringReader) getAllLines() []*NumberedLine {
 		resultIndex++
 	}
 
-	return lines
+	f.filteredLinesCache = &cache
+
+	log.Debugf("Filtered out %d/%d lines in %s",
+		len(allBaseLines.lines)-len(cache), len(allBaseLines.lines), time.Since(t0))
 }
 
-func (f FilteringReader) GetLineCount() int {
+func (f *FilteringReader) getAllLines() []*NumberedLine {
+	if f.filteredLinesCache == nil {
+		f.rebuildCache()
+		return *f.filteredLinesCache
+	}
+
+	if f.unfilteredLineCountWhenCaching != f.BackingReader.GetLineCount() {
+		f.rebuildCache()
+		return *f.filteredLinesCache
+	}
+
+	var currentFilterPattern string
+	if *f.FilterPattern != nil {
+		currentFilterPattern = (*f.FilterPattern).String()
+	}
+	var cacheFilterPattern string
+	if f.filterPatternWhenCaching != nil {
+		cacheFilterPattern = f.filterPatternWhenCaching.String()
+	}
+	if currentFilterPattern != cacheFilterPattern {
+		f.rebuildCache()
+		return *f.filteredLinesCache
+	}
+
+	return *f.filteredLinesCache
+}
+
+func (f *FilteringReader) GetLineCount() int {
 	return len(f.getAllLines())
 }
 
-func (f FilteringReader) GetLine(index linemetadata.Index) *NumberedLine {
+func (f *FilteringReader) GetLine(index linemetadata.Index) *NumberedLine {
 	allLines := f.getAllLines()
 	if index.Index() < 0 || index.Index() >= len(allLines) {
 		return nil
@@ -53,7 +103,7 @@ func (f FilteringReader) GetLine(index linemetadata.Index) *NumberedLine {
 	return allLines[index.Index()]
 }
 
-func (f FilteringReader) GetLines(firstLine linemetadata.Index, wantedLineCount int) *InputLines {
+func (f *FilteringReader) GetLines(firstLine linemetadata.Index, wantedLineCount int) *InputLines {
 	lines := f.getAllLines()
 
 	if len(lines) == 0 || wantedLineCount == 0 {
