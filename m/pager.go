@@ -138,6 +138,12 @@ Moving around
 * Half page 'u'p / 'd'own, or CTRL-u / CTRL-d
 * RETURN moves down one line
 
+Filtering
+---------
+Type '&' to start filtering, then type your filter expression
+
+While filtering, arrow keys, PageUp, PageDown, Home and End work as usual.
+
 Searching
 ---------
 * Type / to start searching, then type what you want to find
