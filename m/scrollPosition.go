@@ -43,6 +43,8 @@ type scrollPositionCanonical struct {
 	showStatusBar   bool // From pager
 	wrapLongLines   bool // From pager
 
+	pagerLineCount int // From pager.Reader().GetLineCount()
+
 	lineIndex        *linemetadata.Index // From scrollPositionInternal
 	deltaScreenLines int                 // From scrollPositionInternal
 }
@@ -55,6 +57,8 @@ func canonicalFromPager(pager *Pager) scrollPositionCanonical {
 		showLineNumbers: pager.ShowLineNumbers,
 		showStatusBar:   pager.ShowStatusBar,
 		wrapLongLines:   pager.WrapLongLines,
+
+		pagerLineCount: pager.Reader().GetLineCount(),
 
 		lineIndex:        pager.scrollPosition.internalDontTouch.lineIndex,
 		deltaScreenLines: pager.scrollPosition.internalDontTouch.deltaScreenLines,
