@@ -63,10 +63,7 @@ func (line *Line) Plain(lineNumber *linenumbers.LineNumber) string {
 	defer line.lock.Unlock()
 
 	if line.plain == nil {
-		line.lock.Unlock()
-		// The computation doesn't need the lock
 		plain := textstyles.WithoutFormatting(plainTextStyle, line.raw, lineNumber)
-		line.lock.Lock()
 		line.plain = &plain
 	}
 	return *line.plain
