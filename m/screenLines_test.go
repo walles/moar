@@ -2,6 +2,7 @@ package m
 
 import (
 	"regexp"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -256,12 +257,47 @@ func TestShortenedInput(t *testing.T) {
 	assert.Equal(t, pager.lineIndex().Index(), 0, "Should have scrolled to the first line")
 }
 
-// FIXME: Make another test just like TestShortenedInput but:
 // - Start with a 1000 lines file
 // - Scroll to the bottom
 // - Add a filter matching the first 100 lines
 // - Render
-// - Verify that the 10 (or 9?) last matching lines were rendered
+// - Verify that the 10 last matching lines were rendered
 func TestShortenedInputManyLines(t *testing.T) {
-	assert.Equal(t, false, true, "Not yet implemented")
+	lines := []string{"first"}
+	for i := range 999 {
+		if i < 100 {
+			lines = append(lines, "match "+strconv.Itoa(i))
+		} else {
+			lines = append(lines, "other "+strconv.Itoa(i))
+		}
+	}
+
+	pager := Pager{
+		screen:         twin.NewFakeScreen(20, 10),
+		reader:         NewReaderFromText("test", strings.Join(lines, "\n")),
+		scrollPosition: newScrollPosition("TestShortenedInputManyLines"),
+	}
+	pager.filteringReader = FilteringReader{
+		BackingReader: pager.reader,
+		FilterPattern: &pager.searchPattern,
+	}
+
+	pager.scrollToEnd()
+	assert.Equal(t, pager.lineIndex().Index(), 990, "Should be at the last line before filtering")
+
+	pager.mode = &PagerModeFilter{pager: &pager}
+	pager.searchPattern = regexp.MustCompile(`^match`)
+
+	rendered, _ := pager.renderScreenLines()
+	assert.Equal(t, len(rendered), 10, "Should have rendered 10 lines")
+
+	expectedLines := []string{}
+	for i := 90; i < 100; i++ {
+		expectedLines = append(expectedLines, "match "+strconv.Itoa(i))
+	}
+	for i, row := range rendered {
+		assert.Equal(t, rowToString(row), expectedLines[i], "Line %d mismatch", i)
+	}
+	assert.Equal(t, pager.lineIndex().Index(), 90, "The last lines should now be visible")
+	assert.Equal(t, "match 99", rowToString(rendered[len(rendered)-1]))
 }
