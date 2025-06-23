@@ -225,3 +225,43 @@ func TestOneLineTerminal(t *testing.T) {
 	rendered, _ := pager.renderScreenLines()
 	assert.Equal(t, len(rendered), 0)
 }
+
+// What happens if we are scrolled to the bottom of a 1000 lines file, and then
+// add a filter matching only the first line?
+//
+// What should happen is that we should go as far down as possible.
+func TestShortenedInput(t *testing.T) {
+	pager := Pager{
+		screen: twin.NewFakeScreen(20, 10),
+
+		// 1000 lines of input, we will scroll to the bottom
+		reader: NewReaderFromText("test", "first\n"+strings.Repeat("line\n", 1000)),
+
+		scrollPosition: newScrollPosition("TestShortenedInput"),
+	}
+	pager.filteringReader = FilteringReader{
+		BackingReader: pager.reader,
+		FilterPattern: &pager.searchPattern,
+	}
+
+	pager.scrollToEnd()
+	assert.Equal(t, pager.lineIndex().Index(), 991, "This should have been the effect of calling scrollToEnd()")
+
+	pager.mode = &PagerModeFilter{pager: &pager}
+	pager.searchPattern = regexp.MustCompile("first") // Match only the first line
+
+	rendered, _ := pager.renderScreenLines()
+	assert.Equal(t, len(rendered), 1, "Should have rendered one line")
+	assert.Equal(t, "first", rowToString(rendered[0]))
+	assert.Equal(t, pager.lineIndex().Index(), 0, "Should have scrolled to the first line")
+}
+
+// FIXME: Make another test just like TestShortenedInput but:
+// - Start with a 1000 lines file
+// - Scroll to the bottom
+// - Add a filter matching the first 100 lines
+// - Render
+// - Verify that the 10 (or 9?) last matching lines were rendered
+func TestShortenedInputManyLines(t *testing.T) {
+	assert.Equal(t, false, true, "Not yet implemented")
+}
