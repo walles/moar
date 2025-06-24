@@ -132,7 +132,7 @@ func (f *FilteringReader) GetLines(firstLine linemetadata.Index, wantedLineCount
 
 	if len(lines) == 0 || wantedLineCount == 0 {
 		return &InputLines{
-			statusText: "No filtered lines",
+			statusText: "NOTE: Press '&' to unhide lines",
 		}
 	}
 
