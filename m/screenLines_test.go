@@ -83,6 +83,10 @@ func TestEmpty(t *testing.T) {
 
 		scrollPosition: newScrollPosition("TestEmpty"),
 	}
+	pager.filteringReader = FilteringReader{
+		BackingReader: pager.reader,
+		FilterPattern: &pager.filterPattern,
+	}
 
 	rendered, statusText := pager.renderScreenLines()
 	assert.Equal(t, len(rendered), 0)
@@ -98,6 +102,10 @@ func TestSearchHighlight(t *testing.T) {
 	pager := Pager{
 		screen:        twin.NewFakeScreen(100, 10),
 		searchPattern: regexp.MustCompile("\""),
+	}
+	pager.filteringReader = FilteringReader{
+		BackingReader: pager.reader,
+		FilterPattern: &pager.filterPattern,
 	}
 
 	numberedLine := NumberedLine{
@@ -136,6 +144,10 @@ func TestOverflowDown(t *testing.T) {
 		// This value can be anything and should be clipped, that's what we're testing
 		scrollPosition: *scrollPositionFromIndex("TestOverflowDown", linemetadata.IndexFromOneBased(42)),
 	}
+	pager.filteringReader = FilteringReader{
+		BackingReader: pager.reader,
+		FilterPattern: &pager.filterPattern,
+	}
 
 	rendered, statusText := pager.renderScreenLines()
 	assert.Equal(t, len(rendered), 1)
@@ -156,6 +168,10 @@ func TestOverflowUp(t *testing.T) {
 		reader: NewReaderFromText("test", "hej"),
 
 		// NOTE: scrollPosition intentionally not initialized
+	}
+	pager.filteringReader = FilteringReader{
+		BackingReader: pager.reader,
+		FilterPattern: &pager.filterPattern,
 	}
 
 	rendered, statusText := pager.renderScreenLines()
@@ -222,6 +238,10 @@ func TestOneLineTerminal(t *testing.T) {
 		reader:        NewReaderFromText("test", "hej"),
 		ShowStatusBar: true,
 	}
+	pager.filteringReader = FilteringReader{
+		BackingReader: pager.reader,
+		FilterPattern: &pager.filterPattern,
+	}
 
 	rendered, _ := pager.renderScreenLines()
 	assert.Equal(t, len(rendered), 0)
@@ -242,14 +262,14 @@ func TestShortenedInput(t *testing.T) {
 	}
 	pager.filteringReader = FilteringReader{
 		BackingReader: pager.reader,
-		FilterPattern: &pager.searchPattern,
+		FilterPattern: &pager.filterPattern,
 	}
 
 	pager.scrollToEnd()
 	assert.Equal(t, pager.lineIndex().Index(), 991, "This should have been the effect of calling scrollToEnd()")
 
 	pager.mode = &PagerModeFilter{pager: &pager}
-	pager.searchPattern = regexp.MustCompile("first") // Match only the first line
+	pager.filterPattern = regexp.MustCompile("first") // Match only the first line
 
 	rendered, _ := pager.renderScreenLines()
 	assert.Equal(t, len(rendered), 1, "Should have rendered one line")
@@ -279,14 +299,14 @@ func TestShortenedInputManyLines(t *testing.T) {
 	}
 	pager.filteringReader = FilteringReader{
 		BackingReader: pager.reader,
-		FilterPattern: &pager.searchPattern,
+		FilterPattern: &pager.filterPattern,
 	}
 
 	pager.scrollToEnd()
 	assert.Equal(t, pager.lineIndex().Index(), 990, "Should be at the last line before filtering")
 
 	pager.mode = &PagerModeFilter{pager: &pager}
-	pager.searchPattern = regexp.MustCompile(`^match`)
+	pager.filterPattern = regexp.MustCompile(`^match`)
 
 	rendered, _ := pager.renderScreenLines()
 	assert.Equal(t, len(rendered), 10, "Should have rendered 10 lines")

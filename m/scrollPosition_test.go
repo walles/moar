@@ -17,6 +17,10 @@ func testCanonicalize1000(t *testing.T, withStatusBar bool, currentStartLine lin
 	pager := Pager{}
 	pager.screen = twin.NewFakeScreen(100, screenHeight)
 	pager.reader = NewReaderFromText("test", strings.Repeat("a\n", 2000))
+	pager.filteringReader = FilteringReader{
+		BackingReader: pager.reader,
+		FilterPattern: &pager.filterPattern,
+	}
 	pager.ShowLineNumbers = true
 	pager.ShowStatusBar = withStatusBar
 	pager.scrollPosition = scrollPosition{

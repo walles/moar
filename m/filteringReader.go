@@ -91,11 +91,31 @@ func (f *FilteringReader) getAllLines() []*NumberedLine {
 	return *f.filteredLinesCache
 }
 
+func (f *FilteringReader) shouldPassThrough() bool {
+	if *f.FilterPattern == nil || len((*f.FilterPattern).String()) == 0 {
+		// Cache is not needed
+		f.filteredLinesCache = nil
+
+		// No filtering, so pass through all
+		return true
+	}
+
+	return false
+}
+
 func (f *FilteringReader) GetLineCount() int {
+	if f.shouldPassThrough() {
+		return f.BackingReader.GetLineCount()
+	}
+
 	return len(f.getAllLines())
 }
 
 func (f *FilteringReader) GetLine(index linemetadata.Index) *NumberedLine {
+	if f.shouldPassThrough() {
+		return f.BackingReader.GetLine(index)
+	}
+
 	allLines := f.getAllLines()
 	if index.Index() < 0 || index.Index() >= len(allLines) {
 		return nil
@@ -104,6 +124,10 @@ func (f *FilteringReader) GetLine(index linemetadata.Index) *NumberedLine {
 }
 
 func (f *FilteringReader) GetLines(firstLine linemetadata.Index, wantedLineCount int) *InputLines {
+	if f.shouldPassThrough() {
+		return f.BackingReader.GetLines(firstLine, wantedLineCount)
+	}
+
 	lines := f.getAllLines()
 
 	if len(lines) == 0 || wantedLineCount == 0 {
