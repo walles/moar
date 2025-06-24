@@ -56,6 +56,7 @@ type Pager struct {
 
 	searchString  string
 	searchPattern *regexp.Regexp
+	filterPattern *regexp.Regexp
 
 	// We used to have a "Following" field here. If you want to follow, set
 	// TargetLineNumber to LineNumberMax() instead, see below.
@@ -195,7 +196,7 @@ func NewPager(r *ReaderImpl) *Pager {
 	pager.mode = PagerModeViewing{pager: &pager}
 	pager.filteringReader = FilteringReader{
 		BackingReader: pager.reader,
-		FilterPattern: &pager.searchPattern,
+		FilterPattern: &pager.filterPattern,
 	}
 
 	return &pager

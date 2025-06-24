@@ -6,7 +6,8 @@ import (
 )
 
 type PagerModeFilter struct {
-	pager *Pager
+	pager        *Pager
+	filterString string
 }
 
 func (m PagerModeFilter) drawFooter(_ string, _ string) {
@@ -15,7 +16,7 @@ func (m PagerModeFilter) drawFooter(_ string, _ string) {
 	prompt := "Filter: "
 
 	pos := 0
-	for _, token := range prompt + m.pager.searchString {
+	for _, token := range prompt + m.filterString {
 		pos += m.pager.screen.SetCell(pos, height-1, twin.NewStyledRune(token, twin.StyleDefault))
 	}
 
@@ -30,17 +31,24 @@ func (m PagerModeFilter) drawFooter(_ string, _ string) {
 
 func (m *PagerModeFilter) onKey(key twin.KeyCode) {
 	switch key {
-	case twin.KeyEnter, twin.KeyEscape:
+	case twin.KeyEnter:
 		m.pager.mode = PagerModeViewing{pager: m.pager}
+
+	case twin.KeyEscape:
+		m.pager.mode = PagerModeViewing{pager: m.pager}
+		m.pager.filterPattern = nil
+		m.pager.searchString = ""
 		m.pager.searchPattern = nil
 
 	case twin.KeyBackspace, twin.KeyDelete:
-		if len(m.pager.searchString) == 0 {
+		if len(m.filterString) == 0 {
 			return
 		}
 
-		m.pager.searchString = removeLastChar(m.pager.searchString)
-		m.pager.searchPattern = toPattern(m.pager.searchString)
+		m.filterString = removeLastChar(m.filterString)
+		m.pager.filterPattern = toPattern(m.filterString)
+		m.pager.searchString = m.filterString
+		m.pager.searchPattern = toPattern(m.filterString)
 
 	case twin.KeyUp, twin.KeyDown, twin.KeyRight, twin.KeyLeft, twin.KeyPgUp, twin.KeyPgDown, twin.KeyHome, twin.KeyEnd:
 		viewing := PagerModeViewing{pager: m.pager}
@@ -56,14 +64,16 @@ func (m *PagerModeFilter) onKey(key twin.KeyCode) {
 func (m *PagerModeFilter) onRune(char rune) {
 	if char == '\x08' {
 		// Backspace
-		if len(m.pager.searchString) == 0 {
+		if len(m.filterString) == 0 {
 			return
 		}
 
-		m.pager.searchString = removeLastChar(m.pager.searchString)
+		m.filterString = removeLastChar(m.filterString)
 	} else {
-		m.pager.searchString = m.pager.searchString + string(char)
+		m.filterString = m.filterString + string(char)
 	}
 
-	m.pager.searchPattern = toPattern(m.pager.searchString)
+	m.pager.filterPattern = toPattern(m.filterString)
+	m.pager.searchString = m.filterString
+	m.pager.searchPattern = toPattern(m.filterString)
 }
