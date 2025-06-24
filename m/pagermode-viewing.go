@@ -10,9 +10,9 @@ type PagerModeViewing struct {
 }
 
 func (m PagerModeViewing) drawFooter(statusText string, spinner string) {
-	helpText := "Press 'ESC' / 'q' to exit, '/' to search, 'h' for help"
+	helpText := "Press 'ESC' / 'q' to exit, '/' to search, '&' to filter, 'h' for help"
 	if m.pager.isShowingHelp {
-		helpText = "Press 'ESC' / 'q' to exit help, '/' to search"
+		helpText = "Press 'ESC' / 'q' to exit help, '/' to search, '&' to filter"
 	}
 
 	if m.pager.ShowStatusBar {
