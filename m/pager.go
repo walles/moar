@@ -289,11 +289,7 @@ func (p *Pager) moveRight(delta int) {
 }
 
 func (p *Pager) Reader() Reader {
-	if _, ok := p.mode.(*PagerModeFilter); ok {
-		return &p.filteringReader
-	}
-
-	return p.reader
+	return &p.filteringReader
 }
 
 func (p *Pager) handleScrolledUp() {
