@@ -9,24 +9,24 @@ import (
 	"github.com/walles/moar/twin"
 )
 
-type SearchMode int
+type SearchDirection int
 
 const (
-	SearchModeForward SearchMode = iota
-	SearchModeBackward
+	SearchDirectionForward SearchDirection = iota
+	SearchDirectionBackward
 )
 
 type PagerModeSearch struct {
 	pager                 *Pager
 	initialScrollPosition scrollPosition // Pager position before search started
-	mode                  SearchMode
+	direction             SearchDirection
 }
 
 func (m PagerModeSearch) drawFooter(_ string, _ string) {
 	width, height := m.pager.screen.Size()
 
 	prompt := "Search: "
-	if m.mode == SearchModeBackward {
+	if m.direction == SearchDirectionBackward {
 		prompt = "Search backwards: "
 	}
 
@@ -47,10 +47,10 @@ func (m PagerModeSearch) drawFooter(_ string, _ string) {
 func (m *PagerModeSearch) updateSearchPattern() {
 	m.pager.searchPattern = toPattern(m.pager.searchString)
 
-	switch m.mode {
-	case SearchModeBackward:
+	switch m.direction {
+	case SearchDirectionBackward:
 		m.pager.scrollToSearchHitsBackwards()
-	case SearchModeForward:
+	case SearchDirectionForward:
 		m.pager.scrollToSearchHits()
 	}
 }
