@@ -154,9 +154,9 @@ func (m PagerModeViewing) onRune(char rune) {
 
 	case '&':
 		p.mode = &PagerModeFilter{pager: p}
-		p.TargetLineNumber = nil
 		p.searchString = ""
 		p.searchPattern = nil
+		p.filterPattern = nil
 
 	case 'g':
 		p.mode = &PagerModeGotoLine{pager: p}
