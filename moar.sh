@@ -5,11 +5,14 @@
 
 set -e -o pipefail
 
-MYDIR="$(cd "$(dirname "$0")"; pwd)"
+MYDIR="$(
+    cd "$(dirname "$0")"
+    pwd
+)"
 cd "$MYDIR"
 
 rm -f moar
 
-./build.sh 1>&2
+RACE=-race ./build.sh 1>&2
 
-./moar "$@"
+GORACE="log_path=moar-race-report" ./moar "$@"
