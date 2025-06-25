@@ -83,8 +83,8 @@ type Pager struct {
 
 	SideScrollAmount int // Should be positive
 
-	// If non-nil, scroll to this line index as soon as possible. Set this
-	// value to IndexMax() to follow the end of the input (tail).
+	// If non-nil, scroll to this line as soon as possible. Set this value to
+	// IndexMax() to follow the end of the input (tail).
 	TargetLine *linemetadata.Index
 
 	// If true, pager will clear the screen on return. If false, pager will
@@ -195,7 +195,7 @@ func NewPager(r *ReaderImpl) *Pager {
 
 	pager.mode = PagerModeViewing{pager: &pager}
 	pager.filteringReader = FilteringReader{
-		BackingReader: pager.reader,
+		BackingReader: r,
 		FilterPattern: &pager.filterPattern,
 	}
 
