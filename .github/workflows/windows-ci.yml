@@ -17,5 +17,5 @@ jobs:
         with:
           go-version-file: "go.mod"
 
-      - run: go build
+      - run: go build -race
       - run: go test -race -timeout 60s ./...
