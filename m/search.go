@@ -17,22 +17,22 @@ func (p *Pager) scrollToSearchHits() {
 		return
 	}
 
-	lineNumber := p.scrollPosition.lineIndex(p)
-	if lineNumber == nil {
+	lineIndex := p.scrollPosition.lineIndex(p)
+	if lineIndex == nil {
 		// No lines to search
 		return
 	}
 
-	firstHitPosition := p.findFirstHit(*lineNumber, nil, false)
+	firstHitPosition := p.findFirstHit(*lineIndex, nil, false)
 	if firstHitPosition == nil {
-		canWrap := (*lineNumber != linemetadata.Index{})
+		canWrap := (*lineIndex != linemetadata.Index{})
 		if !canWrap {
 			// No match, can't wrap, give up
 			return
 		}
 
 		// Try again from the top
-		firstHitPosition = p.findFirstHit(linemetadata.Index{}, lineNumber, false)
+		firstHitPosition = p.findFirstHit(linemetadata.Index{}, lineIndex, false)
 	}
 	if firstHitPosition == nil {
 		// No match, give up
@@ -61,13 +61,13 @@ func (p *Pager) scrollToSearchHitsBackwards() {
 		// No lines to search
 		return
 	}
-	lineNumber := lastVisiblePosition.lineIndex(p)
-	if lineNumber == nil {
+	lineIndex := lastVisiblePosition.lineIndex(p)
+	if lineIndex == nil {
 		log.Warn("No line number to search even though we have a last visible position")
 		return
 	}
 
-	firstHitPosition := p.findFirstHit(*lineNumber, nil, true)
+	firstHitPosition := p.findFirstHit(*lineIndex, nil, true)
 	if firstHitPosition == nil {
 		lastLine := linemetadata.IndexFromLength(p.Reader().GetLineCount())
 		if lastLine == nil {
@@ -76,14 +76,14 @@ func (p *Pager) scrollToSearchHitsBackwards() {
 			log.Error("Wrapped backwards search had no lines to search")
 			return
 		}
-		canWrap := (*lineNumber != *lastLine)
+		canWrap := (*lineIndex != *lastLine)
 		if !canWrap {
 			// No match, can't wrap, give up
 			return
 		}
 
 		// Try again from the bottom
-		firstHitPosition = p.findFirstHit(*lastLine, lineNumber, true)
+		firstHitPosition = p.findFirstHit(*lastLine, lineIndex, true)
 	}
 	if firstHitPosition == nil {
 		// No match, give up

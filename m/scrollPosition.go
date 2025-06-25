@@ -104,13 +104,13 @@ func NewScrollPositionFromIndex(index linemetadata.Index, name string) scrollPos
 func (si *scrollPositionInternal) handleNegativeDeltaScreenLines(pager *Pager) {
 	for !si.lineIndex.IsZero() && si.deltaScreenLines < 0 {
 		// Render the previous line
-		previousLineNumber := si.lineIndex.NonWrappingAdd(-1)
-		previousLine := pager.Reader().GetLine(previousLineNumber)
+		previousLineIndex := si.lineIndex.NonWrappingAdd(-1)
+		previousLine := pager.Reader().GetLine(previousLineIndex)
 		previousSubLines := pager.renderLine(previousLine, si.getMaxNumberPrefixLength(pager))
 
 		// Adjust lineNumber and deltaScreenLines to move up into the previous
 		// screen line
-		si.lineIndex = &previousLineNumber
+		si.lineIndex = &previousLineIndex
 		si.deltaScreenLines += len(previousSubLines)
 	}
 
@@ -143,8 +143,8 @@ func (si *scrollPositionInternal) handlePositiveDeltaScreenLines(pager *Pager) {
 			return
 		}
 
-		nextLineNumber := si.lineIndex.NonWrappingAdd(1)
-		si.lineIndex = &nextLineNumber
+		nextLineIndex := si.lineIndex.NonWrappingAdd(1)
+		si.lineIndex = &nextLineIndex
 		si.deltaScreenLines -= len(subLines)
 	}
 }
@@ -160,7 +160,7 @@ func (si *scrollPositionInternal) emptyBottomLinesCount(pager *Pager) int {
 	// Start counting where the current input line begins
 	unclaimedViewportLines += si.deltaScreenLines
 
-	lineNumber := *si.lineIndex
+	lineIndex := *si.lineIndex
 
 	var lastLine NumberedLine
 	lastLineIndex := linemetadata.IndexFromLength(pager.Reader().GetLineCount())
@@ -175,7 +175,7 @@ func (si *scrollPositionInternal) emptyBottomLinesCount(pager *Pager) int {
 	lastLineNumberWidth := pager.getLineNumberPrefixLength(lastLine.number)
 
 	for {
-		line := pager.Reader().GetLine(lineNumber)
+		line := pager.Reader().GetLine(lineIndex)
 		if line == nil {
 			// No more lines!
 			break
@@ -188,7 +188,7 @@ func (si *scrollPositionInternal) emptyBottomLinesCount(pager *Pager) int {
 		}
 
 		// Move to the next line
-		lineNumber = lineNumber.NonWrappingAdd(1)
+		lineIndex = lineIndex.NonWrappingAdd(1)
 	}
 
 	return unclaimedViewportLines

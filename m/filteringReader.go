@@ -140,9 +140,9 @@ func (f *FilteringReader) GetLines(firstLine linemetadata.Index, wantedLineCount
 	lastLine := firstLine.NonWrappingAdd(wantedLineCount - 1)
 
 	// Prevent reading past the end of the available lines
-	maxLineNumber := *linemetadata.IndexFromLength(len(acceptedLines))
-	if lastLine.IsAfter(maxLineNumber) {
-		lastLine = maxLineNumber
+	maxLineIndex := *linemetadata.IndexFromLength(len(acceptedLines))
+	if lastLine.IsAfter(maxLineIndex) {
+		lastLine = maxLineIndex
 
 		// If one line was requested, then first and last should be exactly the
 		// same, and we would get there by adding zero.

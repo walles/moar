@@ -735,9 +735,9 @@ func (reader *ReaderImpl) getLinesUnlocked(firstLine linemetadata.Index, wantedL
 	lastLine := firstLine.NonWrappingAdd(wantedLineCount - 1)
 
 	// Prevent reading past the end of the available lines
-	maxLineNumber := *linemetadata.IndexFromLength(len(reader.lines))
-	if lastLine.IsAfter(maxLineNumber) {
-		lastLine = maxLineNumber
+	maxLineIndex := *linemetadata.IndexFromLength(len(reader.lines))
+	if lastLine.IsAfter(maxLineIndex) {
+		lastLine = maxLineIndex
 
 		// If one line was requested, then first and last should be exactly the
 		// same, and we would get there by adding zero.
@@ -776,15 +776,15 @@ func (reader *ReaderImpl) PumpToStdout() {
 
 		// Print the lines we got
 		printed := false
-		for index, line := range lines.lines {
-			lineNumber := firstReturnedIndex.NonWrappingAdd(index)
-			if lineNumber.IsBefore(firstNotPrintedLine) {
+		for loopIndex, line := range lines.lines {
+			lineIndex := firstReturnedIndex.NonWrappingAdd(loopIndex)
+			if lineIndex.IsBefore(firstNotPrintedLine) {
 				continue
 			}
 
 			fmt.Println(line.line.raw)
 			printed = true
-			firstNotPrintedLine = lineNumber.NonWrappingAdd(1)
+			firstNotPrintedLine = lineIndex.NonWrappingAdd(1)
 		}
 
 		return printed
