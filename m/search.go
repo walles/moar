@@ -69,7 +69,7 @@ func (p *Pager) scrollToSearchHitsBackwards() {
 
 	firstHitPosition := p.findFirstHit(*lineNumber, nil, true)
 	if firstHitPosition == nil {
-		lastLine := linemetadata.IndexFromLength(p.reader.GetLineCount())
+		lastLine := linemetadata.IndexFromLength(p.Reader().GetLineCount())
 		if lastLine == nil {
 			// In the first part of the search we had some lines to search.
 			// Lines should never go away, so this should never happen.
@@ -123,7 +123,7 @@ func (p *Pager) findFirstHit(startPosition linemetadata.Index, beforePosition *l
 			linesCount = startPosition.Index() - beforePosition.Index()
 		}
 	} else {
-		linesCount = p.reader.GetLineCount() - startPosition.Index()
+		linesCount = p.Reader().GetLineCount() - startPosition.Index()
 		if beforePosition != nil {
 			// Searching from 1 with before set to 2 should make the count 1
 			linesCount = beforePosition.Index() - startPosition.Index()
@@ -216,7 +216,7 @@ func (p *Pager) findFirstHit(startPosition linemetadata.Index, beforePosition *l
 func (p *Pager) _findFirstHit(startPosition linemetadata.Index, beforePosition *linemetadata.Index, backwards bool) *scrollPosition {
 	searchPosition := startPosition
 	for {
-		line := p.reader.GetLine(searchPosition)
+		line := p.Reader().GetLine(searchPosition)
 		if line == nil {
 			// No match, give up
 			return nil
@@ -261,7 +261,7 @@ func (p *Pager) scrollToNextSearchHit() {
 		return
 	}
 
-	if p.reader.GetLineCount() == 0 {
+	if p.Reader().GetLineCount() == 0 {
 		// Nothing to search in, never mind
 		return
 	}
@@ -305,7 +305,7 @@ func (p *Pager) scrollToPreviousSearchHit() {
 		return
 	}
 
-	if p.reader.GetLineCount() == 0 {
+	if p.Reader().GetLineCount() == 0 {
 		// Nothing to search in, never mind
 		return
 	}
@@ -321,7 +321,7 @@ func (p *Pager) scrollToPreviousSearchHit() {
 	case p.isNotFound():
 		// Restart searching from the bottom
 		p.mode = PagerModeViewing{pager: p}
-		firstSearchPosition = *linemetadata.IndexFromLength(p.reader.GetLineCount())
+		firstSearchPosition = *linemetadata.IndexFromLength(p.Reader().GetLineCount())
 
 	default:
 		panic(fmt.Sprint("Unknown search mode when finding previous: ", p.mode))
