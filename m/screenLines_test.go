@@ -2,11 +2,12 @@ package m
 
 import (
 	"regexp"
+	"strconv"
 	"strings"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
-	"github.com/walles/moar/m/linenumbers"
+	"github.com/walles/moar/m/linemetadata"
 	"github.com/walles/moar/twin"
 	"gotest.tools/v3/assert"
 )
@@ -22,7 +23,10 @@ func testHorizontalCropping(t *testing.T, contents string, firstVisibleColumn in
 	pager.scrollPosition = newScrollPosition("testHorizontalCropping")
 
 	lineContents := NewLine(contents)
-	screenLine := pager.renderLine(&lineContents, linenumbers.LineNumber{}, pager.scrollPosition.internalDontTouch)
+	numberedLine := NumberedLine{
+		line: &lineContents,
+	}
+	screenLine := pager.renderLine(&numberedLine, pager.getLineNumberPrefixLength(numberedLine.number))
 	assert.Equal(t, rowToString(screenLine[0].cells), expected)
 }
 
@@ -79,11 +83,15 @@ func TestEmpty(t *testing.T) {
 
 		scrollPosition: newScrollPosition("TestEmpty"),
 	}
+	pager.filteringReader = FilteringReader{
+		BackingReader: pager.reader,
+		FilterPattern: &pager.filterPattern,
+	}
 
 	rendered, statusText := pager.renderScreenLines()
 	assert.Equal(t, len(rendered), 0)
 	assert.Equal(t, "test: <empty>", statusText)
-	assert.Assert(t, pager.lineNumber() == nil)
+	assert.Assert(t, pager.lineIndex() == nil)
 }
 
 // Repro case for a search bug discovered in v1.9.8.
@@ -95,12 +103,19 @@ func TestSearchHighlight(t *testing.T) {
 		screen:        twin.NewFakeScreen(100, 10),
 		searchPattern: regexp.MustCompile("\""),
 	}
+	pager.filteringReader = FilteringReader{
+		BackingReader: pager.reader,
+		FilterPattern: &pager.filterPattern,
+	}
 
-	rendered := pager.renderLine(&line, linenumbers.LineNumber{}, pager.scrollPosition.internalDontTouch)
+	numberedLine := NumberedLine{
+		line: &line,
+	}
+	rendered := pager.renderLine(&numberedLine, pager.getLineNumberPrefixLength(numberedLine.number))
 	assert.DeepEqual(t, []renderedLine{
 		{
-			inputLine: linenumbers.LineNumber{},
-			wrapIndex: 0,
+			inputLineIndex: linemetadata.Index{},
+			wrapIndex:      0,
 			cells: []twin.StyledRune{
 				{Rune: 'x', Style: twin.StyleDefault},
 				{Rune: '"', Style: twin.StyleDefault.WithAttr(twin.AttrReverse)},
@@ -111,7 +126,8 @@ func TestSearchHighlight(t *testing.T) {
 	}, rendered,
 		cmp.AllowUnexported(twin.Style{}),
 		cmp.AllowUnexported(renderedLine{}),
-		cmp.AllowUnexported(linenumbers.LineNumber{}),
+		cmp.AllowUnexported(linemetadata.Number{}),
+		cmp.AllowUnexported(linemetadata.Index{}),
 	)
 }
 
@@ -126,14 +142,18 @@ func TestOverflowDown(t *testing.T) {
 		reader: NewReaderFromText("test", "hej"),
 
 		// This value can be anything and should be clipped, that's what we're testing
-		scrollPosition: *scrollPositionFromLineNumber("TestOverflowDown", linenumbers.LineNumberFromOneBased(42)),
+		scrollPosition: *scrollPositionFromIndex("TestOverflowDown", linemetadata.IndexFromOneBased(42)),
+	}
+	pager.filteringReader = FilteringReader{
+		BackingReader: pager.reader,
+		FilterPattern: &pager.filterPattern,
 	}
 
 	rendered, statusText := pager.renderScreenLines()
 	assert.Equal(t, len(rendered), 1)
 	assert.Equal(t, "hej", rowToString(rendered[0]))
 	assert.Equal(t, "test: 1 line  100%", statusText)
-	assert.Assert(t, pager.lineNumber().IsZero())
+	assert.Assert(t, pager.lineIndex().IsZero())
 	assert.Equal(t, pager.deltaScreenLines(), 0)
 }
 
@@ -149,12 +169,16 @@ func TestOverflowUp(t *testing.T) {
 
 		// NOTE: scrollPosition intentionally not initialized
 	}
+	pager.filteringReader = FilteringReader{
+		BackingReader: pager.reader,
+		FilterPattern: &pager.filterPattern,
+	}
 
 	rendered, statusText := pager.renderScreenLines()
 	assert.Equal(t, len(rendered), 1)
 	assert.Equal(t, "hej", rowToString(rendered[0]))
 	assert.Equal(t, "test: 1 line  100%", statusText)
-	assert.Assert(t, pager.lineNumber().IsZero())
+	assert.Assert(t, pager.lineIndex().IsZero())
 	assert.Equal(t, pager.deltaScreenLines(), 0)
 }
 
@@ -214,7 +238,86 @@ func TestOneLineTerminal(t *testing.T) {
 		reader:        NewReaderFromText("test", "hej"),
 		ShowStatusBar: true,
 	}
+	pager.filteringReader = FilteringReader{
+		BackingReader: pager.reader,
+		FilterPattern: &pager.filterPattern,
+	}
 
 	rendered, _ := pager.renderScreenLines()
 	assert.Equal(t, len(rendered), 0)
+}
+
+// What happens if we are scrolled to the bottom of a 1000 lines file, and then
+// add a filter matching only the first line?
+//
+// What should happen is that we should go as far down as possible.
+func TestShortenedInput(t *testing.T) {
+	pager := Pager{
+		screen: twin.NewFakeScreen(20, 10),
+
+		// 1000 lines of input, we will scroll to the bottom
+		reader: NewReaderFromText("test", "first\n"+strings.Repeat("line\n", 1000)),
+
+		scrollPosition: newScrollPosition("TestShortenedInput"),
+	}
+	pager.filteringReader = FilteringReader{
+		BackingReader: pager.reader,
+		FilterPattern: &pager.filterPattern,
+	}
+
+	pager.scrollToEnd()
+	assert.Equal(t, pager.lineIndex().Index(), 991, "This should have been the effect of calling scrollToEnd()")
+
+	pager.mode = &PagerModeFilter{pager: &pager}
+	pager.filterPattern = regexp.MustCompile("first") // Match only the first line
+
+	rendered, _ := pager.renderScreenLines()
+	assert.Equal(t, len(rendered), 1, "Should have rendered one line")
+	assert.Equal(t, "first", rowToString(rendered[0]))
+	assert.Equal(t, pager.lineIndex().Index(), 0, "Should have scrolled to the first line")
+}
+
+// - Start with a 1000 lines file
+// - Scroll to the bottom
+// - Add a filter matching the first 100 lines
+// - Render
+// - Verify that the 10 last matching lines were rendered
+func TestShortenedInputManyLines(t *testing.T) {
+	lines := []string{"first"}
+	for i := range 999 {
+		if i < 100 {
+			lines = append(lines, "match "+strconv.Itoa(i))
+		} else {
+			lines = append(lines, "other "+strconv.Itoa(i))
+		}
+	}
+
+	pager := Pager{
+		screen:         twin.NewFakeScreen(20, 10),
+		reader:         NewReaderFromText("test", strings.Join(lines, "\n")),
+		scrollPosition: newScrollPosition("TestShortenedInputManyLines"),
+	}
+	pager.filteringReader = FilteringReader{
+		BackingReader: pager.reader,
+		FilterPattern: &pager.filterPattern,
+	}
+
+	pager.scrollToEnd()
+	assert.Equal(t, pager.lineIndex().Index(), 990, "Should be at the last line before filtering")
+
+	pager.mode = &PagerModeFilter{pager: &pager}
+	pager.filterPattern = regexp.MustCompile(`^match`)
+
+	rendered, _ := pager.renderScreenLines()
+	assert.Equal(t, len(rendered), 10, "Should have rendered 10 lines")
+
+	expectedLines := []string{}
+	for i := 90; i < 100; i++ {
+		expectedLines = append(expectedLines, "match "+strconv.Itoa(i))
+	}
+	for i, row := range rendered {
+		assert.Equal(t, rowToString(row), expectedLines[i], "Line %d mismatch", i)
+	}
+	assert.Equal(t, pager.lineIndex().Index(), 90, "The last lines should now be visible")
+	assert.Equal(t, "match 99", rowToString(rendered[len(rendered)-1]))
 }

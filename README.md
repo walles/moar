@@ -20,6 +20,8 @@ Doing the right thing includes:
 - **Search is incremental** / find-as-you-type just like in
   [Chrome](http://www.google.com/chrome) or
   [Emacs](http://www.gnu.org/software/emacs/)
+- **Filtering is incremental**: Press <kbd>&</kbd> to filter the input
+  interactively
 - Search becomes case sensitive if you add any UPPER CASE characters
   to your search terms, just like in Emacs
 - [Regexp](http://en.wikipedia.org/wiki/Regular_expression#Basic_concepts)

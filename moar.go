@@ -19,7 +19,7 @@ import (
 	"golang.org/x/term"
 
 	"github.com/walles/moar/m"
-	"github.com/walles/moar/m/linenumbers"
+	"github.com/walles/moar/m/linemetadata"
 	"github.com/walles/moar/m/textstyles"
 	"github.com/walles/moar/twin"
 )
@@ -229,7 +229,7 @@ func tryOpen(filename string) error {
 // line number, and returns the remaining args.
 //
 // Returns nil on no target line number specified.
-func getTargetLineNumber(args []string) (*linenumbers.LineNumber, []string) {
+func getTargetLine(args []string) (*linemetadata.Index, []string) {
 	for i, arg := range args {
 		if !strings.HasPrefix(arg, "+") {
 			continue
@@ -252,7 +252,7 @@ func getTargetLineNumber(args []string) (*linenumbers.LineNumber, []string) {
 		remainingArgs = append(remainingArgs, args[:i]...)
 		remainingArgs = append(remainingArgs, args[i+1:]...)
 
-		returnMe := linenumbers.LineNumberFromOneBased(int(lineNumber))
+		returnMe := linemetadata.IndexFromOneBased(int(lineNumber))
 		return &returnMe, remainingArgs
 	}
 
@@ -388,7 +388,7 @@ func pagerFromArgs(
 		flags = append(strings.Fields(moarEnv), flags...)
 	}
 
-	targetLineNumber, remainingArgs := getTargetLineNumber(flags)
+	targetLine, remainingArgs := getTargetLine(flags)
 
 	err = flagSet.Parse(remainingArgs)
 	if err != nil {
@@ -488,7 +488,7 @@ func pagerFromArgs(
 		formatter = formatters.TTY16m
 	}
 
-	var reader *m.Reader
+	var reader *m.ReaderImpl
 	shouldFormat := *reFormat
 	if stdinIsRedirected {
 		// Display input pipe contents
@@ -573,10 +573,10 @@ func pagerFromArgs(
 	pager.ScrollRightHint = *scrollRightHint
 	pager.SideScrollAmount = int(*shift)
 
-	pager.TargetLineNumber = targetLineNumber
-	if *follow && pager.TargetLineNumber == nil {
-		reallyHigh := linenumbers.LineNumberMax()
-		pager.TargetLineNumber = &reallyHigh
+	pager.TargetLine = targetLine
+	if *follow && pager.TargetLine == nil {
+		reallyHigh := linemetadata.IndexMax()
+		pager.TargetLine = &reallyHigh
 	}
 
 	return pager, screen, style, &formatter, logsRequested, nil

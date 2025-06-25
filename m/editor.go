@@ -9,12 +9,12 @@ import (
 	"strings"
 
 	log "github.com/sirupsen/logrus"
-	"github.com/walles/moar/m/linenumbers"
+	"github.com/walles/moar/m/linemetadata"
 )
 
 // Dump the reader lines into a read-only temp file and return the absolute file
 // name.
-func dumpToTempFile(reader *Reader) (string, error) {
+func dumpToTempFile(reader *ReaderImpl) (string, error) {
 	tempFile, err := os.CreateTemp("", "moar-contents-")
 	if err != nil {
 		return "", err
@@ -28,10 +28,9 @@ func dumpToTempFile(reader *Reader) (string, error) {
 
 	log.Debug("Dumping contents into: ", tempFile.Name())
 
-	lines := reader.GetLines(linenumbers.LineNumber{}, math.MaxInt)
-	for index, line := range lines.lines {
-		lineNumber := linenumbers.LineNumberFromZeroBased(index)
-		toWrite := line.Plain(&lineNumber)
+	lines := reader.GetLines(linemetadata.Index{}, math.MaxInt)
+	for _, line := range lines.lines {
+		toWrite := line.Plain()
 		_, err := tempFile.WriteString(toWrite + "\n")
 		if err != nil {
 			return "", err

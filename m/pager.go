@@ -8,7 +8,7 @@ import (
 
 	"github.com/alecthomas/chroma/v2"
 	log "github.com/sirupsen/logrus"
-	"github.com/walles/moar/m/linenumbers"
+	"github.com/walles/moar/m/linemetadata"
 	"github.com/walles/moar/m/textstyles"
 	"github.com/walles/moar/twin"
 )
@@ -42,7 +42,8 @@ type eventMaybeDone struct{}
 
 // Pager is the main on-screen pager
 type Pager struct {
-	reader              *Reader
+	reader              *ReaderImpl
+	filteringReader     FilteringReader
 	screen              twin.Screen
 	quit                bool
 	scrollPosition      scrollPosition
@@ -55,6 +56,7 @@ type Pager struct {
 
 	searchString  string
 	searchPattern *regexp.Regexp
+	filterPattern *regexp.Regexp
 
 	// We used to have a "Following" field here. If you want to follow, set
 	// TargetLineNumber to LineNumberMax() instead, see below.
@@ -81,9 +83,9 @@ type Pager struct {
 
 	SideScrollAmount int // Should be positive
 
-	// If non-nil, scroll to this line number as soon as possible. Set this
-	// value to LineNumberMax() to follow the end of the input (tail).
-	TargetLineNumber *linenumbers.LineNumber
+	// If non-nil, scroll to this line as soon as possible. Set this value to
+	// IndexMax() to follow the end of the input (tail).
+	TargetLine *linemetadata.Index
 
 	// If true, pager will clear the screen on return. If false, pager will
 	// clear the last line, and show the cursor.
@@ -103,10 +105,10 @@ type Pager struct {
 }
 
 type _PreHelpState struct {
-	reader              *Reader
+	reader              *ReaderImpl
 	scrollPosition      scrollPosition
 	leftColumnZeroBased int
-	targetLineNumber    *linenumbers.LineNumber
+	targetLine          *linemetadata.Index
 }
 
 var _HelpReader = NewReaderFromText("Help", `
@@ -137,6 +139,14 @@ Moving around
 * Half page 'u'p / 'd'own, or CTRL-u / CTRL-d
 * RETURN moves down one line
 
+Filtering
+---------
+Type '&' to start filtering, then type your filter expression.
+
+While filtering, arrow keys, PageUp, PageDown, Home and End work as usual.
+
+Press 'ESC' or RETURN to exit filtering mode.
+
 Searching
 ---------
 * Type / to start searching, then type what you want to find
@@ -163,7 +173,7 @@ Available at https://github.com/walles/moar/.
 `)
 
 // NewPager creates a new Pager with default settings
-func NewPager(r *Reader) *Pager {
+func NewPager(r *ReaderImpl) *Pager {
 	var name string
 	if r == nil || r.name == nil || len(*r.name) == 0 {
 		name = "Pager"
@@ -184,6 +194,10 @@ func NewPager(r *Reader) *Pager {
 	}
 
 	pager.mode = PagerModeViewing{pager: &pager}
+	pager.filteringReader = FilteringReader{
+		BackingReader: r,
+		FilterPattern: &pager.filterPattern,
+	}
 
 	return &pager
 }
@@ -196,6 +210,26 @@ func (p *Pager) visibleHeight() int {
 		return height - 1
 	}
 	return height
+}
+
+// How many cells are needed for this line number?
+//
+// Returns 0 if line numbers are disabled.
+func (p *Pager) getLineNumberPrefixLength(lineNumber linemetadata.Number) int {
+	if !p.ShowLineNumbers {
+		return 0
+	}
+
+	length := len(lineNumber.Format()) + 1 // +1 for the space after the line number
+
+	if length < 4 {
+		// 4 = space for 3 digits followed by one whitespace
+		//
+		// https://github.com/walles/moar/issues/38
+		return 4
+	}
+
+	return length
 }
 
 // Draw the footer string at the bottom using the status bar style
@@ -224,7 +258,7 @@ func (p *Pager) Quit() {
 	p.reader = p.preHelpState.reader
 	p.scrollPosition = p.preHelpState.scrollPosition
 	p.leftColumnZeroBased = p.preHelpState.leftColumnZeroBased
-	p.TargetLineNumber = p.preHelpState.targetLineNumber
+	p.TargetLine = p.preHelpState.targetLine
 	p.preHelpState = nil
 }
 
@@ -254,17 +288,21 @@ func (p *Pager) moveRight(delta int) {
 	}
 }
 
+func (p *Pager) Reader() Reader {
+	return &p.filteringReader
+}
+
 func (p *Pager) handleScrolledUp() {
-	p.TargetLineNumber = nil
+	p.TargetLine = nil
 }
 
 func (p *Pager) handleScrolledDown() {
 	if p.isScrolledToEnd() {
 		// Follow output
-		reallyHigh := linenumbers.LineNumberMax()
-		p.TargetLineNumber = &reallyHigh
+		reallyHigh := linemetadata.IndexMax()
+		p.TargetLine = &reallyHigh
 	} else {
-		p.TargetLineNumber = nil
+		p.TargetLine = nil
 	}
 }
 
@@ -406,15 +444,15 @@ func (p *Pager) StartPaging(screen twin.Screen, chromaStyle *chroma.Style, chrom
 			return
 
 		case eventMoreLinesAvailable:
-			if p.TargetLineNumber != nil {
+			if p.TargetLine != nil {
 				// The user wants to scroll down to a specific line number
-				if linenumbers.LineNumberFromLength(p.reader.GetLineCount()).IsBefore(*p.TargetLineNumber) {
+				if linemetadata.IndexFromLength(p.Reader().GetLineCount()).IsBefore(*p.TargetLine) {
 					// Not there yet, keep scrolling
 					p.scrollToEnd()
 				} else {
 					// We see the target, scroll to it
-					p.scrollPosition = NewScrollPositionFromLineNumber(*p.TargetLineNumber, "goToTargetLineNumber")
-					p.TargetLineNumber = nil
+					p.scrollPosition = NewScrollPositionFromIndex(*p.TargetLine, "goToTargetLine")
+					p.TargetLine = nil
 				}
 			}
 
@@ -434,16 +472,16 @@ func (p *Pager) StartPaging(screen twin.Screen, chromaStyle *chroma.Style, chrom
 	}
 }
 
-func fitsOnOneScreen(reader *Reader, width int, height int) bool {
+func fitsOnOneScreen(reader *ReaderImpl, width int, height int) bool {
 	// One extra line to account for the status bar
 	extraLines := 1
 	if reader.GetLineCount() > height-extraLines {
 		return false
 	}
 
-	lines := reader.GetLines(linenumbers.LineNumberFromZeroBased(0), reader.GetLineCount())
+	lines := reader.GetLines(linemetadata.Index{}, reader.GetLineCount())
 	for _, line := range lines.lines {
-		rendered := line.HighlightedTokens(twin.StyleDefault, nil, nil).StyledRunes
+		rendered := line.HighlightedTokens(twin.StyleDefault, nil).StyledRunes
 		if len(rendered) > width {
 			// This line is too long to fit on one screen line, no fit
 			return false

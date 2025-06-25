@@ -15,7 +15,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/walles/moar/m/linenumbers"
+	"github.com/walles/moar/m/linemetadata"
 
 	"github.com/alecthomas/chroma/v2"
 	"github.com/alecthomas/chroma/v2/lexers"
@@ -39,13 +39,22 @@ type ReaderOptions struct {
 	Lexer chroma.Lexer
 }
 
-// Reader reads a file into an array of strings.
+type Reader interface {
+	GetLineCount() int
+	GetLine(index linemetadata.Index) *NumberedLine
+
+	// This method will try to honor wantedLineCount over firstLine. This means
+	// that the returned first line may be different from the requested one.
+	GetLines(firstLine linemetadata.Index, wantedLineCount int) *InputLines
+}
+
+// ReaderImpl reads a file into an array of strings.
 //
 // It does the reading in the background, and it returns parts of the read data
 // upon request.
 //
 // This package provides query methods for the struct, no peeking!!
-type Reader struct {
+type ReaderImpl struct {
 	sync.Mutex
 
 	lines []*Line
@@ -85,10 +94,7 @@ type Reader struct {
 
 // InputLines contains a number of lines from the reader, plus metadata
 type InputLines struct {
-	lines []*Line
-
-	// Line number of the first line returned
-	firstLine linenumbers.LineNumber
+	lines []*NumberedLine
 
 	// "monkey.txt: 1-23/45 51%"
 	statusText string
@@ -98,7 +104,7 @@ type InputLines struct {
 // performance improvement:
 //
 // go test -benchmem -benchtime=10s -run='^$' -bench 'ReadLargeFile'
-func (reader *Reader) preAllocLines() {
+func (reader *ReaderImpl) preAllocLines() {
 	if reader.fileName == nil {
 		return
 	}
@@ -128,7 +134,7 @@ func (reader *Reader) preAllocLines() {
 	reader.lines = make([]*Line, 0, lineCount)
 }
 
-func (reader *Reader) readStream(stream io.Reader, formatter chroma.Formatter, options ReaderOptions) {
+func (reader *ReaderImpl) readStream(stream io.Reader, formatter chroma.Formatter, options ReaderOptions) {
 	reader.consumeLinesFromStream(stream)
 
 	t0 := time.Now()
@@ -153,7 +159,7 @@ func (reader *Reader) readStream(stream io.Reader, formatter chroma.Formatter, o
 
 // This function will update the Reader struct. It is expected to run in a
 // goroutine.
-func (reader *Reader) consumeLinesFromStream(stream io.Reader) {
+func (reader *ReaderImpl) consumeLinesFromStream(stream io.Reader) {
 	reader.preAllocLines()
 
 	inspectionReader := inspectionReader{base: stream}
@@ -249,7 +255,7 @@ func (reader *Reader) consumeLinesFromStream(stream io.Reader) {
 	log.Info("Stream read in ", time.Since(t0))
 }
 
-func (reader *Reader) tailFile() error {
+func (reader *ReaderImpl) tailFile() error {
 	reader.Lock()
 	fileName := reader.fileName
 	reader.Unlock()
@@ -334,7 +340,7 @@ func (reader *Reader) tailFile() error {
 //
 // Note that you must call reader.SetStyleForHighlighting() after this to get
 // highlighting.
-func NewReaderFromStream(name string, reader io.Reader, formatter chroma.Formatter, options ReaderOptions) (*Reader, error) {
+func NewReaderFromStream(name string, reader io.Reader, formatter chroma.Formatter, options ReaderOptions) (*ReaderImpl, error) {
 	zReader, err := ZReader(reader)
 	if err != nil {
 		return nil, err
@@ -372,12 +378,12 @@ func NewReaderFromStream(name string, reader io.Reader, formatter chroma.Formatt
 //
 // Note that you must call reader.SetStyleForHighlighting() after this to get
 // highlighting.
-func newReaderFromStream(reader io.Reader, originalFileName *string, formatter chroma.Formatter, options ReaderOptions) *Reader {
+func newReaderFromStream(reader io.Reader, originalFileName *string, formatter chroma.Formatter, options ReaderOptions) *ReaderImpl {
 	done := atomic.Bool{}
 	done.Store(false)
 	highlightingDone := atomic.Bool{}
 	highlightingDone.Store(false)
-	returnMe := Reader{
+	returnMe := ReaderImpl{
 		// This needs to be size 1. If it would be 0, and we add more
 		// lines while the pager is processing, the pager would miss
 		// the lines added while it was processing.
@@ -409,7 +415,7 @@ func newReaderFromStream(reader io.Reader, originalFileName *string, formatter c
 //
 // Calling _wait() on this Reader will always return immediately, no
 // asynchronous ops will be performed.
-func NewReaderFromText(name string, text string) *Reader {
+func NewReaderFromText(name string, text string) *ReaderImpl {
 	noExternalNewlines := strings.Trim(text, "\n")
 	lines := []*Line{}
 	if len(noExternalNewlines) > 0 {
@@ -422,7 +428,7 @@ func NewReaderFromText(name string, text string) *Reader {
 	done.Store(true)
 	highlightingDone := atomic.Bool{}
 	highlightingDone.Store(true) // No highlighting to do = nothing left = Done!
-	returnMe := &Reader{
+	returnMe := &ReaderImpl{
 		lines:                   lines,
 		done:                    &done,
 		highlightingDone:        &highlightingDone,
@@ -521,7 +527,7 @@ func countLines(filename string) (uint64, error) {
 // The Reader will try to uncompress various compressed file format, and also
 // apply highlighting to the file using Chroma:
 // https://github.com/alecthomas/chroma
-func NewReaderFromFilename(filename string, formatter chroma.Formatter, options ReaderOptions) (*Reader, error) {
+func NewReaderFromFilename(filename string, formatter chroma.Formatter, options ReaderOptions) (*ReaderImpl, error) {
 	fileError := tryOpen(filename)
 	if fileError != nil {
 		return nil, fileError
@@ -549,7 +555,7 @@ func NewReaderFromFilename(filename string, formatter chroma.Formatter, options 
 	return returnMe, nil
 }
 
-func textAsString(reader *Reader, shouldFormat bool) string {
+func textAsString(reader *ReaderImpl, shouldFormat bool) string {
 	reader.Lock()
 
 	text := strings.Builder{}
@@ -589,7 +595,7 @@ func isXml(text string) bool {
 }
 
 // We expect this to be executed in a goroutine
-func highlightFromMemory(reader *Reader, formatter chroma.Formatter, options ReaderOptions) {
+func highlightFromMemory(reader *ReaderImpl, formatter chroma.Formatter, options ReaderOptions) {
 	defer func() {
 		reader.highlightingDone.Store(true)
 		select {
@@ -657,7 +663,7 @@ func highlightFromMemory(reader *Reader, formatter chroma.Formatter, options Rea
 }
 
 // createStatusUnlocked() assumes that its caller is holding the lock
-func (reader *Reader) createStatusUnlocked(lastLine linenumbers.LineNumber) string {
+func (reader *ReaderImpl) createStatusUnlocked(lastLine linemetadata.Index) string {
 	prefix := ""
 	if reader.name != nil {
 		prefix = filepath.Base(*reader.name) + ": "
@@ -671,11 +677,11 @@ func (reader *Reader) createStatusUnlocked(lastLine linenumbers.LineNumber) stri
 		return prefix + "1 line  100%"
 	}
 
-	percent := int(100 * float64(lastLine.AsOneBased()) / float64(len(reader.lines)))
+	percent := int(100 * float64(lastLine.Index()+1) / float64(len(reader.lines)))
 
 	return fmt.Sprintf("%s%s lines  %d%%",
 		prefix,
-		linenumbers.LineNumberFromLength(len(reader.lines)).Format(),
+		linemetadata.IndexFromLength(len(reader.lines)).Format(),
 		percent)
 }
 
@@ -683,12 +689,12 @@ func (reader *Reader) createStatusUnlocked(lastLine linenumbers.LineNumber) stri
 //
 // Used for making sudo work:
 // https://github.com/walles/moar/issues/199
-func (reader *Reader) AwaitFirstByte() {
+func (reader *ReaderImpl) AwaitFirstByte() {
 	<-reader.doneWaitingForFirstByte
 }
 
 // GetLineCount returns the number of lines available for viewing
-func (reader *Reader) GetLineCount() int {
+func (reader *ReaderImpl) GetLineCount() int {
 	reader.Lock()
 	defer reader.Unlock()
 
@@ -696,33 +702,32 @@ func (reader *Reader) GetLineCount() int {
 }
 
 // GetLine gets a line. If the requested line number is out of bounds, nil is returned.
-func (reader *Reader) GetLine(lineNumber linenumbers.LineNumber) *Line {
+func (reader *ReaderImpl) GetLine(index linemetadata.Index) *NumberedLine {
 	reader.Lock()
 	defer reader.Unlock()
 
-	if lineNumber.AsOneBased() > len(reader.lines) {
+	if !index.IsWithinLength(len(reader.lines)) {
 		return nil
 	}
-	return reader.lines[lineNumber.AsZeroBased()]
+	return &NumberedLine{
+		index:  index,
+		number: linemetadata.NumberFromZeroBased(index.Index()),
+		line:   reader.lines[index.Index()],
+	}
 }
 
 // GetLines gets the indicated lines from the input
 //
-// Overflow state will be didFit if we returned all lines we currently have, or
-// didOverflow otherwise.
-//
 //revive:disable-next-line:unexported-return
-func (reader *Reader) GetLines(firstLine linenumbers.LineNumber, wantedLineCount int) *InputLines {
+func (reader *ReaderImpl) GetLines(firstLine linemetadata.Index, wantedLineCount int) *InputLines {
 	reader.Lock()
 	defer reader.Unlock()
 	return reader.getLinesUnlocked(firstLine, wantedLineCount)
 }
 
-func (reader *Reader) getLinesUnlocked(firstLine linenumbers.LineNumber, wantedLineCount int) *InputLines {
+func (reader *ReaderImpl) getLinesUnlocked(firstLine linemetadata.Index, wantedLineCount int) *InputLines {
 	if len(reader.lines) == 0 || wantedLineCount == 0 {
 		return &InputLines{
-			lines:      nil,
-			firstLine:  firstLine,
 			statusText: reader.createStatusUnlocked(firstLine),
 		}
 	}
@@ -730,9 +735,9 @@ func (reader *Reader) getLinesUnlocked(firstLine linenumbers.LineNumber, wantedL
 	lastLine := firstLine.NonWrappingAdd(wantedLineCount - 1)
 
 	// Prevent reading past the end of the available lines
-	maxLineNumber := *linenumbers.LineNumberFromLength(len(reader.lines))
-	if lastLine.IsAfter(maxLineNumber) {
-		lastLine = maxLineNumber
+	maxLineIndex := *linemetadata.IndexFromLength(len(reader.lines))
+	if lastLine.IsAfter(maxLineIndex) {
+		lastLine = maxLineIndex
 
 		// If one line was requested, then first and last should be exactly the
 		// same, and we would get there by adding zero.
@@ -741,33 +746,45 @@ func (reader *Reader) getLinesUnlocked(firstLine linenumbers.LineNumber, wantedL
 		return reader.getLinesUnlocked(firstLine, firstLine.CountLinesTo(lastLine))
 	}
 
-	returnLines := reader.lines[firstLine.AsZeroBased() : lastLine.AsZeroBased()+1]
+	notNumberedReturnLines := reader.lines[firstLine.Index() : lastLine.Index()+1]
+	returnLines := make([]*NumberedLine, 0, len(notNumberedReturnLines))
+	for loopIndex, line := range notNumberedReturnLines {
+		lineIndex := firstLine.NonWrappingAdd(loopIndex)
+		returnLines = append(returnLines, &NumberedLine{
+			index:  lineIndex,
+			number: linemetadata.NumberFromZeroBased(lineIndex.Index()),
+			line:   line,
+		})
+	}
 
 	return &InputLines{
 		lines:      returnLines,
-		firstLine:  firstLine,
 		statusText: reader.createStatusUnlocked(lastLine),
 	}
 }
 
-func (reader *Reader) PumpToStdout() {
+func (reader *ReaderImpl) PumpToStdout() {
 	const wantedLineCount = 100
-	firstNotPrintedLine := linenumbers.LineNumberFromOneBased(1)
+	firstNotPrintedLine := linemetadata.Index{}
 
 	drainLines := func() bool {
 		lines := reader.GetLines(firstNotPrintedLine, wantedLineCount)
+		var firstReturnedIndex linemetadata.Index
+		if len(lines.lines) > 0 {
+			firstReturnedIndex = lines.lines[0].index
+		}
 
 		// Print the lines we got
 		printed := false
-		for index, line := range lines.lines {
-			lineNumber := lines.firstLine.NonWrappingAdd(index)
-			if lineNumber.IsBefore(firstNotPrintedLine) {
+		for loopIndex, line := range lines.lines {
+			lineIndex := firstReturnedIndex.NonWrappingAdd(loopIndex)
+			if lineIndex.IsBefore(firstNotPrintedLine) {
 				continue
 			}
 
-			fmt.Println(line.raw)
+			fmt.Println(line.line.raw)
 			printed = true
-			firstNotPrintedLine = lineNumber.NonWrappingAdd(1)
+			firstNotPrintedLine = lineIndex.NonWrappingAdd(1)
 		}
 
 		return printed
@@ -796,7 +813,7 @@ func (reader *Reader) PumpToStdout() {
 }
 
 // Replace reader contents with the given text and mark as done
-func (reader *Reader) setText(text string) {
+func (reader *ReaderImpl) setText(text string) {
 	lines := []*Line{}
 	for _, lineString := range strings.Split(text, "\n") {
 		line := NewLine(lineString)
@@ -826,6 +843,6 @@ func (reader *Reader) setText(text string) {
 	}
 }
 
-func (reader *Reader) SetStyleForHighlighting(style chroma.Style) {
+func (reader *ReaderImpl) SetStyleForHighlighting(style chroma.Style) {
 	reader.highlightingStyle <- style
 }

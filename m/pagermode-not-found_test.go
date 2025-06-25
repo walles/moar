@@ -23,7 +23,7 @@ func TestNotFoundFindPrevious(t *testing.T) {
 	pager.mode.onRune('p')
 
 	// We should now be on the second line saying "bepa"
-	assert.Equal(t, pager.scrollPosition.lineNumber(pager).AsOneBased(), 2)
+	assert.Equal(t, pager.scrollPosition.lineIndex(pager).Index(), 1)
 	assert.Assert(t, pager.isViewing())
 }
 
@@ -44,6 +44,6 @@ func TestWrapSearchBackwards(t *testing.T) {
 	// We should now have found gold on the last line. Since the pager is
 	// showing two lines on the screen, this puts the pager line number at 3
 	// (not 4).
-	assert.Equal(t, pager.scrollPosition.lineNumber(pager).AsOneBased(), 3)
+	assert.Equal(t, pager.scrollPosition.lineIndex(pager).Index(), 2)
 	assert.Assert(t, pager.isViewing())
 }

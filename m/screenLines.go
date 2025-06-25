@@ -3,13 +3,15 @@ package m
 import (
 	"fmt"
 
-	"github.com/walles/moar/m/linenumbers"
+	"github.com/walles/moar/m/linemetadata"
 	"github.com/walles/moar/m/textstyles"
 	"github.com/walles/moar/twin"
 )
 
 type renderedLine struct {
-	inputLine linenumbers.LineNumber
+	// Certain lines are available for viewing. This index is the (zero based)
+	// position of this line among those.
+	inputLineIndex linemetadata.Index
 
 	// If an input line has been wrapped into two, the part on the second line
 	// will have a wrapIndex of 1.
@@ -102,33 +104,25 @@ func (p *Pager) renderScreenLines() (lines [][]twin.StyledRune, statusText strin
 // height. If the status line is visible, you'll get at most one less than the
 // screen height from this method.
 func (p *Pager) renderLines() ([]renderedLine, string) {
-	wantedLineCount := p.visibleHeight()
-
-	var lineNumber linenumbers.LineNumber
-	if p.lineNumber() != nil {
-		lineNumber = *p.lineNumber()
-	} else {
-		// No lines to show, line number doesn't matter, pick anything. But we
-		// still want one so that we can get the status text from the reader
-		// below.
-		lineNumber = linenumbers.LineNumber{}
+	var lineIndex linemetadata.Index
+	if p.lineIndex() != nil {
+		lineIndex = *p.lineIndex()
 	}
-
-	inputLines := p.reader.GetLines(lineNumber, wantedLineCount)
-	if inputLines.lines == nil {
+	inputLines := p.Reader().GetLines(lineIndex, p.visibleHeight())
+	if len(inputLines.lines) == 0 {
 		// Empty input, empty output
 		return []renderedLine{}, inputLines.statusText
 	}
 
+	lastVisibleLineNumber := inputLines.lines[len(inputLines.lines)-1].number
+	numberPrefixLength := p.getLineNumberPrefixLength(lastVisibleLineNumber)
+
 	allLines := make([]renderedLine, 0)
-	for lineIndex, line := range inputLines.lines {
-
-		lineNumber := inputLines.firstLine.NonWrappingAdd(lineIndex)
-
-		rendering := p.renderLine(line, lineNumber, p.scrollPosition.internalDontTouch)
+	for _, line := range inputLines.lines {
+		rendering := p.renderLine(line, numberPrefixLength)
 
 		var onScreenLength int
-		for i := 0; i < len(rendering); i++ {
+		for i := range rendering {
 			trimmedLen := len(twin.TrimSpaceRight(rendering[i].cells))
 			if trimmedLen > onScreenLength {
 				onScreenLength = trimmedLen
@@ -153,12 +147,12 @@ func (p *Pager) renderLines() ([]renderedLine, string) {
 	// screen
 	firstVisibleIndex := -1 // Not found
 	for index, line := range allLines {
-		if p.lineNumber() == nil {
+		if p.lineIndex() == nil {
 			// Expected zero lines but got some anyway, grab the first one!
 			firstVisibleIndex = index
 			break
 		}
-		if line.inputLine == *p.lineNumber() && line.wrapIndex == p.deltaScreenLines() {
+		if line.inputLineIndex == *p.lineIndex() && line.wrapIndex == p.deltaScreenLines() {
 			firstVisibleIndex = index
 			break
 		}
@@ -171,6 +165,7 @@ func (p *Pager) renderLines() ([]renderedLine, string) {
 	// Drop the lines that should go above the screen
 	allLines = allLines[firstVisibleIndex:]
 
+	wantedLineCount := p.visibleHeight()
 	if len(allLines) <= wantedLineCount {
 		// Screen has enough room for everything, return everything
 		return allLines, inputLines.statusText
@@ -186,12 +181,12 @@ func (p *Pager) renderLines() ([]renderedLine, string) {
 //
 // lineNumber and numberPrefixLength are required for knowing how much to
 // indent, and to (optionally) render the line number.
-func (p *Pager) renderLine(line *Line, lineNumber linenumbers.LineNumber, scrollPosition scrollPositionInternal) []renderedLine {
-	highlighted := line.HighlightedTokens(plainTextStyle, p.searchPattern, &lineNumber)
+func (p *Pager) renderLine(line *NumberedLine, numberPrefixLength int) []renderedLine {
+	highlighted := line.HighlightedTokens(plainTextStyle, p.searchPattern)
 	var wrapped [][]twin.StyledRune
 	if p.WrapLongLines {
 		width, _ := p.screen.Size()
-		wrapped = wrapLine(width-numberPrefixLength(p, scrollPosition), highlighted.StyledRunes)
+		wrapped = wrapLine(width-numberPrefixLength, highlighted.StyledRunes)
 	} else {
 		// All on one line
 		wrapped = [][]twin.StyledRune{highlighted.StyledRunes}
@@ -199,17 +194,18 @@ func (p *Pager) renderLine(line *Line, lineNumber linenumbers.LineNumber, scroll
 
 	rendered := make([]renderedLine, 0)
 	for wrapIndex, inputLinePart := range wrapped {
+		lineNumber := line.number
 		visibleLineNumber := &lineNumber
 		if wrapIndex > 0 {
 			visibleLineNumber = nil
 		}
 
-		decorated := p.decorateLine(visibleLineNumber, inputLinePart, scrollPosition)
+		decorated := p.decorateLine(visibleLineNumber, numberPrefixLength, inputLinePart)
 
 		rendered = append(rendered, renderedLine{
-			inputLine: lineNumber,
-			wrapIndex: wrapIndex,
-			cells:     decorated,
+			inputLineIndex: line.index,
+			wrapIndex:      wrapIndex,
+			cells:          decorated,
 		})
 	}
 
@@ -226,10 +222,9 @@ func (p *Pager) renderLine(line *Line, lineNumber linenumbers.LineNumber, scroll
 //   - Line number, or leading whitespace for wrapped lines
 //   - Scroll left indicator
 //   - Scroll right indicator
-func (p *Pager) decorateLine(lineNumberToShow *linenumbers.LineNumber, contents []twin.StyledRune, scrollPosition scrollPositionInternal) []twin.StyledRune {
+func (p *Pager) decorateLine(lineNumberToShow *linemetadata.Number, numberPrefixLength int, contents []twin.StyledRune) []twin.StyledRune {
 	width, _ := p.screen.Size()
 	newLine := make([]twin.StyledRune, 0, width)
-	numberPrefixLength := numberPrefixLength(p, scrollPosition)
 	newLine = append(newLine, createLinePrefix(lineNumberToShow, numberPrefixLength)...)
 
 	// Find the first and last fully visible runes.
@@ -337,7 +332,7 @@ func (p *Pager) decorateLine(lineNumberToShow *linenumbers.LineNumber, contents 
 // Generate a line number prefix of the given length.
 //
 // Can be empty or all-whitespace depending on parameters.
-func createLinePrefix(lineNumber *linenumbers.LineNumber, numberPrefixLength int) []twin.StyledRune {
+func createLinePrefix(lineNumber *linemetadata.Number, numberPrefixLength int) []twin.StyledRune {
 	if numberPrefixLength == 0 {
 		return []twin.StyledRune{}
 	}

@@ -4,7 +4,7 @@ import (
 	"strconv"
 
 	log "github.com/sirupsen/logrus"
-	"github.com/walles/moar/m/linenumbers"
+	"github.com/walles/moar/m/linemetadata"
 	"github.com/walles/moar/twin"
 )
 
@@ -35,8 +35,8 @@ func (m *PagerModeGotoLine) onKey(key twin.KeyCode) {
 	case twin.KeyEnter:
 		newLineNumber, err := strconv.Atoi(m.gotoLineString)
 		if err == nil {
-			p.scrollPosition = NewScrollPositionFromLineNumber(
-				linenumbers.LineNumberFromOneBased(newLineNumber),
+			p.scrollPosition = NewScrollPositionFromIndex(
+				linemetadata.IndexFromOneBased(newLineNumber),
 				"onGotoLineKey",
 			)
 		}
