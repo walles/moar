@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math"
 	"regexp"
+	"sync"
 	"time"
 
 	log "github.com/sirupsen/logrus"
@@ -19,6 +20,10 @@ type FilteringReader struct {
 	// original pattern, including if it is set to nil.
 	FilterPattern **regexp.Regexp
 
+	// Protects filteredLinesCache, unfilteredLineCountWhenCaching, and
+	// filterPatternWhenCaching.
+	lock sync.Mutex
+
 	// nil means no filtering has happened yet
 	filteredLinesCache *[]*NumberedLine
 
@@ -32,6 +37,7 @@ type FilteringReader struct {
 	filterPatternWhenCaching *regexp.Regexp
 }
 
+// Please hold the lock when calling this method.
 func (f *FilteringReader) rebuildCache() {
 	t0 := time.Now()
 
@@ -66,6 +72,9 @@ func (f *FilteringReader) rebuildCache() {
 }
 
 func (f *FilteringReader) getAllLines() []*NumberedLine {
+	f.lock.Lock()
+	defer f.lock.Unlock()
+
 	if f.filteredLinesCache == nil {
 		f.rebuildCache()
 		return *f.filteredLinesCache
@@ -93,6 +102,9 @@ func (f *FilteringReader) getAllLines() []*NumberedLine {
 }
 
 func (f *FilteringReader) shouldPassThrough() bool {
+	f.lock.Lock()
+	defer f.lock.Unlock()
+
 	if *f.FilterPattern == nil || len((*f.FilterPattern).String()) == 0 {
 		// Cache is not needed
 		f.filteredLinesCache = nil
