@@ -1,6 +1,7 @@
 package m
 
 import (
+	"fmt"
 	"math"
 	"regexp"
 	"time"
@@ -128,18 +129,18 @@ func (f *FilteringReader) GetLines(firstLine linemetadata.Index, wantedLineCount
 		return f.BackingReader.GetLines(firstLine, wantedLineCount)
 	}
 
-	lines := f.getAllLines()
+	acceptedLines := f.getAllLines()
 
-	if len(lines) == 0 || wantedLineCount == 0 {
+	if len(acceptedLines) == 0 || wantedLineCount == 0 {
 		return &InputLines{
-			statusText: "NOTE: Press '&' to unhide lines",
+			statusText: f.createStatus(nil),
 		}
 	}
 
 	lastLine := firstLine.NonWrappingAdd(wantedLineCount - 1)
 
 	// Prevent reading past the end of the available lines
-	maxLineNumber := *linemetadata.IndexFromLength(len(lines))
+	maxLineNumber := *linemetadata.IndexFromLength(len(acceptedLines))
 	if lastLine.IsAfter(maxLineNumber) {
 		lastLine = maxLineNumber
 
@@ -151,7 +152,34 @@ func (f *FilteringReader) GetLines(firstLine linemetadata.Index, wantedLineCount
 	}
 
 	return &InputLines{
-		lines:      lines[firstLine.Index() : firstLine.Index()+wantedLineCount],
-		statusText: "Filtered lines",
+		lines:      acceptedLines[firstLine.Index() : firstLine.Index()+wantedLineCount],
+		statusText: f.createStatus(&lastLine),
 	}
+}
+
+// In the general case, this will return a text like this:
+// "Filtered: 1234/5678 lines  22%"
+func (f *FilteringReader) createStatus(lastLine *linemetadata.Index) string {
+	baseCount := f.BackingReader.GetLineCount()
+	if baseCount == 0 {
+		return "Filtered: No input lines"
+	}
+
+	baseCountString := linemetadata.IndexFromLength(baseCount).Format() + " line"
+	if baseCount > 1 {
+		baseCountString += "s"
+	}
+
+	if lastLine == nil {
+		// 100% because we're showing all 0 lines
+		return "Filtered: 0/" + baseCountString + "  100%"
+	}
+
+	acceptedCount := f.GetLineCount()
+	acceptedCountString := linemetadata.IndexFromLength(acceptedCount).Format()
+
+	percent := int(100 * float64(lastLine.Index()+1) / float64(acceptedCount))
+
+	return fmt.Sprintf("Filtered: %s/%s  %d%%",
+		acceptedCountString, baseCountString, percent)
 }
