@@ -7,7 +7,7 @@ on:
 
 jobs:
   validate:
-    runs-on: windows-2022
+    runs-on: windows-latest
     steps:
       - name: Check out repository code
         uses: actions/checkout@v4
@@ -18,4 +18,4 @@ jobs:
           go-version-file: "go.mod"
 
       - run: go build
-      - run: go test -timeout 60s ./...
+      - run: go test -race -timeout 60s ./...
