@@ -85,7 +85,7 @@ type Pager struct {
 
 	// If non-nil, scroll to this line index as soon as possible. Set this
 	// value to IndexMax() to follow the end of the input (tail).
-	TargetLineNumber *linemetadata.Index
+	TargetLine *linemetadata.Index
 
 	// If true, pager will clear the screen on return. If false, pager will
 	// clear the last line, and show the cursor.
@@ -108,7 +108,7 @@ type _PreHelpState struct {
 	reader              *ReaderImpl
 	scrollPosition      scrollPosition
 	leftColumnZeroBased int
-	targetLineNumber    *linemetadata.Index
+	targetLine          *linemetadata.Index
 }
 
 var _HelpReader = NewReaderFromText("Help", `
@@ -258,7 +258,7 @@ func (p *Pager) Quit() {
 	p.reader = p.preHelpState.reader
 	p.scrollPosition = p.preHelpState.scrollPosition
 	p.leftColumnZeroBased = p.preHelpState.leftColumnZeroBased
-	p.TargetLineNumber = p.preHelpState.targetLineNumber
+	p.TargetLine = p.preHelpState.targetLine
 	p.preHelpState = nil
 }
 
@@ -293,16 +293,16 @@ func (p *Pager) Reader() Reader {
 }
 
 func (p *Pager) handleScrolledUp() {
-	p.TargetLineNumber = nil
+	p.TargetLine = nil
 }
 
 func (p *Pager) handleScrolledDown() {
 	if p.isScrolledToEnd() {
 		// Follow output
 		reallyHigh := linemetadata.IndexMax()
-		p.TargetLineNumber = &reallyHigh
+		p.TargetLine = &reallyHigh
 	} else {
-		p.TargetLineNumber = nil
+		p.TargetLine = nil
 	}
 }
 
@@ -444,15 +444,15 @@ func (p *Pager) StartPaging(screen twin.Screen, chromaStyle *chroma.Style, chrom
 			return
 
 		case eventMoreLinesAvailable:
-			if p.TargetLineNumber != nil {
+			if p.TargetLine != nil {
 				// The user wants to scroll down to a specific line number
-				if linemetadata.IndexFromLength(p.Reader().GetLineCount()).IsBefore(*p.TargetLineNumber) {
+				if linemetadata.IndexFromLength(p.Reader().GetLineCount()).IsBefore(*p.TargetLine) {
 					// Not there yet, keep scrolling
 					p.scrollToEnd()
 				} else {
 					// We see the target, scroll to it
-					p.scrollPosition = NewScrollPositionFromIndex(*p.TargetLineNumber, "goToTargetLineNumber")
-					p.TargetLineNumber = nil
+					p.scrollPosition = NewScrollPositionFromIndex(*p.TargetLine, "goToTargetLine")
+					p.TargetLine = nil
 				}
 			}
 

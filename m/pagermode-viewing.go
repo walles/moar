@@ -88,12 +88,12 @@ func (m PagerModeViewing) onRune(char rune) {
 			reader:              p.reader,
 			scrollPosition:      p.scrollPosition,
 			leftColumnZeroBased: p.leftColumnZeroBased,
-			targetLineNumber:    p.TargetLineNumber,
+			targetLine:          p.TargetLine,
 		}
 		p.reader = _HelpReader
 		p.scrollPosition = newScrollPosition("Pager scroll position")
 		p.leftColumnZeroBased = 0
-		p.TargetLineNumber = nil
+		p.TargetLine = nil
 		p.isShowingHelp = true
 
 	case '=':
@@ -142,13 +142,13 @@ func (m PagerModeViewing) onRune(char rune) {
 
 	case '/':
 		p.mode = PagerModeSearch{pager: p, direction: SearchDirectionForward, initialScrollPosition: p.scrollPosition}
-		p.TargetLineNumber = nil
+		p.TargetLine = nil
 		p.searchString = ""
 		p.searchPattern = nil
 
 	case '?':
 		p.mode = PagerModeSearch{pager: p, direction: SearchDirectionBackward, initialScrollPosition: p.scrollPosition}
-		p.TargetLineNumber = nil
+		p.TargetLine = nil
 		p.searchString = ""
 		p.searchPattern = nil
 
@@ -160,7 +160,7 @@ func (m PagerModeViewing) onRune(char rune) {
 
 	case 'g':
 		p.mode = &PagerModeGotoLine{pager: p}
-		p.TargetLineNumber = nil
+		p.TargetLine = nil
 
 	// Should match the pagermode-not-found.go previous-search-hit bindings
 	case 'n':
@@ -172,11 +172,11 @@ func (m PagerModeViewing) onRune(char rune) {
 
 	case 'm':
 		p.mode = PagerModeMark{pager: p}
-		p.TargetLineNumber = nil
+		p.TargetLine = nil
 
 	case '\'':
 		p.mode = PagerModeJumpToMark{pager: p}
-		p.TargetLineNumber = nil
+		p.TargetLine = nil
 
 	case 'w':
 		p.WrapLongLines = !p.WrapLongLines
