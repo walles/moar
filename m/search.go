@@ -2,6 +2,7 @@ package m
 
 import (
 	"fmt"
+	"regexp"
 	"runtime"
 	"runtime/debug"
 	"time"
@@ -182,12 +183,14 @@ func (p *Pager) findFirstHit(startPosition linemetadata.Index, beforePosition *l
 			chunkBefore = beforePosition
 		}
 
+		reader := p.Reader()
+		pattern := *p.searchPattern
 		go func(i int, searchStart linemetadata.Index, chunkBefore *linemetadata.Index) {
 			defer func() {
 				panicHandler("findFirstHit()/chunkSearch", recover(), debug.Stack())
 			}()
 
-			findings[i] <- p._findFirstHit(searchStart, chunkBefore, backwards)
+			findings[i] <- _findFirstHit(reader, searchStart, pattern, chunkBefore, backwards)
 		}(i, searchStart, chunkBefore)
 	}
 
@@ -213,17 +216,17 @@ func (p *Pager) findFirstHit(startPosition linemetadata.Index, beforePosition *l
 // help large file search performance.
 //
 // FIXME: We should take startPosition.deltaScreenLines into account as well!
-func (p *Pager) _findFirstHit(startPosition linemetadata.Index, beforePosition *linemetadata.Index, backwards bool) *scrollPosition {
+func _findFirstHit(reader Reader, startPosition linemetadata.Index, pattern regexp.Regexp, beforePosition *linemetadata.Index, backwards bool) *scrollPosition {
 	searchPosition := startPosition
 	for {
-		line := p.Reader().GetLine(searchPosition)
+		line := reader.GetLine(searchPosition)
 		if line == nil {
 			// No match, give up
 			return nil
 		}
 
 		lineText := line.Plain()
-		if p.searchPattern.MatchString(lineText) {
+		if pattern.MatchString(lineText) {
 			return scrollPositionFromIndex("findFirstHit", searchPosition)
 		}
 
