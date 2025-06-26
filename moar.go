@@ -9,6 +9,7 @@ import (
 	"runtime/debug"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/alecthomas/chroma/v2"
@@ -480,11 +481,12 @@ func pagerFromArgs(
 	}
 
 	formatter := formatters.TTY256
-	if *terminalColorsCount == twin.ColorCount8 {
+	switch *terminalColorsCount {
+	case twin.ColorCount8:
 		formatter = formatters.TTY8
-	} else if *terminalColorsCount == twin.ColorCount16 {
+	case twin.ColorCount16:
 		formatter = formatters.TTY16
-	} else if *terminalColorsCount == twin.ColorCount24bit {
+	case twin.ColorCount24bit:
 		formatter = formatters.TTY16m
 	}
 
@@ -582,8 +584,27 @@ func pagerFromArgs(
 	return pager, screen, style, &formatter, logsRequested, nil
 }
 
+type logWriter struct {
+	lock   sync.Mutex
+	buffer strings.Builder
+}
+
+func (lw *logWriter) Write(p []byte) (n int, err error) {
+	lw.lock.Lock()
+	defer lw.lock.Unlock()
+
+	return lw.buffer.Write(p)
+}
+
+func (lw *logWriter) String() string {
+	lw.lock.Lock()
+	defer lw.lock.Unlock()
+
+	return lw.buffer.String()
+}
+
 func main() {
-	var loglines strings.Builder
+	var loglines logWriter
 	logsRequested := false
 	log.SetOutput(&loglines)
 	russiaNotSupported()
