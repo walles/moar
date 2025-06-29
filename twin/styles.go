@@ -112,6 +112,15 @@ func (style Style) WithHyperlink(hyperlinkURL *string) Style {
 	}
 }
 
+// HyperlinkURL returns the hyperlink URL if set, or nil otherwise.
+func (style Style) HyperlinkURL() *string {
+	if style.hyperlinkURL == nil || *style.hyperlinkURL == "" {
+		return nil
+	}
+
+	return style.hyperlinkURL
+}
+
 func (style Style) WithoutAttr(attr AttrMask) Style {
 	return Style{
 		fg:             style.fg,

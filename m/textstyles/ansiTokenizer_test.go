@@ -324,3 +324,14 @@ func TestHyperlink_incomplete(t *testing.T) {
 		})
 	}
 }
+
+func TestRawUpdateStyleResetDoesNotAffectHyperlink(t *testing.T) {
+	url := "file:///Users/johan/src/riff/src/refiner.rs"
+	styleWithLink := twin.StyleDefault.WithHyperlink(&url)
+
+	// ESC[m should reset style, but not touch the hyperlink
+	updated, _, err := rawUpdateStyle(styleWithLink, "m", nil)
+	assert.NilError(t, err)
+	assert.Assert(t, updated.HyperlinkURL() != nil)
+	assert.Equal(t, *updated.HyperlinkURL(), url)
+}

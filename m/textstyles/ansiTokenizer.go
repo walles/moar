@@ -429,7 +429,8 @@ func rawUpdateStyle(style twin.Style, escapeSequenceWithoutHeader string, number
 		index++
 		switch number {
 		case 0:
-			style = twin.StyleDefault
+			// SGR Reset should not affect the OSC8 hyperlink
+			style = twin.StyleDefault.WithHyperlink(style.HyperlinkURL())
 
 		case 1:
 			style = style.WithAttr(twin.AttrBold)
