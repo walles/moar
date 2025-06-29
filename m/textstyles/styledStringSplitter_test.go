@@ -99,7 +99,7 @@ func TestWindowsURL(t *testing.T) {
 func TestURLWithSpace(t *testing.T) {
 	urlPath := `hello%20there.txt`
 	text := `hello there.txt`
-	styledStrings, trailer := collectStyledStrings("\x1b]8;;file://" + urlPath + "\x07" + text)
+	styledStrings, trailer := collectStyledStrings("\x1b]8;;file://" + urlPath + "\x1b\\" + text)
 	assert.Equal(t, twin.StyleDefault, trailer)
 	assert.Equal(t, 1, len(styledStrings))
 	assert.Equal(t, text, styledStrings[0].String)
