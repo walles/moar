@@ -784,9 +784,7 @@ func renderLine(row []StyledRune, width int, terminalColorCount ColorCount) (str
 	builder.WriteString("\x1b[m")
 	lastStyle := StyleDefault
 
-	for column := 0; column < len(row); column++ {
-		cell := row[column]
-
+	for _, cell := range row {
 		style := cell.Style
 		runeToWrite := cell.Rune
 		if !Printable(runeToWrite) {
@@ -805,6 +803,13 @@ func renderLine(row []StyledRune, width int, terminalColorCount ColorCount) (str
 		}
 
 		builder.WriteRune(runeToWrite)
+	}
+
+	lastStyleMinusHyperlink := lastStyle.WithHyperlink(nil)
+	if lastStyleMinusHyperlink != lastStyle {
+		// Remove the hyperlink attribute
+		builder.WriteString(lastStyleMinusHyperlink.RenderUpdateFrom(lastStyle, terminalColorCount))
+		lastStyle = lastStyleMinusHyperlink
 	}
 
 	if len(row) < width {
@@ -839,7 +844,7 @@ func (screen *UnixScreen) showNLines(width int, height int, clearFirst bool) {
 		builder.WriteString("\x1b[1;1H")
 	}
 
-	for row := 0; row < height; row++ {
+	for row := range height {
 		rendered, lineLength := renderLine(screen.cells[row], width, screen.terminalColorCount)
 		builder.WriteString(rendered)
 
