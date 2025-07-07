@@ -5,6 +5,7 @@ package textstyles
 
 import (
 	"fmt"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -272,13 +273,7 @@ func consumeBullet(runes []rune, index int) (int, *twin.StyledRune) {
 }
 
 func runesFromStyledString(styledString _StyledString) string {
-	hasBackspace := false
-	for _, byteValue := range []byte(styledString.String) {
-		if byteValue == BACKSPACE {
-			hasBackspace = true
-			break
-		}
-	}
+	hasBackspace := slices.Contains([]byte(styledString.String), BACKSPACE)
 
 	if !hasBackspace {
 		// Shortcut when there's no backspace based formatting to worry about
