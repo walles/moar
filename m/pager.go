@@ -101,6 +101,8 @@ type Pager struct {
 	// Ref: https://github.com/walles/moar/issues/175
 	marks map[rune]scrollPosition
 
+	ShouldStartWithSearch bool
+
 	AfterExit func() error
 }
 
@@ -321,7 +323,11 @@ func (p *Pager) StartPaging(screen twin.Screen, chromaStyle *chroma.Style, chrom
 	styleUI(chromaStyle, chromaFormatter, p.StatusBarStyle, p.WithTerminalFg)
 
 	p.screen = screen
-	p.mode = PagerModeViewing{pager: p}
+	if p.ShouldStartWithSearch {
+		p.mode = PagerModeSearch{pager: p}
+	} else {
+		p.mode = PagerModeViewing{pager: p}
+	}
 	p.marks = make(map[rune]scrollPosition)
 
 	go func() {

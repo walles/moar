@@ -379,6 +379,7 @@ func pagerFromArgs(
 		"Mouse `mode`: auto, select or scroll: https://github.com/walles/moar/blob/master/MOUSE.md",
 		parseMouseMode,
 	)
+	search := flagSet.Bool("search", false, "Start with search mode")
 
 	// Combine flags from environment and from command line
 	flags := args[1:]
@@ -574,6 +575,7 @@ func pagerFromArgs(
 	pager.ScrollLeftHint = *scrollLeftHint
 	pager.ScrollRightHint = *scrollRightHint
 	pager.SideScrollAmount = int(*shift)
+	pager.ShouldStartWithSearch = *search
 
 	pager.TargetLine = targetLine
 	if *follow && pager.TargetLine == nil {
