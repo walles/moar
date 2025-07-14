@@ -379,7 +379,7 @@ func pagerFromArgs(
 		"Mouse `mode`: auto, select or scroll: https://github.com/walles/moar/blob/master/MOUSE.md",
 		parseMouseMode,
 	)
-	search := flagSet.Bool("search", false, "Start with search mode")
+	search := flagSet.Bool("search", false, "Start in search mode")
 
 	// Combine flags from environment and from command line
 	flags := args[1:]
