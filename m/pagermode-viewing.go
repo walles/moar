@@ -12,7 +12,7 @@ type PagerModeViewing struct {
 func (m PagerModeViewing) drawFooter(statusText string, spinner string) {
 	helpText := "Press 'ESC' / 'q' to exit, '/' to search, '&' to filter, 'h' for help"
 	if m.pager.isShowingHelp {
-		helpText = "Press 'ESC' / 'q' to exit help, '/' to search, '&' to filter"
+		helpText = "Press 'ESC' / 'q' to exit help, '/' to search"
 	}
 
 	if m.pager.ShowStatusBar {
@@ -153,10 +153,14 @@ func (m PagerModeViewing) onRune(char rune) {
 		p.searchPattern = nil
 
 	case '&':
-		p.mode = &PagerModeFilter{pager: p}
-		p.searchString = ""
-		p.searchPattern = nil
-		p.filterPattern = nil
+		if !p.isShowingHelp {
+			// Filtering the help text is not supported. Feel free to work on
+			// that if you feel that's time well spent.
+			p.mode = &PagerModeFilter{pager: p}
+			p.searchString = ""
+			p.searchPattern = nil
+			p.filterPattern = nil
+		}
 
 	case 'g':
 		p.mode = &PagerModeGotoLine{pager: p}

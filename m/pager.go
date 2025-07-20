@@ -289,6 +289,9 @@ func (p *Pager) moveRight(delta int) {
 }
 
 func (p *Pager) Reader() Reader {
+	if p.isShowingHelp {
+		return _HelpReader
+	}
 	return &p.filteringReader
 }
 
