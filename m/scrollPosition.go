@@ -134,8 +134,21 @@ func (si *scrollPositionInternal) handlePositiveDeltaScreenLines(pager *Pager) {
 		maxPrefixLength = pager.getLineNumberPrefixLength(lastPossibleLine.number)
 	}
 
-	for _, line := range allPossibleLines.lines {
-		si.lineIndex = &line.index
+	for {
+		line := pager.reader.GetLine(*si.lineIndex)
+		if line == nil {
+			// Out of bounds downwards, get the last line...
+			si.lineIndex = linemetadata.IndexFromLength(pager.reader.GetLineCount())
+			line = pager.reader.GetLine(*si.lineIndex)
+			if line == nil {
+				panic(fmt.Errorf("Last line is nil"))
+			}
+			subLines := pager.renderLine(line, maxPrefixLength)
+
+			// ... and go to the bottom of that.
+			si.deltaScreenLines = len(subLines) - 1
+			return
+		}
 
 		subLines := pager.renderLine(line, maxPrefixLength)
 		if si.deltaScreenLines < len(subLines) {
