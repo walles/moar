@@ -1,7 +1,6 @@
 package m
 
 import (
-	"fmt"
 	"unicode"
 
 	"github.com/walles/moar/twin"
@@ -15,11 +14,6 @@ const NO_BREAK_SPACE = '\xa0'
 // Given some text and a maximum width in screen cells, find the best point at
 // which to wrap the text. Return value is in number of runes.
 func getWrapCount(line []twin.StyledRune, maxScreenCellsCount int) int {
-	if getScreenCellCount(line) <= maxScreenCellsCount {
-		panic(fmt.Errorf("cannot compute wrap width when input isn't wider than max (%d<=%d)",
-			len(line), maxScreenCellsCount))
-	}
-
 	screenCells := 0
 	bestCutPoint := maxScreenCellsCount
 	inLeadingWhitespace := true
