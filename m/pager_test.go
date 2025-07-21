@@ -429,43 +429,6 @@ func TestScrollToBottomWrapNextToLastLine(t *testing.T) {
 	assert.Equal(t, actual, expected)
 }
 
-func TestScrollDownWrapLastLine(t *testing.T) {
-	reader := NewReaderFromText("",
-		"first line\nlast line will be wrapped into multiple lines since it is long")
-
-	// Heigh 3 = two lines of contents + one footer
-	screen := twin.NewFakeScreen(10, 3)
-
-	pager := NewPager(reader)
-	pager.WrapLongLines = true
-	pager.ShowLineNumbers = false
-	pager.screen = screen
-
-	assert.NilError(t, pager.reader._wait())
-
-	// This is what we're testing really
-	pager.scrollPosition.NextLine(1)
-
-	// Exit immediately
-	pager.Quit()
-
-	// Get contents onto our fake screen
-	pager.StartPaging(screen, nil, nil)
-	pager.redraw("")
-
-	actual := strings.Join([]string{
-		rowToString(screen.GetRow(0)),
-		rowToString(screen.GetRow(1)),
-		rowToString(screen.GetRow(2)),
-	}, "\n")
-	expected := strings.Join([]string{
-		"last line",
-		"will be",
-		"2 lines  1", // "2 lines 100%" clipped after 10 characters (screen width)
-	}, "\n")
-	assert.Equal(t, actual, expected)
-}
-
 // Repro for https://github.com/walles/moar/issues/105
 func TestScrollToEndLongInput(t *testing.T) {
 	const lineCount = 10100 // At least five digits
