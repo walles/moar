@@ -15,7 +15,7 @@ const NO_BREAK_SPACE = '\xa0'
 // Given some text and a maximum width in screen cells, find the best point at
 // which to wrap the text. Return value is in number of runes.
 func getWrapCount(line []twin.StyledRune, maxScreenCellsCount int) int {
-	if screenLength(line) <= maxScreenCellsCount {
+	if getScreenCellCount(line) <= maxScreenCellsCount {
 		panic(fmt.Errorf("cannot compute wrap width when input isn't wider than max (%d<=%d)",
 			len(line), maxScreenCellsCount))
 	}
@@ -81,13 +81,14 @@ func getWrapCount(line []twin.StyledRune, maxScreenCellsCount int) int {
 	return bestCutPoint
 }
 
-func screenLength(runes []twin.StyledRune) int {
-	length := 0
-	for _, cell := range runes {
-		length += cell.Width()
+// How many screen cells wide will this line be?
+func getScreenCellCount(runes []twin.StyledRune) int {
+	cellCount := 0
+	for _, rune := range runes {
+		cellCount += rune.Width()
 	}
 
-	return length
+	return cellCount
 }
 
 // Wrap one line of text to a maximum width
@@ -96,12 +97,13 @@ func wrapLine(width int, line []twin.StyledRune) [][]twin.StyledRune {
 	// look weird.
 	line = twin.TrimSpaceRight(line)
 
-	if screenLength(line) == 0 {
+	screenCellCount := getScreenCellCount(line)
+	if screenCellCount == 0 {
 		return [][]twin.StyledRune{{}}
 	}
 
 	wrapped := make([][]twin.StyledRune, 0, len(line)/width)
-	for screenLength(line) > width {
+	for screenCellCount > width {
 		wrapWidth := getWrapCount(line, width)
 		firstPart := line[:wrapWidth]
 		isOnFirstLine := len(wrapped) == 0
@@ -113,7 +115,15 @@ func wrapLine(width int, line []twin.StyledRune) [][]twin.StyledRune {
 
 		wrapped = append(wrapped, twin.TrimSpaceRight(firstPart))
 
-		line = twin.TrimSpaceLeft(line[wrapWidth:])
+		// These runes still need processing
+		remaining := twin.TrimSpaceLeft(line[wrapWidth:])
+
+		// Track how many screen cells are left to handle
+		handledCount := len(line) - len(remaining)
+		screenCellCount -= getScreenCellCount(line[:handledCount])
+
+		// Prepare for the next iteration
+		line = remaining
 	}
 
 	isOnFirstLine := len(wrapped) == 0
