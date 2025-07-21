@@ -131,3 +131,22 @@ func TestGetWrapCountWideChars(t *testing.T) {
 	assert.Equal(t, getWrapCount(line, 2), 1)
 	assert.Equal(t, getWrapCount(line, 1), 1)
 }
+
+func BenchmarkWrapLine(b *testing.B) {
+	words := "Here are some words of different lengths, some of which are very long, and some of which are short. "
+	lineLen := 60_000
+	line := ""
+	for len(line) < lineLen {
+		line += words
+	}
+	line = line[:lineLen]
+
+	styledRunes := tokenize(line)
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		_ = wrapLine(73, styledRunes)
+	}
+
+	b.StopTimer()
+}
