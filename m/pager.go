@@ -105,7 +105,6 @@ type Pager struct {
 }
 
 type _PreHelpState struct {
-	reader              *ReaderImpl
 	scrollPosition      scrollPosition
 	leftColumnZeroBased int
 	targetLine          *linemetadata.Index
@@ -255,7 +254,6 @@ func (p *Pager) Quit() {
 
 	// Reset help
 	p.isShowingHelp = false
-	p.reader = p.preHelpState.reader
 	p.scrollPosition = p.preHelpState.scrollPosition
 	p.leftColumnZeroBased = p.preHelpState.leftColumnZeroBased
 	p.TargetLine = p.preHelpState.targetLine
