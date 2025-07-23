@@ -108,6 +108,8 @@ func removeLastChar(s string) string {
 
 func (m PagerModeSearch) onKey(key twin.KeyCode) {
 	switch key {
+	case twin.KeyCtrlD:
+		m.pager.Quit()
 	case twin.KeyEnter:
 		m.pager.mode = PagerModeViewing{pager: m.pager}
 

@@ -23,6 +23,8 @@ const (
 	KeyEnd
 	KeyPgUp
 	KeyPgDown
+
+	KeyCtrlD
 )
 
 // Map incoming escape keystrokes to keycodes, used in consumeEncodedEvent() in
@@ -68,4 +70,6 @@ var escapeSequenceToKeyCode = map[string]KeyCode{
 	"\x1b[4~": KeyEnd,
 	"\x1b[5~": KeyPgUp,
 	"\x1b[6~": KeyPgDown,
+
+	"\x04": KeyCtrlD, // CTRL + D
 }
