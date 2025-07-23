@@ -335,16 +335,22 @@ func pagerFromArgs(
 	flagSet.SetOutput(io.Discard) // We want to do our own printing
 
 	printVersion := flagSet.Bool("version", false, "Prints the moar version number")
+	flagSet.BoolVar(printVersion, "V", false, "Prints the moar version number")
 	debug := flagSet.Bool("debug", false, "Print debug logs after exiting")
 	trace := flagSet.Bool("trace", false, "Print trace logs after exiting")
 
 	wrap := flagSet.Bool("wrap", false, "Wrap long lines")
+	flagSet.BoolVar(wrap, "w", false, "Wrap long lines")
 	follow := flagSet.Bool("follow", false, "Follow piped input just like \"tail -f\"")
+	flagSet.BoolVar(follow, "f", false, "Follow piped input just like \"tail -f\"")
 	styleOption := flagSetFunc(flagSet,
 		"style", nil,
 		"Highlighting `style` from https://xyproto.github.io/splash/docs/longer/all.html", parseStyleOption)
 	lexer := flagSetFunc(flagSet,
 		"lang", nil,
+		"File contents, used for highlighting. Mime type or file extension (\"html\"). Default is to guess by filename.", parseLexerOption)
+	flagSetFuncVar(flagSet,
+		lexer, "l", nil,
 		"File contents, used for highlighting. Mime type or file extension (\"html\"). Default is to guess by filename.", parseLexerOption)
 	terminalFg := flagSet.Bool("terminal-fg", false, "Use terminal foreground color rather than style foreground for plain text")
 
@@ -360,6 +366,7 @@ func pagerFromArgs(
 	reFormat := flagSet.Bool("reformat", false, "Reformat some input files (JSON)")
 	flagSet.Bool("no-reformat", true, "No effect, kept for compatibility. See --reformat")
 	quitIfOneScreen := flagSet.Bool("quit-if-one-screen", false, "Don't page if contents fits on one screen")
+	flagSet.BoolVar(quitIfOneScreen, "F", false, "Don't page if contents fits on one screen")
 	noClearOnExit := flagSet.Bool("no-clear-on-exit", false, "Retain screen contents when exiting moar")
 	statusBarStyle := flagSetFunc(flagSet, "statusbar", m.STATUSBAR_STYLE_INVERSE,
 		"Status bar `style`: inverse, plain or bold", parseStatusBarStyle)
@@ -663,18 +670,24 @@ func main() {
 // The return value is the address of a variable that stores the parsed value of
 // the flag.
 func flagSetFunc[T any](flagSet *flag.FlagSet, name string, defaultValue T, usage string, parser func(valueString string) (T, error)) *T {
-	parsed := defaultValue
+	var parsed T
+	flagSetFuncVar(flagSet, &parsed, name, defaultValue, usage, parser)
+	return &parsed
+}
+
+// Define a generic flag with specified name, default value, and usage string.
+// The parsed value of the flag will be written to the passed pointer.
+func flagSetFuncVar[T any](flagSet *flag.FlagSet, p *T, name string, defaultValue T, usage string, parser func(valueString string) (T, error)) {
+	*p = defaultValue
 
 	flagSet.Func(name, usage, func(valueString string) error {
 		parseResult, err := parser(valueString)
 		if err != nil {
 			return err
 		}
-		parsed = parseResult
+		*p = parseResult
 		return nil
 	})
-
-	return &parsed
 }
 
 func startPaging(pager *m.Pager, screen twin.Screen, chromaStyle *chroma.Style, chromaFormatter *chroma.Formatter) {
