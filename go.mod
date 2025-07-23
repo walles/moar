@@ -5,7 +5,7 @@ go 1.22
 toolchain go1.24.4
 
 require (
-	github.com/alecthomas/chroma/v2 v2.18.1-0.20250607032210-6ffb4659a458
+	github.com/alecthomas/chroma/v2 v2.19.1-0.20250723141813-02ff9d482061
 	github.com/google/go-cmp v0.5.9
 	github.com/klauspost/compress v1.17.4
 	github.com/rivo/uniseg v0.4.7

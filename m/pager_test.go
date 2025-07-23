@@ -194,6 +194,7 @@ func TestCodeHighlighting(t *testing.T) {
 	assert.NilError(t, reader._wait())
 
 	packageKeywordStyle := twin.StyleDefault.WithAttr(twin.AttrBold).WithForeground(twin.NewColorHex(0x6AB825))
+	packageSpaceStyle := twin.StyleDefault.WithForeground(twin.NewColorHex(0x666666))
 	packageNameStyle := twin.StyleDefault.WithForeground(twin.NewColorHex(0xD0D0D0))
 	var answers = []twin.StyledRune{
 		twin.NewStyledRune('p', packageKeywordStyle),
@@ -203,7 +204,7 @@ func TestCodeHighlighting(t *testing.T) {
 		twin.NewStyledRune('a', packageKeywordStyle),
 		twin.NewStyledRune('g', packageKeywordStyle),
 		twin.NewStyledRune('e', packageKeywordStyle),
-		twin.NewStyledRune(' ', packageNameStyle),
+		twin.NewStyledRune(' ', packageSpaceStyle),
 		twin.NewStyledRune('m', packageNameStyle),
 	}
 
