@@ -89,7 +89,6 @@ func (m PagerModeViewing) onRune(char rune) {
 			leftColumnZeroBased: p.leftColumnZeroBased,
 			targetLine:          p.TargetLine,
 		}
-		p.reader = _HelpReader
 		p.scrollPosition = newScrollPosition("Pager scroll position")
 		p.leftColumnZeroBased = 0
 		p.TargetLine = nil
