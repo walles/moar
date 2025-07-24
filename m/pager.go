@@ -9,6 +9,7 @@ import (
 	"github.com/alecthomas/chroma/v2"
 	log "github.com/sirupsen/logrus"
 	"github.com/walles/moar/m/linemetadata"
+	"github.com/walles/moar/m/reader"
 	"github.com/walles/moar/m/textstyles"
 	"github.com/walles/moar/twin"
 )
@@ -42,7 +43,7 @@ type eventMaybeDone struct{}
 
 // Pager is the main on-screen pager
 type Pager struct {
-	reader              *ReaderImpl
+	reader              *reader.ReaderImpl
 	filteringReader     FilteringReader
 	screen              twin.Screen
 	quit                bool
@@ -114,7 +115,7 @@ type _PreHelpState struct {
 	targetLine          *linemetadata.Index
 }
 
-var _HelpReader = NewReaderFromText("Help", `
+var _HelpReader = reader.NewFromText("Help", `
 Welcome to Moar, the nice pager!
 
 Miscellaneous
@@ -176,12 +177,12 @@ Available at https://github.com/walles/moar/.
 `)
 
 // NewPager creates a new Pager with default settings
-func NewPager(r *ReaderImpl) *Pager {
+func NewPager(r *reader.ReaderImpl) *Pager {
 	var name string
-	if r == nil || r.name == nil || len(*r.name) == 0 {
+	if r == nil || r.Name == nil || len(*r.Name) == 0 {
 		name = "Pager"
 	} else {
-		name = "Pager " + *r.name
+		name = "Pager " + *r.Name
 	}
 
 	pager := Pager{
@@ -290,7 +291,7 @@ func (p *Pager) moveRight(delta int) {
 	}
 }
 
-func (p *Pager) Reader() Reader {
+func (p *Pager) Reader() reader.Reader {
 	if p.isShowingHelp {
 		return _HelpReader
 	}
@@ -316,8 +317,8 @@ func (p *Pager) StartPaging(screen twin.Screen, chromaStyle *chroma.Style, chrom
 	log.Info("Pager starting")
 
 	defer func() {
-		if p.reader.err != nil {
-			log.Warnf("Reader reported an error: %s", p.reader.err.Error())
+		if p.reader.Err != nil {
+			log.Warnf("Reader reported an error: %s", p.reader.Err.Error())
 		}
 	}()
 
@@ -331,10 +332,10 @@ func (p *Pager) StartPaging(screen twin.Screen, chromaStyle *chroma.Style, chrom
 
 	go func() {
 		defer func() {
-			panicHandler("StartPaging()/moreLinesAvailable", recover(), debug.Stack())
+			PanicHandler("StartPaging()/moreLinesAvailable", recover(), debug.Stack())
 		}()
 
-		for range p.reader.moreLinesAdded {
+		for range p.reader.MoreLinesAdded {
 			// Notify the main loop about the new lines so it can show them
 			screen.Events() <- eventMoreLinesAvailable{}
 
@@ -350,13 +351,13 @@ func (p *Pager) StartPaging(screen twin.Screen, chromaStyle *chroma.Style, chrom
 
 	go func() {
 		defer func() {
-			panicHandler("StartPaging()/spinner", recover(), debug.Stack())
+			PanicHandler("StartPaging()/spinner", recover(), debug.Stack())
 		}()
 
 		// Spin the spinner as long as contents is still loading
 		spinnerFrames := [...]string{"/.\\", "-o-", "\\O/", "| |"}
 		spinnerIndex := 0
-		for !p.reader.done.Load() {
+		for !p.reader.Done.Load() {
 			screen.Events() <- eventSpinnerUpdate{spinnerFrames[spinnerIndex]}
 			spinnerIndex++
 			if spinnerIndex >= len(spinnerFrames) {
@@ -372,10 +373,10 @@ func (p *Pager) StartPaging(screen twin.Screen, chromaStyle *chroma.Style, chrom
 
 	go func() {
 		defer func() {
-			panicHandler("StartPaging()/maybeDone", recover(), debug.Stack())
+			PanicHandler("StartPaging()/maybeDone", recover(), debug.Stack())
 		}()
 
-		for range p.reader.maybeDone {
+		for range p.reader.MaybeDone {
 			screen.Events() <- eventMaybeDone{}
 		}
 	}()
@@ -394,7 +395,7 @@ func (p *Pager) StartPaging(screen twin.Screen, chromaStyle *chroma.Style, chrom
 			//
 			// Note that we do the slow (atomic) checks only if the fast ones (no locking
 			// required) passed
-			if p.QuitIfOneScreen && !p.isShowingHelp && p.reader.done.Load() && p.reader.highlightingDone.Load() {
+			if p.QuitIfOneScreen && !p.isShowingHelp && p.reader.Done.Load() && p.reader.HighlightingDone.Load() {
 				width, height := p.screen.Size()
 				if fitsOnOneScreen(p.reader, width, height-p.DeInitFalseMargin) {
 					// Ref:
@@ -481,14 +482,14 @@ func (p *Pager) StartPaging(screen twin.Screen, chromaStyle *chroma.Style, chrom
 // shell prompt.
 //
 // This way nothing gets scrolled off screen after we exit.
-func fitsOnOneScreen(reader *ReaderImpl, width int, height int) bool {
+func fitsOnOneScreen(reader *reader.ReaderImpl, width int, height int) bool {
 	if reader.GetLineCount() > height {
 		return false
 	}
 
 	lines := reader.GetLines(linemetadata.Index{}, reader.GetLineCount())
-	for _, line := range lines.lines {
-		rendered := line.HighlightedTokens(twin.StyleDefault, nil).StyledRunes
+	for _, line := range lines.Lines {
+		rendered := line.HighlightedTokens(twin.StyleDefault, nil, nil).StyledRunes
 		if len(rendered) > width {
 			// This line is too long to fit on one screen line, no fit
 			return false

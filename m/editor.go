@@ -10,11 +10,12 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	"github.com/walles/moar/m/linemetadata"
+	"github.com/walles/moar/m/reader"
 )
 
 // Dump the reader lines into a read-only temp file and return the absolute file
 // name.
-func dumpToTempFile(reader *ReaderImpl) (string, error) {
+func dumpToTempFile(reader *reader.ReaderImpl) (string, error) {
 	tempFile, err := os.CreateTemp("", "moar-contents-")
 	if err != nil {
 		return "", err
@@ -29,7 +30,7 @@ func dumpToTempFile(reader *ReaderImpl) (string, error) {
 	log.Debug("Dumping contents into: ", tempFile.Name())
 
 	lines := reader.GetLines(linemetadata.Index{}, math.MaxInt)
-	for _, line := range lines.lines {
+	for _, line := range lines.Lines {
 		toWrite := line.Plain()
 		_, err := tempFile.WriteString(toWrite + "\n")
 		if err != nil {
@@ -133,10 +134,10 @@ func handleEditingRequest(p *Pager) {
 		return
 	}
 
-	canOpenFile := p.reader.fileName != nil
-	if p.reader.fileName != nil {
+	canOpenFile := p.reader.FileName != nil
+	if p.reader.FileName != nil {
 		// Verify that the file exists and is readable
-		err = tryOpen(*p.reader.fileName)
+		err = reader.TryOpen(*p.reader.FileName)
 		if err != nil {
 			canOpenFile = false
 			log.Info("File to edit is not readable: ", err)
@@ -145,7 +146,7 @@ func handleEditingRequest(p *Pager) {
 
 	var fileToEdit string
 	if canOpenFile {
-		fileToEdit = *p.reader.fileName
+		fileToEdit = *p.reader.FileName
 	} else {
 		// NOTE: Let's not wait for the stream to finish, just dump whatever we
 		// have and open the editor on that. The user just asked for it, if they

@@ -1,4 +1,4 @@
-package m
+package reader
 
 import (
 	"bufio"
@@ -63,21 +63,21 @@ type ReaderImpl struct {
 	//
 	// For files, this will be the file name. For our help text, this will be
 	// "Help". For streams this will generally not be set.
-	name *string
+	Name *string
 
 	// If this is set, it will point out the file we are reading from. If this
 	// is not set, we are not reading from a file.
-	fileName *string
+	FileName *string
 
 	// How many bytes have we read so far?
 	bytesCount int64
 
 	endsWithNewline bool
 
-	err error
+	Err error
 
-	done             *atomic.Bool
-	highlightingDone *atomic.Bool
+	Done             *atomic.Bool
+	HighlightingDone *atomic.Bool
 
 	highlightingStyle chan chroma.Style
 
@@ -87,17 +87,17 @@ type ReaderImpl struct {
 
 	// For telling the UI it should recheck the --quit-if-one-screen conditions.
 	// Signalled when either highlighting is done or reading is done.
-	maybeDone chan bool
+	MaybeDone chan bool
 
-	moreLinesAdded chan bool
+	MoreLinesAdded chan bool
 }
 
 // InputLines contains a number of lines from the reader, plus metadata
 type InputLines struct {
-	lines []*NumberedLine
+	Lines []*NumberedLine
 
 	// "monkey.txt: 1-23/45 51%"
-	statusText string
+	StatusText string
 }
 
 // Count lines in the original file and preallocate space for them.  Good
@@ -105,7 +105,7 @@ type InputLines struct {
 //
 // go test -benchmem -benchtime=10s -run='^$' -bench 'ReadLargeFile'
 func (reader *ReaderImpl) preAllocLines() {
-	if reader.fileName == nil {
+	if reader.FileName == nil {
 		return
 	}
 
@@ -115,7 +115,7 @@ func (reader *ReaderImpl) preAllocLines() {
 		return
 	}
 
-	lineCount, err := countLines(*reader.fileName)
+	lineCount, err := countLines(*reader.FileName)
 	if err != nil {
 		log.Warn("Line counting failed: ", err)
 		return
@@ -143,9 +143,9 @@ func (reader *ReaderImpl) readStream(stream io.Reader, formatter chroma.Formatte
 	highlightFromMemory(reader, formatter, options)
 	log.Debug("highlightFromMemory() took ", time.Since(t0))
 
-	reader.done.Store(true)
+	reader.Done.Store(true)
 	select {
-	case reader.maybeDone <- true:
+	case reader.MaybeDone <- true:
 	default:
 	}
 
@@ -196,9 +196,9 @@ func (reader *ReaderImpl) consumeLinesFromStream(stream io.Reader) {
 			}
 
 			reader.Lock()
-			if reader.err == nil {
+			if reader.Err == nil {
 				// Store the error unless it overwrites one we already have
-				reader.err = fmt.Errorf("error reading line from input stream: %w", err)
+				reader.Err = fmt.Errorf("error reading line from input stream: %w", err)
 			}
 			reader.Unlock()
 		}
@@ -207,7 +207,7 @@ func (reader *ReaderImpl) consumeLinesFromStream(stream io.Reader) {
 			break
 		}
 
-		if reader.err != nil {
+		if reader.Err != nil {
 			break
 		}
 
@@ -230,13 +230,13 @@ func (reader *ReaderImpl) consumeLinesFromStream(stream io.Reader) {
 		// This is how to do a non-blocking write to a channel:
 		// https://gobyexample.com/non-blocking-channel-operations
 		select {
-		case reader.moreLinesAdded <- true:
+		case reader.MoreLinesAdded <- true:
 		default:
 			// Default case required for the write to be non-blocking
 		}
 	}
 
-	if reader.fileName != nil {
+	if reader.FileName != nil {
 		reader.Lock()
 		reader.bytesCount += inspectionReader.bytesCount
 		reader.Unlock()
@@ -257,7 +257,7 @@ func (reader *ReaderImpl) consumeLinesFromStream(stream io.Reader) {
 
 func (reader *ReaderImpl) tailFile() error {
 	reader.Lock()
-	fileName := reader.fileName
+	fileName := reader.FileName
 	reader.Unlock()
 	if fileName == nil {
 		return nil
@@ -331,7 +331,7 @@ func (reader *ReaderImpl) tailFile() error {
 	}
 }
 
-// NewReaderFromStream creates a new stream reader
+// NewFromStream creates a new stream reader
 //
 // The name can be an empty string ("").
 //
@@ -340,7 +340,7 @@ func (reader *ReaderImpl) tailFile() error {
 //
 // Note that you must call reader.SetStyleForHighlighting() after this to get
 // highlighting.
-func NewReaderFromStream(name string, reader io.Reader, formatter chroma.Formatter, options ReaderOptions) (*ReaderImpl, error) {
+func NewFromStream(name string, reader io.Reader, formatter chroma.Formatter, options ReaderOptions) (*ReaderImpl, error) {
 	zReader, err := ZReader(reader)
 	if err != nil {
 		return nil, err
@@ -349,12 +349,12 @@ func NewReaderFromStream(name string, reader io.Reader, formatter chroma.Formatt
 
 	if len(name) > 0 {
 		mReader.Lock()
-		mReader.name = &name
+		mReader.Name = &name
 		mReader.Unlock()
 	}
 
 	if options.Lexer == nil {
-		mReader.highlightingDone.Store(true)
+		mReader.HighlightingDone.Store(true)
 	}
 
 	if options.Style != nil {
@@ -387,19 +387,19 @@ func newReaderFromStream(reader io.Reader, originalFileName *string, formatter c
 		// This needs to be size 1. If it would be 0, and we add more
 		// lines while the pager is processing, the pager would miss
 		// the lines added while it was processing.
-		fileName:                originalFileName,
-		name:                    originalFileName,
-		moreLinesAdded:          make(chan bool, 1),
-		maybeDone:               make(chan bool, 1),
+		FileName:                originalFileName,
+		Name:                    originalFileName,
+		MoreLinesAdded:          make(chan bool, 1),
+		MaybeDone:               make(chan bool, 1),
 		highlightingStyle:       make(chan chroma.Style, 1),
 		doneWaitingForFirstByte: make(chan bool, 1),
-		highlightingDone:        &highlightingDone,
-		done:                    &done,
+		HighlightingDone:        &highlightingDone,
+		Done:                    &done,
 	}
 
 	go func() {
 		defer func() {
-			panicHandler("newReaderFromStream()/readStream()", recover(), debug.Stack())
+			PanicHandler("newReaderFromStream()/readStream()", recover(), debug.Stack())
 		}()
 
 		returnMe.readStream(reader, formatter, options)
@@ -408,14 +408,14 @@ func newReaderFromStream(reader io.Reader, originalFileName *string, formatter c
 	return &returnMe
 }
 
-// NewReaderFromText creates a Reader from a block of text.
+// NewFromText creates a Reader from a block of text.
 //
 // First parameter is the name of this Reader. This name will be displayed by
 // Moar in the bottom left corner of the screen.
 //
 // Calling _wait() on this Reader will always return immediately, no
 // asynchronous ops will be performed.
-func NewReaderFromText(name string, text string) *ReaderImpl {
+func NewFromText(name string, text string) *ReaderImpl {
 	noExternalNewlines := strings.Trim(text, "\n")
 	lines := []*Line{}
 	if len(noExternalNewlines) > 0 {
@@ -430,19 +430,19 @@ func NewReaderFromText(name string, text string) *ReaderImpl {
 	highlightingDone.Store(true) // No highlighting to do = nothing left = Done!
 	returnMe := &ReaderImpl{
 		lines:                   lines,
-		done:                    &done,
-		highlightingDone:        &highlightingDone,
+		Done:                    &done,
+		HighlightingDone:        &highlightingDone,
 		doneWaitingForFirstByte: make(chan bool, 1),
 	}
 	if name != "" {
-		returnMe.name = &name
+		returnMe.Name = &name
 	}
 
 	return returnMe
 }
 
-// Duplicate of moar/moar.go:tryOpen
-func tryOpen(filename string) error {
+// Duplicate of moar/moar.go:TryOpen
+func TryOpen(filename string) error {
 	// Try opening the file
 	tryMe, err := os.Open(filename)
 	if err != nil {
@@ -517,7 +517,7 @@ func countLines(filename string) (uint64, error) {
 	return count, nil
 }
 
-// NewReaderFromFilename creates a new file reader.
+// NewFromFilename creates a new file reader.
 //
 // If options.Lexer is nil it will be determined from the input file name.
 //
@@ -527,8 +527,8 @@ func countLines(filename string) (uint64, error) {
 // The Reader will try to uncompress various compressed file format, and also
 // apply highlighting to the file using Chroma:
 // https://github.com/alecthomas/chroma
-func NewReaderFromFilename(filename string, formatter chroma.Formatter, options ReaderOptions) (*ReaderImpl, error) {
-	fileError := tryOpen(filename)
+func NewFromFilename(filename string, formatter chroma.Formatter, options ReaderOptions) (*ReaderImpl, error) {
+	fileError := TryOpen(filename)
 	if fileError != nil {
 		return nil, fileError
 	}
@@ -545,7 +545,7 @@ func NewReaderFromFilename(filename string, formatter chroma.Formatter, options 
 	returnMe := newReaderFromStream(stream, &highlightingFilename, formatter, options)
 
 	if options.Lexer == nil {
-		returnMe.highlightingDone.Store(true)
+		returnMe.HighlightingDone.Store(true)
 	}
 
 	if options.Style != nil {
@@ -553,6 +553,21 @@ func NewReaderFromFilename(filename string, formatter chroma.Formatter, options 
 	}
 
 	return returnMe, nil
+}
+
+// Wait for reader to finish reading and highlighting. Used by tests.
+func (reader *ReaderImpl) Wait() error {
+	// Wait for our goroutine to finish
+	//revive:disable-next-line:empty-block
+	for !reader.Done.Load() {
+	}
+	//revive:disable-next-line:empty-block
+	for !reader.HighlightingDone.Load() {
+	}
+
+	reader.Lock()
+	defer reader.Unlock()
+	return reader.Err
 }
 
 func textAsString(reader *ReaderImpl, shouldFormat bool) string {
@@ -597,9 +612,9 @@ func isXml(text string) bool {
 // We expect this to be executed in a goroutine
 func highlightFromMemory(reader *ReaderImpl, formatter chroma.Formatter, options ReaderOptions) {
 	defer func() {
-		reader.highlightingDone.Store(true)
+		reader.HighlightingDone.Store(true)
 		select {
-		case reader.maybeDone <- true:
+		case reader.MaybeDone <- true:
 		default:
 		}
 	}()
@@ -648,7 +663,7 @@ func highlightFromMemory(reader *ReaderImpl, formatter chroma.Formatter, options
 		return
 	}
 
-	highlighted, err := highlight(text, *options.Style, formatter, options.Lexer)
+	highlighted, err := Highlight(text, *options.Style, formatter, options.Lexer)
 	if err != nil {
 		log.Warn("Highlighting failed: ", err)
 		return
@@ -665,8 +680,8 @@ func highlightFromMemory(reader *ReaderImpl, formatter chroma.Formatter, options
 // createStatusUnlocked() assumes that its caller is holding the lock
 func (reader *ReaderImpl) createStatusUnlocked(lastLine linemetadata.Index) string {
 	prefix := ""
-	if reader.name != nil {
-		prefix = filepath.Base(*reader.name) + ": "
+	if reader.Name != nil {
+		prefix = filepath.Base(*reader.Name) + ": "
 	}
 
 	if len(reader.lines) == 0 {
@@ -710,9 +725,9 @@ func (reader *ReaderImpl) GetLine(index linemetadata.Index) *NumberedLine {
 		return nil
 	}
 	return &NumberedLine{
-		index:  index,
-		number: linemetadata.NumberFromZeroBased(index.Index()),
-		line:   reader.lines[index.Index()],
+		Index:  index,
+		Number: linemetadata.NumberFromZeroBased(index.Index()),
+		Line:   reader.lines[index.Index()],
 	}
 }
 
@@ -728,7 +743,7 @@ func (reader *ReaderImpl) GetLines(firstLine linemetadata.Index, wantedLineCount
 func (reader *ReaderImpl) getLinesUnlocked(firstLine linemetadata.Index, wantedLineCount int) *InputLines {
 	if len(reader.lines) == 0 || wantedLineCount == 0 {
 		return &InputLines{
-			statusText: reader.createStatusUnlocked(firstLine),
+			StatusText: reader.createStatusUnlocked(firstLine),
 		}
 	}
 
@@ -751,15 +766,15 @@ func (reader *ReaderImpl) getLinesUnlocked(firstLine linemetadata.Index, wantedL
 	for loopIndex, line := range notNumberedReturnLines {
 		lineIndex := firstLine.NonWrappingAdd(loopIndex)
 		returnLines = append(returnLines, &NumberedLine{
-			index:  lineIndex,
-			number: linemetadata.NumberFromZeroBased(lineIndex.Index()),
-			line:   line,
+			Index:  lineIndex,
+			Number: linemetadata.NumberFromZeroBased(lineIndex.Index()),
+			Line:   line,
 		})
 	}
 
 	return &InputLines{
-		lines:      returnLines,
-		statusText: reader.createStatusUnlocked(lastLine),
+		Lines:      returnLines,
+		StatusText: reader.createStatusUnlocked(lastLine),
 	}
 }
 
@@ -770,19 +785,19 @@ func (reader *ReaderImpl) PumpToStdout() {
 	drainLines := func() bool {
 		lines := reader.GetLines(firstNotPrintedLine, wantedLineCount)
 		var firstReturnedIndex linemetadata.Index
-		if len(lines.lines) > 0 {
-			firstReturnedIndex = lines.lines[0].index
+		if len(lines.Lines) > 0 {
+			firstReturnedIndex = lines.Lines[0].Index
 		}
 
 		// Print the lines we got
 		printed := false
-		for loopIndex, line := range lines.lines {
+		for loopIndex, line := range lines.Lines {
 			lineIndex := firstReturnedIndex.NonWrappingAdd(loopIndex)
 			if lineIndex.IsBefore(firstNotPrintedLine) {
 				continue
 			}
 
-			fmt.Println(line.line.raw)
+			fmt.Println(line.Line.raw)
 			printed = true
 			firstNotPrintedLine = lineIndex.NonWrappingAdd(1)
 		}
@@ -801,9 +816,9 @@ func (reader *ReaderImpl) PumpToStdout() {
 		drainAllLines()
 
 		select {
-		case <-reader.moreLinesAdded:
+		case <-reader.MoreLinesAdded:
 			continue
-		case <-reader.maybeDone:
+		case <-reader.MaybeDone:
 			done = true
 		}
 	}
@@ -830,15 +845,15 @@ func (reader *ReaderImpl) setText(text string) {
 	reader.lines = lines
 	reader.Unlock()
 
-	reader.done.Store(true)
+	reader.Done.Store(true)
 	select {
-	case reader.maybeDone <- true:
+	case reader.MaybeDone <- true:
 	default:
 	}
 	log.Trace("Reader done, contents explicitly set")
 
 	select {
-	case reader.moreLinesAdded <- true:
+	case reader.MoreLinesAdded <- true:
 	default:
 	}
 }

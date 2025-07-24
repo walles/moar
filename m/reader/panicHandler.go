@@ -1,4 +1,4 @@
-package m
+package reader
 
 // NOTE: This file should be identical to twin/panicHandler.go
 

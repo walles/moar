@@ -3,6 +3,7 @@ package m
 import (
 	"testing"
 
+	"github.com/walles/moar/m/reader"
 	"github.com/walles/moar/twin"
 	"gotest.tools/v3/assert"
 )
@@ -24,7 +25,7 @@ func modeName(pager *Pager) string {
 
 // Create a pager with three screen lines reading from a six lines stream
 func createThreeLinesPager(t *testing.T) *Pager {
-	reader := NewReaderFromText("", "a\nb\nc\nd\ne\nf\n")
+	reader := reader.NewFromText("", "a\nb\nc\nd\ne\nf\n")
 
 	screen := twin.NewFakeScreen(20, 3)
 	pager := NewPager(reader)
@@ -108,7 +109,7 @@ func TestScrollToNextSearchHit_WrapAfterFound(t *testing.T) {
 // Ref: https://github.com/walles/moar/issues/152
 func Test152(t *testing.T) {
 	// Show a pager on a five lines terminal
-	reader := NewReaderFromText("", "a\nab\nabc\nabcd\nabcde\nabcdef\n")
+	reader := reader.NewFromText("", "a\nab\nabc\nabcd\nabcde\nabcdef\n")
 	screen := twin.NewFakeScreen(20, 5)
 	pager := NewPager(reader)
 	pager.screen = screen

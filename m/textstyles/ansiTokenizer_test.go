@@ -80,7 +80,7 @@ func TestTokenize(t *testing.T) {
 				log.SetOutput(&loglines)
 
 				tokens := StyledRunesFromString(twin.StyleDefault, line, lineIndex).StyledRunes
-				plainString := WithoutFormatting(twin.StyleDefault, line, lineIndex)
+				plainString := WithoutFormatting(line, lineIndex)
 				if len(tokens) != utf8.RuneCountInString(plainString) {
 					t.Errorf("%s:%s: len(tokens)=%d, len(plainString)=%d for: <%s>",
 						fileName, lineIndex.Format(),

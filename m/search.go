@@ -9,6 +9,7 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	"github.com/walles/moar/m/linemetadata"
+	"github.com/walles/moar/m/reader"
 )
 
 // Scroll to the next search hit, while the user is typing the search string.
@@ -187,7 +188,7 @@ func (p *Pager) findFirstHit(startPosition linemetadata.Index, beforePosition *l
 		pattern := *p.searchPattern
 		go func(i int, searchStart linemetadata.Index, chunkBefore *linemetadata.Index) {
 			defer func() {
-				panicHandler("findFirstHit()/chunkSearch", recover(), debug.Stack())
+				PanicHandler("findFirstHit()/chunkSearch", recover(), debug.Stack())
 			}()
 
 			findings[i] <- _findFirstHit(reader, searchStart, pattern, chunkBefore, backwards)
@@ -216,7 +217,7 @@ func (p *Pager) findFirstHit(startPosition linemetadata.Index, beforePosition *l
 // help large file search performance.
 //
 // FIXME: We should take startPosition.deltaScreenLines into account as well!
-func _findFirstHit(reader Reader, startPosition linemetadata.Index, pattern regexp.Regexp, beforePosition *linemetadata.Index, backwards bool) *scrollPosition {
+func _findFirstHit(reader reader.Reader, startPosition linemetadata.Index, pattern regexp.Regexp, beforePosition *linemetadata.Index, backwards bool) *scrollPosition {
 	searchPosition := startPosition
 	for {
 		line := reader.GetLine(searchPosition)

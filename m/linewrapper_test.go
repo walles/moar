@@ -6,12 +6,13 @@ import (
 
 	"gotest.tools/v3/assert"
 
+	"github.com/walles/moar/m/reader"
 	"github.com/walles/moar/twin"
 )
 
 func tokenize(input string) []twin.StyledRune {
-	line := NewLine(input)
-	return line.HighlightedTokens(twin.StyleDefault, nil, nil).StyledRunes
+	line := reader.NewLine(input)
+	return line.HighlightedTokens(twin.StyleDefault, nil, nil, nil).StyledRunes
 }
 
 func rowsToString(cellLines [][]twin.StyledRune) string {

@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/walles/moar/m/linemetadata"
+	"github.com/walles/moar/m/reader"
 	"github.com/walles/moar/m/textstyles"
 	"github.com/walles/moar/twin"
 )
@@ -109,16 +110,16 @@ func (p *Pager) renderLines() ([]renderedLine, string) {
 		lineIndex = *p.lineIndex()
 	}
 	inputLines := p.Reader().GetLines(lineIndex, p.visibleHeight())
-	if len(inputLines.lines) == 0 {
+	if len(inputLines.Lines) == 0 {
 		// Empty input, empty output
-		return []renderedLine{}, inputLines.statusText
+		return []renderedLine{}, inputLines.StatusText
 	}
 
-	lastVisibleLineNumber := inputLines.lines[len(inputLines.lines)-1].number
+	lastVisibleLineNumber := inputLines.Lines[len(inputLines.Lines)-1].Number
 	numberPrefixLength := p.getLineNumberPrefixLength(lastVisibleLineNumber)
 
 	allLines := make([]renderedLine, 0)
-	for _, line := range inputLines.lines {
+	for _, line := range inputLines.Lines {
 		rendering := p.renderLine(line, numberPrefixLength)
 
 		var onScreenLength int
@@ -168,10 +169,10 @@ func (p *Pager) renderLines() ([]renderedLine, string) {
 	wantedLineCount := p.visibleHeight()
 	if len(allLines) <= wantedLineCount {
 		// Screen has enough room for everything, return everything
-		return allLines, inputLines.statusText
+		return allLines, inputLines.StatusText
 	}
 
-	return allLines[0:wantedLineCount], inputLines.statusText
+	return allLines[0:wantedLineCount], inputLines.StatusText
 }
 
 // Render one input line into one or more screen lines.
@@ -181,8 +182,8 @@ func (p *Pager) renderLines() ([]renderedLine, string) {
 //
 // lineNumber and numberPrefixLength are required for knowing how much to
 // indent, and to (optionally) render the line number.
-func (p *Pager) renderLine(line *NumberedLine, numberPrefixLength int) []renderedLine {
-	highlighted := line.HighlightedTokens(plainTextStyle, p.searchPattern)
+func (p *Pager) renderLine(line *reader.NumberedLine, numberPrefixLength int) []renderedLine {
+	highlighted := line.HighlightedTokens(plainTextStyle, standoutStyle, p.searchPattern)
 	var wrapped [][]twin.StyledRune
 	if p.WrapLongLines {
 		width, _ := p.screen.Size()
@@ -194,7 +195,7 @@ func (p *Pager) renderLine(line *NumberedLine, numberPrefixLength int) []rendere
 
 	rendered := make([]renderedLine, 0)
 	for wrapIndex, inputLinePart := range wrapped {
-		lineNumber := line.number
+		lineNumber := line.Number
 		visibleLineNumber := &lineNumber
 		if wrapIndex > 0 {
 			visibleLineNumber = nil
@@ -203,7 +204,7 @@ func (p *Pager) renderLine(line *NumberedLine, numberPrefixLength int) []rendere
 		decorated := p.decorateLine(visibleLineNumber, numberPrefixLength, inputLinePart)
 
 		rendered = append(rendered, renderedLine{
-			inputLineIndex: line.index,
+			inputLineIndex: line.Index,
 			wrapIndex:      wrapIndex,
 			cells:          decorated,
 		})
