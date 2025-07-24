@@ -1,4 +1,4 @@
-package m
+package reader
 
 import (
 	"bytes"

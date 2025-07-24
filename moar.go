@@ -21,6 +21,7 @@ import (
 
 	"github.com/walles/moar/m"
 	"github.com/walles/moar/m/linemetadata"
+	"github.com/walles/moar/m/reader"
 	"github.com/walles/moar/m/textstyles"
 	"github.com/walles/moar/twin"
 )
@@ -136,8 +137,8 @@ func parseUnprintableStyle(styleOption string) (textstyles.UnprintableStyleT, er
 
 func parseScrollHint(scrollHint string) (twin.StyledRune, error) {
 	scrollHint = strings.ReplaceAll(scrollHint, "ESC", "\x1b")
-	hintAsLine := m.NewLine(scrollHint)
-	parsedTokens := hintAsLine.HighlightedTokens(twin.StyleDefault, nil, nil).StyledRunes
+	hintAsLine := reader.NewLine(scrollHint)
+	parsedTokens := hintAsLine.HighlightedTokens(twin.StyleDefault, nil, nil, nil).StyledRunes
 	if len(parsedTokens) == 1 {
 		return parsedTokens[0], nil
 	}
@@ -178,7 +179,7 @@ func pumpToStdout(inputFilenames ...string) error {
 		// If we get both redirected stdin and an input filenames, should only
 		// copy the files and ignore stdin, because that's how less works.
 		for _, inputFilename := range inputFilenames {
-			inputFile, _, err := m.ZOpen(inputFilename)
+			inputFile, _, err := reader.ZOpen(inputFilename)
 			if err != nil {
 				return fmt.Errorf("Failed to open %s: %w", inputFilename, err)
 			}
@@ -198,32 +199,6 @@ func pumpToStdout(inputFilenames ...string) error {
 		return fmt.Errorf("Failed to copy stdin to stdout: %w", err)
 	}
 	return nil
-}
-
-// Duplicate of m/reader.go:tryOpen
-func tryOpen(filename string) error {
-	// Try opening the file
-	tryMe, err := os.Open(filename)
-	if err != nil {
-		return err
-	}
-
-	// Try reading a byte
-	buffer := make([]byte, 1)
-	_, err = tryMe.Read(buffer)
-
-	if err != nil && err.Error() == "EOF" {
-		// Empty file, this is fine
-		err = nil
-	}
-
-	closeErr := tryMe.Close()
-	if err == nil && closeErr != nil {
-		// Everything worked up until Close(), report the Close() error
-		return closeErr
-	}
-
-	return err
 }
 
 // Parses an argument like "+123" anywhere on the command line into a one-based
@@ -451,7 +426,7 @@ func pagerFromArgs(
 	for _, inputFilename := range flagSet.Args() {
 		// Need to check before newScreen() below, otherwise the screen
 		// will be cleared before we print the "No such file" error.
-		err := tryOpen(inputFilename)
+		err := reader.TryOpen(inputFilename)
 		if err != nil {
 			return nil, nil, chroma.Style{}, nil, logsRequested, err
 		}
@@ -499,11 +474,11 @@ func pagerFromArgs(
 		formatter = formatters.TTY16m
 	}
 
-	var reader *m.ReaderImpl
+	var readerImpl *reader.ReaderImpl
 	shouldFormat := *reFormat
 	if stdinIsRedirected {
 		// Display input pipe contents
-		reader, err = m.NewReaderFromStream("", os.Stdin, formatter, m.ReaderOptions{Lexer: *lexer, ShouldFormat: shouldFormat})
+		readerImpl, err = reader.NewReaderFromStream("", os.Stdin, formatter, reader.ReaderOptions{Lexer: *lexer, ShouldFormat: shouldFormat})
 		if err != nil {
 			return nil, nil, chroma.Style{}, nil, logsRequested, err
 		}
@@ -512,7 +487,7 @@ func pagerFromArgs(
 		if len(flagSet.Args()) != 1 {
 			panic("Invariant broken: Expected exactly one filename")
 		}
-		reader, err = m.NewReaderFromFilename(flagSet.Args()[0], formatter, m.ReaderOptions{Lexer: *lexer, ShouldFormat: shouldFormat})
+		readerImpl, err = reader.NewReaderFromFilename(flagSet.Args()[0], formatter, reader.ReaderOptions{Lexer: *lexer, ShouldFormat: shouldFormat})
 		if err != nil {
 			return nil, nil, chroma.Style{}, nil, logsRequested, err
 		}
@@ -520,7 +495,7 @@ func pagerFromArgs(
 
 	// If the user is doing "sudo something | moar" we can't show the UI until
 	// we start getting data, otherwise we'll mess up sudo's password prompt.
-	reader.AwaitFirstByte()
+	readerImpl.AwaitFirstByte()
 
 	// We got the first byte, this means sudo is done (if it was used) and we
 	// can set up the UI.
@@ -529,7 +504,7 @@ func pagerFromArgs(
 		// Ref: https://github.com/walles/moar/issues/149
 		log.Info("Failed to set up screen for paging, pumping to stdout instead: ", err)
 
-		reader.PumpToStdout()
+		readerImpl.PumpToStdout()
 
 		return nil, nil, chroma.Style{}, nil, logsRequested, nil
 	}
@@ -569,9 +544,9 @@ func pagerFromArgs(
 		style = **styleOption
 	}
 	log.Debug("Using style <", style.Name, ">")
-	reader.SetStyleForHighlighting(style)
+	readerImpl.SetStyleForHighlighting(style)
 
-	pager := m.NewPager(reader)
+	pager := m.NewPager(readerImpl)
 	pager.WrapLongLines = *wrap
 	pager.ShowLineNumbers = !*noLineNumbers
 	pager.ShowStatusBar = !*noStatusBar

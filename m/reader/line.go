@@ -1,4 +1,4 @@
-package m
+package reader
 
 import (
 	"regexp"
@@ -27,7 +27,7 @@ func NewLine(raw string) Line {
 
 // Returns a representation of the string split into styled tokens. Any regexp
 // matches are highlighted. A nil regexp means no highlighting.
-func (line *Line) HighlightedTokens(plainTextStyle twin.Style, search *regexp.Regexp, lineIndex *linemetadata.Index) textstyles.StyledRunesWithTrailer {
+func (line *Line) HighlightedTokens(plainTextStyle twin.Style, standoutStyle *twin.Style, search *regexp.Regexp, lineIndex *linemetadata.Index) textstyles.StyledRunesWithTrailer {
 	plain := line.Plain(lineIndex)
 	matchRanges := getMatchRanges(&plain, search)
 
@@ -63,7 +63,7 @@ func (line *Line) Plain(lineIndex *linemetadata.Index) string {
 	defer line.lock.Unlock()
 
 	if line.plain == nil {
-		plain := textstyles.WithoutFormatting(plainTextStyle, line.raw, lineIndex)
+		plain := textstyles.WithoutFormatting(line.raw, lineIndex)
 		line.plain = &plain
 	}
 	return *line.plain

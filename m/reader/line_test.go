@@ -1,4 +1,4 @@
-package m
+package reader
 
 import (
 	"testing"
@@ -20,7 +20,7 @@ func TestHighlightedTokensWithManPageHeading(t *testing.T) {
 	}
 
 	line := NewLine(manPageHeading)
-	highlighted := line.HighlightedTokens(twin.StyleDefault, nil, nil)
+	highlighted := line.HighlightedTokens(twin.StyleDefault, nil, nil, nil)
 
 	assert.Equal(t, len(highlighted.StyledRunes), len(headingText))
 	for i, cell := range highlighted.StyledRunes {

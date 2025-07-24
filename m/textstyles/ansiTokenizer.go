@@ -50,7 +50,7 @@ func isPlain(s string) bool {
 	return true
 }
 
-func WithoutFormatting(plainTextStyle twin.Style, s string, lineIndex *linemetadata.Index) string {
+func WithoutFormatting(s string, lineIndex *linemetadata.Index) string {
 	if isPlain(s) {
 		return s
 	}
@@ -63,7 +63,7 @@ func WithoutFormatting(plainTextStyle twin.Style, s string, lineIndex *linemetad
 	// runes.
 	stripped.Grow(len(s) * 2)
 
-	styledStringsFromString(plainTextStyle, s, lineIndex, func(str string, style twin.Style) {
+	styledStringsFromString(twin.StyleDefault, s, lineIndex, func(str string, style twin.Style) {
 		for _, runeValue := range runesFromStyledString(_StyledString{String: str, Style: style}) {
 			switch runeValue {
 

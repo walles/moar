@@ -9,12 +9,13 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	"github.com/walles/moar/m/linemetadata"
+	"github.com/walles/moar/m/reader"
 )
 
 // Filters lines based on the search query from the pager.
 
 type FilteringReader struct {
-	BackingReader Reader
+	BackingReader reader.Reader
 
 	// This is a reference to a reference so that we can track changes to the
 	// original pattern, including if it is set to nil.
@@ -25,7 +26,7 @@ type FilteringReader struct {
 	lock sync.Mutex
 
 	// nil means no filtering has happened yet
-	filteredLinesCache *[]*NumberedLine
+	filteredLinesCache *[]*reader.NumberedLine
 
 	// This is what the reader's line count was when we filtered. If the
 	// reader's current line count doesn't match, then our cache needs to be
@@ -41,7 +42,7 @@ type FilteringReader struct {
 func (f *FilteringReader) rebuildCache() {
 	t0 := time.Now()
 
-	cache := make([]*NumberedLine, 0)
+	cache := make([]*reader.NumberedLine, 0)
 	filterPattern := *f.FilterPattern
 
 	// Mark cache base conditions
@@ -51,16 +52,16 @@ func (f *FilteringReader) rebuildCache() {
 	// Repopulate the cache
 	allBaseLines := f.BackingReader.GetLines(linemetadata.Index{}, math.MaxInt)
 	resultIndex := 0
-	for _, line := range allBaseLines.lines {
-		if filterPattern != nil && len(filterPattern.String()) > 0 && !filterPattern.MatchString(line.line.Plain(&line.index)) {
+	for _, line := range allBaseLines.Lines {
+		if filterPattern != nil && len(filterPattern.String()) > 0 && !filterPattern.MatchString(line.Line.Plain(&line.Index)) {
 			// We have a pattern but it doesn't match
 			continue
 		}
 
-		cache = append(cache, &NumberedLine{
-			line:   line.line,
-			index:  linemetadata.IndexFromZeroBased(resultIndex),
-			number: line.number,
+		cache = append(cache, &reader.NumberedLine{
+			Line:   line.Line,
+			Index:  linemetadata.IndexFromZeroBased(resultIndex),
+			Number: line.Number,
 		})
 		resultIndex++
 	}
@@ -68,10 +69,10 @@ func (f *FilteringReader) rebuildCache() {
 	f.filteredLinesCache = &cache
 
 	log.Debugf("Filtered out %d/%d lines in %s",
-		len(allBaseLines.lines)-len(cache), len(allBaseLines.lines), time.Since(t0))
+		len(allBaseLines.Lines)-len(cache), len(allBaseLines.Lines), time.Since(t0))
 }
 
-func (f *FilteringReader) getAllLines() []*NumberedLine {
+func (f *FilteringReader) getAllLines() []*reader.NumberedLine {
 	f.lock.Lock()
 	defer f.lock.Unlock()
 
@@ -124,7 +125,7 @@ func (f *FilteringReader) GetLineCount() int {
 	return len(f.getAllLines())
 }
 
-func (f *FilteringReader) GetLine(index linemetadata.Index) *NumberedLine {
+func (f *FilteringReader) GetLine(index linemetadata.Index) *reader.NumberedLine {
 	if f.shouldPassThrough() {
 		return f.BackingReader.GetLine(index)
 	}
@@ -136,7 +137,7 @@ func (f *FilteringReader) GetLine(index linemetadata.Index) *NumberedLine {
 	return allLines[index.Index()]
 }
 
-func (f *FilteringReader) GetLines(firstLine linemetadata.Index, wantedLineCount int) *InputLines {
+func (f *FilteringReader) GetLines(firstLine linemetadata.Index, wantedLineCount int) *reader.InputLines {
 	if f.shouldPassThrough() {
 		return f.BackingReader.GetLines(firstLine, wantedLineCount)
 	}
@@ -144,8 +145,8 @@ func (f *FilteringReader) GetLines(firstLine linemetadata.Index, wantedLineCount
 	acceptedLines := f.getAllLines()
 
 	if len(acceptedLines) == 0 || wantedLineCount == 0 {
-		return &InputLines{
-			statusText: f.createStatus(nil),
+		return &reader.InputLines{
+			StatusText: f.createStatus(nil),
 		}
 	}
 
@@ -163,9 +164,9 @@ func (f *FilteringReader) GetLines(firstLine linemetadata.Index, wantedLineCount
 		return f.GetLines(firstLine, firstLine.CountLinesTo(lastLine))
 	}
 
-	return &InputLines{
-		lines:      acceptedLines[firstLine.Index() : firstLine.Index()+wantedLineCount],
-		statusText: f.createStatus(&lastLine),
+	return &reader.InputLines{
+		Lines:      acceptedLines[firstLine.Index() : firstLine.Index()+wantedLineCount],
+		StatusText: f.createStatus(&lastLine),
 	}
 }
 

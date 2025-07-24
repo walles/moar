@@ -3,17 +3,18 @@ package m
 import (
 	"testing"
 
+	"github.com/walles/moar/m/reader"
 	"github.com/walles/moar/twin"
 	"gotest.tools/v3/assert"
 )
 
 // Repro for not-found part of https://github.com/walles/moar/issues/182
 func TestNotFoundFindPrevious(t *testing.T) {
-	reader := NewReaderFromText("TestNotFoundFindPrevious", "apa\nbepa\ncepa\ndepa")
+	reader := reader.NewReaderFromText("TestNotFoundFindPrevious", "apa\nbepa\ncepa\ndepa")
 	pager := NewPager(reader)
 	pager.screen = twin.NewFakeScreen(40, 2)
 
-	assert.NilError(t, reader._wait())
+	assert.NilError(t, reader.Wait())
 
 	// Look for a hit on the second line
 	pager.searchPattern = toPattern("bepa")
@@ -28,11 +29,11 @@ func TestNotFoundFindPrevious(t *testing.T) {
 }
 
 func TestWrapSearchBackwards(t *testing.T) {
-	reader := NewReaderFromText("TestNotFoundFindPrevious", "gold\napa\nbepa\ngold")
+	reader := reader.NewReaderFromText("TestNotFoundFindPrevious", "gold\napa\nbepa\ngold")
 	pager := NewPager(reader)
 	pager.screen = twin.NewFakeScreen(40, 3)
 
-	assert.NilError(t, reader._wait())
+	assert.NilError(t, reader.Wait())
 
 	// Looking for this should take us to the last line
 	pager.searchPattern = toPattern("gold")

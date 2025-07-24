@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/walles/moar/m/linemetadata"
+	"github.com/walles/moar/m/reader"
 )
 
 // Please create using newScrollPosition(name)
@@ -133,9 +134,9 @@ func (si *scrollPositionInternal) handleNegativeDeltaScreenLines(pager *Pager) {
 func (si *scrollPositionInternal) handlePositiveDeltaScreenLines(pager *Pager) {
 	maxPrefixLength := 0
 	allPossibleLines := pager.Reader().GetLines(*si.lineIndex, pager.visibleHeight())
-	if len(allPossibleLines.lines) > 0 {
-		lastPossibleLine := allPossibleLines.lines[len(allPossibleLines.lines)-1]
-		maxPrefixLength = pager.getLineNumberPrefixLength(lastPossibleLine.number)
+	if len(allPossibleLines.Lines) > 0 {
+		lastPossibleLine := allPossibleLines.Lines[len(allPossibleLines.Lines)-1]
+		maxPrefixLength = pager.getLineNumberPrefixLength(lastPossibleLine.Number)
 	}
 
 	for {
@@ -179,7 +180,7 @@ func (si *scrollPositionInternal) emptyBottomLinesCount(pager *Pager) int {
 
 	lineIndex := *si.lineIndex
 
-	var lastLine NumberedLine
+	var lastLine reader.NumberedLine
 	lastLineIndex := linemetadata.IndexFromLength(pager.Reader().GetLineCount())
 	if lastLineIndex != nil {
 		maybeLastLine := pager.Reader().GetLine(*lastLineIndex)
@@ -189,7 +190,7 @@ func (si *scrollPositionInternal) emptyBottomLinesCount(pager *Pager) int {
 			lastLine = *maybeLastLine
 		}
 	}
-	lastLineNumberWidth := pager.getLineNumberPrefixLength(lastLine.number)
+	lastLineNumberWidth := pager.getLineNumberPrefixLength(lastLine.Number)
 
 	for {
 		line := pager.Reader().GetLine(lineIndex)
@@ -344,7 +345,7 @@ func (p *Pager) scrollToEnd() {
 
 	// Scroll down enough. We know for sure the last line won't wrap into more
 	// lines than the number of characters it contains.
-	p.scrollPosition.internalDontTouch.deltaScreenLines = len(lastInputLine.line.raw)
+	p.scrollPosition.internalDontTouch.deltaScreenLines = len(lastInputLine.Line.Plain(&lastInputLine.Index))
 
 	if p.TargetLine == nil {
 		// Start following the end of the file
@@ -376,7 +377,7 @@ func (p *Pager) isScrolledToEnd() bool {
 	// Last line is on screen, now we need to figure out whether we can see all
 	// of it
 	lastInputLine := p.Reader().GetLine(lastInputLineIndex)
-	lastInputLineRendered := p.renderLine(lastInputLine, p.getLineNumberPrefixLength(lastInputLine.number))
+	lastInputLineRendered := p.renderLine(lastInputLine, p.getLineNumberPrefixLength(lastInputLine.Number))
 	lastRenderedSubLine := lastInputLineRendered[len(lastInputLineRendered)-1]
 
 	// If the last visible subline is the same as the last possible subline then
@@ -427,7 +428,7 @@ func (si *scrollPositionInternal) getMaxNumberPrefixLength(pager *Pager) int {
 
 	// nil can happen when the input stream is empty
 	if lastVisibleLine != nil {
-		number = lastVisibleLine.number
+		number = lastVisibleLine.Number
 	}
 
 	// Count the length of the last line number
