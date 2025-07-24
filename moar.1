@@ -57,7 +57,11 @@ Or guarantee mouse scrolling works but selecting text requiring extra effort.
 Details here: https://github.com/walles/moar/blob/master/MOUSE.md
 .TP
 \fB\-\-no\-clear\-on\-exit\fR
-Retain screen contents when exiting moar
+Retain screen contents when exiting moar.
+Affected by \fB--no-clear-on-exit-margin\fP.
+.TP
+\fB\-\-no\-clear\-on\-exit\-margin\fR=int
+Leave this number of lines for your shell prompt after exiting. Defaults to 1. Affects \fB--no-clear-on-exit\fP and \fB--quit-if-one-screen\fP.
 .TP
 \fB\-\-no\-linenumbers\fR
 Hide line numbers on startup, press left arrow key to show
@@ -70,7 +74,8 @@ Hide the status bar, toggle with
 .B =
 .TP
 \fB\-\-quit\-if\-one\-screen\fR
-Print input contents without paging if the input fits on one screen
+Print input contents without paging if the input fits on one screen.
+Affected by \fB--no-clear-on-exit-margin\fP.
 .TP
 \fB\-\-reformat\fR
 Reformat supported input files (JSON) before showing them.

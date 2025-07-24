@@ -91,6 +91,10 @@ type Pager struct {
 	// clear the last line, and show the cursor.
 	DeInit bool
 
+	// If DeInit is false, leave this number of lines for the shell prompt after
+	// exiting
+	DeInitFalseMargin int
+
 	WithTerminalFg bool // If true, don't set linePrefix
 
 	// Length of the longest line displayed. This is used for limiting scrolling to the right.
@@ -392,7 +396,7 @@ func (p *Pager) StartPaging(screen twin.Screen, chromaStyle *chroma.Style, chrom
 			// required) passed
 			if p.QuitIfOneScreen && !p.isShowingHelp && p.reader.done.Load() && p.reader.highlightingDone.Load() {
 				width, height := p.screen.Size()
-				if fitsOnOneScreen(p.reader, width, height) {
+				if fitsOnOneScreen(p.reader, width, height-p.DeInitFalseMargin) {
 					// Ref:
 					// https://github.com/walles/moar/issues/113#issuecomment-1368294132
 					p.ShowLineNumbers = false // Requires a redraw to take effect, see below
@@ -473,10 +477,12 @@ func (p *Pager) StartPaging(screen twin.Screen, chromaStyle *chroma.Style, chrom
 	}
 }
 
+// The height parameter is the terminal height minus the height of the user's
+// shell prompt.
+//
+// This way nothing gets scrolled off screen after we exit.
 func fitsOnOneScreen(reader *ReaderImpl, width int, height int) bool {
-	// One extra line to account for the status bar
-	extraLines := 1
-	if reader.GetLineCount() > height-extraLines {
+	if reader.GetLineCount() > height {
 		return false
 	}
 
@@ -500,15 +506,15 @@ func (p *Pager) ReprintAfterExit() error {
 	screenLinesCount := len(renderedScreenLines)
 
 	_, screenHeight := p.screen.Size()
-	screenHeightWithoutFooter := screenHeight - 1
+	screenHeightWithoutFooter := screenHeight - p.DeInitFalseMargin
 	if screenLinesCount > screenHeightWithoutFooter {
 		screenLinesCount = screenHeightWithoutFooter
 	}
 
 	if screenLinesCount > 0 {
 		p.screen.ShowNLines(screenLinesCount)
+		fmt.Println()
 	}
-	fmt.Println()
 
 	return nil
 }

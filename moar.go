@@ -359,8 +359,10 @@ func pagerFromArgs(
 	noStatusBar := flagSet.Bool("no-statusbar", false, "Hide the status bar, toggle with '='")
 	reFormat := flagSet.Bool("reformat", false, "Reformat some input files (JSON)")
 	flagSet.Bool("no-reformat", true, "No effect, kept for compatibility. See --reformat")
-	quitIfOneScreen := flagSet.Bool("quit-if-one-screen", false, "Don't page if contents fits on one screen")
+	quitIfOneScreen := flagSet.Bool("quit-if-one-screen", false, "Don't page if contents fits on one screen. Affected by --no-clear-on-exit-margin.")
 	noClearOnExit := flagSet.Bool("no-clear-on-exit", false, "Retain screen contents when exiting moar")
+	noClearOnExitMargin := flagSet.Int("no-clear-on-exit-margin", 1,
+		"Number of lines to leave for your shell prompt, defaults to 1")
 	statusBarStyle := flagSetFunc(flagSet, "statusbar", m.STATUSBAR_STYLE_INVERSE,
 		"Status bar `style`: inverse, plain or bold", parseStatusBarStyle)
 	unprintableStyle := flagSetFunc(flagSet, "render-unprintable", textstyles.UnprintableStyleHighlight,
@@ -392,6 +394,13 @@ func pagerFromArgs(
 	targetLine, remainingArgs := getTargetLine(flags)
 
 	err = flagSet.Parse(remainingArgs)
+
+	if err == nil {
+		if *noClearOnExitMargin < 0 {
+			err = fmt.Errorf("Invalid --no-clear-on-exit-margin %d, must be 0 or higher", *noClearOnExitMargin)
+		}
+	}
+
 	if err != nil {
 		if err == flag.ErrHelp {
 			printUsage(flagSet, *terminalColorsCount)
@@ -567,6 +576,7 @@ func pagerFromArgs(
 	pager.ShowLineNumbers = !*noLineNumbers
 	pager.ShowStatusBar = !*noStatusBar
 	pager.DeInit = !*noClearOnExit
+	pager.DeInitFalseMargin = *noClearOnExitMargin
 	pager.QuitIfOneScreen = *quitIfOneScreen
 	pager.StatusBarStyle = *statusBarStyle
 	pager.UnprintableStyle = *unprintableStyle
