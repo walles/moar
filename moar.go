@@ -478,7 +478,7 @@ func pagerFromArgs(
 	shouldFormat := *reFormat
 	if stdinIsRedirected {
 		// Display input pipe contents
-		readerImpl, err = reader.NewReaderFromStream("", os.Stdin, formatter, reader.ReaderOptions{Lexer: *lexer, ShouldFormat: shouldFormat})
+		readerImpl, err = reader.NewFromStream("", os.Stdin, formatter, reader.ReaderOptions{Lexer: *lexer, ShouldFormat: shouldFormat})
 		if err != nil {
 			return nil, nil, chroma.Style{}, nil, logsRequested, err
 		}
@@ -487,7 +487,7 @@ func pagerFromArgs(
 		if len(flagSet.Args()) != 1 {
 			panic("Invariant broken: Expected exactly one filename")
 		}
-		readerImpl, err = reader.NewReaderFromFilename(flagSet.Args()[0], formatter, reader.ReaderOptions{Lexer: *lexer, ShouldFormat: shouldFormat})
+		readerImpl, err = reader.NewFromFilename(flagSet.Args()[0], formatter, reader.ReaderOptions{Lexer: *lexer, ShouldFormat: shouldFormat})
 		if err != nil {
 			return nil, nil, chroma.Style{}, nil, logsRequested, err
 		}

@@ -80,7 +80,7 @@ func TestEmpty(t *testing.T) {
 		screen: twin.NewFakeScreen(99, 10),
 
 		// No lines available
-		reader: reader.NewReaderFromText("test", ""),
+		reader: reader.NewFromText("test", ""),
 
 		scrollPosition: newScrollPosition("TestEmpty"),
 	}
@@ -138,7 +138,7 @@ func TestOverflowDown(t *testing.T) {
 		),
 
 		// Single line of input
-		reader: reader.NewReaderFromText("test", "hej"),
+		reader: reader.NewFromText("test", "hej"),
 
 		// This value can be anything and should be clipped, that's what we're testing
 		scrollPosition: *scrollPositionFromIndex("TestOverflowDown", linemetadata.IndexFromOneBased(42)),
@@ -164,7 +164,7 @@ func TestOverflowUp(t *testing.T) {
 		),
 
 		// Single line of input
-		reader: reader.NewReaderFromText("test", "hej"),
+		reader: reader.NewFromText("test", "hej"),
 
 		// NOTE: scrollPosition intentionally not initialized
 	}
@@ -182,7 +182,7 @@ func TestOverflowUp(t *testing.T) {
 }
 
 func TestWrapping(t *testing.T) {
-	reader := reader.NewReaderFromText("",
+	reader := reader.NewFromText("",
 		"first line\nline two will be wrapped\nhere's the last line")
 	pager := NewPager(reader)
 	pager.screen = twin.NewFakeScreen(40, 40)
@@ -234,7 +234,7 @@ func TestOneLineTerminal(t *testing.T) {
 		// Single line terminal window, this is what we're testing
 		screen: twin.NewFakeScreen(20, 1),
 
-		reader:        reader.NewReaderFromText("test", "hej"),
+		reader:        reader.NewFromText("test", "hej"),
 		ShowStatusBar: true,
 	}
 	pager.filteringReader = FilteringReader{
@@ -255,7 +255,7 @@ func TestShortenedInput(t *testing.T) {
 		screen: twin.NewFakeScreen(20, 10),
 
 		// 1000 lines of input, we will scroll to the bottom
-		reader: reader.NewReaderFromText("test", "first\n"+strings.Repeat("line\n", 1000)),
+		reader: reader.NewFromText("test", "first\n"+strings.Repeat("line\n", 1000)),
 
 		scrollPosition: newScrollPosition("TestShortenedInput"),
 	}
@@ -293,7 +293,7 @@ func TestShortenedInputManyLines(t *testing.T) {
 
 	pager := Pager{
 		screen:         twin.NewFakeScreen(20, 10),
-		reader:         reader.NewReaderFromText("test", strings.Join(lines, "\n")),
+		reader:         reader.NewFromText("test", strings.Join(lines, "\n")),
 		scrollPosition: newScrollPosition("TestShortenedInputManyLines"),
 	}
 	pager.filteringReader = FilteringReader{

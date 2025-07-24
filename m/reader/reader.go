@@ -331,7 +331,7 @@ func (reader *ReaderImpl) tailFile() error {
 	}
 }
 
-// NewReaderFromStream creates a new stream reader
+// NewFromStream creates a new stream reader
 //
 // The name can be an empty string ("").
 //
@@ -340,7 +340,7 @@ func (reader *ReaderImpl) tailFile() error {
 //
 // Note that you must call reader.SetStyleForHighlighting() after this to get
 // highlighting.
-func NewReaderFromStream(name string, reader io.Reader, formatter chroma.Formatter, options ReaderOptions) (*ReaderImpl, error) {
+func NewFromStream(name string, reader io.Reader, formatter chroma.Formatter, options ReaderOptions) (*ReaderImpl, error) {
 	zReader, err := ZReader(reader)
 	if err != nil {
 		return nil, err
@@ -408,14 +408,14 @@ func newReaderFromStream(reader io.Reader, originalFileName *string, formatter c
 	return &returnMe
 }
 
-// NewReaderFromText creates a Reader from a block of text.
+// NewFromText creates a Reader from a block of text.
 //
 // First parameter is the name of this Reader. This name will be displayed by
 // Moar in the bottom left corner of the screen.
 //
 // Calling _wait() on this Reader will always return immediately, no
 // asynchronous ops will be performed.
-func NewReaderFromText(name string, text string) *ReaderImpl {
+func NewFromText(name string, text string) *ReaderImpl {
 	noExternalNewlines := strings.Trim(text, "\n")
 	lines := []*Line{}
 	if len(noExternalNewlines) > 0 {
@@ -517,7 +517,7 @@ func countLines(filename string) (uint64, error) {
 	return count, nil
 }
 
-// NewReaderFromFilename creates a new file reader.
+// NewFromFilename creates a new file reader.
 //
 // If options.Lexer is nil it will be determined from the input file name.
 //
@@ -527,7 +527,7 @@ func countLines(filename string) (uint64, error) {
 // The Reader will try to uncompress various compressed file format, and also
 // apply highlighting to the file using Chroma:
 // https://github.com/alecthomas/chroma
-func NewReaderFromFilename(filename string, formatter chroma.Formatter, options ReaderOptions) (*ReaderImpl, error) {
+func NewFromFilename(filename string, formatter chroma.Formatter, options ReaderOptions) (*ReaderImpl, error) {
 	fileError := TryOpen(filename)
 	if fileError != nil {
 		return nil, fileError
