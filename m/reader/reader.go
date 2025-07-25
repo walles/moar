@@ -99,9 +99,13 @@ type ReaderImpl struct {
 
 	MoreLinesAdded chan bool
 
+	// Because we don't want to consume infinitely
+	pauseAfterLines int
+
 	// The reader notifies this channel whenever it pauses or unpauses.
 	//
-	// If you get this, check the PauseStatus value.
+	// If you get this, check the PauseStatus value. The value passed through
+	// the channel has no meaning, don't use it.
 	PauseStatusUpdated chan bool
 	PauseStatus        *atomic.Bool
 }
@@ -148,6 +152,8 @@ func (reader *ReaderImpl) preAllocLines() {
 	reader.lines = make([]*Line, 0, lineCount)
 }
 
+// This is the reader's main function. It will be run in a goroutine. First it
+// reads the stream until the end, then starts tailing.
 func (reader *ReaderImpl) readStream(stream io.Reader, formatter chroma.Formatter, options ReaderOptions) {
 	reader.consumeLinesFromStream(stream)
 
@@ -172,7 +178,7 @@ func (reader *ReaderImpl) readStream(stream io.Reader, formatter chroma.Formatte
 }
 
 // This function will update the Reader struct. It is expected to run in a
-// goroutine.
+// goroutine. Sort of the main loop until the stream ends.
 func (reader *ReaderImpl) consumeLinesFromStream(stream io.Reader) {
 	reader.preAllocLines()
 
@@ -238,7 +244,15 @@ func (reader *ReaderImpl) consumeLinesFromStream(stream io.Reader) {
 			reader.lines = append(reader.lines, &newLine)
 		}
 		reader.endsWithNewline = true
+
+		if len(reader.lines) == reader.pauseAfterLines {
+			// We just arrived at the pause point
+			reader.SetPaused(true)
+		}
+
 		reader.Unlock()
+
+		// Reset our line buffer
 		completeLine = completeLine[:0]
 
 		// This is how to do a non-blocking write to a channel:
@@ -397,12 +411,21 @@ func newReaderFromStream(reader io.Reader, originalFileName *string, formatter c
 	done.Store(false)
 	highlightingDone := atomic.Bool{}
 	highlightingDone.Store(false)
+	pauseStatus := atomic.Bool{}
+	pauseStatus.Store(false)
+	pauseAfterLines := DEFAULT_PAUSE_AFTER_LINES
+	if options.PauseAfterLines != nil {
+		pauseAfterLines = *options.PauseAfterLines
+	}
 	returnMe := ReaderImpl{
 		// This needs to be size 1. If it would be 0, and we add more
 		// lines while the pager is processing, the pager would miss
 		// the lines added while it was processing.
 		FileName:                originalFileName,
 		Name:                    originalFileName,
+		pauseAfterLines:         pauseAfterLines,
+		PauseStatus:             &pauseStatus,
+		PauseStatusUpdated:      make(chan bool, 1),
 		MoreLinesAdded:          make(chan bool, 1),
 		MaybeDone:               make(chan bool, 1),
 		highlightingStyle:       make(chan chroma.Style, 1),
@@ -873,7 +896,17 @@ func (reader *ReaderImpl) setText(text string) {
 }
 
 func (reader *ReaderImpl) SetPaused(paused bool) {
-	panic("Not implemented")
+	if !reader.PauseStatus.CompareAndSwap(!paused, paused) {
+		// Pause status already had that value, we're done
+		return
+	}
+
+	// Pause status changed, asynchronously notify the UI
+	select {
+	case reader.PauseStatusUpdated <- true:
+	default:
+		// Default case required for the write to be non-blocking
+	}
 }
 
 func (reader *ReaderImpl) SetStyleForHighlighting(style chroma.Style) {
