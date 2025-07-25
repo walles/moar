@@ -98,6 +98,12 @@ type ReaderImpl struct {
 	MaybeDone chan bool
 
 	MoreLinesAdded chan bool
+
+	// The reader notifies this channel whenever it pauses or unpauses.
+	//
+	// If you get this, check the PauseStatus value.
+	PauseStatusUpdated chan bool
+	PauseStatus        *atomic.Bool
 }
 
 // InputLines contains a number of lines from the reader, plus metadata
@@ -864,6 +870,10 @@ func (reader *ReaderImpl) setText(text string) {
 	case reader.MoreLinesAdded <- true:
 	default:
 	}
+}
+
+func (reader *ReaderImpl) SetPaused(paused bool) {
+	panic("Not implemented")
 }
 
 func (reader *ReaderImpl) SetStyleForHighlighting(style chroma.Style) {
