@@ -6,6 +6,7 @@ import (
 
 	"github.com/alecthomas/chroma/v2/formatters"
 	"github.com/alecthomas/chroma/v2/styles"
+	"github.com/walles/moar/m/linemetadata"
 	"gotest.tools/v3/assert"
 )
 
@@ -24,15 +25,41 @@ func TestPauseAfterNLines(t *testing.T) {
 		})
 	assert.NilError(t, err)
 
-	// FIXME: Expect a pause notification
+	// Expect a pause notification since we configure it to pause after 1 line ^
+	<-testMe.PauseStatusUpdated
+	assert.Assert(t, testMe.PauseStatus.Load() == true,
+		"Reader should be paused after reading %d lines", pauseAfterLines)
 
-	// FIXME: Check that the reader has exactly the first line and nothing else
+	// Verify that we have *not* received a done notification yet
+	assert.Assert(t, testMe.Done.Load() == false,
+		"Reader should not be done yet, only paused")
 
-	// FIXME: Tell reader to continue
+	// Check that the reader has exactly the first line and nothing else
+	lines := testMe.GetLines(linemetadata.Index{}, 2).Lines
+	assert.Equal(t, len(lines), 1,
+		"Reader should have exactly one line after pausing")
+	assert.Equal(t, lines[0].Plain(), "one",
+		"Reader should have the first line after pausing")
 
-	// FIXME: Expect an unpause notification
+	// Tell reader to continue
+	testMe.SetPaused(false)
 
-	// FIXME: Expect a done notification
+	// Expect an unpause notification
+	<-testMe.PauseStatusUpdated
+	assert.Assert(t, testMe.PauseStatus.Load() == false,
+		"Reader should be unpaused after continuing")
 
-	// FIXME: Check that the reader has both lines and nothing else
+	// Expect a done notification
+	<-testMe.MaybeDone
+	assert.Assert(t, testMe.Done.Load() == true,
+		"Reader should be done after reading all lines")
+
+	// Check that the reader has both lines
+	lines = testMe.GetLines(linemetadata.Index{}, 3).Lines
+	assert.Equal(t, len(lines), 2,
+		"Reader should have two lines after unpausing")
+	assert.Equal(t, lines[0].Plain(), "one",
+		"Reader should have the first line after unpausing")
+	assert.Equal(t, lines[1].Plain(), "two",
+		"Reader should have the second line after unpausing")
 }
