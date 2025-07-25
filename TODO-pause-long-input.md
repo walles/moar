@@ -24,12 +24,13 @@ Men om moar tailar ska readern fortsätta läsa tills man inte tailar längre.
 
 # Implementation
 
-- Gör tester för readerns nya beteende
-  - Ställ in paus efter N rader
-  - Kolla att readern berättar när den pausar
-  - Kolla att readern kan bli tillsagd att fortsätta
-  - Kolla att readern berättar när den startar igen
-- Gör samma tester fast för situationen när readern pollar och hittar fler rader
+- OK: Gör tester för readerns nya beteende
+  - OK: Ställ in paus efter N rader
+  - OK: Kolla att readern berättar när den pausar
+  - OK: Kolla att readern kan bli tillsagd att fortsätta
+  - OK: Kolla att readern berättar när den startar igen
+- OK: Gör samma tester fast för situationen när readern pollar och hittar fler rader
+- Se till att testerna går igenom
 - Se till att pagern tar emot de nya meddelandena från readern och visar rätt
   spinner
 - Låt pagern informera readern om sin status, väntar den sig fler rader eller
