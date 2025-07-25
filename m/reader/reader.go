@@ -27,9 +27,17 @@ import (
 //revive:disable-next-line:var-naming
 const MAX_HIGHLIGHT_SIZE int64 = 1024 * 1024
 
+const DEFAULT_PAUSE_AFTER_LINES = 20_000
+
 type ReaderOptions struct {
 	// Format JSON input
 	ShouldFormat bool
+
+	// Pause after reading this many lines, unless told otherwise
+	// FIXME: Document here how to control this!
+	//
+	// nil means 20k lines.
+	PauseAfterLines *int
 
 	// If this is nil, you must call reader.SetStyleForHighlighting() later if
 	// you want highlighting.
