@@ -382,7 +382,7 @@ func TestReadUpdatingFile(t *testing.T) {
 	assert.NilError(t, err)
 
 	// Give the reader some time to react
-	for i := 0; i < 20; i++ {
+	for range 20 {
 		allLines := testMe.GetLines(linemetadata.Index{}, 10)
 		if len(allLines.Lines) == 2 {
 			break
