@@ -27,7 +27,7 @@ func TestPauseAfterNLines(t *testing.T) {
 		})
 	assert.NilError(t, err)
 
-	// Expect a pause notification since we configure it to pause after 1 line ^
+	// Expect a pause notification since we configured it to pause after 1 line ^
 	select {
 	case <-testMe.PauseStatusUpdated:
 		// Received pause status update, nice!
@@ -88,19 +88,23 @@ func TestPauseAfterNLines_Polling(t *testing.T) {
 		Style:           styles.Get("native"),
 	})
 	assert.NilError(t, err)
-	assert.NilError(t, testMe.Wait())
 
-	// Verify state before we add another line to the file
+	// Expect a pause notification since we configured it to pause after 1 line ^
+	select {
+	case <-testMe.PauseStatusUpdated:
+		// Received pause status update, nice!
+	case <-time.After(2 * time.Second):
+		t.Fatal("Timeout waiting for pause status update")
+	}
 	assert.Assert(t, testMe.PauseStatus.Load() == true,
 		"Reader should be paused after reading %d lines", pauseAfterLines)
+
+	// Verify state before we add another line to the file
 	lines := testMe.GetLines(linemetadata.Index{}, 2).Lines
 	assert.Equal(t, len(lines), 1,
 		"Reader should have exactly one line after pausing")
 	assert.Equal(t, lines[0].Plain(), "one",
 		"Reader should have the first line after pausing")
-
-	// Clear pause status update notification so that we can check it later
-	<-testMe.PauseStatusUpdated
 
 	// Write another line to the file
 	_, err = file.WriteString("two\n")

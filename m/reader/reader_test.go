@@ -137,20 +137,22 @@ func getTestFiles(t *testing.T) []string {
 
 func TestGetLines(t *testing.T) {
 	for _, file := range getTestFiles(t) {
-		reader, err := NewFromFilename(file, formatters.TTY16m, ReaderOptions{Style: styles.Get("native")})
-		if err != nil {
-			t.Errorf("Error opening file <%s>: %s", file, err.Error())
-			continue
-		}
-		if err := reader.Wait(); err != nil {
-			t.Errorf("Error reading file <%s>: %s", file, err.Error())
-			continue
-		}
-
 		t.Run(file, func(t *testing.T) {
-			testGetLines(t, reader)
-			testGetLineCount(t, reader)
-			testHighlightingLineCount(t, file)
+			reader, err := NewFromFilename(file, formatters.TTY16m, ReaderOptions{Style: styles.Get("native")})
+			if err != nil {
+				t.Errorf("Error opening file <%s>: %s", file, err.Error())
+				return
+			}
+			if err := reader.Wait(); err != nil {
+				t.Errorf("Error reading file <%s>: %s", file, err.Error())
+				return
+			}
+
+			t.Run(file, func(t *testing.T) {
+				testGetLines(t, reader)
+				testGetLineCount(t, reader)
+				testHighlightingLineCount(t, file)
+			})
 		})
 	}
 }
