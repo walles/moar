@@ -49,7 +49,7 @@ func TestPauseAfterNLines(t *testing.T) {
 		"Reader should have the first line after pausing")
 
 	// Tell reader to continue
-	testMe.SetPaused(false)
+	testMe.SetPauseAfterLines(99)
 
 	// Expect an unpause notification
 	<-testMe.PauseStatusUpdated
@@ -119,7 +119,7 @@ func TestPauseAfterNLines_Polling(t *testing.T) {
 	}
 
 	// No new line while paused, good! Unpause.
-	testMe.SetPaused(false)
+	testMe.SetPauseAfterLines(99)
 
 	// Give the new line two seconds to arrive
 	var bothLines []*NumberedLine

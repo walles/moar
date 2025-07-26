@@ -247,7 +247,7 @@ func (reader *ReaderImpl) consumeLinesFromStream(stream io.Reader) {
 
 		if len(reader.lines) == reader.pauseAfterLines {
 			// We just arrived at the pause point
-			reader.SetPaused(true)
+			reader.setPaused(true)
 		}
 
 		reader.Unlock()
@@ -895,7 +895,7 @@ func (reader *ReaderImpl) setText(text string) {
 	}
 }
 
-func (reader *ReaderImpl) SetPaused(paused bool) {
+func (reader *ReaderImpl) setPaused(paused bool) {
 	if !reader.PauseStatus.CompareAndSwap(!paused, paused) {
 		// Pause status already had that value, we're done
 		return
@@ -907,6 +907,17 @@ func (reader *ReaderImpl) SetPaused(paused bool) {
 	default:
 		// Default case required for the write to be non-blocking
 	}
+}
+
+func (reader *ReaderImpl) SetPauseAfterLines(lines int) {
+	if lines < 0 {
+		log.Warnf("Tried to set pause-after-lines to %d, ignoring", lines)
+		return
+	}
+
+	reader.Lock()
+	defer reader.Unlock()
+	reader.pauseAfterLines = lines
 }
 
 func (reader *ReaderImpl) SetStyleForHighlighting(style chroma.Style) {
