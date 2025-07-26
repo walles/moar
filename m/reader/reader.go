@@ -100,7 +100,8 @@ type ReaderImpl struct {
 	MoreLinesAdded chan bool
 
 	// Because we don't want to consume infinitely
-	pauseAfterLines int
+	pauseAfterLines        int
+	pauseAfterLinesUpdated chan bool
 
 	// The reader notifies this channel whenever it pauses or unpauses.
 	//
@@ -177,6 +178,25 @@ func (reader *ReaderImpl) readStream(stream io.Reader, formatter chroma.Formatte
 	}
 }
 
+// Pause if we should pause, otherwise not. Pausing means waiting for
+// pauseAfterLinesUpdated to be signalled in SetPauseAfterLines().
+func (reader *ReaderImpl) maybePause() {
+	for {
+		reader.Lock()
+		shouldPause := len(reader.lines) >= reader.pauseAfterLines
+		reader.Unlock()
+
+		if !shouldPause {
+			// Not there yet, no pause
+			reader.setPauseStatus(false)
+			return
+		}
+
+		reader.setPauseStatus(true)
+		<-reader.pauseAfterLinesUpdated
+	}
+}
+
 // This function will update the Reader struct. It is expected to run in a
 // goroutine. Sort of the main loop until the stream ends.
 func (reader *ReaderImpl) consumeLinesFromStream(stream io.Reader) {
@@ -188,6 +208,8 @@ func (reader *ReaderImpl) consumeLinesFromStream(stream io.Reader) {
 
 	t0 := time.Now()
 	for {
+		reader.maybePause()
+
 		keepReadingLine := true
 		eof := false
 
@@ -244,11 +266,6 @@ func (reader *ReaderImpl) consumeLinesFromStream(stream io.Reader) {
 			reader.lines = append(reader.lines, &newLine)
 		}
 		reader.endsWithNewline = true
-
-		if len(reader.lines) == reader.pauseAfterLines {
-			// We just arrived at the pause point
-			reader.setPaused(true)
-		}
 
 		reader.Unlock()
 
@@ -421,11 +438,15 @@ func newReaderFromStream(reader io.Reader, originalFileName *string, formatter c
 		// This needs to be size 1. If it would be 0, and we add more
 		// lines while the pager is processing, the pager would miss
 		// the lines added while it was processing.
-		FileName:                originalFileName,
-		Name:                    originalFileName,
-		pauseAfterLines:         pauseAfterLines,
-		PauseStatus:             &pauseStatus,
-		PauseStatusUpdated:      make(chan bool, 1),
+		FileName: originalFileName,
+		Name:     originalFileName,
+
+		pauseAfterLines:        pauseAfterLines,
+		pauseAfterLinesUpdated: make(chan bool, 1),
+
+		PauseStatus:        &pauseStatus,
+		PauseStatusUpdated: make(chan bool, 1),
+
 		MoreLinesAdded:          make(chan bool, 1),
 		MaybeDone:               make(chan bool, 1),
 		highlightingStyle:       make(chan chroma.Style, 1),
@@ -895,7 +916,7 @@ func (reader *ReaderImpl) setText(text string) {
 	}
 }
 
-func (reader *ReaderImpl) setPaused(paused bool) {
+func (reader *ReaderImpl) setPauseStatus(paused bool) {
 	if !reader.PauseStatus.CompareAndSwap(!paused, paused) {
 		// Pause status already had that value, we're done
 		return
@@ -916,8 +937,16 @@ func (reader *ReaderImpl) SetPauseAfterLines(lines int) {
 	}
 
 	reader.Lock()
-	defer reader.Unlock()
 	reader.pauseAfterLines = lines
+	reader.Unlock()
+
+	// Notify the reader that the pause-after-lines value has been updated. Will
+	// be noticed in the maybePause() function.
+	select {
+	case reader.pauseAfterLinesUpdated <- true:
+	default:
+		// Default case required for the write to be non-blocking
+	}
 }
 
 func (reader *ReaderImpl) SetStyleForHighlighting(style chroma.Style) {
