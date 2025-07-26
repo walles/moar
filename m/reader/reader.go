@@ -34,7 +34,7 @@ type ReaderOptions struct {
 	ShouldFormat bool
 
 	// Pause after reading this many lines, unless told otherwise
-	// FIXME: Document here how to control this!
+	// Tune at runtime using SetPauseAfterLines().
 	//
 	// nil means 20k lines.
 	PauseAfterLines *int
@@ -471,7 +471,7 @@ func newReaderFromStream(reader io.Reader, originalFileName *string, formatter c
 // First parameter is the name of this Reader. This name will be displayed by
 // Moar in the bottom left corner of the screen.
 //
-// Calling _wait() on this Reader will always return immediately, no
+// Calling Wait() on this Reader will always return immediately, no
 // asynchronous ops will be performed.
 func NewFromText(name string, text string) *ReaderImpl {
 	noExternalNewlines := strings.Trim(text, "\n")

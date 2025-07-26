@@ -44,7 +44,7 @@ Vi ska skicka meddelanden till pagern när:
 - OK: Gör samma tester fast för situationen när readern pollar och hittar fler rader
 - OK: Skriv om paustesterna så att det pagern berättar för readern är vilket
   radnummer den siktar på
-- Se till att testerna går igenom
+- OK (alla utom large-git-log-patch.txt): Se till att testerna går igenom
 - Se till att pagern tar emot de nya meddelandena från readern och visar rätt
   spinner
 - Låt pagern informera readern om sin status, väntar den sig fler rader eller
