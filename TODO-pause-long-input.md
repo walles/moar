@@ -47,7 +47,7 @@ Vi ska skicka meddelanden till pagern när:
 - OK (alla utom large-git-log-patch.txt): Se till att testerna går igenom
 - OK Se till att pagern tar emot de nya meddelandena från readern och visar rätt
   spinner
-- Ta bort kanalen som readern postar på när pausstatus ändras, pagern pollar så
-  den behövs inte
+- OK: Ta bort kanalen som readern postar på när pausstatus ändras, pagern pollar
+  så den behövs inte
 - Låt pagern informera readern om sin status, väntar den sig fler rader eller
   inte?

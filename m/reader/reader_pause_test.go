@@ -27,12 +27,8 @@ func TestPauseAfterNLines(t *testing.T) {
 		})
 	assert.NilError(t, err)
 
-	// Expect a pause notification since we configured it to pause after 1 line ^
-	select {
-	case <-testMe.PauseStatusUpdated:
-		// Received pause status update, nice!
-	case <-time.After(2 * time.Second):
-		t.Fatal("Timeout waiting for pause status update")
+	// Expect pause since we configured the reader to pause after 1 line ^
+	for testMe.PauseStatus.Load() != true {
 	}
 	assert.Assert(t, testMe.PauseStatus.Load() == true,
 		"Reader should be paused after reading %d lines", pauseAfterLines)
@@ -51,8 +47,9 @@ func TestPauseAfterNLines(t *testing.T) {
 	// Tell reader to continue
 	testMe.SetPauseAfterLines(99)
 
-	// Expect an unpause notification
-	<-testMe.PauseStatusUpdated
+	// More lines allowed, expect pause to be over
+	for testMe.PauseStatus.Load() != false {
+	}
 	assert.Assert(t, testMe.PauseStatus.Load() == false,
 		"Reader should be unpaused after continuing")
 
@@ -89,12 +86,8 @@ func TestPauseAfterNLines_Polling(t *testing.T) {
 	})
 	assert.NilError(t, err)
 
-	// Expect a pause notification since we configured it to pause after 1 line ^
-	select {
-	case <-testMe.PauseStatusUpdated:
-		// Received pause status update, nice!
-	case <-time.After(2 * time.Second):
-		t.Fatal("Timeout waiting for pause status update")
+	// Expect pause since we configured the reader to pause after 1 line ^
+	for testMe.PauseStatus.Load() != true {
 	}
 	assert.Assert(t, testMe.PauseStatus.Load() == true,
 		"Reader should be paused after reading %d lines", pauseAfterLines)

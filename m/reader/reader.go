@@ -103,12 +103,8 @@ type ReaderImpl struct {
 	pauseAfterLines        int
 	pauseAfterLinesUpdated chan bool
 
-	// The reader notifies this channel whenever it pauses or unpauses.
-	//
-	// If you get this, check the PauseStatus value. The value passed through
-	// the channel has no meaning, don't use it.
-	PauseStatusUpdated chan bool
-	PauseStatus        *atomic.Bool
+	// PauseStatus is true if the reader is paused, false if it is not
+	PauseStatus *atomic.Bool
 }
 
 // InputLines contains a number of lines from the reader, plus metadata
@@ -444,8 +440,7 @@ func newReaderFromStream(reader io.Reader, originalFileName *string, formatter c
 		pauseAfterLines:        pauseAfterLines,
 		pauseAfterLinesUpdated: make(chan bool, 1),
 
-		PauseStatus:        &pauseStatus,
-		PauseStatusUpdated: make(chan bool, 1),
+		PauseStatus: &pauseStatus,
 
 		MoreLinesAdded:          make(chan bool, 1),
 		MaybeDone:               make(chan bool, 1),
@@ -927,13 +922,6 @@ func (reader *ReaderImpl) setPauseStatus(paused bool) {
 	}
 
 	log.Debugf("Reader pause status changed to %t", paused)
-
-	// Pause status changed, asynchronously notify the UI
-	select {
-	case reader.PauseStatusUpdated <- true:
-	default:
-		// Default case required for the write to be non-blocking
-	}
 }
 
 func (reader *ReaderImpl) SetPauseAfterLines(lines int) {
