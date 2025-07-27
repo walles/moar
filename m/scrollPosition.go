@@ -170,6 +170,11 @@ func (si *scrollPositionInternal) handlePositiveDeltaScreenLines(pager *Pager) {
 // This method assumes si contains a canonical position
 func (si *scrollPositionInternal) emptyBottomLinesCount(pager *Pager) int {
 	unclaimedViewportLines := pager.visibleHeight()
+	if unclaimedViewportLines == 0 {
+		// No lines at all => no lines are empty. Happens (at least) during
+		// testing.
+		return 0
+	}
 	if pager.Reader().GetLineCount() == 0 {
 		// No lines available, so all viewport lines are unclaimed
 		return unclaimedViewportLines
@@ -181,14 +186,17 @@ func (si *scrollPositionInternal) emptyBottomLinesCount(pager *Pager) int {
 	lineIndex := *si.lineIndex
 
 	var lastLine reader.NumberedLine
-	lastLineIndex := linemetadata.IndexFromLength(pager.Reader().GetLineCount())
-	if lastLineIndex != nil {
-		maybeLastLine := pager.Reader().GetLine(*lastLineIndex)
-		// This check is needed for the unlikely case that we just reformatted
-		// the input stream and it just lost some lines.
-		if maybeLastLine != nil {
-			lastLine = *maybeLastLine
-		}
+	lastLineIndex := linemetadata.IndexFromZeroBased(lineIndex.Index() + pager.visibleHeight() - 1)
+	lastPossibleLineIndex := linemetadata.IndexFromLength(pager.Reader().GetLineCount())
+	if lastPossibleLineIndex != nil && lastLineIndex.IsAfter(*lastPossibleLineIndex) {
+		lastLineIndex = *lastPossibleLineIndex
+	}
+
+	maybeLastLine := pager.Reader().GetLine(lastLineIndex)
+	// This check is needed for the unlikely case that we just reformatted
+	// the input stream and it just lost some lines.
+	if maybeLastLine != nil {
+		lastLine = *maybeLastLine
 	}
 	lastLineNumberWidth := pager.getLineNumberPrefixLength(lastLine.Number)
 
