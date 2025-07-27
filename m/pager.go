@@ -319,6 +319,7 @@ func (p *Pager) handleScrolledDown() {
 // Except for setting TargetLine, this method also syncs with the reader so that
 // the reader knows how many lines it needs to fetch.
 func (p *Pager) setTargetLine(targetLine *linemetadata.Index) {
+	log.Trace("Pager: Setting target line to ", targetLine, "...")
 	p.TargetLine = targetLine
 	if targetLine == nil {
 		// No target, just do your thing

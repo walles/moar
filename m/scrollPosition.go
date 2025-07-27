@@ -361,7 +361,7 @@ func (p *Pager) scrollToEnd() {
 		// Otherwise, if we're already aiming for some place, don't overwrite
 		// that.
 		maxLineIndex := linemetadata.IndexMax()
-		p.TargetLine = &maxLineIndex
+		p.setTargetLine(&maxLineIndex)
 	}
 }
 

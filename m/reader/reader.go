@@ -957,6 +957,8 @@ func (reader *ReaderImpl) SetPauseAfterLines(lines int) {
 		return
 	}
 
+	log.Trace("Setting pause-after-lines to ", lines, "...")
+
 	reader.Lock()
 	reader.pauseAfterLines = lines
 	reader.Unlock()

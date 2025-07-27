@@ -58,10 +58,13 @@ Vi ska skicka meddelanden till pagern när:
   inläsningen? Dels vet vi inte om det stämmer, och dels rullar inte siffrorna
   så det är inte uppenbart för användaren att datan är inkomplett. Eller ska vi
   animera siffrorna på något sätt? Vi testar att bara gömma siffrorna vid paus.
-- Om man gör ./moar.sh sample-files/large-git-log-patch.txt och trycker > för
-  att gå till sista raden, då växlar statusraden mellan att visa och inte visa
-  totalt radantal. Det betyder att readern växlar mellan att pausa och inte
+- OK: Om man gör ./moar.sh sample-files/large-git-log-patch.txt och trycker >
+  för att gå till sista raden, då växlar statusraden mellan att visa och inte
+  visa totalt radantal. Det betyder att readern växlar mellan att pausa och inte
   pausa, vilket den inte borde göra när vi tailar.
 - Testa ./moar.sh sample-files/large-git-log-patch.txt och gå till rad 300_000.
   Då borde vi sätta targetLine till 300_000, inläsningen borde göras klar och vi
   borde hamna på sista raden.
+- I statusraden borde mellanrum mellan filnamn och radantal alltid vara ": ".
+  Alla andra mellanrum borde vara " " (två mellanrum). Se
+  Reader.createStatusUnlocked().
