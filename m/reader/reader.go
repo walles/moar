@@ -618,6 +618,10 @@ func (reader *ReaderImpl) Wait() error {
 	// Wait for our goroutine to finish
 	//revive:disable-next-line:empty-block
 	for !reader.Done.Load() {
+		if reader.PauseStatus.Load() {
+			// We want more lines
+			reader.SetPauseAfterLines(reader.GetLineCount() * 2)
+		}
 	}
 	//revive:disable-next-line:empty-block
 	for !reader.HighlightingDone.Load() {
