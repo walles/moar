@@ -742,19 +742,32 @@ func (reader *ReaderImpl) createStatusUnlocked(lastLine linemetadata.Index) stri
 		prefix = filepath.Base(*reader.Name) + ": "
 	}
 
+	// Show line count only when done or not paused. Showing line count when
+	// paused gets misleading, the user will easily believe the number is the
+	// complete line count.
+	showLineCount := reader.Done.Load() || !reader.PauseStatus.Load()
+
 	if len(reader.lines) == 0 {
 		return prefix + "<empty>"
 	}
 
 	if len(reader.lines) == 1 {
-		return prefix + "1 line  100%"
+		count := ""
+		if showLineCount {
+			count = "1 line  "
+		}
+		return prefix + count + "100%"
 	}
 
 	percent := int(100 * float64(lastLine.Index()+1) / float64(len(reader.lines)))
 
-	return fmt.Sprintf("%s%s lines  %d%%",
+	count := ""
+	if showLineCount {
+		count = linemetadata.IndexFromLength(len(reader.lines)).Format() + " lines  "
+	}
+	return fmt.Sprintf("%s%s%d%%",
 		prefix,
-		linemetadata.IndexFromLength(len(reader.lines)).Format(),
+		count,
 		percent)
 }
 
