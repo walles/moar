@@ -7,6 +7,7 @@ import (
 	"encoding/xml"
 	"fmt"
 	"io"
+	"math"
 	"os"
 	"path/filepath"
 	"runtime/debug"
@@ -737,9 +738,13 @@ func highlightFromMemory(reader *ReaderImpl, formatter chroma.Formatter, options
 
 // createStatusUnlocked() assumes that its caller is holding the lock
 func (reader *ReaderImpl) createStatusUnlocked(lastLine linemetadata.Index) string {
-	prefix := ""
+	filename := ""
 	if reader.Name != nil {
-		prefix = filepath.Base(*reader.Name) + ": "
+		filename = filepath.Base(*reader.Name)
+	}
+
+	if len(reader.lines) == 0 {
+		return filename + ": <empty>"
 	}
 
 	// Show line count only when done or not paused. Showing line count when
@@ -747,28 +752,41 @@ func (reader *ReaderImpl) createStatusUnlocked(lastLine linemetadata.Index) stri
 	// complete line count.
 	showLineCount := reader.Done.Load() || !reader.PauseStatus.Load()
 
-	if len(reader.lines) == 0 {
-		return prefix + "<empty>"
-	}
-
+	linesCount := ""
+	percent := ""
 	if len(reader.lines) == 1 {
-		count := ""
-		if showLineCount {
-			count = "1 line  "
+		linesCount = "1 line"
+		percent = "100%"
+	} else {
+		// More than one line
+		linesCount = linemetadata.IndexFromLength(len(reader.lines)).Format() + " lines"
+		percent = fmt.Sprintf("%.0f%%", math.Floor(100*float64(lastLine.Index()+1)/float64(len(reader.lines))))
+	}
+
+	if !showLineCount {
+		linesCount = ""
+	}
+
+	return_me := ""
+	if len(filename) > 0 {
+		return_me = filename
+	}
+
+	if len(linesCount) > 0 {
+		if len(filename) > 0 {
+			return_me += ": "
 		}
-		return prefix + count + "100%"
+		return_me += linesCount
 	}
 
-	percent := int(100 * float64(lastLine.Index()+1) / float64(len(reader.lines)))
-
-	count := ""
-	if showLineCount {
-		count = linemetadata.IndexFromLength(len(reader.lines)).Format() + " lines  "
+	if len(percent) > 0 {
+		if len(return_me) > 0 {
+			return_me += "  "
+		}
+		return_me += percent
 	}
-	return fmt.Sprintf("%s%s%d%%",
-		prefix,
-		count,
-		percent)
+
+	return return_me
 }
 
 // Wait for the first line to be read.

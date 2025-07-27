@@ -62,9 +62,12 @@ Vi ska skicka meddelanden till pagern när:
   för att gå till sista raden, då växlar statusraden mellan att visa och inte
   visa totalt radantal. Det betyder att readern växlar mellan att pausa och inte
   pausa, vilket den inte borde göra när vi tailar.
+- OK: I statusraden borde mellanrum mellan filnamn och radantal alltid vara
+  ": ". Alla andra mellanrum borde vara " " (två mellanrum). Se
+  Reader.createStatusUnlocked().
 - Testa ./moar.sh sample-files/large-git-log-patch.txt och gå till rad 300_000.
   Då borde vi sätta targetLine till 300_000, inläsningen borde göras klar och vi
   borde hamna på sista raden.
-- I statusraden borde mellanrum mellan filnamn och radantal alltid vara ": ".
-  Alla andra mellanrum borde vara " " (två mellanrum). Se
-  Reader.createStatusUnlocked().
+- Se till att statusraden för "Filtered:" visar radantal vid rätt tillfällen men
+  inte annars.
+- Fundera på hur filtreringen ska interagera med pausningen.
