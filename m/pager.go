@@ -355,14 +355,21 @@ func (p *Pager) StartPaging(screen twin.Screen, chromaStyle *chroma.Style, chrom
 		}()
 
 		// Spin the spinner as long as contents is still loading
-		spinnerFrames := [...]string{"/.\\", "-o-", "\\O/", "| |"}
 		spinnerIndex := 0
 		for !p.reader.Done.Load() {
-			screen.Events() <- eventSpinnerUpdate{spinnerFrames[spinnerIndex]}
+			var spinnerFrames []string
+			if p.reader.PauseStatus.Load() {
+				// Draw the same thing multiple frames to get a the slow blink we want
+				spinnerFrames = []string{"||", "||", "||", "||", "||", "  ", "  ", "  ", "  ", "  "}
+			} else {
+				spinnerFrames = []string{`/.\`, "-o-", `\O/`, "| |"}
+			}
+
 			spinnerIndex++
 			if spinnerIndex >= len(spinnerFrames) {
 				spinnerIndex = 0
 			}
+			screen.Events() <- eventSpinnerUpdate{spinnerFrames[spinnerIndex]}
 
 			time.Sleep(200 * time.Millisecond)
 		}

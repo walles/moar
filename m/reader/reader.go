@@ -926,6 +926,8 @@ func (reader *ReaderImpl) setPauseStatus(paused bool) {
 		return
 	}
 
+	log.Debugf("Reader pause status changed to %t", paused)
+
 	// Pause status changed, asynchronously notify the UI
 	select {
 	case reader.PauseStatusUpdated <- true:

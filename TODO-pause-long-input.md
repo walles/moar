@@ -45,7 +45,9 @@ Vi ska skicka meddelanden till pagern när:
 - OK: Skriv om paustesterna så att det pagern berättar för readern är vilket
   radnummer den siktar på
 - OK (alla utom large-git-log-patch.txt): Se till att testerna går igenom
-- Se till att pagern tar emot de nya meddelandena från readern och visar rätt
+- OK Se till att pagern tar emot de nya meddelandena från readern och visar rätt
   spinner
+- Ta bort kanalen som readern postar på när pausstatus ändras, pagern pollar så
+  den behövs inte
 - Låt pagern informera readern om sin status, väntar den sig fler rader eller
   inte?
