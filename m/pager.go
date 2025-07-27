@@ -2,6 +2,7 @@ package m
 
 import (
 	"fmt"
+	"math"
 	"regexp"
 	"runtime/debug"
 	"time"
@@ -86,6 +87,9 @@ type Pager struct {
 
 	// If non-nil, scroll to this line as soon as possible. Set this value to
 	// IndexMax() to follow the end of the input (tail).
+	//
+	// NOTE: Always use setTargetLine() to keep the reader in sync with the
+	// pager!
 	TargetLine *linemetadata.Index
 
 	// If true, pager will clear the screen on return. If false, pager will
@@ -261,7 +265,7 @@ func (p *Pager) Quit() {
 	p.isShowingHelp = false
 	p.scrollPosition = p.preHelpState.scrollPosition
 	p.leftColumnZeroBased = p.preHelpState.leftColumnZeroBased
-	p.TargetLine = p.preHelpState.targetLine
+	p.setTargetLine(p.preHelpState.targetLine)
 	p.preHelpState = nil
 }
 
@@ -299,17 +303,40 @@ func (p *Pager) Reader() reader.Reader {
 }
 
 func (p *Pager) handleScrolledUp() {
-	p.TargetLine = nil
+	p.setTargetLine(nil)
 }
 
 func (p *Pager) handleScrolledDown() {
 	if p.isScrolledToEnd() {
 		// Follow output
 		reallyHigh := linemetadata.IndexMax()
-		p.TargetLine = &reallyHigh
+		p.setTargetLine(&reallyHigh)
 	} else {
-		p.TargetLine = nil
+		p.setTargetLine(nil)
 	}
+}
+
+// Except for setting TargetLine, this method also syncs with the reader so that
+// the reader knows how many lines it needs to fetch.
+func (p *Pager) setTargetLine(targetLine *linemetadata.Index) {
+	p.TargetLine = targetLine
+	if targetLine == nil {
+		// No target, just do your thing
+		p.reader.SetPauseAfterLines(reader.DEFAULT_PAUSE_AFTER_LINES)
+		return
+	}
+
+	// The value 1000 here is supposed to be larger than any possible screen
+	// height, to give us some lookahead and to avoid fetching too few lines.
+	targetValue := targetLine.Index() + 1000
+	if targetValue < targetLine.Index() {
+		// Overflow detected, clip to max int
+		targetValue = math.MaxInt
+	}
+	if targetValue < reader.DEFAULT_PAUSE_AFTER_LINES {
+		targetValue = reader.DEFAULT_PAUSE_AFTER_LINES
+	}
+	p.reader.SetPauseAfterLines(targetValue)
 }
 
 // StartPaging brings up the pager on screen
@@ -329,6 +356,9 @@ func (p *Pager) StartPaging(screen twin.Screen, chromaStyle *chroma.Style, chrom
 	p.screen = screen
 	p.mode = PagerModeViewing{pager: p}
 	p.marks = make(map[rune]scrollPosition)
+
+	// Make sure the reader knows how many lines we want
+	p.setTargetLine(p.TargetLine)
 
 	go func() {
 		defer func() {
@@ -465,7 +495,7 @@ func (p *Pager) StartPaging(screen twin.Screen, chromaStyle *chroma.Style, chrom
 				} else {
 					// We see the target, scroll to it
 					p.scrollPosition = NewScrollPositionFromIndex(*p.TargetLine, "goToTargetLine")
-					p.TargetLine = nil
+					p.setTargetLine(nil)
 				}
 			}
 

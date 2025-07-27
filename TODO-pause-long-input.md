@@ -49,5 +49,7 @@ Vi ska skicka meddelanden till pagern när:
   spinner
 - OK: Ta bort kanalen som readern postar på när pausstatus ändras, pagern pollar
   så den behövs inte
-- Låt pagern informera readern om sin status, väntar den sig fler rader eller
-  inte?
+- OK: Låt pagern informera readern om sin status, väntar den sig fler rader
+  eller inte?
+- Om pagern kommer tillräckligt nära det pausade slutet på de inlästa raderna,
+  se till att readern ligger en lagom bit framför.
