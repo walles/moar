@@ -53,6 +53,8 @@ Vi ska skicka meddelanden till pagern när:
   eller inte?
 - OK: Om pagern kommer tillräckligt nära det pausade slutet på de inlästa
   raderna, se till att readern ligger en lagom bit framför.
+- OK: Skippa pausanimationen, känns inte som den tillför något.
 - Fundera på UIet, ska vi verkligen visa antalet rader om vi med flit pausat
   inläsningen? Dels vet vi inte om det stämmer, och dels rullar inte siffrorna
-  så det är inte uppenbart för användaren att datan är inkomplett.
+  så det är inte uppenbart för användaren att datan är inkomplett. Eller ska vi
+  animera siffrorna på något sätt? Vi testar att bara gömma siffrorna vid paus.
