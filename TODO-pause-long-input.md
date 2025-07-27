@@ -51,5 +51,8 @@ Vi ska skicka meddelanden till pagern när:
   så den behövs inte
 - OK: Låt pagern informera readern om sin status, väntar den sig fler rader
   eller inte?
-- Om pagern kommer tillräckligt nära det pausade slutet på de inlästa raderna,
-  se till att readern ligger en lagom bit framför.
+- OK: Om pagern kommer tillräckligt nära det pausade slutet på de inlästa
+  raderna, se till att readern ligger en lagom bit framför.
+- Fundera på UIet, ska vi verkligen visa antalet rader om vi med flit pausat
+  inläsningen? Dels vet vi inte om det stämmer, och dels rullar inte siffrorna
+  så det är inte uppenbart för användaren att datan är inkomplett.

@@ -10,6 +10,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime/debug"
+	"slices"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -777,6 +778,19 @@ func (reader *ReaderImpl) GetLineCount() int {
 func (reader *ReaderImpl) GetLine(index linemetadata.Index) *NumberedLine {
 	reader.Lock()
 	defer reader.Unlock()
+
+	if index.Index() >= reader.pauseAfterLines-DEFAULT_PAUSE_AFTER_LINES/2 {
+		// Getting close(ish) to the pause threshold, bump it up. The Max()
+		// construct is to handle the case when the add overflows.
+		reader.pauseAfterLines = slices.Max([]int{
+			reader.pauseAfterLines + DEFAULT_PAUSE_AFTER_LINES/2,
+			reader.pauseAfterLines})
+		select {
+		case reader.pauseAfterLinesUpdated <- true:
+		default:
+			// Default case required for the write to be non-blocking
+		}
+	}
 
 	if !index.IsWithinLength(len(reader.lines)) {
 		return nil
