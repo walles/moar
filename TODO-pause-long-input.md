@@ -71,6 +71,7 @@ Vi ska skicka meddelanden till pagern när:
 - OK: Testa ./moar.sh sample-files/large-git-log-patch.txt och gå till rad
   300_000. Då borde vi sätta targetLine till 300_000, inläsningen borde göras
   klar och vi borde hamna på sista raden.
-- Sök efter `.scrollPosition =` och kolla ifall fler ställen behöver sätta
+- OK: Sök efter `.scrollPosition =` och kolla ifall fler ställen behöver sätta
   targetLine. Eller behöver vi en setter för scrollPosition som även sätter
   targetLine?
+- OK: Se till att alla tester går igenom

@@ -752,7 +752,11 @@ func (reader *ReaderImpl) createStatusUnlocked(lastLine linemetadata.Index) stri
 	}
 
 	if len(reader.lines) == 0 {
-		return filename + ": <empty>"
+		empty := "<empty>"
+		if len(filename) > 0 {
+			return filename + ": " + empty
+		}
+		return empty
 	}
 
 	linesCount := ""
