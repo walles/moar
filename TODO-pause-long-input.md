@@ -68,6 +68,9 @@ Vi ska skicka meddelanden till pagern när:
 - OK: Se till att statusraden för "Filtered:" visar radantal vid rätt tillfällen
   men inte annars.
 - OK: Fundera på hur filtreringen ska interagera med pausningen.
-- Testa ./moar.sh sample-files/large-git-log-patch.txt och gå till rad 300_000.
-  Då borde vi sätta targetLine till 300_000, inläsningen borde göras klar och vi
-  borde hamna på sista raden.
+- OK: Testa ./moar.sh sample-files/large-git-log-patch.txt och gå till rad
+  300_000. Då borde vi sätta targetLine till 300_000, inläsningen borde göras
+  klar och vi borde hamna på sista raden.
+- Sök efter `.scrollPosition =` och kolla ifall fler ställen behöver sätta
+  targetLine. Eller behöver vi en setter för scrollPosition som även sätter
+  targetLine?

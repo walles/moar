@@ -35,10 +35,12 @@ func (m *PagerModeGotoLine) onKey(key twin.KeyCode) {
 	case twin.KeyEnter:
 		newLineNumber, err := strconv.Atoi(m.gotoLineString)
 		if err == nil {
+			targetIndex := linemetadata.IndexFromOneBased(newLineNumber)
 			p.scrollPosition = NewScrollPositionFromIndex(
-				linemetadata.IndexFromOneBased(newLineNumber),
+				targetIndex,
 				"onGotoLineKey",
 			)
+			p.setTargetLine(&targetIndex)
 		}
 		p.mode = PagerModeViewing{pager: p}
 
