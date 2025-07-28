@@ -56,6 +56,14 @@ type Reader interface {
 	// This method will try to honor wantedLineCount over firstLine. This means
 	// that the returned first line may be different from the requested one.
 	GetLines(firstLine linemetadata.Index, wantedLineCount int) *InputLines
+
+	// False when paused. Showing the paused line count is confusing, because
+	// the user might think that the number is the total line count, even though
+	// we are not done.
+	//
+	// When we're not paused, the number will be constantly changing, indicating
+	// that the counting is not done yet.
+	ShouldShowLineCount() bool
 }
 
 // ReaderImpl reads a file into an array of strings.
@@ -747,11 +755,6 @@ func (reader *ReaderImpl) createStatusUnlocked(lastLine linemetadata.Index) stri
 		return filename + ": <empty>"
 	}
 
-	// Show line count only when done or not paused. Showing line count when
-	// paused gets misleading, the user will easily believe the number is the
-	// complete line count.
-	showLineCount := reader.Done.Load() || !reader.PauseStatus.Load()
-
 	linesCount := ""
 	percent := ""
 	if len(reader.lines) == 1 {
@@ -763,7 +766,7 @@ func (reader *ReaderImpl) createStatusUnlocked(lastLine linemetadata.Index) stri
 		percent = fmt.Sprintf("%.0f%%", math.Floor(100*float64(lastLine.Index()+1)/float64(len(reader.lines))))
 	}
 
-	if !showLineCount {
+	if !reader.ShouldShowLineCount() {
 		linesCount = ""
 	}
 
@@ -803,6 +806,21 @@ func (reader *ReaderImpl) GetLineCount() int {
 	defer reader.Unlock()
 
 	return len(reader.lines)
+}
+
+func (reader *ReaderImpl) ShouldShowLineCount() bool {
+	if reader.Done.Load() {
+		// We are done, the number won't change, show it!
+		return true
+	}
+
+	if !reader.PauseStatus.Load() {
+		// Reading in progress, number is constantly changing so it's
+		// obvious we aren't done yet. Show it!
+		return true
+	}
+
+	return false
 }
 
 // GetLine gets a line. If the requested line number is out of bounds, nil is returned.
