@@ -561,7 +561,7 @@ func TestReadUpdatingFile_HalfUtf8(t *testing.T) {
 //
 // Run with: go test -run='^$' -bench=. . ./...
 func BenchmarkReaderDone(b *testing.B) {
-	filename := "pager.go" // This is our longest .go file
+	filename := "reader.go" // This is our longest .go file
 	b.ResetTimer()
 	for n := 0; n < b.N; n++ {
 		// This is our longest .go file
@@ -579,7 +579,7 @@ func BenchmarkReadLargeFile(b *testing.B) {
 	const largeSizeBytes = 35_000_000
 
 	// First, create it from something...
-	inputFilename := "pager.go"
+	inputFilename := "reader.go"
 	contents, err := os.ReadFile(inputFilename)
 	assert.NilError(b, err)
 
@@ -611,7 +611,7 @@ func BenchmarkReadLargeFile(b *testing.B) {
 // Count lines in pager.go
 func BenchmarkCountLines(b *testing.B) {
 	// First, get some sample lines...
-	inputFilename := "pager.go"
+	inputFilename := "reader.go"
 	contents, err := os.ReadFile(inputFilename)
 	assert.NilError(b, err)
 
