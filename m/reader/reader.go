@@ -18,6 +18,7 @@ import (
 	"time"
 
 	"github.com/walles/moar/m/linemetadata"
+	"github.com/walles/moar/m/util"
 
 	"github.com/alecthomas/chroma/v2"
 	"github.com/alecthomas/chroma/v2/lexers"
@@ -771,7 +772,7 @@ func (reader *ReaderImpl) createStatusUnlocked(lastLine linemetadata.Index) stri
 		percent = "100%"
 	} else {
 		// More than one line
-		linesCount = linemetadata.IndexFromLength(len(reader.lines)).Format() + " lines"
+		linesCount = util.FormatInt(len(reader.lines)) + " lines"
 		percent = fmt.Sprintf("%.0f%%", math.Floor(100*float64(lastLine.Index()+1)/float64(len(reader.lines))))
 	}
 

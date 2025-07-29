@@ -1,13 +1,13 @@
-package linemetadata
+package util
 
 import "fmt"
 
-// Formats a number into a string with _ between each three-group of digits, for
-// numbers >= 10_000.
+// Formats a positive number into a string with _ between each three-group of
+// digits, for numbers >= 10_000.
 //
 // Regarding the >= 10_000 exception:
 // https://en.wikipedia.org/wiki/Decimal_separator#Exceptions_to_digit_grouping
-func formatInt(i int) string {
+func FormatInt(i int) string {
 	if i < 10_000 {
 		return fmt.Sprint(i)
 	}

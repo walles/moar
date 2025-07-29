@@ -3,6 +3,8 @@ package linemetadata
 import (
 	"fmt"
 	"math"
+
+	"github.com/walles/moar/m/util"
 )
 
 // This represents a (zero based) index into an array of lines
@@ -61,7 +63,7 @@ func (i Index) NonWrappingAdd(offset int) Index {
 
 // First line will be formatted as "1".
 func (i Index) Format() string {
-	return formatInt(i.index + 1)
+	return util.FormatInt(i.index + 1)
 }
 
 func (i Index) IsBefore(other Index) bool {

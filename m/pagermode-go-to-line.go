@@ -5,6 +5,7 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	"github.com/walles/moar/m/linemetadata"
+	"github.com/walles/moar/m/util"
 	"github.com/walles/moar/twin"
 )
 
@@ -19,8 +20,17 @@ func (m *PagerModeGotoLine) drawFooter(_ string, _ string) {
 
 	_, height := p.screen.Size()
 
+	formattedGotoLineString := m.gotoLineString
+	if len(formattedGotoLineString) > 0 {
+		goToLineInt, err := strconv.Atoi(formattedGotoLineString)
+		if err != nil {
+			panic("goto line string should always be a number: " + formattedGotoLineString)
+		}
+		formattedGotoLineString = util.FormatInt(goToLineInt)
+	}
+
 	pos := 0
-	for _, token := range "Go to line number: " + m.gotoLineString {
+	for _, token := range "Go to line number: " + formattedGotoLineString {
 		pos += p.screen.SetCell(pos, height-1, twin.NewStyledRune(token, twin.StyleDefault))
 	}
 

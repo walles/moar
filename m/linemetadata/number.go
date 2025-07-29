@@ -3,6 +3,8 @@ package linemetadata
 import (
 	"fmt"
 	"math"
+
+	"github.com/walles/moar/m/util"
 )
 
 // This represents a line number in an input stream
@@ -69,7 +71,7 @@ func (l Number) NonWrappingAdd(offset int) Number {
 }
 
 func (l Number) Format() string {
-	return formatInt(l.AsOneBased())
+	return util.FormatInt(l.AsOneBased())
 }
 
 // If both lines are the same this method will return 1.
