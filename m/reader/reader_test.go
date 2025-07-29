@@ -627,9 +627,9 @@ func BenchmarkCountLines(b *testing.B) {
 	countFile, err := os.Create(countFileName)
 	assert.NilError(b, err)
 
-	// 1000x makes this take about 12ms on my machine right now. Before 1000x
-	// the numbers fluctuated much more.
-	for n := 0; n < b.N*1000; n++ {
+	// Make a large enough test case that a majority of the time is spent
+	// counting lines, rather than on any counting startup cost.
+	for range 1000 {
 		_, err := countFile.Write(contents)
 		assert.NilError(b, err)
 	}
@@ -637,6 +637,8 @@ func BenchmarkCountLines(b *testing.B) {
 	assert.NilError(b, err)
 
 	b.ResetTimer()
-	_, err = countLines(countFileName)
-	assert.NilError(b, err)
+	for range b.N {
+		_, err = countLines(countFileName)
+		assert.NilError(b, err)
+	}
 }
