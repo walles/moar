@@ -607,9 +607,18 @@ func BenchmarkReadLargeFile(b *testing.B) {
 	err = largeFile.Close()
 	assert.NilError(b, err)
 
+	// Make sure we don't pause during the benchmark
+	targetLineCount := largeSizeBytes * 2
+
 	b.ResetTimer()
 	for n := 0; n < b.N; n++ {
-		readMe, err := NewFromFilename(largeFileName, formatters.TTY16m, ReaderOptions{Style: styles.Get("native")})
+		readMe, err := NewFromFilename(
+			largeFileName,
+			formatters.TTY16m,
+			ReaderOptions{
+				Style:           styles.Get("native"),
+				PauseAfterLines: &targetLineCount,
+			})
 		assert.NilError(b, err)
 
 		assert.NilError(b, readMe.Wait())
