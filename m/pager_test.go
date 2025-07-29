@@ -740,9 +740,9 @@ func benchmarkSearch(b *testing.B, highlighted bool) {
 		fileContents = *highlightedSourceCode
 	}
 
-	// Duplicate data N times
+	// Create some input to search
 	testString := ""
-	for n := 0; n < b.N; n++ {
+	for range 100 {
 		testString += fileContents
 	}
 
@@ -759,11 +759,13 @@ func benchmarkSearch(b *testing.B, highlighted bool) {
 
 	b.ResetTimer()
 
-	// This test will search through all the N copies we made of our file
-	hit := pager.findFirstHit(linemetadata.Index{}, nil, false)
+	for range b.N {
+		// This test will search through all the N copies we made of our file
+		hit := pager.findFirstHit(linemetadata.Index{}, nil, false)
 
-	if hit != nil {
-		panic(fmt.Errorf("This test is meant to scan the whole file without finding anything"))
+		if hit != nil {
+			panic(fmt.Errorf("This test is meant to scan the whole file without finding anything"))
+		}
 	}
 }
 
