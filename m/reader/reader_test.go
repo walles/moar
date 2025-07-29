@@ -629,7 +629,10 @@ func BenchmarkCountLines(b *testing.B) {
 
 	// Make a large enough test case that a majority of the time is spent
 	// counting lines, rather than on any counting startup cost.
-	for range 1000 {
+	//
+	// We used to have 1000 here, but that made the benchmark result fluctuate
+	// too much. 10_000 seems to provide stable enough results.
+	for range 10_000 {
 		_, err := countFile.Write(contents)
 		assert.NilError(b, err)
 	}
