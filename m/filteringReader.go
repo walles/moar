@@ -125,6 +125,10 @@ func (f *FilteringReader) GetLineCount() int {
 	return len(f.getAllLines())
 }
 
+func (f *FilteringReader) ShouldShowLineCount() bool {
+	panic("Unexpected call to FilteringReader.ShouldShowLineCount()")
+}
+
 func (f *FilteringReader) GetLine(index linemetadata.Index) *reader.NumberedLine {
 	if f.shouldPassThrough() {
 		return f.BackingReader.GetLine(index)
@@ -178,23 +182,26 @@ func (f *FilteringReader) createStatus(lastLine *linemetadata.Index) string {
 		return "Filtered: No input lines"
 	}
 
-	baseCountString := linemetadata.IndexFromLength(baseCount).Format()
+	baseCountString := "/" + linemetadata.IndexFromLength(baseCount).Format()
+	if !f.BackingReader.ShouldShowLineCount() {
+		baseCountString = ""
+	}
 
 	if lastLine == nil {
 		// 100% because we're showing all 0 lines
-		return "Filtered: 0/" + baseCountString + " lines  100%"
+		return "Filtered: 0" + baseCountString + " lines  100%"
 	}
 
 	acceptedCount := f.GetLineCount()
 	acceptedCountString := linemetadata.IndexFromLength(acceptedCount).Format()
 
-	percent := int(100 * float64(lastLine.Index()+1) / float64(acceptedCount))
+	percent := int(math.Floor(100 * float64(lastLine.Index()+1) / float64(acceptedCount)))
 
 	lineString := "line"
-	if acceptedCount != 1 {
+	if (len(baseCountString) > 0 && baseCount != 1) || (len(baseCountString) == 0 && acceptedCount != 1) {
 		lineString += "s"
 	}
 
-	return fmt.Sprintf("Filtered: %s/%s %s  %d%%",
+	return fmt.Sprintf("Filtered: %s%s %s  %d%%",
 		acceptedCountString, baseCountString, lineString, percent)
 }

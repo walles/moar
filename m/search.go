@@ -300,7 +300,7 @@ func (p *Pager) scrollToNextSearchHit() {
 	p.scrollPosition = *firstHitPosition
 
 	// Don't let any search hit scroll out of sight
-	p.TargetLine = nil
+	p.setTargetLine(nil)
 }
 
 func (p *Pager) scrollToPreviousSearchHit() {
@@ -339,5 +339,5 @@ func (p *Pager) scrollToPreviousSearchHit() {
 	p.scrollPosition = *firstHitPosition
 
 	// Don't let any search hit scroll out of sight
-	p.TargetLine = nil
+	p.setTargetLine(nil)
 }

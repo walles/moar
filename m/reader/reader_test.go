@@ -137,20 +137,22 @@ func getTestFiles(t *testing.T) []string {
 
 func TestGetLines(t *testing.T) {
 	for _, file := range getTestFiles(t) {
-		reader, err := NewFromFilename(file, formatters.TTY16m, ReaderOptions{Style: styles.Get("native")})
-		if err != nil {
-			t.Errorf("Error opening file <%s>: %s", file, err.Error())
-			continue
-		}
-		if err := reader.Wait(); err != nil {
-			t.Errorf("Error reading file <%s>: %s", file, err.Error())
-			continue
-		}
-
 		t.Run(file, func(t *testing.T) {
-			testGetLines(t, reader)
-			testGetLineCount(t, reader)
-			testHighlightingLineCount(t, file)
+			reader, err := NewFromFilename(file, formatters.TTY16m, ReaderOptions{Style: styles.Get("native")})
+			if err != nil {
+				t.Errorf("Error opening file <%s>: %s", file, err.Error())
+				return
+			}
+			if err := reader.Wait(); err != nil {
+				t.Errorf("Error reading file <%s>: %s", file, err.Error())
+				return
+			}
+
+			t.Run(file, func(t *testing.T) {
+				testGetLines(t, reader)
+				testGetLineCount(t, reader)
+				testHighlightingLineCount(t, file)
+			})
 		})
 	}
 }
@@ -389,7 +391,7 @@ func TestReadUpdatingFile(t *testing.T) {
 	assert.NilError(t, err)
 
 	// Give the reader some time to react
-	for i := 0; i < 20; i++ {
+	for range 20 {
 		allLines := testMe.GetLines(linemetadata.Index{}, 10)
 		if len(allLines.Lines) == 2 {
 			break
@@ -605,9 +607,18 @@ func BenchmarkReadLargeFile(b *testing.B) {
 	err = largeFile.Close()
 	assert.NilError(b, err)
 
+	// Make sure we don't pause during the benchmark
+	targetLineCount := largeSizeBytes * 2
+
 	b.ResetTimer()
 	for n := 0; n < b.N; n++ {
-		readMe, err := NewFromFilename(largeFileName, formatters.TTY16m, ReaderOptions{Style: styles.Get("native")})
+		readMe, err := NewFromFilename(
+			largeFileName,
+			formatters.TTY16m,
+			ReaderOptions{
+				Style:           styles.Get("native"),
+				PauseAfterLines: &targetLineCount,
+			})
 		assert.NilError(b, err)
 
 		assert.NilError(b, readMe.Wait())

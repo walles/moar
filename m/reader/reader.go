@@ -7,9 +7,11 @@ import (
 	"encoding/xml"
 	"fmt"
 	"io"
+	"math"
 	"os"
 	"path/filepath"
 	"runtime/debug"
+	"slices"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -27,9 +29,17 @@ import (
 //revive:disable-next-line:var-naming
 const MAX_HIGHLIGHT_SIZE int64 = 1024 * 1024
 
+const DEFAULT_PAUSE_AFTER_LINES = 20_000
+
 type ReaderOptions struct {
 	// Format JSON input
 	ShouldFormat bool
+
+	// Pause after reading this many lines, unless told otherwise.
+	// Tune at runtime using SetPauseAfterLines().
+	//
+	// nil means 20k lines.
+	PauseAfterLines *int
 
 	// If this is nil, you must call reader.SetStyleForHighlighting() later if
 	// you want highlighting.
@@ -46,6 +56,14 @@ type Reader interface {
 	// This method will try to honor wantedLineCount over firstLine. This means
 	// that the returned first line may be different from the requested one.
 	GetLines(firstLine linemetadata.Index, wantedLineCount int) *InputLines
+
+	// False when paused. Showing the paused line count is confusing, because
+	// the user might think that the number is the total line count, even though
+	// we are not done yet.
+	//
+	// When we're not paused, the number will be constantly changing, indicating
+	// that the counting is not done yet.
+	ShouldShowLineCount() bool
 }
 
 // ReaderImpl reads a file into an array of strings.
@@ -90,6 +108,15 @@ type ReaderImpl struct {
 	MaybeDone chan bool
 
 	MoreLinesAdded chan bool
+
+	// Because we don't want to consume infinitely.
+	//
+	// Ref: https://github.com/walles/moar/issues/296
+	pauseAfterLines        int
+	pauseAfterLinesUpdated chan bool
+
+	// PauseStatus is true if the reader is paused, false if it is not
+	PauseStatus *atomic.Bool
 }
 
 // InputLines contains a number of lines from the reader, plus metadata
@@ -134,6 +161,8 @@ func (reader *ReaderImpl) preAllocLines() {
 	reader.lines = make([]*Line, 0, lineCount)
 }
 
+// This is the reader's main function. It will be run in a goroutine. First it
+// reads the stream until the end, then starts tailing.
 func (reader *ReaderImpl) readStream(stream io.Reader, formatter chroma.Formatter, options ReaderOptions) {
 	reader.consumeLinesFromStream(stream)
 
@@ -157,8 +186,30 @@ func (reader *ReaderImpl) readStream(stream io.Reader, formatter chroma.Formatte
 	}
 }
 
+// Pause if we should pause, otherwise not. Pausing means waiting for
+// pauseAfterLinesUpdated to be signalled in SetPauseAfterLines().
+func (reader *ReaderImpl) maybePause() {
+	for {
+		reader.Lock()
+		shouldPause := len(reader.lines) >= reader.pauseAfterLines
+		reader.Unlock()
+
+		if !shouldPause {
+			// Not there yet, no pause
+			reader.setPauseStatus(false)
+			return
+		}
+
+		reader.setPauseStatus(true)
+		<-reader.pauseAfterLinesUpdated
+	}
+}
+
 // This function will update the Reader struct. It is expected to run in a
 // goroutine.
+//
+// It is used both during the initial read of the stream until it ends, and
+// while tailing files for changes.
 func (reader *ReaderImpl) consumeLinesFromStream(stream io.Reader) {
 	reader.preAllocLines()
 
@@ -168,6 +219,8 @@ func (reader *ReaderImpl) consumeLinesFromStream(stream io.Reader) {
 
 	t0 := time.Now()
 	for {
+		reader.maybePause()
+
 		keepReadingLine := true
 		eof := false
 
@@ -224,7 +277,10 @@ func (reader *ReaderImpl) consumeLinesFromStream(stream io.Reader) {
 			reader.lines = append(reader.lines, &newLine)
 		}
 		reader.endsWithNewline = true
+
 		reader.Unlock()
+
+		// Reset our line buffer
 		completeLine = completeLine[:0]
 
 		// This is how to do a non-blocking write to a channel:
@@ -383,12 +439,24 @@ func newReaderFromStream(reader io.Reader, originalFileName *string, formatter c
 	done.Store(false)
 	highlightingDone := atomic.Bool{}
 	highlightingDone.Store(false)
+	pauseStatus := atomic.Bool{}
+	pauseStatus.Store(false)
+	pauseAfterLines := DEFAULT_PAUSE_AFTER_LINES
+	if options.PauseAfterLines != nil {
+		pauseAfterLines = *options.PauseAfterLines
+	}
 	returnMe := ReaderImpl{
 		// This needs to be size 1. If it would be 0, and we add more
 		// lines while the pager is processing, the pager would miss
 		// the lines added while it was processing.
-		FileName:                originalFileName,
-		Name:                    originalFileName,
+		FileName: originalFileName,
+		Name:     originalFileName,
+
+		pauseAfterLines:        pauseAfterLines,
+		pauseAfterLinesUpdated: make(chan bool, 1),
+
+		PauseStatus: &pauseStatus,
+
 		MoreLinesAdded:          make(chan bool, 1),
 		MaybeDone:               make(chan bool, 1),
 		highlightingStyle:       make(chan chroma.Style, 1),
@@ -413,7 +481,7 @@ func newReaderFromStream(reader io.Reader, originalFileName *string, formatter c
 // First parameter is the name of this Reader. This name will be displayed by
 // Moar in the bottom left corner of the screen.
 //
-// Calling _wait() on this Reader will always return immediately, no
+// Calling Wait() on this Reader will always return immediately, no
 // asynchronous ops will be performed.
 func NewFromText(name string, text string) *ReaderImpl {
 	noExternalNewlines := strings.Trim(text, "\n")
@@ -560,6 +628,10 @@ func (reader *ReaderImpl) Wait() error {
 	// Wait for our goroutine to finish
 	//revive:disable-next-line:empty-block
 	for !reader.Done.Load() {
+		if reader.PauseStatus.Load() {
+			// We want more lines
+			reader.SetPauseAfterLines(reader.GetLineCount() * 2)
+		}
 	}
 	//revive:disable-next-line:empty-block
 	for !reader.HighlightingDone.Load() {
@@ -679,25 +751,54 @@ func highlightFromMemory(reader *ReaderImpl, formatter chroma.Formatter, options
 
 // createStatusUnlocked() assumes that its caller is holding the lock
 func (reader *ReaderImpl) createStatusUnlocked(lastLine linemetadata.Index) string {
-	prefix := ""
+	filename := ""
 	if reader.Name != nil {
-		prefix = filepath.Base(*reader.Name) + ": "
+		filename = filepath.Base(*reader.Name)
 	}
 
 	if len(reader.lines) == 0 {
-		return prefix + "<empty>"
+		empty := "<empty>"
+		if len(filename) > 0 {
+			return filename + ": " + empty
+		}
+		return empty
 	}
 
+	linesCount := ""
+	percent := ""
 	if len(reader.lines) == 1 {
-		return prefix + "1 line  100%"
+		linesCount = "1 line"
+		percent = "100%"
+	} else {
+		// More than one line
+		linesCount = linemetadata.IndexFromLength(len(reader.lines)).Format() + " lines"
+		percent = fmt.Sprintf("%.0f%%", math.Floor(100*float64(lastLine.Index()+1)/float64(len(reader.lines))))
 	}
 
-	percent := int(100 * float64(lastLine.Index()+1) / float64(len(reader.lines)))
+	if !reader.ShouldShowLineCount() {
+		linesCount = ""
+	}
 
-	return fmt.Sprintf("%s%s lines  %d%%",
-		prefix,
-		linemetadata.IndexFromLength(len(reader.lines)).Format(),
-		percent)
+	return_me := ""
+	if len(filename) > 0 {
+		return_me = filename
+	}
+
+	if len(linesCount) > 0 {
+		if len(filename) > 0 {
+			return_me += ": "
+		}
+		return_me += linesCount
+	}
+
+	if len(percent) > 0 {
+		if len(return_me) > 0 {
+			return_me += "  "
+		}
+		return_me += percent
+	}
+
+	return return_me
 }
 
 // Wait for the first line to be read.
@@ -716,10 +817,38 @@ func (reader *ReaderImpl) GetLineCount() int {
 	return len(reader.lines)
 }
 
+func (reader *ReaderImpl) ShouldShowLineCount() bool {
+	if reader.Done.Load() {
+		// We are done, the number won't change, show it!
+		return true
+	}
+
+	if !reader.PauseStatus.Load() {
+		// Reading in progress, number is constantly changing so it's
+		// obvious we aren't done yet. Show it!
+		return true
+	}
+
+	return false
+}
+
 // GetLine gets a line. If the requested line number is out of bounds, nil is returned.
 func (reader *ReaderImpl) GetLine(index linemetadata.Index) *NumberedLine {
 	reader.Lock()
 	defer reader.Unlock()
+
+	if index.Index() >= reader.pauseAfterLines-DEFAULT_PAUSE_AFTER_LINES/2 {
+		// Getting close(ish) to the pause threshold, bump it up. The Max()
+		// construct is to handle the case when the add overflows.
+		reader.pauseAfterLines = slices.Max([]int{
+			reader.pauseAfterLines + DEFAULT_PAUSE_AFTER_LINES/2,
+			reader.pauseAfterLines})
+		select {
+		case reader.pauseAfterLinesUpdated <- true:
+		default:
+			// Default case required for the write to be non-blocking
+		}
+	}
 
 	if !index.IsWithinLength(len(reader.lines)) {
 		return nil
@@ -855,6 +984,36 @@ func (reader *ReaderImpl) setText(text string) {
 	select {
 	case reader.MoreLinesAdded <- true:
 	default:
+	}
+}
+
+func (reader *ReaderImpl) setPauseStatus(paused bool) {
+	if !reader.PauseStatus.CompareAndSwap(!paused, paused) {
+		// Pause status already had that value, we're done
+		return
+	}
+
+	log.Debugf("Reader pause status changed to %t", paused)
+}
+
+func (reader *ReaderImpl) SetPauseAfterLines(lines int) {
+	if lines < 0 {
+		log.Warnf("Tried to set pause-after-lines to %d, ignoring", lines)
+		return
+	}
+
+	log.Trace("Setting pause-after-lines to ", lines, "...")
+
+	reader.Lock()
+	reader.pauseAfterLines = lines
+	reader.Unlock()
+
+	// Notify the reader that the pause-after-lines value has been updated. Will
+	// be noticed in the maybePause() function.
+	select {
+	case reader.pauseAfterLinesUpdated <- true:
+	default:
+		// Default case required for the write to be non-blocking
 	}
 }
 
