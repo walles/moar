@@ -13,11 +13,18 @@ import (
 	"github.com/alecthomas/chroma/v2/formatters"
 	"github.com/alecthomas/chroma/v2/lexers"
 	"github.com/alecthomas/chroma/v2/styles"
-	"github.com/walles/moar/m/linemetadata"
+	log "github.com/sirupsen/logrus"
 	"gotest.tools/v3/assert"
+
+	"github.com/walles/moar/m/linemetadata"
 )
 
 const samplesDir = "../../sample-files"
+
+func init() {
+	// Info logs clutter at least benchmark output
+	log.SetLevel(log.WarnLevel)
+}
 
 func testGetLineCount(t *testing.T, reader *ReaderImpl) {
 	if strings.Contains(*reader.Name, "compressed") {
