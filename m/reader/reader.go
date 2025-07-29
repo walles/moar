@@ -35,7 +35,7 @@ type ReaderOptions struct {
 	// Format JSON input
 	ShouldFormat bool
 
-	// Pause after reading this many lines, unless told otherwise
+	// Pause after reading this many lines, unless told otherwise.
 	// Tune at runtime using SetPauseAfterLines().
 	//
 	// nil means 20k lines.
@@ -59,7 +59,7 @@ type Reader interface {
 
 	// False when paused. Showing the paused line count is confusing, because
 	// the user might think that the number is the total line count, even though
-	// we are not done.
+	// we are not done yet.
 	//
 	// When we're not paused, the number will be constantly changing, indicating
 	// that the counting is not done yet.
@@ -109,7 +109,9 @@ type ReaderImpl struct {
 
 	MoreLinesAdded chan bool
 
-	// Because we don't want to consume infinitely
+	// Because we don't want to consume infinitely.
+	//
+	// Ref: https://github.com/walles/moar/issues/296
 	pauseAfterLines        int
 	pauseAfterLinesUpdated chan bool
 
@@ -204,7 +206,10 @@ func (reader *ReaderImpl) maybePause() {
 }
 
 // This function will update the Reader struct. It is expected to run in a
-// goroutine. Sort of the main loop until the stream ends.
+// goroutine.
+//
+// It is used both during the initial read of the stream until it ends, and
+// while tailing files for changes.
 func (reader *ReaderImpl) consumeLinesFromStream(stream io.Reader) {
 	reader.preAllocLines()
 
