@@ -1,13 +1,17 @@
 package moar
 
 import (
+	"fmt"
 	"io"
+	"os"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/walles/moar/internal"
 	internalReader "github.com/walles/moar/internal/reader"
 	"github.com/walles/moar/twin"
 )
+
+const logLevel = log.WarnLevel
 
 // If you feel some option is missing, request more options at
 // https://github.com/walles/moar/issues.
@@ -28,7 +32,8 @@ type Options struct {
 }
 
 func PageFromStream(reader io.Reader, options Options) error {
-	setUpLogging()
+	logs := startLogCollection()
+	defer collectLogs(logs)
 
 	pagerReader, err := internalReader.NewFromStream(
 		options.Title,
@@ -45,7 +50,8 @@ func PageFromStream(reader io.Reader, options Options) error {
 }
 
 func PageFromFile(name string, options Options) error {
-	setUpLogging()
+	logs := startLogCollection()
+	defer collectLogs(logs)
 
 	pagerReader, err := internalReader.NewFromFilename(
 		name,
@@ -65,16 +71,26 @@ func PageFromFile(name string, options Options) error {
 }
 
 func PageFromString(text string, options Options) error {
-	setUpLogging()
+	logs := startLogCollection()
+	defer collectLogs(logs)
 
 	pagerReader := internalReader.NewFromText(options.Title, text)
 	return pageFromReader(pagerReader, options)
 }
 
-func setUpLogging() {
-	// Just disable logging. If something else is requested at some point, let's
-	// deal with that then.
-	log.SetOutput(io.Discard)
+func startLogCollection() *internal.LogWriter {
+	log.SetLevel(logLevel)
+
+	var logLines internal.LogWriter
+	log.SetOutput(&logLines)
+	return &logLines
+}
+
+func collectLogs(logs *internal.LogWriter) {
+	if len(logs.String()) == 0 {
+		return
+	}
+	fmt.Fprintln(os.Stderr, logs.String())
 }
 
 func pageFromReader(reader *internalReader.ReaderImpl, options Options) error {

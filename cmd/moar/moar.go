@@ -9,7 +9,6 @@ import (
 	"runtime/debug"
 	"strconv"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/alecthomas/chroma/v2"
@@ -569,27 +568,8 @@ func pagerFromArgs(
 	return pager, screen, style, &formatter, logsRequested, nil
 }
 
-type logWriter struct {
-	lock   sync.Mutex
-	buffer strings.Builder
-}
-
-func (lw *logWriter) Write(p []byte) (n int, err error) {
-	lw.lock.Lock()
-	defer lw.lock.Unlock()
-
-	return lw.buffer.Write(p)
-}
-
-func (lw *logWriter) String() string {
-	lw.lock.Lock()
-	defer lw.lock.Unlock()
-
-	return lw.buffer.String()
-}
-
 func main() {
-	var loglines logWriter
+	var loglines internal.LogWriter
 	logsRequested := false
 	log.SetOutput(&loglines)
 	russiaNotSupported()
