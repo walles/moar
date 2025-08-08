@@ -1,5 +1,7 @@
 package moar
 
+// NOTE: No imports from internal allowed here!! Externals cannot do that, so if
+// we have to that means the whole external API is broken.
 import (
 	"bytes"
 	"fmt"
@@ -31,8 +33,8 @@ func TestEmbedApi(t *testing.T) {
 	// Never call this function! That would launch a pager, and we don't want
 	// that during testing.
 	//
-	// But we still want a call to it (that we never make) to make the linter
-	// stop complaining.
+	// But we still want to have a call to it (that we never make) to make the
+	// linter stop complaining.
 	if false {
 		apiUsageExample()
 	}
