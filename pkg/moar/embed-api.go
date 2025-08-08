@@ -1,4 +1,4 @@
-package internal
+package moar
 
 import (
 	"github.com/walles/moar/twin"
