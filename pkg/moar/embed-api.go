@@ -3,10 +3,14 @@ package moar
 import (
 	"io"
 
+	log "github.com/sirupsen/logrus"
 	"github.com/walles/moar/internal"
 	internalReader "github.com/walles/moar/internal/reader"
 	"github.com/walles/moar/twin"
 )
+
+// Only log important things to the terminal
+const logLevel = log.WarnLevel
 
 type Options struct {
 	// Name displayed in the bottom left corner of the pager.
@@ -25,6 +29,8 @@ type Options struct {
 }
 
 func PageFromStream(reader io.Reader, options Options) error {
+	setUpLogging()
+
 	pagerReader, err := internalReader.NewFromStream(
 		options.Title,
 		reader,
@@ -40,6 +46,8 @@ func PageFromStream(reader io.Reader, options Options) error {
 }
 
 func PageFromFile(name string, options Options) error {
+	setUpLogging()
+
 	pagerReader, err := internalReader.NewFromFilename(
 		name,
 		nil,
@@ -58,8 +66,14 @@ func PageFromFile(name string, options Options) error {
 }
 
 func PageFromString(text string, options Options) error {
+	setUpLogging()
+
 	pagerReader := internalReader.NewFromText(options.Title, text)
 	return pageFromReader(pagerReader, options)
+}
+
+func setUpLogging() {
+	log.SetLevel(logLevel)
 }
 
 func pageFromReader(reader *internalReader.ReaderImpl, options Options) error {
