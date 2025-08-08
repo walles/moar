@@ -1,22 +1,31 @@
 package moar
 
-import (
-	"github.com/walles/moar/twin"
-)
+import "io"
 
-// Page displays text in a pager.
-func (p *Pager) Page() error {
-	screen, e := twin.NewScreen()
-	if e != nil {
-		// Screen setup failed
-		return e
-	}
+type Options struct {
+	// Name displayed in the bottom left corner of the pager.
+	//
+	// Defaults to the file name when paging files, otherwise nothing. Leave
+	// blank for default.
+	Title string
 
-	p.StartPaging(screen, nil, nil)
-	screen.Close()
-	if p.DeInit {
-		return nil
-	}
+	// The default is to auto format JSON input. Set this to true to disable
+	// auto formatting.
+	NoAutoFormat bool
 
-	return p.ReprintAfterExit()
+	// Long lines are truncated by default. Set this to true to wrap them.
+	// Users can toggle wrapping on / off using the 'w' key while paging.
+	WrapLongLines bool
+}
+
+func PageFromStream(reader io.Reader, options Options) error {
+	panic("not implemented")
+}
+
+func PageFromFile(name string, options Options) error {
+	panic("not implemented")
+}
+
+func PageFromString(text string, options Options) error {
+	panic("not implemented")
 }

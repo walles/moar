@@ -4,33 +4,22 @@ import (
 	"bytes"
 	"fmt"
 	"os"
-
-	"github.com/alecthomas/chroma/v2/formatters"
 )
 
-// Almost verbatim copied from here, this must compile!
-//
+// Inspired from here:
 // https://github.com/Friends-Of-Noso/NosoData-Go/blob/82de894968e752d6d93d779ecf57db78b10c4acf/cmd/block.go#L145-L163
-func _doNotCall_compileTestOnly() {
+//
+// This function is not meant to be called (because then it would start paging
+// which is impractical during testing). It's just here to demonstrate how the
+// API can be used, and to ensure the API compiles.
+func _demoUsageShouldCompile() {
 	blockNumber := 12_345
 	buf := new(bytes.Buffer)
-	options := ReaderOptions{}
 
-	reader, err := NewReaderFromStream(
-		fmt.Sprintf("Block: %d", blockNumber),
-		buf,
-		formatters.TTY,
-		options,
-	)
-	if err != nil {
-		fmt.Printf("%v\n", err)
-		os.Exit(1)
-	}
-
-	pager := NewPager(reader)
-	pager.WrapLongLines = true
-
-	err = pager.Page()
+	err := PageFromStream(buf, Options{
+		Title:         fmt.Sprintf("Block: %d", blockNumber),
+		WrapLongLines: true,
+	})
 	if err != nil {
 		fmt.Printf("%v\n", err)
 		os.Exit(1)
