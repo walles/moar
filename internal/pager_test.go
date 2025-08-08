@@ -209,7 +209,14 @@ func TestCodeHighlighting(t *testing.T) {
 		twin.NewStyledRune('g', packageKeywordStyle),
 		twin.NewStyledRune('e', packageKeywordStyle),
 		twin.NewStyledRune(' ', packageSpaceStyle),
-		twin.NewStyledRune('m', packageNameStyle),
+		twin.NewStyledRune('i', packageNameStyle),
+		twin.NewStyledRune('n', packageNameStyle),
+		twin.NewStyledRune('t', packageNameStyle),
+		twin.NewStyledRune('e', packageNameStyle),
+		twin.NewStyledRune('r', packageNameStyle),
+		twin.NewStyledRune('n', packageNameStyle),
+		twin.NewStyledRune('a', packageNameStyle),
+		twin.NewStyledRune('l', packageNameStyle),
 	}
 
 	contents := startPaging(t, reader).GetRow(0)
