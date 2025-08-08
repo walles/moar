@@ -1,6 +1,12 @@
 package moar
 
-import "io"
+import (
+	"io"
+
+	"github.com/walles/moar/internal"
+	internalReader "github.com/walles/moar/internal/reader"
+	"github.com/walles/moar/twin"
+)
 
 type Options struct {
 	// Name displayed in the bottom left corner of the pager.
@@ -19,7 +25,18 @@ type Options struct {
 }
 
 func PageFromStream(reader io.Reader, options Options) error {
-	panic("not implemented")
+	pagerReader, err := internalReader.NewFromStream(
+		options.Title,
+		reader,
+		nil,
+		internalReader.ReaderOptions{
+			ShouldFormat: !options.NoAutoFormat,
+		})
+	if err != nil {
+		return err
+	}
+
+	return pageFromReader(pagerReader, options)
 }
 
 func PageFromFile(name string, options Options) error {
@@ -28,4 +45,19 @@ func PageFromFile(name string, options Options) error {
 
 func PageFromString(text string, options Options) error {
 	panic("not implemented")
+}
+
+func pageFromReader(reader *internalReader.ReaderImpl, options Options) error {
+	pager := internal.NewPager(reader)
+	pager.WrapLongLines = options.WrapLongLines
+
+	screen, e := twin.NewScreen()
+	if e != nil {
+		// Screen setup failed
+		return e
+	}
+
+	pager.StartPaging(screen, nil, nil)
+	screen.Close()
+	return nil
 }
