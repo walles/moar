@@ -9,9 +9,8 @@ import (
 	"github.com/walles/moar/twin"
 )
 
-// Only log important things to the terminal
-const logLevel = log.WarnLevel
-
+// If you feel some option is missing, request more options at
+// https://github.com/walles/moar/issues.
 type Options struct {
 	// Name displayed in the bottom left corner of the pager.
 	//
@@ -73,7 +72,9 @@ func PageFromString(text string, options Options) error {
 }
 
 func setUpLogging() {
-	log.SetLevel(logLevel)
+	// Just disable logging. If something else is requested at some point, let's
+	// deal with that then.
+	log.SetOutput(io.Discard)
 }
 
 func pageFromReader(reader *internalReader.ReaderImpl, options Options) error {
