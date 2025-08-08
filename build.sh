@@ -25,7 +25,7 @@ fi
 
 # This line must be last in the script so that its return code
 # propagates properly to its caller
-go build ${RACE} -trimpath -ldflags="-s -w -X main.versionString=${VERSION}" -o "${BINARY}"
+go build "${RACE}" -trimpath -ldflags="-s -w -X main.versionString=${VERSION}" -o "${BINARY}" ./cmd/moar
 
 # Alternative build line, if you want to attach to the running process in the Go debugger:
 # go build -ldflags="-X main.versionString=${VERSION}" -gcflags="all=-N -l" -o "${BINARY}"
