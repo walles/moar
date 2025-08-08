@@ -40,7 +40,21 @@ func PageFromStream(reader io.Reader, options Options) error {
 }
 
 func PageFromFile(name string, options Options) error {
-	panic("not implemented")
+	pagerReader, err := internalReader.NewFromFilename(
+		name,
+		nil,
+		internalReader.ReaderOptions{
+			ShouldFormat: !options.NoAutoFormat,
+		})
+	if err != nil {
+		return err
+	}
+
+	if options.Title != "" {
+		pagerReader.Name = &options.Title
+	}
+
+	return pageFromReader(pagerReader, options)
 }
 
 func PageFromString(text string, options Options) error {
