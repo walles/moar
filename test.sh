@@ -3,8 +3,8 @@
 set -e -o pipefail
 
 # Test that we only pass twin colors to these methods, not numbers
-grep -En 'Foreground\([1-9]' ./*.go ./*/*.go && exit 1
-grep -En 'Background\([1-9]' ./*.go ./*/*.go && exit 1
+grep -En 'Foreground\([1-9]' ./**/*.go && exit 1
+grep -En 'Background\([1-9]' ./**/*.go && exit 1
 
 # Compile test first
 echo Building sources...
