@@ -58,7 +58,8 @@ func PageFromFile(name string, options Options) error {
 }
 
 func PageFromString(text string, options Options) error {
-	panic("not implemented")
+	pagerReader := internalReader.NewFromText(options.Title, text)
+	return pageFromReader(pagerReader, options)
 }
 
 func pageFromReader(reader *internalReader.ReaderImpl, options Options) error {
