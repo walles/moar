@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"os"
+	"testing"
 )
 
 // Inspired from here:
@@ -12,7 +13,7 @@ import (
 // This function is not meant to be called (because then it would start paging
 // which is impractical during testing). It's just here to demonstrate how the
 // API can be used, and to ensure the API compiles.
-func _demoUsageShouldCompile() {
+func apiUsageExample() {
 	blockNumber := 12_345
 	buf := new(bytes.Buffer)
 
@@ -23,5 +24,16 @@ func _demoUsageShouldCompile() {
 	if err != nil {
 		fmt.Printf("%v\n", err)
 		os.Exit(1)
+	}
+}
+
+func TestEmbedApi(t *testing.T) {
+	// Never call this function! That would launch a pager, and we don't want
+	// that during testing.
+	//
+	// But we still want a call to it (that we never make) to make the linter
+	// stop complaining.
+	if false {
+		apiUsageExample()
 	}
 }
