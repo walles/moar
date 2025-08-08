@@ -103,6 +103,9 @@ func pageFromReader(reader *internalReader.ReaderImpl, options Options) error {
 		return e
 	}
 
+	style := internal.GetStyleForScreen(screen)
+	reader.SetStyleForHighlighting(style)
+
 	pager.StartPaging(screen, nil, nil)
 	screen.Close()
 	return nil
