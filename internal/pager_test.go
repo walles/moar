@@ -14,10 +14,10 @@ import (
 	"github.com/alecthomas/chroma/v2/lexers"
 	"github.com/alecthomas/chroma/v2/styles"
 	"github.com/google/go-cmp/cmp"
-	"github.com/walles/moar/internal/linemetadata"
-	"github.com/walles/moar/internal/reader"
-	"github.com/walles/moar/internal/textstyles"
-	"github.com/walles/moar/twin"
+	"github.com/walles/moor/internal/linemetadata"
+	"github.com/walles/moor/internal/reader"
+	"github.com/walles/moor/internal/textstyles"
+	"github.com/walles/moor/twin"
 	"gotest.tools/v3/assert"
 )
 
@@ -252,7 +252,7 @@ func TestCodeHighlight_compressed(t *testing.T) {
 }
 
 // Regression test for:
-// https://github.com/walles/moar/issues/236#issuecomment-2282677792
+// https://github.com/walles/moor/issues/236#issuecomment-2282677792
 //
 // Sample file sysctl.h from:
 // https://github.com/fastfetch-cli/fastfetch/blob/f9597eba39d6afd278eeca2f2972f73a7e54f111/src/common/sysctl.h
@@ -441,7 +441,7 @@ func TestScrollToBottomWrapNextToLastLine(t *testing.T) {
 	assert.Equal(t, actual, expected)
 }
 
-// Repro for https://github.com/walles/moar/issues/105
+// Repro for https://github.com/walles/moor/issues/105
 func TestScrollToEndLongInput(t *testing.T) {
 	const lineCount = 10100 // At least five digits
 
@@ -696,7 +696,7 @@ func renderTextLine(text string) string {
 	return rowToString(screen.GetRow(0))
 }
 
-// Ref: https://github.com/walles/moar/issues/243
+// Ref: https://github.com/walles/moor/issues/243
 func TestPageWideChars(t *testing.T) {
 	// Both of these characters are 2 cells wide on a terminal
 	const monospaced4cells = "上午"

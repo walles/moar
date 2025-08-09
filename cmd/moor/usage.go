@@ -11,8 +11,8 @@ import (
 	"strings"
 
 	log "github.com/sirupsen/logrus"
-	"github.com/walles/moar/internal"
-	"github.com/walles/moar/twin"
+	"github.com/walles/moor/internal"
+	"github.com/walles/moor/twin"
 )
 
 func renderLessTermcapEnvVar(envVarName string, description string, colors twin.ColorCount) string {
@@ -59,14 +59,14 @@ func renderPagerEnvVar(name string, colors twin.ColorCount) string {
 			name,
 			what,
 			bold,
-			getMoarPath(),
+			getMoorPath(),
 			notBold,
 		)
 	}
 
-	absMoarPath, err := absLookPath(os.Args[0])
+	absMoorPath, err := absLookPath(os.Args[0])
 	if err != nil {
-		log.Warn("Unable to find absolute moar path: ", err)
+		log.Warn("Unable to find absolute moor path: ", err)
 		return ""
 	}
 
@@ -76,7 +76,7 @@ func renderPagerEnvVar(name string, colors twin.ColorCount) string {
 		absEnvValue = value
 	}
 
-	if absEnvValue == absMoarPath {
+	if absEnvValue == absMoorPath {
 		return fmt.Sprintf("  %s=%s\n", name, value)
 	}
 
@@ -84,7 +84,7 @@ func renderPagerEnvVar(name string, colors twin.ColorCount) string {
 		name,
 		value,
 		bold,
-		getMoarPath(),
+		getMoorPath(),
 		notBold,
 	)
 }
@@ -101,8 +101,8 @@ func renderPlainEnvVar(envVarName string) string {
 }
 
 func printCommandline(output io.Writer) {
-	fmt.Fprintln(output, "Commandline: moar", strings.Join(os.Args[1:], " ")) //nolint:errcheck
-	fmt.Fprintf(output, "Environment: MOAR=\"%v\"\n", os.Getenv("MOAR"))      //nolint:errcheck
+	fmt.Fprintln(output, "Commandline: moor", strings.Join(os.Args[1:], " ")) //nolint:errcheck
+	fmt.Fprintf(output, "Environment: MOOR=\"%v\"\n", os.Getenv("MOOR"))      //nolint:errcheck
 	fmt.Fprintln(output)                                                      //nolint:errcheck
 }
 
@@ -120,26 +120,26 @@ func printUsage(flagSet *flag.FlagSet, colors twin.ColorCount) {
 	// FIXME: Log if any printouts fail?
 
 	fmt.Println(heading("Usage", colors))
-	fmt.Println("  moar [options] <file>")
-	fmt.Println("  ... | moar")
-	fmt.Println("  moar < file")
+	fmt.Println("  moor [options] <file>")
+	fmt.Println("  ... | moor")
+	fmt.Println("  moor < file")
 	fmt.Println()
 	fmt.Println("Shows file contents. Compressed files will be transparently decompressed.")
 	fmt.Println("Input is expected to be (possibly compressed) UTF-8 encoded text. Invalid /")
 	fmt.Println("non-printable characters are by default rendered as '?'.")
 	fmt.Println()
 	fmt.Println("More information + source code:")
-	fmt.Println("  <https://github.com/walles/moar#readme>")
+	fmt.Println("  <https://github.com/walles/moor#readme>")
 	fmt.Println()
 	fmt.Println(heading("Environment", colors))
 
-	moarEnv := os.Getenv("MOAR")
-	if len(moarEnv) == 0 {
-		fmt.Println("  Additional options are read from the MOAR environment variable if set.")
-		fmt.Println("  But currently, the MOAR environment variable is not set.")
+	moorEnv := os.Getenv("MOOR")
+	if len(moorEnv) == 0 {
+		fmt.Println("  Additional options are read from the MOOR environment variable if set.")
+		fmt.Println("  But currently, the MOOR environment variable is not set.")
 	} else {
-		fmt.Println("  Additional options are read from the MOAR environment variable.")
-		fmt.Printf("  Current setting: MOAR=\"%s\"\n", moarEnv)
+		fmt.Println("  Additional options are read from the MOOR environment variable.")
+		fmt.Printf("  Current setting: MOOR=\"%s\"\n", moorEnv)
 	}
 
 	envSection := ""
@@ -172,7 +172,7 @@ func printUsage(flagSet *flag.FlagSet, colors twin.ColorCount) {
 	envSection += renderPlainEnvVar("TERM_PROGRAM")
 	envSection += renderPlainEnvVar("COLORTERM")
 
-	// Requested here: https://github.com/walles/moar/issues/170#issuecomment-1891154661
+	// Requested here: https://github.com/walles/moor/issues/170#issuecomment-1891154661
 	envSection += renderPlainEnvVar("MANROFFOPT")
 
 	if envSection != "" {
@@ -195,9 +195,9 @@ func printUsage(flagSet *flag.FlagSet, colors twin.ColorCount) {
 
 // If $PAGER isn't pointing to us, print a help text on how to set it.
 func printSetDefaultPagerHelp(colors twin.ColorCount) {
-	absMoarPath, err := absLookPath(os.Args[0])
+	absMoorPath, err := absLookPath(os.Args[0])
 	if err != nil {
-		log.Warn("Unable to find moar binary ", err)
+		log.Warn("Unable to find moor binary ", err)
 		return
 	}
 
@@ -206,13 +206,13 @@ func printSetDefaultPagerHelp(colors twin.ColorCount) {
 		absPagerValue = ""
 	}
 
-	if absPagerValue == absMoarPath {
+	if absPagerValue == absMoorPath {
 		// We're already the default pager
 		return
 	}
 
 	fmt.Println()
-	fmt.Println(heading("Making moar Your Default Pager", colors))
+	fmt.Println(heading("Making moor Your Default Pager", colors))
 
 	shellIsFish := strings.HasSuffix(os.Getenv("SHELL"), "fish")
 	shellIsPowershell := len(os.Getenv("PSModulePath")) > 0
@@ -220,43 +220,43 @@ func printSetDefaultPagerHelp(colors twin.ColorCount) {
 	if shellIsFish {
 		fmt.Println("  Write this command at your prompt:")
 		fmt.Println()
-		fmt.Printf("     set -Ux PAGER %s\n", getMoarPath())
+		fmt.Printf("     set -Ux PAGER %s\n", getMoorPath())
 	} else if shellIsPowershell {
 		fmt.Println("  Put the following line in your $PROFILE file (\"echo $PROFILE\" to find it)")
-		fmt.Println("  and moar will be used as the default pager in all new terminal windows:")
+		fmt.Println("  and moor will be used as the default pager in all new terminal windows:")
 		fmt.Println()
-		fmt.Printf("     $env:PAGER = \"%s\"\n", getMoarPath())
+		fmt.Printf("     $env:PAGER = \"%s\"\n", getMoorPath())
 	} else {
 		// I don't know how to identify bash / zsh, put generic instructions here
 		fmt.Println("  Put the following line in your ~/.bashrc, ~/.bash_profile or ~/.zshrc")
-		fmt.Println("  and moar will be used as the default pager in all new terminal windows:")
+		fmt.Println("  and moor will be used as the default pager in all new terminal windows:")
 		fmt.Println()
-		fmt.Printf("     export PAGER=%s\n", getMoarPath())
+		fmt.Printf("     export PAGER=%s\n", getMoorPath())
 	}
 }
 
-// "moar" if we're in the $PATH, otherwise an absolute path
-func getMoarPath() string {
-	moarPath := os.Args[0]
-	if filepath.IsAbs(moarPath) {
-		return moarPath
+// "moor" if we're in the $PATH, otherwise an absolute path
+func getMoorPath() string {
+	moorPath := os.Args[0]
+	if filepath.IsAbs(moorPath) {
+		return moorPath
 	}
 
-	if strings.Contains(moarPath, string(os.PathSeparator)) {
+	if strings.Contains(moorPath, string(os.PathSeparator)) {
 		// Relative path
-		moarPath, err := filepath.Abs(moarPath)
+		moorPath, err := filepath.Abs(moorPath)
 		if err != nil {
 			panic(err)
 		}
-		return moarPath
+		return moorPath
 	}
 
 	// Neither absolute nor relative, try PATH
-	_, err := exec.LookPath(moarPath)
+	_, err := exec.LookPath(moorPath)
 	if err != nil {
-		panic("Unable to find in $PATH: " + moarPath)
+		panic("Unable to find in $PATH: " + moorPath)
 	}
-	return moarPath
+	return moorPath
 }
 
 func absLookPath(path string) (string, error) {

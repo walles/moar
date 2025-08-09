@@ -5,15 +5,15 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/walles/moar/internal/linemetadata"
-	"github.com/walles/moar/internal/reader"
-	"github.com/walles/moar/twin"
+	"github.com/walles/moor/internal/linemetadata"
+	"github.com/walles/moor/internal/reader"
+	"github.com/walles/moor/twin"
 	"gotest.tools/v3/assert"
 )
 
 const screenHeight = 60
 
-// Repro for: https://github.com/walles/moar/issues/166
+// Repro for: https://github.com/walles/moor/issues/166
 func testCanonicalize1000(t *testing.T, withStatusBar bool, currentStartLine linemetadata.Index, lastVisibleLine linemetadata.Index) {
 	pager := Pager{}
 	pager.screen = twin.NewFakeScreen(100, screenHeight)

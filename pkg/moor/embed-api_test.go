@@ -3,7 +3,7 @@
 // Actually running the API has been done manually using a separate external
 // program by Johan Walles on 2025aug09.
 
-package moar
+package moor
 
 // NOTE: No imports from internal allowed here!! Externals cannot do that, so if
 // we have to that means the whole external API is broken.

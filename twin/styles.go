@@ -31,7 +31,7 @@ type Style struct {
 	//
 	// Ref:
 	// * https://gist.github.com/egmontkob/eb114294efbcd5adb1944c9f3cb5feda
-	// * https://github.com/walles/moar/issues/131
+	// * https://github.com/walles/moor/issues/131
 	hyperlinkURL *string
 }
 

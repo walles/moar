@@ -38,7 +38,7 @@ type EventResize struct {
 // If we're unable to continue showing the screen, we'll send this event and
 // drop out.
 //
-// Ref: https://github.com/walles/moar/issues/126
+// Ref: https://github.com/walles/moor/issues/126
 type EventExit struct {
 	// This interface intentionally left blank
 }

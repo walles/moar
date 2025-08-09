@@ -1,4 +1,6 @@
-/moar
-/moar.exe
+/moor
+/moor.exe
+/releases/moor-*
+
+# For historical reasons, this old name had to be changed to get into Debian
 /releases/moar-*
-/m/__debug_bin*

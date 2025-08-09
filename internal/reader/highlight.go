@@ -33,7 +33,7 @@ func Highlight(text string, style chroma.Style, formatter chroma.Formatter, lexe
 	//   lexer = chroma.Coalesce(lexer)
 	//
 	// ... here, but with Chroma 2.12.0 that resulted in this problem:
-	// https://github.com/walles/moar/issues/236#issuecomment-2282677792
+	// https://github.com/walles/moor/issues/236#issuecomment-2282677792
 	//
 	// So let's not do that anymore.
 

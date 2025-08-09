@@ -16,7 +16,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"gotest.tools/v3/assert"
 
-	"github.com/walles/moar/internal/linemetadata"
+	"github.com/walles/moor/internal/linemetadata"
 )
 
 const samplesDir = "../../sample-files"
@@ -363,7 +363,7 @@ func TestFormatJsonArray(t *testing.T) {
 // changes.
 func TestReadUpdatingFile(t *testing.T) {
 	// Make a temp file containing one line of text, ending with a newline
-	file, err := os.CreateTemp("", "moar-TestReadUpdatingFile-*.txt")
+	file, err := os.CreateTemp("", "moor-TestReadUpdatingFile-*.txt")
 	assert.NilError(t, err)
 	defer os.Remove(file.Name()) //nolint:errcheck
 
@@ -440,7 +440,7 @@ func TestReadUpdatingFile(t *testing.T) {
 // This test verifies it with an initially empty file.
 func TestReadUpdatingFile_InitiallyEmpty(t *testing.T) {
 	// Make a temp file containing one line of text, ending with a newline
-	file, err := os.CreateTemp("", "moar-TestReadUpdatingFile_NoNewlineAtEOF-*.txt")
+	file, err := os.CreateTemp("", "moor-TestReadUpdatingFile_NoNewlineAtEOF-*.txt")
 	assert.NilError(t, err)
 	defer os.Remove(file.Name()) //nolint:errcheck
 
@@ -482,7 +482,7 @@ func TestReadUpdatingFile_InitiallyEmpty(t *testing.T) {
 // This test verifies it with the initial contents not ending with a linefeed.
 func TestReadUpdatingFile_HalfLine(t *testing.T) {
 	// Make a temp file containing one line of text, ending with a newline
-	file, err := os.CreateTemp("", "moar-TestReadUpdatingFile-*.txt")
+	file, err := os.CreateTemp("", "moor-TestReadUpdatingFile-*.txt")
 	assert.NilError(t, err)
 	defer os.Remove(file.Name()) //nolint:errcheck
 
@@ -526,7 +526,7 @@ func TestReadUpdatingFile_HalfLine(t *testing.T) {
 // This test verifies it with the initial contents ending in the middle of an UTF-8 character.
 func TestReadUpdatingFile_HalfUtf8(t *testing.T) {
 	// Make a temp file containing one line of text, ending with a newline
-	file, err := os.CreateTemp("", "moar-TestReadUpdatingFile-*.txt")
+	file, err := os.CreateTemp("", "moor-TestReadUpdatingFile-*.txt")
 	assert.NilError(t, err)
 	defer os.Remove(file.Name()) //nolint:errcheck
 

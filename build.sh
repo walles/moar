@@ -9,7 +9,7 @@ fi
 
 VERSION="$(git describe --tags --dirty --always)"
 
-BINARY="moar"
+BINARY="moor"
 if [ -n "${GOOS}${GOARCH}" ]; then
     EXE=""
     if [ "${GOOS}" = "windows" ]; then
@@ -30,7 +30,7 @@ fi
 #
 # Note that ${RACE} must *not* be quoted, we want it to disappear if empty.
 # shellcheck disable=SC2086
-go build ${RACE} -trimpath -ldflags="-s -w -X main.versionString=${VERSION}" -o "${BINARY}" ./cmd/moar
+go build ${RACE} -trimpath -ldflags="-s -w -X main.versionString=${VERSION}" -o "${BINARY}" ./cmd/moor
 
 # Alternative build line, if you want to attach to the running process in the Go debugger:
 # go build -ldflags="-X main.versionString=${VERSION}" -gcflags="all=-N -l" -o "${BINARY}"

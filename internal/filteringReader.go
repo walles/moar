@@ -8,8 +8,8 @@ import (
 	"time"
 
 	log "github.com/sirupsen/logrus"
-	"github.com/walles/moar/internal/linemetadata"
-	"github.com/walles/moar/internal/reader"
+	"github.com/walles/moor/internal/linemetadata"
+	"github.com/walles/moor/internal/reader"
 )
 
 // Filters lines based on the search query from the pager.

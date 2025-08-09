@@ -142,7 +142,7 @@ func NewScreenWithMouseModeAndColorCount(mouseMode MouseMode, terminalColorCount
 
 	// The number "80" here is from manual testing on my MacBook:
 	//
-	// First, start "./moar.sh sample-files/large-git-log-patch.txt".
+	// First, start "./moor.sh sample-files/large-git-log-patch.txt".
 	//
 	// Then do a two finger flick initiating a momentum based scroll-up.
 	//
@@ -150,7 +150,7 @@ func NewScreenWithMouseModeAndColorCount(mouseMode MouseMode, terminalColorCount
 	//
 	// By this definition, 40 was too small, and 80 was OK.
 	//
-	// Bumped to 160 because of: https://github.com/walles/moar/issues/164
+	// Bumped to 160 because of: https://github.com/walles/moor/issues/164
 	screen.events = make(chan Event, 160)
 
 	screen.setupSigwinchNotification()
@@ -208,9 +208,9 @@ func (screen *UnixScreen) Close() {
 	err := screen.restoreTtyInTtyOut()
 	if err != nil {
 		// Debug logging because this is expected to fail in some cases:
-		// * https://github.com/walles/moar/issues/145
-		// * https://github.com/walles/moar/issues/149
-		// * https://github.com/walles/moar/issues/150
+		// * https://github.com/walles/moor/issues/145
+		// * https://github.com/walles/moor/issues/149
+		// * https://github.com/walles/moor/issues/150
 		log.Info("Problem restoring TTY state: ", err)
 	}
 }
@@ -272,11 +272,11 @@ func (screen *UnixScreen) onWindowResized() {
 //
 // For those that do, we're better off without mouse tracking.
 //
-// To test your terminal, run with `moar --mousemode=mark` and see if mouse
+// To test your terminal, run with `moor --mousemode=mark` and see if mouse
 // scrolling still works (both down and then back up to the top). If it does,
 // add another check to this function!
 //
-// See also: https://github.com/walles/moar/issues/53
+// See also: https://github.com/walles/moor/issues/53
 func terminalHasArrowKeysEmulation() bool {
 	// Untested:
 	// * The Windows terminal
@@ -430,9 +430,9 @@ func (screen *UnixScreen) mainLoop() {
 		count, err := screen.ttyInReader.Read(buffer)
 		if err != nil {
 			// Ref:
-			// * https://github.com/walles/moar/issues/145
-			// * https://github.com/walles/moar/issues/149
-			// * https://github.com/walles/moar/issues/150
+			// * https://github.com/walles/moor/issues/145
+			// * https://github.com/walles/moor/issues/149
+			// * https://github.com/walles/moor/issues/150
 			log.Info("ttyin read error, twin giving up: ", err)
 
 			screen.events <- EventExit{}
@@ -854,7 +854,7 @@ func (screen *UnixScreen) showNLines(width int, height int, clearFirst bool) {
 		// one line precisely as long as the terminal window goes before one
 		// empty line, the empty line will never be rendered.
 		//
-		// Can be demonstrated using "moar m/pager.go", scroll right once to
+		// Can be demonstrated using "moor m/pager.go", scroll right once to
 		// make the line numbers go away, then make the window narrower until
 		// some line before an empty line is just as wide as the window.
 		//

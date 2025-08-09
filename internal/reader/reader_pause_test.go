@@ -8,7 +8,7 @@ import (
 
 	"github.com/alecthomas/chroma/v2/formatters"
 	"github.com/alecthomas/chroma/v2/styles"
-	"github.com/walles/moar/internal/linemetadata"
+	"github.com/walles/moor/internal/linemetadata"
 	"gotest.tools/v3/assert"
 )
 

@@ -7,7 +7,7 @@ set -e -o pipefail
 echo
 
 echo 'Installing into /usr/local/bin...'
-cp moar /usr/local/bin/moar
+cp moor /usr/local/bin/moor
 
 echo
-echo 'Installed, try "moar moar.go" to see moar in action!'
+echo 'Installed, try "moor moor.go" to see moor in action!'

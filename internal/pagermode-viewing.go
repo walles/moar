@@ -2,7 +2,7 @@ package internal
 
 import (
 	log "github.com/sirupsen/logrus"
-	"github.com/walles/moar/twin"
+	"github.com/walles/moor/twin"
 )
 
 type PagerModeViewing struct {
@@ -101,14 +101,14 @@ func (m PagerModeViewing) onRune(char rune) {
 		p.ShowStatusBar = !p.ShowStatusBar
 
 	// '\x10' = CTRL-p, should scroll up one line.
-	// Ref: https://github.com/walles/moar/issues/107#issuecomment-1328354080
+	// Ref: https://github.com/walles/moor/issues/107#issuecomment-1328354080
 	case 'k', 'y', '\x10':
 		// Clipping is done in _Redraw()
 		p.scrollPosition = p.scrollPosition.PreviousLine(1)
 		p.handleScrolledUp()
 
 	// '\x0e' = CTRL-n, should scroll down one line.
-	// Ref: https://github.com/walles/moar/issues/107#issuecomment-1328354080
+	// Ref: https://github.com/walles/moor/issues/107#issuecomment-1328354080
 	case 'j', 'e', '\x0e':
 		// Clipping is done in _Redraw()
 		p.scrollPosition = p.scrollPosition.NextLine(1)
@@ -130,13 +130,13 @@ func (m PagerModeViewing) onRune(char rune) {
 		p.handleScrolledUp()
 
 	// '\x15' = CTRL-u, should work like just 'u'.
-	// Ref: https://github.com/walles/moar/issues/90
+	// Ref: https://github.com/walles/moor/issues/90
 	case 'u', '\x15':
 		p.scrollPosition = p.scrollPosition.PreviousLine(p.visibleHeight() / 2)
 		p.handleScrolledUp()
 
 	// '\x04' = CTRL-d, should work like just 'd'.
-	// Ref: https://github.com/walles/moar/issues/90
+	// Ref: https://github.com/walles/moor/issues/90
 	case 'd', '\x04':
 		p.scrollPosition = p.scrollPosition.NextLine(p.visibleHeight() / 2)
 		p.handleScrolledDown()

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"math"
 
-	"github.com/walles/moar/internal/util"
+	"github.com/walles/moor/internal/util"
 )
 
 // This represents a line number in an input stream

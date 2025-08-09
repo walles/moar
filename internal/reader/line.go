@@ -4,9 +4,9 @@ import (
 	"regexp"
 	"sync"
 
-	"github.com/walles/moar/internal/linemetadata"
-	"github.com/walles/moar/internal/textstyles"
-	"github.com/walles/moar/twin"
+	"github.com/walles/moor/internal/linemetadata"
+	"github.com/walles/moor/internal/textstyles"
+	"github.com/walles/moor/twin"
 )
 
 // A Line represents a line of text that can / will be paged

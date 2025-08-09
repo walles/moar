@@ -12,4 +12,4 @@ jobs:
         uses: dawidd6/action-homebrew-bump-formula@v3
         with:
           token: ${{secrets.JOHAN_GITHUB_API_TOKEN}}
-          formula: moar
+          formula: moor

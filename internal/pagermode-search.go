@@ -6,7 +6,7 @@ import (
 	"unicode/utf8"
 
 	log "github.com/sirupsen/logrus"
-	"github.com/walles/moar/twin"
+	"github.com/walles/moor/twin"
 )
 
 type SearchDirection int

@@ -24,7 +24,7 @@ echo
 echo "Please provide a version number on the form 'v1.2.3' for the new release:"
 read -r VERSION
 
-# https://github.com/walles/moar/issues/47
+# https://github.com/walles/moor/issues/47
 if ! echo "${VERSION}" | grep -q -E '^v[0-9]+\.[0-9]+\.[0-9]+$'; then
   echo "ERROR: Version number must be on the form: v1.2.3: ${VERSION}"
   exit 1
@@ -49,7 +49,7 @@ git tag --annotate "${VERSION}"
 # NOTE: Make sure this list matches the one in test.sh
 GOOS=linux GOARCH=386 ./build.sh
 GOOS=linux GOARCH=amd64 ./build.sh
-GOOS=linux GOARCH=arm ./build.sh # Ref: https://github.com/walles/moar/issues/122
+GOOS=linux GOARCH=arm ./build.sh # Ref: https://github.com/walles/moor/issues/122
 GOOS=darwin GOARCH=amd64 ./build.sh
 GOOS=darwin GOARCH=arm64 ./build.sh
 GOOS=windows GOARCH=amd64 ./build.sh
@@ -60,5 +60,5 @@ git push --tags
 # FIXME: Instead of asking the user to upload the binaries, upload them for
 # the user.
 echo
-echo "Please upload the following binaries to <https://github.com/walles/moar/releases/tag/${VERSION}>:"
-file releases/moar-"${VERSION}"-*-*
+echo "Please upload the following binaries to <https://github.com/walles/moor/releases/tag/${VERSION}>:"
+file releases/moor-"${VERSION}"-*-*

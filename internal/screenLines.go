@@ -3,10 +3,10 @@ package internal
 import (
 	"fmt"
 
-	"github.com/walles/moar/internal/linemetadata"
-	"github.com/walles/moar/internal/reader"
-	"github.com/walles/moar/internal/textstyles"
-	"github.com/walles/moar/twin"
+	"github.com/walles/moor/internal/linemetadata"
+	"github.com/walles/moor/internal/reader"
+	"github.com/walles/moor/internal/textstyles"
+	"github.com/walles/moor/twin"
 )
 
 type renderedLine struct {
@@ -23,7 +23,7 @@ type renderedLine struct {
 	// Used for rendering clear-to-end-of-line control sequences:
 	// https://en.wikipedia.org/wiki/ANSI_escape_code#EL
 	//
-	// Ref: https://github.com/walles/moar/issues/106
+	// Ref: https://github.com/walles/moor/issues/106
 	trailer twin.Style
 }
 

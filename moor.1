@@ -1,23 +1,23 @@
-.TH MOAR 1 2022-07-21
+.TH MOOR 1 2022-07-21
 .SH NAME
-moar \- the nice pager
+moor \- the nice pager
 .SH SYNOPSIS
-.B moar
+.B moor
 [options]
 .IR file
 .br
-.B "moar \-\-help"
+.B "moor \-\-help"
 .br
-.B "moar \-\-version"
+.B "moor \-\-version"
 .SH DESCRIPTION
-.B moar
+.B moor
 is a pager much like
 .I less
 (1), but with generally nicer out-of-the-box behavior.
 .PP
-More information and screenshots: https://github.com/walles/moar#readme
+More information and screenshots: https://github.com/walles/moor#readme
 .PP
-Inside of \fBmoar\fR, press
+Inside of \fBmoor\fR, press
 .B ?
 to access the built-in help.
 .PP
@@ -27,11 +27,11 @@ Invalid / unprintable characters are by default rendered as '?'.
 Multiple-choice options all have the default value listed first.
 .PP
 All of these options can be appended to the
-.B MOAR
+.B MOOR
 environment variable for persistent configuration.
 .PP
 Doing
-.B moar --help
+.B moor --help
 will also list these options.
 .TP
 \fB\-\-colors\fR={\fBauto\fR | \fB8\fR | \fB16\fR | \fB256\fR | \fB16M\fR}
@@ -54,10 +54,10 @@ For the source of truth on what is supported exactly, look in https://github.com
 \fB\-\-mousemode\fR={\fBauto\fR | \fBselect\fR | \fBscroll\fR}
 Guarantee selecting text with the mouse works but maybe not mouse scrolling.
 Or guarantee mouse scrolling works but selecting text requiring extra effort.
-Details here: https://github.com/walles/moar/blob/master/MOUSE.md
+Details here: https://github.com/walles/moor/blob/master/MOUSE.md
 .TP
 \fB\-\-no\-clear\-on\-exit\fR
-Retain screen contents when exiting moar.
+Retain screen contents when exiting moor.
 Affected by \fB--no-clear-on-exit-margin\fP.
 .TP
 \fB\-\-no\-clear\-on\-exit\-margin\fR=int
@@ -126,15 +126,15 @@ Immediately scroll to line
 .B 1234
 .SH ENVIRONMENT
 Having
-.B PAGER=moar
+.B PAGER=moor
 in your environment will make lots of different programs use
-.B moar
+.B moor
 as their pager.
 .PP
 Additional options are read from the
-.B MOAR
+.B MOOR
 environment variable if set, just as if those same options had been manually added to each
-.B moar
+.B moor
 invocation.
 .SH BUGS
-Kindly report any bugs here: https://github.com/walles/moar/issues
+Kindly report any bugs here: https://github.com/walles/moor/issues

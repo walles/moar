@@ -6,8 +6,8 @@ import (
 	"unicode/utf8"
 
 	log "github.com/sirupsen/logrus"
-	"github.com/walles/moar/internal/linemetadata"
-	"github.com/walles/moar/twin"
+	"github.com/walles/moor/internal/linemetadata"
+	"github.com/walles/moor/twin"
 )
 
 const esc = '\x1b'
@@ -256,7 +256,7 @@ func (s *styledStringSplitter) handleOsc(sequence string) error {
 	if strings.HasSuffix(sequence, "?") {
 		// OSC query, we don't intend to answer those, just ignore them.
 		//
-		// Ref: https://github.com/walles/moar/issues/279
+		// Ref: https://github.com/walles/moor/issues/279
 		return nil
 	}
 
@@ -291,7 +291,7 @@ func isNonCharacter(char rune) bool {
 // Based on https://url.spec.whatwg.org/#url-code-points
 func isValidURLChar(char rune) bool {
 	if char == '\\' {
-		// Ref: https://github.com/walles/moar/issues/244#issuecomment-2350908401
+		// Ref: https://github.com/walles/moor/issues/244#issuecomment-2350908401
 		return true
 	}
 

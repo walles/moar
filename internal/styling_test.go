@@ -7,7 +7,7 @@ import (
 	"github.com/alecthomas/chroma/v2"
 	"github.com/alecthomas/chroma/v2/formatters"
 	"github.com/alecthomas/chroma/v2/styles"
-	"github.com/walles/moar/twin"
+	"github.com/walles/moor/twin"
 	"gotest.tools/v3/assert"
 )
 
@@ -28,9 +28,9 @@ func TestTwinStyleFromChroma(t *testing.T) {
 }
 
 func TestSetStyle(t *testing.T) {
-	assert.NilError(t, os.Setenv("MOAR_TEST_STYLE", "\x1b[1;31m"))
+	assert.NilError(t, os.Setenv("MOOR_TEST_STYLE", "\x1b[1;31m"))
 	style := twin.StyleDefault
-	setStyle(&style, "MOAR_TEST_STYLE", nil)
+	setStyle(&style, "MOOR_TEST_STYLE", nil)
 
 	assert.Equal(t, style, twin.StyleDefault.WithAttr(twin.AttrBold).WithForeground(twin.NewColor16(1)))
 }

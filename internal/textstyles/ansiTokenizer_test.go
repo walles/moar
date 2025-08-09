@@ -12,8 +12,8 @@ import (
 	"github.com/google/go-cmp/cmp"
 	log "github.com/sirupsen/logrus"
 
-	"github.com/walles/moar/internal/linemetadata"
-	"github.com/walles/moar/twin"
+	"github.com/walles/moor/internal/linemetadata"
+	"github.com/walles/moor/twin"
 	"gotest.tools/v3/assert"
 )
 
@@ -155,7 +155,7 @@ func TestManPages(t *testing.T) {
 	assert.Equal(t, tokens[2], twin.StyledRune{Rune: 'c', Style: twin.StyleDefault})
 
 	// Bullet point 1, taken from doing this on my macOS system:
-	// env PAGER="hexdump -C" man printf | moar
+	// env PAGER="hexdump -C" man printf | moor
 	tokens = StyledRunesFromString(twin.StyleDefault, "a+\b+\bo\bob", nil).StyledRunes
 	assert.Equal(t, len(tokens), 3)
 	assert.Equal(t, tokens[0], twin.StyledRune{Rune: 'a', Style: twin.StyleDefault})
@@ -163,7 +163,7 @@ func TestManPages(t *testing.T) {
 	assert.Equal(t, tokens[2], twin.StyledRune{Rune: 'b', Style: twin.StyleDefault})
 
 	// Bullet point 2, taken from doing this using the "fish" shell on my macOS system:
-	// man printf | hexdump -C | moar
+	// man printf | hexdump -C | moor
 	tokens = StyledRunesFromString(twin.StyleDefault, "a+\bob", nil).StyledRunes
 	assert.Equal(t, len(tokens), 3)
 	assert.Equal(t, tokens[0], twin.StyledRune{Rune: 'a', Style: twin.StyleDefault})
@@ -204,7 +204,7 @@ func TestManPageHeadings(t *testing.T) {
 
 func TestConsumeCompositeColorHappy(t *testing.T) {
 	// 8 bit color
-	// Example from: https://github.com/walles/moar/issues/14
+	// Example from: https://github.com/walles/moor/issues/14
 	newIndex, color, err := consumeCompositeColor([]uint{38, 5, 74}, 0)
 	assert.NilError(t, err)
 	assert.Equal(t, newIndex, 3)
@@ -219,7 +219,7 @@ func TestConsumeCompositeColorHappy(t *testing.T) {
 
 func TestConsumeCompositeColorBadPrefix(t *testing.T) {
 	// 8 bit color
-	// Example from: https://github.com/walles/moar/issues/14
+	// Example from: https://github.com/walles/moor/issues/14
 	_, color, err := consumeCompositeColor([]uint{29}, 0)
 	assert.Equal(t, err.Error(), "unknown start of color sequence <29>, expected 38 (foreground), 48 (background) or 58 (underline): <CSI 29m>")
 	assert.Assert(t, color == nil)

@@ -1,28 +1,28 @@
 #!/bin/bash
 
-# Verify the PAGER= suggestion is correct in "moar --help" output.
+# Verify the PAGER= suggestion is correct in "moor --help" output.
 #
-# Ref: https://github.com/walles/moar/issues/88
+# Ref: https://github.com/walles/moor/issues/88
 
 set -e -o pipefail
 
-MOAR="$(realpath "$1")"
-if ! [ -x "$MOAR" ]; then
-    echo ERROR: Not executable: "$MOAR"
+MOOR="$(realpath "$1")"
+if ! [ -x "$MOOR" ]; then
+    echo ERROR: Not executable: "$MOOR"
     exit 1
 fi
 
-echo Testing PAGER= suggestion in moar --help output...
+echo Testing PAGER= suggestion in moor --help output...
 
-WORKDIR="$(mktemp -d -t moar-path-help-test.XXXXXXXX)"
+WORKDIR="$(mktemp -d -t moor-path-help-test.XXXXXXXX)"
 
-# Put a symlink to $MOAR first in the $PATH
-ln -s "$MOAR" "$WORKDIR/moar"
-echo "moar" >"$WORKDIR/expected"
+# Put a symlink to $MOOR first in the $PATH
+ln -s "$MOOR" "$WORKDIR/moor"
+echo "moor" >"$WORKDIR/expected"
 
-# Extract suggested PAGER value from moar --help
+# Extract suggested PAGER value from moor --help
 unset PAGER
-PATH="$WORKDIR" PAGER="" MOAR="" moar --help | grep "PAGER" | grep -v "is empty" | sed -E 's/.*PAGER[= ]//' >"$WORKDIR/actual"
+PATH="$WORKDIR" PAGER="" MOOR="" moor --help | grep "PAGER" | grep -v "is empty" | sed -E 's/.*PAGER[= ]//' >"$WORKDIR/actual"
 
 # Ensure it matches the symlink we have in $PATH
 cd "$WORKDIR"

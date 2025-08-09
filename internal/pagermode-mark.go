@@ -1,6 +1,6 @@
 package internal
 
-import "github.com/walles/moar/twin"
+import "github.com/walles/moor/twin"
 
 type PagerModeMark struct {
 	pager *Pager

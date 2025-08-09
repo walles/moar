@@ -11,8 +11,8 @@ MYDIR="$(
 )"
 cd "$MYDIR"
 
-rm -f moar
+rm -f moor
 
 RACE=-race ./build.sh 1>&2
 
-GORACE="log_path=moar-race-report" ./moar "$@"
+GORACE="log_path=moor-race-report" ./moor "$@"

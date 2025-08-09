@@ -37,7 +37,7 @@ func TestConsumeEncodedEvent(t *testing.T) {
 
 	// This happens when users paste.
 	//
-	// Ref: https://github.com/walles/moar/issues/73
+	// Ref: https://github.com/walles/moor/issues/73
 	assertEncode(t, "1234", EventRune{rune: '1'}, "234")
 }
 

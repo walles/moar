@@ -7,8 +7,8 @@ import (
 
 	"github.com/alecthomas/chroma/v2"
 	log "github.com/sirupsen/logrus"
-	"github.com/walles/moar/internal/textstyles"
-	"github.com/walles/moar/twin"
+	"github.com/walles/moor/internal/textstyles"
+	"github.com/walles/moor/twin"
 )
 
 // From LESS_TERMCAP_so, overrides statusbarStyle from the Chroma style if set
@@ -81,9 +81,9 @@ func twinStyleFromChroma(chromaStyle *chroma.Style, chromaFormatter *chroma.Form
 }
 
 // consumeLessTermcapEnvs parses LESS_TERMCAP_xx environment variables and
-// adapts the moar output accordingly.
+// adapts the moor output accordingly.
 func consumeLessTermcapEnvs(chromaStyle *chroma.Style, chromaFormatter *chroma.Formatter) {
-	// Requested here: https://github.com/walles/moar/issues/14
+	// Requested here: https://github.com/walles/moor/issues/14
 
 	setStyle(
 		&textstyles.ManPageBold,
@@ -99,7 +99,7 @@ func consumeLessTermcapEnvs(chromaStyle *chroma.Style, chromaFormatter *chroma.F
 	// Instead we give it special treatment here and set it only if its
 	// environment variable is set.
 	//
-	// Ref: https://github.com/walles/moar/issues/171
+	// Ref: https://github.com/walles/moor/issues/171
 	envValue := os.Getenv("LESS_TERMCAP_so")
 	if envValue != "" {
 		style, err := TermcapToStyle(envValue)

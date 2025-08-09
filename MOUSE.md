@@ -1,23 +1,23 @@
 # Mouse Scrolling vs Selecting and Copying
 
-`moar` supports two mouse modes (using the `--mousemode` parameter):
+`moor` supports two mouse modes (using the `--mousemode` parameter):
 
-- `scroll` makes `moar` process mouse events from your terminal, thus enabling mouse scrolling work,
+- `scroll` makes `moor` process mouse events from your terminal, thus enabling mouse scrolling work,
 but disabling the ability to select text with mouse in the usual way. Selecting text will require using your terminal's capability to bypass mouse protocol.
 Most terminals support this capability, see [Selection workarounds for `scroll` mode](#mouse-selection-workarounds-for-scroll-mode) for details.
-- `select` makes `moar` not process mouse events. This makes selecting and copying text work, but scrolling might not be possible, depending on your terminal and its configuration.
+- `select` makes `moor` not process mouse events. This makes selecting and copying text work, but scrolling might not be possible, depending on your terminal and its configuration.
 - `auto` uses `select` on terminals where we know it won't break scrolling, and
   `scroll` on all others. [The white list lives in the
   `terminalHasArrowKeysEmulation()` function in
-  `screen.go`](https://github.com/walles/moar/blob/master/twin/screen.go).
+  `screen.go`](https://github.com/walles/moor/blob/master/twin/screen.go).
 
-The reason these tradeoffs exist is that if `moar` requests mouse events from the terminal,
+The reason these tradeoffs exist is that if `moor` requests mouse events from the terminal,
 it should process _all_ mouse events, including attempts to select text. This is the case with every console application.
 
 However, some terminals can send "fake" arrow key presses to applications which _do not_ request processing mouse events.
 This means that on those terminals, you will be better off using `--mousemode select` option, given that you also have this feature enabled (it's usually on by default).
 With this setup, both scrolling and text selecting in the usual way will work.
-To check whether this could work, simply run `moar` with option `--mousemode select` and see if scrolling still works.
+To check whether this could work, simply run `moor` with option `--mousemode select` and see if scrolling still works.
 
 ## Mouse Selection Workarounds for `scroll` Mode
 
@@ -30,7 +30,7 @@ documentation of the one you're using to get detailed up-to-date information.
 If your favorite terminal is missing, feel free to add it.
 
 > :warning: With some of these, if you made incorrect selection you can cancel it either with an <kbd>Escape</kbd> key press or with a mouse
-> click on text area. You will probably need to still hold the modifier key for this, as hitting <kbd>Escape</kbd> without it will likely exit `moar`.
+> click on text area. You will probably need to still hold the modifier key for this, as hitting <kbd>Escape</kbd> without it will likely exit `moor`.
 
 | Terminal | Solution |
 | -------- | -------- |
@@ -64,10 +64,10 @@ less /etc/passwd
 ##
 ```
 
-# `moar`'s screen initialization sequence
+# `moor`'s screen initialization sequence
 
 ```
-moar /etc/passwd /Users/johan/src/moar
+moor /etc/passwd /Users/johan/src/moor
 ^G<ESC>[30m<ESC>(B<ESC>[m^M
 <ESC>[?1049h
 <ESC>[?1006;1000h
@@ -78,7 +78,7 @@ moar /etc/passwd /Users/johan/src/moar
 
 # Analysis of `less`
 
-The line starting with `^G` is probably from from [`fish`](https://fishshell.com/) since it's the same for both `less` and `moar`.
+The line starting with `^G` is probably from from [`fish`](https://fishshell.com/) since it's the same for both `less` and `moor`.
 
 `<ESC>[?1049h` switches to the Alternate Screen Buffer, [search here for `1 0 4 9`](https://invisible-island.net/xterm/ctlseqs/ctlseqs.html#h2-The-Alternate-Screen-Buffer) for info.
 
@@ -86,7 +86,7 @@ Then `less` does `[?1h`, which apparently is [DECCKM Cursor Keys Mode, send ESC 
 
 **NOTE** that this means that `less` version 487 that comes with macOS 11.3 Big Sur doesn't even try to enable any mouse reporting, but relies on the terminal to convert scroll wheel events into arrow keypresses.
 
-# Analysis of `moar`
+# Analysis of `moor`
 
 Same as `less` up until the Alternate Screen Buffer is enabled.
 
