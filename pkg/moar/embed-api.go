@@ -74,11 +74,10 @@ func PageFromFile(name string, options Options) error {
 }
 
 func PageFromString(text string, options Options) error {
-	logs := startLogCollection()
-	defer collectLogs(logs)
-
-	pagerReader := internalReader.NewFromText(options.Title, text)
-	return pageFromReader(pagerReader, options)
+	// NOTE: Pager froze when I tried to use internalReader.NewFromText() here.
+	// If you want to try that, make sure to test it using some externa test
+	// program!
+	return PageFromStream(strings.NewReader(text), options)
 }
 
 func startLogCollection() *internal.LogWriter {

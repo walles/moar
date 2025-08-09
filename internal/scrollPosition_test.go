@@ -17,7 +17,7 @@ const screenHeight = 60
 func testCanonicalize1000(t *testing.T, withStatusBar bool, currentStartLine linemetadata.Index, lastVisibleLine linemetadata.Index) {
 	pager := Pager{}
 	pager.screen = twin.NewFakeScreen(100, screenHeight)
-	pager.reader = reader.NewFromText("test", strings.Repeat("a\n", 2000))
+	pager.reader = reader.NewFromTextForTesting("test", strings.Repeat("a\n", 2000))
 	pager.filteringReader = FilteringReader{
 		BackingReader: pager.reader,
 		FilterPattern: &pager.filterPattern,

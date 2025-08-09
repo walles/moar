@@ -119,7 +119,7 @@ type _PreHelpState struct {
 	targetLine          *linemetadata.Index
 }
 
-var _HelpReader = reader.NewFromText("Help", `
+var _HelpReader = reader.NewFromTextForTesting("Help", `
 Welcome to Moar, the nice pager!
 
 Miscellaneous

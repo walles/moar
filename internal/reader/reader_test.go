@@ -220,7 +220,7 @@ func TestGetLongLine(t *testing.T) {
 }
 
 func getReaderWithLineCount(totalLines int) *ReaderImpl {
-	return NewFromText("", strings.Repeat("x\n", totalLines))
+	return NewFromTextForTesting("", strings.Repeat("x\n", totalLines))
 }
 
 func testStatusText(t *testing.T, fromLine linemetadata.Index, toLine linemetadata.Index, totalLines int, expected string) {
@@ -309,7 +309,7 @@ func TestReadStreamDoneYesHighlighting(t *testing.T) {
 }
 
 func TestReadTextDone(t *testing.T) {
-	testMe := NewFromText("", "Johan")
+	testMe := NewFromTextForTesting("", "Johan")
 
 	assert.NilError(t, testMe.Wait())
 }

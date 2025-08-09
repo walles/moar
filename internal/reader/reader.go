@@ -477,14 +477,16 @@ func newReaderFromStream(reader io.Reader, originalFileName *string, formatter c
 	return &returnMe
 }
 
-// NewFromText creates a Reader from a block of text.
+// Testing only!! May or may not hang if run in real world scenarios.
+//
+// NewFromTextForTesting creates a Reader from a block of text.
 //
 // First parameter is the name of this Reader. This name will be displayed by
 // Moar in the bottom left corner of the screen.
 //
 // Calling Wait() on this Reader will always return immediately, no
 // asynchronous ops will be performed.
-func NewFromText(name string, text string) *ReaderImpl {
+func NewFromTextForTesting(name string, text string) *ReaderImpl {
 	noExternalNewlines := strings.Trim(text, "\n")
 	lines := []*Line{}
 	if len(noExternalNewlines) > 0 {

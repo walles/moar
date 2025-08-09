@@ -10,7 +10,7 @@ import (
 
 // Repro for not-found part of https://github.com/walles/moar/issues/182
 func TestNotFoundFindPrevious(t *testing.T) {
-	reader := reader.NewFromText("TestNotFoundFindPrevious", "apa\nbepa\ncepa\ndepa")
+	reader := reader.NewFromTextForTesting("TestNotFoundFindPrevious", "apa\nbepa\ncepa\ndepa")
 	pager := NewPager(reader)
 	pager.screen = twin.NewFakeScreen(40, 2)
 
@@ -29,7 +29,7 @@ func TestNotFoundFindPrevious(t *testing.T) {
 }
 
 func TestWrapSearchBackwards(t *testing.T) {
-	reader := reader.NewFromText("TestNotFoundFindPrevious", "gold\napa\nbepa\ngold")
+	reader := reader.NewFromTextForTesting("TestNotFoundFindPrevious", "gold\napa\nbepa\ngold")
 	pager := NewPager(reader)
 	pager.screen = twin.NewFakeScreen(40, 3)
 
