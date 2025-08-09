@@ -3,8 +3,8 @@
 set -e -o pipefail
 
 # Test that we only pass twin colors to these methods, not numbers
-grep -En 'Foreground\([1-9]' ./*.go ./*/*.go && exit 1
-grep -En 'Background\([1-9]' ./*.go ./*/*.go && exit 1
+grep -En 'Foreground\([1-9]' ./**/*.go && exit 1
+grep -En 'Background\([1-9]' ./**/*.go && exit 1
 
 # Compile test first
 echo Building sources...
@@ -57,17 +57,17 @@ function cleanup {
 trap cleanup EXIT
 
 echo Test reading from redirected stdin, writing to redirected stdout...
-./moar <moar.go >"${RESULT}"
-diff -u moar.go "${RESULT}"
+./moar <cmd/moar/moar.go >"${RESULT}"
+diff -u cmd/moar/moar.go "${RESULT}"
 
 echo Test redirecting a file by name into file by redirecting stdout...
-./moar moar.go >"${RESULT}"
-diff -u moar.go "${RESULT}"
+./moar cmd/moar/moar.go >"${RESULT}"
+diff -u cmd/moar/moar.go "${RESULT}"
 
 # Ref: https://github.com/walles/moar/issues/187
 echo Test redirecting multiple files by name into redirected stdout...
-./moar moar.go moar.go >"${RESULT}"
-diff -u <(cat moar.go moar.go) "${RESULT}"
+./moar cmd/moar/moar.go cmd/moar/moar.go >"${RESULT}"
+diff -u <(cat cmd/moar/moar.go cmd/moar/moar.go) "${RESULT}"
 
 echo Test redirecting non-existing file by name into redirected stdout...
 if ./moar does-not-exist >&/dev/null; then
@@ -76,11 +76,11 @@ if ./moar does-not-exist >&/dev/null; then
 fi
 
 echo Testing not crashing with different argument orders...
-./moar +123 moar.go >/dev/null
-./moar moar.go +123 >/dev/null
-./moar +123 --trace moar.go >/dev/null
-./moar --trace +123 moar.go >/dev/null
-./moar --trace moar.go +123 >/dev/null
+./moar +123 cmd/moar/moar.go >/dev/null
+./moar cmd/moar/moar.go +123 >/dev/null
+./moar +123 --trace cmd/moar/moar.go >/dev/null
+./moar --trace +123 cmd/moar/moar.go >/dev/null
+./moar --trace cmd/moar/moar.go +123 >/dev/null
 
 # We can only do this test if we have a terminal. This means it will be run
 # locally but not in CI. Not great, but better than nothing.

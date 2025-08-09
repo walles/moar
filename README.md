@@ -175,19 +175,11 @@ Here's one way to embed `moar` in your app:
 package main
 
 import (
-	"bytes"
-	"fmt"
-
-	"github.com/walles/moar/m"
+	"github.com/walles/moar/pkg/moar"
 )
 
 func main() {
-	buf := new(bytes.Buffer)
-	for range [99]struct{}{} {
-		fmt.Fprintln(buf, "Moar")
-	}
-
-	err := m.NewPager(m.NewReaderFromStream("Moar", buf)).Page()
+	err := moar.PageFromString("Hello, world!", moar.Options{})
 	if err != nil {
 		// Handle paging problems
 		panic(err)
@@ -195,8 +187,7 @@ func main() {
 }
 ```
 
-`m.Reader` can also be initialized using `NewReaderFromText()` or
-`NewReaderFromFilename()`.
+You can also `PageFromStream()` or `PageFromFile()`.
 
 # Developing
 
@@ -220,14 +211,14 @@ Linux, or `docker build . -f Dockerfile-test-386` (tested on macOS).
 Run microbenchmarks:
 
 ```bash
-go test -benchmem -run='^$' -bench=. . ./...
+go test -benchmem -run='^$' -bench=. ./...
 ```
 
 Profiling `BenchmarkPlainTextSearch()`. Try replacing `-alloc_objects` with
 `-alloc_space` or change the `-focus` function:
 
 ```bash
-go test -memprofilerate 1 -memprofile profile.out -benchmem -run='^$' -bench '^BenchmarkPlainTextSearch$' github.com/walles/moar/m && go tool pprof -alloc_objects -focus findFirstHit -relative_percentages -web profile.out
+go test -memprofilerate 1 -memprofile profile.out -benchmem -run='^$' -bench '^BenchmarkPlainTextSearch$' github.com/walles/moar/internal && go tool pprof -alloc_objects -focus findFirstHit -relative_percentages -web profile.out
 ```
 
 Build + run:
