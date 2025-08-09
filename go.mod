@@ -1,4 +1,4 @@
-module github.com/walles/moar
+module github.com/walles/moor
 
 go 1.22
 

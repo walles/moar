@@ -3,8 +3,8 @@ package internal
 import (
 	"testing"
 
-	"github.com/walles/moar/internal/reader"
-	"github.com/walles/moar/twin"
+	"github.com/walles/moor/internal/reader"
+	"github.com/walles/moor/twin"
 	"gotest.tools/v3/assert"
 )
 
@@ -106,7 +106,7 @@ func TestScrollToNextSearchHit_WrapAfterFound(t *testing.T) {
 	assert.Equal(t, 4, pager.lineIndex().Index())
 }
 
-// Ref: https://github.com/walles/moar/issues/152
+// Ref: https://github.com/walles/moor/issues/152
 func Test152(t *testing.T) {
 	// Show a pager on a five lines terminal
 	reader := reader.NewFromTextForTesting("", "a\nab\nabc\nabcd\nabcde\nabcdef\n")

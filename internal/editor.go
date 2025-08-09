@@ -9,14 +9,14 @@ import (
 	"strings"
 
 	log "github.com/sirupsen/logrus"
-	"github.com/walles/moar/internal/linemetadata"
-	"github.com/walles/moar/internal/reader"
+	"github.com/walles/moor/internal/linemetadata"
+	"github.com/walles/moor/internal/reader"
 )
 
 // Dump the reader lines into a read-only temp file and return the absolute file
 // name.
 func dumpToTempFile(reader *reader.ReaderImpl) (string, error) {
-	tempFile, err := os.CreateTemp("", "moar-contents-")
+	tempFile, err := os.CreateTemp("", "moor-contents-")
 	if err != nil {
 		return "", err
 	}
@@ -120,7 +120,7 @@ func handleEditingRequest(p *Pager) {
 	editorPath, err := exec.LookPath(firstWord)
 	if err != nil {
 		// FIXME: Show a message in the status bar instead? Nothing wrong with
-		// moar here.
+		// moor here.
 		log.Warn("Failed to find editor "+firstWord+" from $"+editorEnv+": ", err)
 		return
 	}
@@ -129,7 +129,7 @@ func handleEditingRequest(p *Pager) {
 	err = errUnlessExecutable(editorPath)
 	if err != nil {
 		// FIXME: Show a message in the status bar instead? Nothing wrong with
-		// moar here.
+		// moor here.
 		log.Warn("Editor from {} not executable: {}", editorEnv, err)
 		return
 	}
@@ -171,7 +171,7 @@ func handleEditingRequest(p *Pager) {
 
 		if runtime.GOOS == "windows" {
 			// Don't touch command.Stdin on Windows:
-			// https://github.com/walles/moar/issues/281#issuecomment-2953384726
+			// https://github.com/walles/moor/issues/281#issuecomment-2953384726
 		} else {
 			// Since os.Stdin might come from a pipe, we can't trust that. Instead,
 			// we tell the editor to read from os.Stdout, which points to the

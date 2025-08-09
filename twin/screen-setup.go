@@ -138,12 +138,12 @@ func (screen *UnixScreen) setupTtyInTtyOut() error {
 	// Dup stdout so we can close stdin in Close() without closing stdout.
 	// Before this dupping, we crashed on using --quit-if-one-screen.
 	//
-	// Ref:https://github.com/walles/moar/issues/214
+	// Ref:https://github.com/walles/moor/issues/214
 	stdoutDupFd, err := syscall.Dup(int(os.Stdout.Fd()))
 	if err != nil {
 		return err
 	}
-	stdoutDup := os.NewFile(uintptr(stdoutDupFd), "moar-stdout-dup")
+	stdoutDup := os.NewFile(uintptr(stdoutDupFd), "moor-stdout-dup")
 
 	// os.Stdout is a stream that goes to our terminal window.
 	//

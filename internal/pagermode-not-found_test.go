@@ -3,12 +3,12 @@ package internal
 import (
 	"testing"
 
-	"github.com/walles/moar/internal/reader"
-	"github.com/walles/moar/twin"
+	"github.com/walles/moor/internal/reader"
+	"github.com/walles/moor/twin"
 	"gotest.tools/v3/assert"
 )
 
-// Repro for not-found part of https://github.com/walles/moar/issues/182
+// Repro for not-found part of https://github.com/walles/moor/issues/182
 func TestNotFoundFindPrevious(t *testing.T) {
 	reader := reader.NewFromTextForTesting("TestNotFoundFindPrevious", "apa\nbepa\ncepa\ndepa")
 	pager := NewPager(reader)

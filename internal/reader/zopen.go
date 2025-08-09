@@ -53,7 +53,7 @@ func ZOpen(filename string) (io.ReadCloser, string, error) {
 
 		newName := strings.TrimSuffix(filename, ".gz")
 
-		// Ref: https://github.com/walles/moar/issues/194
+		// Ref: https://github.com/walles/moor/issues/194
 		if strings.HasSuffix(newName, ".tgz") {
 			newName = strings.TrimSuffix(newName, ".tgz") + ".tar"
 		}
@@ -99,7 +99,7 @@ func ZOpen(filename string) (io.ReadCloser, string, error) {
 // compression will be automatically detected. Uncompressed streams will be
 // returned as-is.
 //
-// Ref: https://github.com/walles/moar/issues/261
+// Ref: https://github.com/walles/moor/issues/261
 func ZReader(input io.Reader) (io.Reader, error) {
 	// Read the first 6 bytes to determine the compression type
 	firstBytes := make([]byte, 6)

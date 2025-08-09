@@ -9,10 +9,10 @@ import (
 
 	"github.com/alecthomas/chroma/v2"
 	log "github.com/sirupsen/logrus"
-	"github.com/walles/moar/internal/linemetadata"
-	"github.com/walles/moar/internal/reader"
-	"github.com/walles/moar/internal/textstyles"
-	"github.com/walles/moar/twin"
+	"github.com/walles/moor/internal/linemetadata"
+	"github.com/walles/moor/internal/reader"
+	"github.com/walles/moor/internal/textstyles"
+	"github.com/walles/moor/twin"
 )
 
 type PagerMode interface {
@@ -76,10 +76,10 @@ type Pager struct {
 
 	WrapLongLines bool
 
-	// Ref: https://github.com/walles/moar/issues/113
+	// Ref: https://github.com/walles/moor/issues/113
 	QuitIfOneScreen bool
 
-	// Ref: https://github.com/walles/moar/issues/94
+	// Ref: https://github.com/walles/moor/issues/94
 	ScrollLeftHint  twin.StyledRune
 	ScrollRightHint twin.StyledRune
 
@@ -107,7 +107,7 @@ type Pager struct {
 
 	// Bookmarks that you can come back to.
 	//
-	// Ref: https://github.com/walles/moar/issues/175
+	// Ref: https://github.com/walles/moor/issues/175
 	marks map[rune]scrollPosition
 
 	AfterExit func() error
@@ -120,7 +120,7 @@ type _PreHelpState struct {
 }
 
 var _HelpReader = reader.NewFromTextForTesting("Help", `
-Welcome to Moar, the nice pager!
+Welcome to Moor, the nice pager!
 
 Miscellaneous
 -------------
@@ -167,17 +167,17 @@ Searching
 
 Reporting bugs
 --------------
-File issues at https://github.com/walles/moar/issues, or post
+File issues at https://github.com/walles/moor/issues, or post
 questions to johan.walles@gmail.com.
 
-Installing Moar as your default pager
+Installing Moor as your default pager
 -------------------------------------
 Put the following line in your ~/.bashrc, ~/.bash_profile or ~/.zshrc:
-  export PAGER=moar
+  export PAGER=moor
 
 Source Code
 -----------
-Available at https://github.com/walles/moar/.
+Available at https://github.com/walles/moor/.
 `)
 
 // NewPager creates a new Pager with default settings
@@ -233,7 +233,7 @@ func (p *Pager) getLineNumberPrefixLength(lineNumber linemetadata.Number) int {
 	if length < 4 {
 		// 4 = space for 3 digits followed by one whitespace
 		//
-		// https://github.com/walles/moar/issues/38
+		// https://github.com/walles/moor/issues/38
 		return 4
 	}
 
@@ -430,7 +430,7 @@ func (p *Pager) StartPaging(screen twin.Screen, chromaStyle *chroma.Style, chrom
 				width, height := p.screen.Size()
 				if fitsOnOneScreen(p.reader, width, height-p.DeInitFalseMargin) {
 					// Ref:
-					// https://github.com/walles/moar/issues/113#issuecomment-1368294132
+					// https://github.com/walles/moor/issues/113#issuecomment-1368294132
 					p.ShowLineNumbers = false // Requires a redraw to take effect, see below
 					p.DeInit = false
 					p.quit = true

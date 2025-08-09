@@ -10,29 +10,29 @@ set -e -o pipefail
 read -r -p "Press enter to start testing, then q to exit the pager"
 clear
 # With --trace we always get a non-zero exit code
-./moar.sh --trace moar.sh || true
+./moor.sh --trace moor.sh || true
 
 echo
 read -r -p "Press enter to continue, then q to exit the pager"
 clear
-./moar.sh --trace <moar.sh || true
+./moor.sh --trace <moor.sh || true
 
 echo
 read -r -p "Press enter to continue, then v to launch a terminal editor, then exit that"
 clear
-EDITOR=nano ./moar.sh --trace moar.sh || true
+EDITOR=nano ./moor.sh --trace moor.sh || true
 
 echo
 read -r -p "Press enter to continue, then v to launch a terminal editor, then exit that"
 clear
-EDITOR=nano ./moar.sh --trace <moar.sh || true
+EDITOR=nano ./moor.sh --trace <moor.sh || true
 
 echo
 read -r -p "Press enter to continue, then v to launch a GUI editor, then exit that"
 clear
-EDITOR="code -w" ./moar.sh --trace moar.sh || true
+EDITOR="code -w" ./moor.sh --trace moor.sh || true
 
 echo
 read -r -p "Press enter to continue, then v to launch a GUI editor, then exit that"
 clear
-EDITOR="code -w" ./moar.sh --trace <moar.sh || true
+EDITOR="code -w" ./moor.sh --trace <moor.sh || true

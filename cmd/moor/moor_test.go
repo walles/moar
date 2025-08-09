@@ -3,7 +3,7 @@ package main
 import (
 	"testing"
 
-	"github.com/walles/moar/twin"
+	"github.com/walles/moor/twin"
 	"gotest.tools/v3/assert"
 )
 
@@ -18,7 +18,7 @@ func TestParseScrollHint(t *testing.T) {
 
 func TestPageOneInputFile(t *testing.T) {
 	pager, screen, _, formatter, _, err := pagerFromArgs(
-		[]string{"", "moar_test.go"},
+		[]string{"", "moor_test.go"},
 		func(_ twin.MouseMode, _ twin.ColorCount) (twin.Screen, error) {
 			return twin.NewFakeScreen(80, 24), nil
 		},

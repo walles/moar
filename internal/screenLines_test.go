@@ -7,9 +7,9 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
-	"github.com/walles/moar/internal/linemetadata"
-	"github.com/walles/moar/internal/reader"
-	"github.com/walles/moar/twin"
+	"github.com/walles/moor/internal/linemetadata"
+	"github.com/walles/moor/internal/reader"
+	"github.com/walles/moor/twin"
 	"gotest.tools/v3/assert"
 )
 
@@ -228,7 +228,7 @@ func TestWrapping(t *testing.T) {
 	}, "\n"))
 }
 
-// Repro for https://github.com/walles/moar/issues/153
+// Repro for https://github.com/walles/moor/issues/153
 func TestOneLineTerminal(t *testing.T) {
 	pager := Pager{
 		// Single line terminal window, this is what we're testing

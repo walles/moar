@@ -3,7 +3,7 @@
 
 FROM golang:1.20
 
-WORKDIR /moar
+WORKDIR /moor
 
 COPY go.mod go.sum ./
 RUN go mod download

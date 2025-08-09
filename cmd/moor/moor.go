@@ -18,26 +18,50 @@ import (
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/term"
 
-	"github.com/walles/moar/internal"
-	"github.com/walles/moar/internal/linemetadata"
-	"github.com/walles/moar/internal/reader"
-	"github.com/walles/moar/internal/textstyles"
-	"github.com/walles/moar/twin"
+	"github.com/walles/moor/internal"
+	"github.com/walles/moor/internal/linemetadata"
+	"github.com/walles/moor/internal/reader"
+	"github.com/walles/moor/internal/textstyles"
+	"github.com/walles/moor/twin"
 )
 
 var versionString = ""
 
+// Which environment variable should we get our config from?
+//
+// Prefer MOOR, but if that's not set, look at MOAR as well for backwards
+// compatibility reasons.
+func moorEnvVarName() string {
+	moorEnvSet := len(strings.TrimSpace(os.Getenv("MOOR"))) > 0
+	if moorEnvSet {
+		return "MOOR"
+	}
+
+	moarEnvSet := len(strings.TrimSpace(os.Getenv("MOAR"))) > 0
+	if moarEnvSet {
+		// Legacy, keep for backwards compatibility
+		return "MOAR"
+	}
+
+	// This is the default
+	return "MOOR"
+}
+
 // printProblemsHeader prints bug reporting information to stderr
 func printProblemsHeader() {
-	fmt.Fprintln(os.Stderr, "Please post the following report at <https://github.com/walles/moar/issues>,")
+	fmt.Fprintln(os.Stderr, "Please post the following report at <https://github.com/walles/moor/issues>,")
 	fmt.Fprintln(os.Stderr, "or e-mail it to johan.walles@gmail.com.")
 	fmt.Fprintln(os.Stderr)
-	fmt.Fprintln(os.Stderr, "Version     :", getVersion())
-	fmt.Fprintln(os.Stderr, "LANG        :", os.Getenv("LANG"))
-	fmt.Fprintln(os.Stderr, "TERM        :", os.Getenv("TERM"))
-	fmt.Fprintln(os.Stderr, "MOAR        :", os.Getenv("MOAR"))
-	fmt.Fprintln(os.Stderr, "EDITOR      :", os.Getenv("EDITOR"))
-	fmt.Fprintln(os.Stderr, "TERM_PROGRAM:", os.Getenv("TERM_PROGRAM"))
+	fmt.Fprintln(os.Stderr, "Version      :", getVersion())
+	fmt.Fprintln(os.Stderr, "LANG         :", os.Getenv("LANG"))
+	fmt.Fprintln(os.Stderr, "TERM         :", os.Getenv("TERM"))
+	if moorEnvVarName() == "MOAR" {
+		fmt.Fprintln(os.Stderr, "MOAR (legacy):", os.Getenv("MOAR"))
+	} else {
+		fmt.Fprintln(os.Stderr, "MOOR         :", os.Getenv("MOOR"))
+	}
+	fmt.Fprintln(os.Stderr, "EDITOR       :", os.Getenv("EDITOR"))
+	fmt.Fprintln(os.Stderr, "TERM_PROGRAM :", os.Getenv("TERM_PROGRAM"))
 	fmt.Fprintln(os.Stderr)
 	fmt.Fprintln(os.Stderr, "GOOS    :", runtime.GOOS)
 	fmt.Fprintln(os.Stderr, "GOARCH  :", runtime.GOARCH)
@@ -237,7 +261,7 @@ func russiaNotSupported() {
 
 	fmt.Fprintln(os.Stderr, "ERROR: russia not supported (but Russian is!)")
 	fmt.Fprintln(os.Stderr)
-	fmt.Fprintln(os.Stderr, "Options for using moar in Russian:")
+	fmt.Fprintln(os.Stderr, "Options for using moor in Russian:")
 	fmt.Fprintln(os.Stderr, "* Change your language setting to ru_UA.UTF-8")
 	fmt.Fprintln(os.Stderr, "* Set CRIMEA=Ukraine in your environment")
 	fmt.Fprintln(os.Stderr, "* russia leaves Ukraine")
@@ -249,7 +273,7 @@ func russiaNotSupported() {
 // Before paging, "man" first checks the terminal width and formats the man page
 // to fit that width.
 //
-// Then, if moar adds line numbers, the rightmost part of the man page won't be
+// Then, if moor adds line numbers, the rightmost part of the man page won't be
 // visible.
 //
 // So we try to detect showing man pages, and in that case disable line numbers
@@ -298,7 +322,7 @@ func pagerFromArgs(
 	)
 	flagSet.SetOutput(io.Discard) // We want to do our own printing
 
-	printVersion := flagSet.Bool("version", false, "Prints the moar version number")
+	printVersion := flagSet.Bool("version", false, "Prints the moor version number")
 	debug := flagSet.Bool("debug", false, "Print debug logs after exiting")
 	trace := flagSet.Bool("trace", false, "Print trace logs after exiting")
 
@@ -324,7 +348,7 @@ func pagerFromArgs(
 	reFormat := flagSet.Bool("reformat", false, "Reformat some input files (JSON)")
 	flagSet.Bool("no-reformat", true, "No effect, kept for compatibility. See --reformat")
 	quitIfOneScreen := flagSet.Bool("quit-if-one-screen", false, "Don't page if contents fits on one screen. Affected by --no-clear-on-exit-margin.")
-	noClearOnExit := flagSet.Bool("no-clear-on-exit", false, "Retain screen contents when exiting moar")
+	noClearOnExit := flagSet.Bool("no-clear-on-exit", false, "Retain screen contents when exiting moor")
 	noClearOnExitMargin := flagSet.Int("no-clear-on-exit-margin", 1,
 		"Number of lines to leave for your shell prompt, defaults to 1")
 	statusBarStyle := flagSetFunc(flagSet, "statusbar", internal.STATUSBAR_STYLE_INVERSE,
@@ -342,17 +366,17 @@ func pagerFromArgs(
 		flagSet,
 		"mousemode",
 		twin.MouseModeAuto,
-		"Mouse `mode`: auto, select or scroll: https://github.com/walles/moar/blob/master/MOUSE.md",
+		"Mouse `mode`: auto, select or scroll: https://github.com/walles/moor/blob/master/MOUSE.md",
 		parseMouseMode,
 	)
 
 	// Combine flags from environment and from command line
 	flags := args[1:]
-	moarEnv := strings.Trim(os.Getenv("MOAR"), " ")
-	if len(moarEnv) > 0 {
+	moorEnv := strings.TrimSpace(os.Getenv(moorEnvVarName()))
+	if len(moorEnv) > 0 {
 		// FIXME: It would be nice if we could debug log that we're doing this,
 		// but logging is not yet set up and depends on command line parameters.
-		flags = append(strings.Fields(moarEnv), flags...)
+		flags = append(strings.Fields(moorEnv), flags...)
 	}
 
 	targetLine, remainingArgs := getTargetLine(flags)
@@ -380,7 +404,7 @@ func pagerFromArgs(
 		fmt.Fprintln(os.Stderr, "ERROR:", boldErrorMessage)
 		fmt.Fprintln(os.Stderr)
 		printCommandline(os.Stderr)
-		fmt.Fprintln(os.Stderr, "For help, run: \x1b[1mmoar --help\x1b[m")
+		fmt.Fprintln(os.Stderr, "For help, run: \x1b[1mmoor --help\x1b[m")
 
 		os.Exit(1)
 	}
@@ -407,7 +431,7 @@ func pagerFromArgs(
 		fmt.Fprintln(os.Stderr, "ERROR: Expected exactly one filename, or data piped from stdin")
 		fmt.Fprintln(os.Stderr)
 		printCommandline(os.Stderr)
-		fmt.Fprintln(os.Stderr, "For help, run: \x1b[1mmoar --help\x1b[m")
+		fmt.Fprintln(os.Stderr, "For help, run: \x1b[1mmoor --help\x1b[m")
 
 		os.Exit(1)
 	}
@@ -425,7 +449,7 @@ func pagerFromArgs(
 		fmt.Fprintln(os.Stderr, "ERROR: Filename or input pipe required")
 		fmt.Fprintln(os.Stderr)
 		printCommandline(os.Stderr)
-		fmt.Fprintln(os.Stderr, "For help, run: \x1b[1mmoar --help\x1b[m")
+		fmt.Fprintln(os.Stderr, "For help, run: \x1b[1mmoor --help\x1b[m")
 		os.Exit(1)
 	}
 
@@ -448,7 +472,7 @@ func pagerFromArgs(
 		fmt.Fprintln(os.Stderr, "ERROR: Expected exactly one filename, or data piped from stdin")
 		fmt.Fprintln(os.Stderr)
 		printCommandline(os.Stderr)
-		fmt.Fprintln(os.Stderr, "For help, run: \x1b[1mmoar --help\x1b[m")
+		fmt.Fprintln(os.Stderr, "For help, run: \x1b[1mmoor --help\x1b[m")
 
 		os.Exit(1)
 	}
@@ -482,7 +506,7 @@ func pagerFromArgs(
 		}
 	}
 
-	// If the user is doing "sudo something | moar" we can't show the UI until
+	// If the user is doing "sudo something | moor" we can't show the UI until
 	// we start getting data, otherwise we'll mess up sudo's password prompt.
 	readerImpl.AwaitFirstByte()
 
@@ -490,7 +514,7 @@ func pagerFromArgs(
 	// can set up the UI.
 	screen, err := newScreen(*mouseMode, *terminalColorsCount)
 	if err != nil {
-		// Ref: https://github.com/walles/moar/issues/149
+		// Ref: https://github.com/walles/moor/issues/149
 		log.Info("Failed to set up screen for paging, pumping to stdout instead: ", err)
 
 		readerImpl.PumpToStdout()

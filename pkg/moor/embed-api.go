@@ -1,4 +1,4 @@
-package moar
+package moor
 
 import (
 	"fmt"
@@ -9,16 +9,16 @@ import (
 	"github.com/alecthomas/chroma/v2"
 	"github.com/alecthomas/chroma/v2/formatters"
 	log "github.com/sirupsen/logrus"
-	"github.com/walles/moar/internal"
-	internalReader "github.com/walles/moar/internal/reader"
-	"github.com/walles/moar/twin"
+	"github.com/walles/moor/internal"
+	internalReader "github.com/walles/moor/internal/reader"
+	"github.com/walles/moor/twin"
 	"golang.org/x/term"
 )
 
 const logLevel = log.WarnLevel
 
 // If you feel some option is missing, request more options at
-// https://github.com/walles/moar/issues.
+// https://github.com/walles/moor/issues.
 type Options struct {
 	// Name displayed in the bottom left corner of the pager.
 	//

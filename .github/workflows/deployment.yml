@@ -6,10 +6,14 @@ on:
 
 jobs:
   homebrew:
+    # Remove this line once https://formulae.brew.sh/formula/moor is up and
+    # running to re-enable auto updating the Brew formula:
+    if: false
+
     runs-on: ubuntu-latest
     steps:
       - name: Bump Homebrew formula
         uses: dawidd6/action-homebrew-bump-formula@v3
         with:
           token: ${{secrets.JOHAN_GITHUB_API_TOKEN}}
-          formula: moar
+          formula: moor

@@ -3,8 +3,8 @@ package internal
 import (
 	"fmt"
 
-	"github.com/walles/moar/internal/linemetadata"
-	"github.com/walles/moar/internal/reader"
+	"github.com/walles/moor/internal/linemetadata"
+	"github.com/walles/moor/internal/reader"
 )
 
 // Please create using newScrollPosition(name)
@@ -420,7 +420,7 @@ func (si *scrollPositionInternal) getMaxNumberPrefixLength(pager *Pager) int {
 	//
 	// Let's improve on demand.
 	var index linemetadata.Index
-	// Ref: https://github.com/walles/moar/issues/198
+	// Ref: https://github.com/walles/moor/issues/198
 	if si.lineIndex != nil {
 		index = *si.lineIndex
 	}

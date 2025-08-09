@@ -6,8 +6,8 @@ import (
 
 	"gotest.tools/v3/assert"
 
-	"github.com/walles/moar/internal/reader"
-	"github.com/walles/moar/twin"
+	"github.com/walles/moor/internal/reader"
+	"github.com/walles/moor/twin"
 )
 
 func tokenize(input string) []twin.StyledRune {

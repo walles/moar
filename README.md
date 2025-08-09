@@ -1,17 +1,17 @@
-[![Linux CI](https://github.com/walles/moar/actions/workflows/linux-ci.yml/badge.svg?branch=master)](https://github.com/walles/moar/actions/workflows/linux-ci.yml?query=branch%3Amaster)
-[![Windows CI](https://github.com/walles/moar/actions/workflows/windows-ci.yml/badge.svg?branch=master)](https://github.com/walles/moar/actions/workflows/windows-ci.yml?query=branch%3Amaster)
+[![Linux CI](https://github.com/walles/moor/actions/workflows/linux-ci.yml/badge.svg?branch=master)](https://github.com/walles/moor/actions/workflows/linux-ci.yml?query=branch%3Amaster)
+[![Windows CI](https://github.com/walles/moor/actions/workflows/windows-ci.yml/badge.svg?branch=master)](https://github.com/walles/moor/actions/workflows/windows-ci.yml?query=branch%3Amaster)
 
-Moar is a pager. It reads and displays UTF-8 encoded text from files or
+Moor is a pager. It reads and displays UTF-8 encoded text from files or
 pipelines.
 
-`moar` is designed to just do the right thing without any configuration:
+`moor` is designed to just do the right thing without any configuration:
 
-![Moar displaying its own source code](screenshot.png)
+![Moor displaying its own source code](screenshot.png)
 
-The intention is that Moar should be trivial to get into if you have previously
+The intention is that Moor should be trivial to get into if you have previously
 been using [Less](http://www.greenwoodsoftware.com/less/). If you come from Less
-and find Moar confusing or hard to migrate to, [please report
-it](https://github.com/walles/moar/issues)!
+and find Moor confusing or hard to migrate to, [please report
+it](https://github.com/walles/moor/issues)!
 
 Doing the right thing includes:
 
@@ -32,30 +32,30 @@ Doing the right thing includes:
   `git diff` [| `riff`](https://github.com/walles/riff) for example)
 - Supports UTF-8 input and output
 - **Transparent decompression** when viewing [compressed text
-  files](https://github.com/walles/moar/issues/97#issuecomment-1191415680)
-  (`.gz`, `.bz2`, `.xz`, `.zst`, `.zstd`) or [streams](https://github.com/walles/moar/issues/261)
+  files](https://github.com/walles/moor/issues/97#issuecomment-1191415680)
+  (`.gz`, `.bz2`, `.xz`, `.zst`, `.zstd`) or [streams](https://github.com/walles/moor/issues/261)
 - The position in the file is always shown
 - Supports **word wrapping** (on actual word boundaries) if requested using
   `--wrap` or by pressing <kbd>w</kbd>
-- [**Follows output** as long as you are on the last line](https://github.com/walles/moar/issues/108#issuecomment-1331743242),
+- [**Follows output** as long as you are on the last line](https://github.com/walles/moor/issues/108#issuecomment-1331743242),
   just like `tail -f`
 - Renders [terminal
   hyperlinks](https://gist.github.com/egmontkob/eb114294efbcd5adb1944c9f3cb5feda)
   properly
 - **Mouse Scrolling** works out of the box (but
-  [look here for tradeoffs](https://github.com/walles/moar/blob/master/MOUSE.md))
+  [look here for tradeoffs](https://github.com/walles/moor/blob/master/MOUSE.md))
 
-[For compatibility reasons](https://github.com/walles/moar/issues/14), `moar`
+[For compatibility reasons](https://github.com/walles/moor/issues/14), `moor`
 uses the formats declared in these environment variables if present:
 
 - `LESS_TERMCAP_md`: Man page <b>bold</b>
 - `LESS_TERMCAP_us`: Man page <u>underline</u>
-- `LESS_TERMCAP_so`: [Status bar and search hits](https://github.com/walles/moar/issues/114)
+- `LESS_TERMCAP_so`: [Status bar and search hits](https://github.com/walles/moor/issues/114)
 
-For configurability reasons, `moar` reads extra command line options from the
-`MOAR` environment variable.
+For configurability reasons, `moor` reads extra command line options from the
+`MOOR` environment variable.
 
-Moar is used as the default pager by:
+Moor is used as the default pager by:
 
 - [`px` / `ptop`](https://github.com/walles/px), `ps` and `top` for human beings
 - [`riff`](https://github.com/walles/riff), a diff filter highlighting which line parts have changed
@@ -63,6 +63,8 @@ Moar is used as the default pager by:
 # Installing
 
 ## Using [Homebrew](https://brew.sh/)
+
+:warning: Installs legacy `moar` binary.
 
 **Both macOS and Linux** users can use Homebrew to install. See below for distro
 specific instructions.
@@ -79,6 +81,8 @@ brew upgrade
 
 ## Using [MacPorts](https://www.macports.org/)
 
+:warning: Installs legacy `moar` binary.
+
 ```sh
 sudo port install moar
 ```
@@ -86,6 +90,8 @@ sudo port install moar
 More info [here](https://ports.macports.org/port/moar/).
 
 ## Using [Gentoo](https://gentoo.org/)
+
+:warning: Installs legacy `moar` binary.
 
 ```sh
 emerge --ask --verbose sys-apps/moar
@@ -95,6 +101,8 @@ More info [here](https://packages.gentoo.org/packages/sys-apps/moar).
 
 ## Using [Arch Linux](https://archlinux.org/)
 
+:warning: Installs legacy `moar` binary.
+
 ```sh
 yay -S moar
 ```
@@ -103,10 +111,10 @@ More info [here](https://aur.archlinux.org/packages/moar-git).
 
 ## Debian / Ubuntu
 
-Nobody has stepped up to maintain `moar` for Debian.
+Nobody has stepped up to maintain `moor` for Debian.
 
-If you want to [maintain the `moar` packaging for
-Debian](https://github.com/walles/moar/issues/137), that would be very welcome!
+If you want to [maintain the `moor` packaging for
+Debian](https://github.com/walles/moor/issues/137), that would be very welcome!
 
 Otherwise use Homebrew (see above) or read on for manual install instructions.
 
@@ -115,71 +123,71 @@ Otherwise use Homebrew (see above) or read on for manual install instructions.
 ### Using `go`
 
 This will [install
-`moar` into `$GOPATH/bin`](<(https://manpages.debian.org/testing/golang-go/go-install.1.en.html)>)
+`moor` into `$GOPATH/bin`](<(https://manpages.debian.org/testing/golang-go/go-install.1.en.html)>)
 :
 
 ```sh
-go install github.com/walles/moar@latest
+go install github.com/walles/moor@latest
 ```
 
 NOTE: If you got here because there is no binary for your platform,
-[please consider packaging `moar`](#packaging).
+[please consider packaging `moor`](#packaging).
 
 ### Downloading binaries
 
-1. Download `moar` for your platform from
-   <https://github.com/walles/moar/releases/latest>
-1. `chmod a+x moar-*-*-*`
-1. `sudo mv moar-*-*-* /usr/local/bin/moar`
+1. Download `moor` for your platform from
+   <https://github.com/walles/moor/releases/latest>
+1. `chmod a+x moor-*-*-*`
+1. `sudo mv moor-*-*-* /usr/local/bin/moor`
 
-And now you can just invoke `moar` from the prompt!
+And now you can just invoke `moor` from the prompt!
 
-Try `moar --help` to see options.
+Try `moor --help` to see options.
 
 # Configuring
 
-Do `moar --help` for an up to date list of options.
+Do `moor --help` for an up to date list of options.
 
-Environment variable `MOAR` can be used to set default options.
+Environment variable `MOOR` can be used to set default options.
 
 For example:
 
 ```bash
-export MOAR='--statusbar=bold --no-linenumbers'
+export MOOR='--statusbar=bold --no-linenumbers'
 ```
 
-## Setting `moar` as your default pager
+## Setting `moor` as your default pager
 
 Set it as your default pager by adding...
 
 ```bash
-export PAGER=/usr/local/bin/moar
+export PAGER=/usr/local/bin/moor
 ```
 
 ... to your `.bashrc`.
 
 # Issues
 
-Issues are tracked [here](https://github.com/walles/moar/issues), or
+Issues are tracked [here](https://github.com/walles/moor/issues), or
 you can send questions to <johan.walles@gmail.com>.
 
 # Packaging
 
-If you package `moar`, do include [the man page](moar.1) in your package.
+If you package `moor`, do include [the man page](moor.1) in your package.
 
 # Embedding
 
-Here's one way to embed `moar` in your app:
+Here's one way to embed `moor` in your app:
 
 ```go
 package main
 
 import (
-	"github.com/walles/moar/pkg/moar"
+	"github.com/walles/moor/pkg/moor"
 )
 
 func main() {
-	err := moar.PageFromString("Hello, world!", moar.Options{})
+	err := moor.PageFromString("Hello, world!", moor.Options{})
 	if err != nil {
 		// Handle paging problems
 		panic(err)
@@ -218,13 +226,13 @@ Profiling `BenchmarkPlainTextSearch()`. Try replacing `-alloc_objects` with
 `-alloc_space` or change the `-focus` function:
 
 ```bash
-go test -memprofilerate 1 -memprofile profile.out -benchmem -run='^$' -bench '^BenchmarkPlainTextSearch$' github.com/walles/moar/internal && go tool pprof -alloc_objects -focus findFirstHit -relative_percentages -web profile.out
+go test -memprofilerate 1 -memprofile profile.out -benchmem -run='^$' -bench '^BenchmarkPlainTextSearch$' github.com/walles/moor/internal && go tool pprof -alloc_objects -focus findFirstHit -relative_percentages -web profile.out
 ```
 
 Build + run:
 
 ```bash
-./moar.sh ...
+./moor.sh ...
 ```
 
 Install (into `/usr/local/bin`) from source:
@@ -235,7 +243,7 @@ Install (into `/usr/local/bin`) from source:
 
 # Making a new Release
 
-Make sure that [screenshot.png](screenshot.png) matches moar's current UI.
+Make sure that [screenshot.png](screenshot.png) matches moor's current UI.
 If it doesn't, scale a window to 81x16 characters and make a new one.
 
 Execute `release.sh` and follow instructions.
@@ -244,7 +252,7 @@ Execute `release.sh` and follow instructions.
 
 - Enable exiting using ^c (without restoring the screen).
 
-- Start at a certain line if run as `moar file.txt:42`
+- Start at a certain line if run as `moor file.txt:42`
 
 - Handle search hits to the right of the right screen edge. Searching forwards
   should move first right, then to the left edge and down. Searching backwards
@@ -260,7 +268,7 @@ Execute `release.sh` and follow instructions.
 
 - Add `>` markers at the end of lines being cut because they are too long
 
-- Doing moar on an arbitrary binary (like `/bin/ls`) should put all
+- Doing moor on an arbitrary binary (like `/bin/ls`) should put all
   line-continuation markers at the rightmost column. This really means our
   truncation code must work even with things like tabs and various control
   characters.
@@ -277,7 +285,7 @@ Execute `release.sh` and follow instructions.
 
 - Remedy all FIXMEs in this README file
 
-- Release the `go` version as the new `moar`, replacing the previous Ruby
+- Release the `go` version as the new `moor`, replacing the previous Ruby
   implementation
 
 - Add licensing information (same as for the Ruby branch)
@@ -291,7 +299,7 @@ Execute `release.sh` and follow instructions.
 - Add spinners while file is still loading
 
 - Make `tail -f /dev/null` exit properly, fix
-  <https://github.com/walles/moar/issues/7>.
+  <https://github.com/walles/moor/issues/7>.
 
 - Showing unicode search hits should highlight the correct chars
 

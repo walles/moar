@@ -81,7 +81,7 @@ Date:   Thu Oct 24 20:45:40 2013 +0200
 [31m-[m
  * Enable pass-through operation unless $stdout.isatty()[m
  [m
- * Doing moar.rb on an arbitrary binary (like /bin/ls) should put all[m
+ * Doing moor.rb on an arbitrary binary (like /bin/ls) should put all[m
 [36m@@ -60,7 +67,8 @@[m [mTODO (in some order):[m
    various control characters.[m
  [m

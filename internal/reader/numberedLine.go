@@ -3,9 +3,9 @@ package reader
 import (
 	"regexp"
 
-	"github.com/walles/moar/internal/linemetadata"
-	"github.com/walles/moar/internal/textstyles"
-	"github.com/walles/moar/twin"
+	"github.com/walles/moor/internal/linemetadata"
+	"github.com/walles/moor/internal/textstyles"
+	"github.com/walles/moor/twin"
 )
 
 type NumberedLine struct {

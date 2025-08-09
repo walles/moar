@@ -17,8 +17,8 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/walles/moar/internal/linemetadata"
-	"github.com/walles/moar/internal/util"
+	"github.com/walles/moor/internal/linemetadata"
+	"github.com/walles/moor/internal/util"
 
 	"github.com/alecthomas/chroma/v2"
 	"github.com/alecthomas/chroma/v2/lexers"
@@ -112,7 +112,7 @@ type ReaderImpl struct {
 
 	// Because we don't want to consume infinitely.
 	//
-	// Ref: https://github.com/walles/moar/issues/296
+	// Ref: https://github.com/walles/moor/issues/296
 	pauseAfterLines        int
 	pauseAfterLinesUpdated chan bool
 
@@ -180,7 +180,7 @@ func (reader *ReaderImpl) readStream(stream io.Reader, formatter chroma.Formatte
 	}
 
 	// Tail the file if the stream is coming from a file.
-	// Ref: https://github.com/walles/moar/issues/224
+	// Ref: https://github.com/walles/moor/issues/224
 	err := reader.tailFile()
 	if err != nil {
 		log.Warn("Failed to tail file: ", err)
@@ -482,7 +482,7 @@ func newReaderFromStream(reader io.Reader, originalFileName *string, formatter c
 // NewFromTextForTesting creates a Reader from a block of text.
 //
 // First parameter is the name of this Reader. This name will be displayed by
-// Moar in the bottom left corner of the screen.
+// Moor in the bottom left corner of the screen.
 //
 // Calling Wait() on this Reader will always return immediately, no
 // asynchronous ops will be performed.
@@ -512,7 +512,7 @@ func NewFromTextForTesting(name string, text string) *ReaderImpl {
 	return returnMe
 }
 
-// Duplicate of moar/moar.go:TryOpen
+// Duplicate of moor/moor.go:TryOpen
 func TryOpen(filename string) error {
 	// Try opening the file
 	tryMe, err := os.Open(filename)
@@ -807,7 +807,7 @@ func (reader *ReaderImpl) createStatusUnlocked(lastLine linemetadata.Index) stri
 // Wait for the first line to be read.
 //
 // Used for making sudo work:
-// https://github.com/walles/moar/issues/199
+// https://github.com/walles/moor/issues/199
 func (reader *ReaderImpl) AwaitFirstByte() {
 	<-reader.doneWaitingForFirstByte
 }

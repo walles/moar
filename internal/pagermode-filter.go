@@ -2,7 +2,7 @@ package internal
 
 import (
 	log "github.com/sirupsen/logrus"
-	"github.com/walles/moar/twin"
+	"github.com/walles/moor/twin"
 )
 
 type PagerModeFilter struct {
