@@ -57,7 +57,7 @@ func demoPageFromString() {
 }
 
 func TestEmbedApi(t *testing.T) {
-	// Never call this function! That would launch a pager, and we don't want
+	// Never call these functions! That would launch pagers, and we don't want
 	// that during testing.
 	//
 	// But we still want to have a call to it (that we never make) to make the

@@ -19,6 +19,7 @@ const defaultDarkTheme = "native"
 // and I like the looks of it.
 const defaultLightTheme = "tango"
 
+// Checks the terminal background color and returns either a dark or light theme
 func GetStyleForScreen(screen twin.Screen) chroma.Style {
 	var style = *styles.Get(defaultDarkTheme)
 

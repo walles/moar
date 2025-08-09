@@ -5,6 +5,7 @@ import (
 	"sync"
 )
 
+// Capture log lines and support returning all logged lines as one string
 type LogWriter struct {
 	lock   sync.Mutex
 	buffer strings.Builder
