@@ -4,7 +4,10 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strings"
 
+	"github.com/alecthomas/chroma/v2"
+	"github.com/alecthomas/chroma/v2/formatters"
 	log "github.com/sirupsen/logrus"
 	"github.com/walles/moar/internal"
 	internalReader "github.com/walles/moar/internal/reader"
@@ -38,7 +41,7 @@ func PageFromStream(reader io.Reader, options Options) error {
 	pagerReader, err := internalReader.NewFromStream(
 		options.Title,
 		reader,
-		nil,
+		getColorFormatter(),
 		internalReader.ReaderOptions{
 			ShouldFormat: !options.NoAutoFormat,
 		})
@@ -55,7 +58,7 @@ func PageFromFile(name string, options Options) error {
 
 	pagerReader, err := internalReader.NewFromFilename(
 		name,
-		nil,
+		getColorFormatter(),
 		internalReader.ReaderOptions{
 			ShouldFormat: !options.NoAutoFormat,
 		})
@@ -93,6 +96,14 @@ func collectLogs(logs *internal.LogWriter) {
 	fmt.Fprintln(os.Stderr, logs.String())
 }
 
+func getColorFormatter() chroma.Formatter {
+	if os.Getenv("COLORTERM") != "truecolor" && strings.Contains(os.Getenv("TERM"), "256") {
+		// Covers "xterm-256color" as used by the macOS Terminal
+		return formatters.TTY256
+	}
+	return formatters.TTY16m
+}
+
 func pageFromReader(reader *internalReader.ReaderImpl, options Options) error {
 	pager := internal.NewPager(reader)
 	pager.WrapLongLines = options.WrapLongLines
@@ -106,7 +117,9 @@ func pageFromReader(reader *internalReader.ReaderImpl, options Options) error {
 	style := internal.GetStyleForScreen(screen)
 	reader.SetStyleForHighlighting(style)
 
-	pager.StartPaging(screen, nil, nil)
+	formatter := getColorFormatter()
+
+	pager.StartPaging(screen, &style, &formatter)
 	screen.Close()
 	return nil
 }
