@@ -64,11 +64,13 @@ Moor is used as the default pager by:
 
 ## Using [Homebrew](https://brew.sh/)
 
+:warning: Installs legacy `moar` binary.
+
 **Both macOS and Linux** users can use Homebrew to install. See below for distro
 specific instructions.
 
 ```sh
-brew install moor
+brew install moar
 ```
 
 Then whenever you want to upgrade to the latest release:
@@ -79,27 +81,33 @@ brew upgrade
 
 ## Using [MacPorts](https://www.macports.org/)
 
+:warning: Installs legacy `moar` binary.
+
 ```sh
-sudo port install moor
+sudo port install moar
 ```
 
-More info [here](https://ports.macports.org/port/moor/).
+More info [here](https://ports.macports.org/port/moar/).
 
 ## Using [Gentoo](https://gentoo.org/)
 
+:warning: Installs legacy `moar` binary.
+
 ```sh
-emerge --ask --verbose sys-apps/moor
+emerge --ask --verbose sys-apps/moar
 ```
 
-More info [here](https://packages.gentoo.org/packages/sys-apps/moor).
+More info [here](https://packages.gentoo.org/packages/sys-apps/moar).
 
 ## Using [Arch Linux](https://archlinux.org/)
 
+:warning: Installs legacy `moar` binary.
+
 ```sh
-yay -S moor
+yay -S moar
 ```
 
-More info [here](https://aur.archlinux.org/packages/moor-git).
+More info [here](https://aur.archlinux.org/packages/moar-git).
 
 ## Debian / Ubuntu
 
