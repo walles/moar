@@ -12,6 +12,7 @@ import (
 	"github.com/walles/moar/internal"
 	internalReader "github.com/walles/moar/internal/reader"
 	"github.com/walles/moar/twin"
+	"golang.org/x/term"
 )
 
 const logLevel = log.WarnLevel
@@ -34,9 +35,15 @@ type Options struct {
 	WrapLongLines bool
 }
 
+// If stdout is not a terminal, the stream contents will just be printed to
+// stdout.
 func PageFromStream(reader io.Reader, options Options) error {
 	logs := startLogCollection()
 	defer collectLogs(logs)
+
+	if !term.IsTerminal(int(os.Stdout.Fd())) {
+		return dumpToStdoutAndClose(reader)
+	}
 
 	pagerReader, err := internalReader.NewFromStream(
 		options.Title,
@@ -52,9 +59,19 @@ func PageFromStream(reader io.Reader, options Options) error {
 	return pageFromReader(pagerReader, options)
 }
 
+// If stdout is not a terminal, the file contents will just be printed to
+// stdout.
 func PageFromFile(name string, options Options) error {
 	logs := startLogCollection()
 	defer collectLogs(logs)
+
+	if !term.IsTerminal(int(os.Stdout.Fd())) {
+		stream, err := os.Open(name)
+		if err != nil {
+			return err
+		}
+		return dumpToStdoutAndClose(stream)
+	}
 
 	pagerReader, err := internalReader.NewFromFilename(
 		name,
@@ -73,6 +90,8 @@ func PageFromFile(name string, options Options) error {
 	return pageFromReader(pagerReader, options)
 }
 
+// If stdout is not a terminal, the string contents will just be printed to
+// stdout.
 func PageFromString(text string, options Options) error {
 	// NOTE: Pager froze when I tried to use internalReader.NewFromText() here.
 	// If you want to try that again, make sure to test it using some externa
@@ -93,6 +112,23 @@ func collectLogs(logs *internal.LogWriter) {
 		return
 	}
 	fmt.Fprintln(os.Stderr, logs.String())
+}
+
+func dumpToStdoutAndClose(reader io.Reader) error {
+	_, err := io.Copy(os.Stdout, reader)
+	if err != nil {
+		return err
+	}
+
+	// Close the reader if we can
+	if closer, ok := reader.(io.Closer); ok {
+		err := closer.Close()
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func getColorFormatter() chroma.Formatter {
