@@ -27,17 +27,41 @@ import (
 
 var versionString = ""
 
+// Which environment variable should we get our config from?
+//
+// Prefer MOOR, but if that's not set, look at MOAR as well for backwards
+// compatibility reasons.
+func moorEnvVarName() string {
+	moorEnvSet := len(strings.TrimSpace(os.Getenv("MOOR"))) > 0
+	if moorEnvSet {
+		return "MOOR"
+	}
+
+	moarEnvSet := len(strings.TrimSpace(os.Getenv("MOAR"))) > 0
+	if moarEnvSet {
+		// Legacy, keep for backwards compatibility
+		return "MOAR"
+	}
+
+	// This is the default
+	return "MOOR"
+}
+
 // printProblemsHeader prints bug reporting information to stderr
 func printProblemsHeader() {
 	fmt.Fprintln(os.Stderr, "Please post the following report at <https://github.com/walles/moor/issues>,")
 	fmt.Fprintln(os.Stderr, "or e-mail it to johan.walles@gmail.com.")
 	fmt.Fprintln(os.Stderr)
-	fmt.Fprintln(os.Stderr, "Version     :", getVersion())
-	fmt.Fprintln(os.Stderr, "LANG        :", os.Getenv("LANG"))
-	fmt.Fprintln(os.Stderr, "TERM        :", os.Getenv("TERM"))
-	fmt.Fprintln(os.Stderr, "MOOR        :", os.Getenv("MOOR"))
-	fmt.Fprintln(os.Stderr, "EDITOR      :", os.Getenv("EDITOR"))
-	fmt.Fprintln(os.Stderr, "TERM_PROGRAM:", os.Getenv("TERM_PROGRAM"))
+	fmt.Fprintln(os.Stderr, "Version      :", getVersion())
+	fmt.Fprintln(os.Stderr, "LANG         :", os.Getenv("LANG"))
+	fmt.Fprintln(os.Stderr, "TERM         :", os.Getenv("TERM"))
+	if moorEnvVarName() == "MOAR" {
+		fmt.Fprintln(os.Stderr, "MOAR (legacy):", os.Getenv("MOAR"))
+	} else {
+		fmt.Fprintln(os.Stderr, "MOOR         :", os.Getenv("MOOR"))
+	}
+	fmt.Fprintln(os.Stderr, "EDITOR       :", os.Getenv("EDITOR"))
+	fmt.Fprintln(os.Stderr, "TERM_PROGRAM :", os.Getenv("TERM_PROGRAM"))
 	fmt.Fprintln(os.Stderr)
 	fmt.Fprintln(os.Stderr, "GOOS    :", runtime.GOOS)
 	fmt.Fprintln(os.Stderr, "GOARCH  :", runtime.GOARCH)
@@ -348,7 +372,7 @@ func pagerFromArgs(
 
 	// Combine flags from environment and from command line
 	flags := args[1:]
-	moorEnv := strings.Trim(os.Getenv("MOOR"), " ")
+	moorEnv := strings.TrimSpace(os.Getenv(moorEnvVarName()))
 	if len(moorEnv) > 0 {
 		// FIXME: It would be nice if we could debug log that we're doing this,
 		// but logging is not yet set up and depends on command line parameters.

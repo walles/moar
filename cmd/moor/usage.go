@@ -101,9 +101,18 @@ func renderPlainEnvVar(envVarName string) string {
 }
 
 func printCommandline(output io.Writer) {
-	fmt.Fprintln(output, "Commandline: moor", strings.Join(os.Args[1:], " ")) //nolint:errcheck
-	fmt.Fprintf(output, "Environment: MOOR=\"%v\"\n", os.Getenv("MOOR"))      //nolint:errcheck
-	fmt.Fprintln(output)                                                      //nolint:errcheck
+	envVarName := moorEnvVarName()
+	envVarDescription := envVarName
+	if envVarName != "MOOR" {
+		bold := twin.StyleDefault.WithAttr(twin.AttrBold).RenderUpdateFrom(twin.StyleDefault, twin.ColorCount256)
+		notBold := twin.StyleDefault.RenderUpdateFrom(twin.StyleDefault.WithAttr(twin.AttrBold), twin.ColorCount256)
+
+		envVarDescription = envVarName + " (" + bold + "legacy, please use MOOR instead!" + notBold + ")"
+	}
+
+	fmt.Fprintln(output, "Commandline: moor", strings.Join(os.Args[1:], " "))                 //nolint:errcheck
+	fmt.Fprintf(output, "Environment: %s=\"%v\"\n", envVarDescription, os.Getenv(envVarName)) //nolint:errcheck
+	fmt.Fprintln(output)                                                                      //nolint:errcheck
 }
 
 func heading(text string, colors twin.ColorCount) string {
@@ -133,13 +142,24 @@ func printUsage(flagSet *flag.FlagSet, colors twin.ColorCount) {
 	fmt.Println()
 	fmt.Println(heading("Environment", colors))
 
-	moorEnv := os.Getenv("MOOR")
-	if len(moorEnv) == 0 {
+	envVarName := moorEnvVarName()
+	envVarValue := os.Getenv(envVarName)
+
+	if len(envVarValue) == 0 {
 		fmt.Println("  Additional options are read from the MOOR environment variable if set.")
 		fmt.Println("  But currently, the MOOR environment variable is not set.")
 	} else {
-		fmt.Println("  Additional options are read from the MOOR environment variable.")
-		fmt.Printf("  Current setting: MOOR=\"%s\"\n", moorEnv)
+		fmt.Printf("  Additional options are read from the %s environment variable.\n", envVarName)
+		if envVarName != "MOOR" {
+			bold := twin.StyleDefault.WithAttr(twin.AttrBold).RenderUpdateFrom(twin.StyleDefault, colors)
+			notBold := twin.StyleDefault.RenderUpdateFrom(twin.StyleDefault.WithAttr(twin.AttrBold), colors)
+
+			fmt.Printf(
+				"  But that is going away, %splease use the MOOR environment variable instead%s!\n",
+				bold,
+				notBold)
+		}
+		fmt.Printf("  Current setting: %s=\"%s\"\n", envVarName, envVarValue)
 	}
 
 	envSection := ""
