@@ -101,13 +101,9 @@ More info [here](https://packages.gentoo.org/packages/sys-apps/moar).
 
 ## Using [Arch Linux](https://archlinux.org/)
 
-:warning: Installs legacy `moar` binary.
+Install `moor` with your [AUR helper](https://wiki.archlinux.org/title/AUR_helpers) of choice or follow the instructions [here](https://wiki.archlinux.org/title/Arch_User_Repository) to install the official way.
 
-```sh
-yay -S moar
-```
-
-More info [here](https://aur.archlinux.org/packages/moar-git).
+More info [here](https://aur.archlinux.org/packages/moor).
 
 ## Debian / Ubuntu
 
