@@ -64,13 +64,11 @@ Moor is used as the default pager by:
 
 ## Using [Homebrew](https://brew.sh/)
 
-:warning: Installs legacy `moar` binary.
-
 **Both macOS and Linux** users can use Homebrew to install. See below for distro
 specific instructions.
 
 ```sh
-brew install moar
+brew install moor
 ```
 
 Then whenever you want to upgrade to the latest release:
@@ -111,12 +109,9 @@ More info [here](https://aur.archlinux.org/packages/moar-git).
 
 ## Debian / Ubuntu
 
-Nobody has stepped up to maintain `moor` for Debian.
+In progress: https://ftp-master.debian.org/new.html
 
-If you want to [maintain the `moor` packaging for
-Debian](https://github.com/walles/moor/issues/137), that would be very welcome!
-
-Otherwise use Homebrew (see above) or read on for manual install instructions.
+In the mean time, use Homebrew (see above) or read on for manual install instructions.
 
 ## Manual Install
 
