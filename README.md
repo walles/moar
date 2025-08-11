@@ -126,7 +126,7 @@ This will [install
 :
 
 ```sh
-go install github.com/walles/moor@latest
+go install github.com/walles/moar@latest
 ```
 
 NOTE: If you got here because there is no binary for your platform,
