@@ -1,3 +1,7 @@
+Note: :warning: [As of version 2.0.0, `moar` has been renamed to
+`moor`](https://github.com/walles/moor/releases/tag/v2.0.0), but is otherwise
+the same tool.
+
 [![Linux CI](https://github.com/walles/moor/actions/workflows/linux-ci.yml/badge.svg?branch=master)](https://github.com/walles/moor/actions/workflows/linux-ci.yml?query=branch%3Amaster)
 [![Windows CI](https://github.com/walles/moor/actions/workflows/windows-ci.yml/badge.svg?branch=master)](https://github.com/walles/moor/actions/workflows/windows-ci.yml?query=branch%3Amaster)
 
