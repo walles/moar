@@ -9,8 +9,8 @@ import (
 	"strings"
 
 	log "github.com/sirupsen/logrus"
-	"github.com/walles/moor/internal/linemetadata"
-	"github.com/walles/moor/internal/reader"
+	"github.com/walles/moor/v2/internal/linemetadata"
+	"github.com/walles/moor/v2/internal/reader"
 )
 
 // Dump the reader lines into a read-only temp file and return the absolute file

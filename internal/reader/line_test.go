@@ -3,8 +3,8 @@ package reader
 import (
 	"testing"
 
-	"github.com/walles/moor/internal/textstyles"
-	"github.com/walles/moor/twin"
+	"github.com/walles/moor/v2/internal/textstyles"
+	"github.com/walles/moor/v2/twin"
 	"gotest.tools/v3/assert"
 )
 

@@ -14,10 +14,10 @@ import (
 	"github.com/alecthomas/chroma/v2/lexers"
 	"github.com/alecthomas/chroma/v2/styles"
 	"github.com/google/go-cmp/cmp"
-	"github.com/walles/moor/internal/linemetadata"
-	"github.com/walles/moor/internal/reader"
-	"github.com/walles/moor/internal/textstyles"
-	"github.com/walles/moor/twin"
+	"github.com/walles/moor/v2/internal/linemetadata"
+	"github.com/walles/moor/v2/internal/reader"
+	"github.com/walles/moor/v2/internal/textstyles"
+	"github.com/walles/moor/v2/twin"
 	"gotest.tools/v3/assert"
 )
 

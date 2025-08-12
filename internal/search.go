@@ -8,8 +8,8 @@ import (
 	"time"
 
 	log "github.com/sirupsen/logrus"
-	"github.com/walles/moor/internal/linemetadata"
-	"github.com/walles/moor/internal/reader"
+	"github.com/walles/moor/v2/internal/linemetadata"
+	"github.com/walles/moor/v2/internal/reader"
 )
 
 // Scroll to the next search hit, while the user is typing the search string.

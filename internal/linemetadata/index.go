@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"math"
 
-	"github.com/walles/moor/internal/util"
+	"github.com/walles/moor/v2/internal/util"
 )
 
 // This represents a (zero based) index into an array of lines

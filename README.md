@@ -1,3 +1,7 @@
+Note: :warning: [As of version 2.0.0, `moar` has been renamed to
+`moor`](https://github.com/walles/moor/releases/tag/v2.0.0), but is otherwise
+the same tool.
+
 [![Linux CI](https://github.com/walles/moor/actions/workflows/linux-ci.yml/badge.svg?branch=master)](https://github.com/walles/moor/actions/workflows/linux-ci.yml?query=branch%3Amaster)
 [![Windows CI](https://github.com/walles/moor/actions/workflows/windows-ci.yml/badge.svg?branch=master)](https://github.com/walles/moor/actions/workflows/windows-ci.yml?query=branch%3Amaster)
 
@@ -99,13 +103,9 @@ More info [here](https://packages.gentoo.org/packages/sys-apps/moar).
 
 ## Using [Arch Linux](https://archlinux.org/)
 
-:warning: Installs legacy `moar` binary.
+Install `moor` with your [AUR helper](https://wiki.archlinux.org/title/AUR_helpers) of choice or follow the instructions [here](https://wiki.archlinux.org/title/Arch_User_Repository) to install the official way.
 
-```sh
-yay -S moar
-```
-
-More info [here](https://aur.archlinux.org/packages/moar-git).
+More info [here](https://aur.archlinux.org/packages/moor).
 
 ## Debian / Ubuntu
 
@@ -122,7 +122,7 @@ This will [install
 :
 
 ```sh
-go install github.com/walles/moor@latest
+go install github.com/walles/moor/v2/cmd/moor@latest
 ```
 
 NOTE: If you got here because there is no binary for your platform,
@@ -178,7 +178,7 @@ Here's one way to embed `moor` in your app:
 package main
 
 import (
-	"github.com/walles/moor/pkg/moor"
+	"github.com/walles/moor/v2/pkg/moor"
 )
 
 func main() {

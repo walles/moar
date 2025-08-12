@@ -9,8 +9,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/walles/moor/internal/linemetadata"
-	"github.com/walles/moor/twin"
+	"github.com/walles/moor/v2/internal/linemetadata"
+	"github.com/walles/moor/v2/twin"
 )
 
 // How do we render unprintable characters?

@@ -9,9 +9,9 @@ import (
 	"github.com/alecthomas/chroma/v2"
 	"github.com/alecthomas/chroma/v2/formatters"
 	log "github.com/sirupsen/logrus"
-	"github.com/walles/moor/internal"
-	internalReader "github.com/walles/moor/internal/reader"
-	"github.com/walles/moor/twin"
+	"github.com/walles/moor/v2/internal"
+	internalReader "github.com/walles/moor/v2/internal/reader"
+	"github.com/walles/moor/v2/twin"
 	"golang.org/x/term"
 )
 
