@@ -182,7 +182,7 @@ Here's one way to embed `moor` in your app:
 package main
 
 import (
-	"github.com/walles/moor/pkg/moor"
+	"github.com/walles/moor/v2/pkg/moor"
 )
 
 func main() {

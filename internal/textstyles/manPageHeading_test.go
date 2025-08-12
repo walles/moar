@@ -3,7 +3,7 @@ package textstyles
 import (
 	"testing"
 
-	"github.com/walles/moor/twin"
+	"github.com/walles/moor/v2/twin"
 	"gotest.tools/v3/assert"
 )
 

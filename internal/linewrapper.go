@@ -3,7 +3,7 @@ package internal
 import (
 	"unicode"
 
-	"github.com/walles/moor/twin"
+	"github.com/walles/moor/v2/twin"
 )
 
 // From: https://www.compart.com/en/unicode/U+00A0

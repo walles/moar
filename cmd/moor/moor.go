@@ -18,11 +18,11 @@ import (
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/term"
 
-	"github.com/walles/moor/internal"
-	"github.com/walles/moor/internal/linemetadata"
-	"github.com/walles/moor/internal/reader"
-	"github.com/walles/moor/internal/textstyles"
-	"github.com/walles/moor/twin"
+	"github.com/walles/moor/v2/internal"
+	"github.com/walles/moor/v2/internal/linemetadata"
+	"github.com/walles/moor/v2/internal/reader"
+	"github.com/walles/moor/v2/internal/textstyles"
+	"github.com/walles/moor/v2/twin"
 )
 
 var versionString = ""

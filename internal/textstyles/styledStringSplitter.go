@@ -6,8 +6,8 @@ import (
 	"unicode/utf8"
 
 	log "github.com/sirupsen/logrus"
-	"github.com/walles/moor/internal/linemetadata"
-	"github.com/walles/moor/twin"
+	"github.com/walles/moor/v2/internal/linemetadata"
+	"github.com/walles/moor/v2/twin"
 )
 
 const esc = '\x1b'

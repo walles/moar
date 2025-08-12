@@ -16,7 +16,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"gotest.tools/v3/assert"
 
-	"github.com/walles/moor/internal/linemetadata"
+	"github.com/walles/moor/v2/internal/linemetadata"
 )
 
 const samplesDir = "../../sample-files"

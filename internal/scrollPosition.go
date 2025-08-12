@@ -3,8 +3,8 @@ package internal
 import (
 	"fmt"
 
-	"github.com/walles/moor/internal/linemetadata"
-	"github.com/walles/moor/internal/reader"
+	"github.com/walles/moor/v2/internal/linemetadata"
+	"github.com/walles/moor/v2/internal/reader"
 )
 
 // Please create using newScrollPosition(name)

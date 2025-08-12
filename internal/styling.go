@@ -7,8 +7,8 @@ import (
 
 	"github.com/alecthomas/chroma/v2"
 	log "github.com/sirupsen/logrus"
-	"github.com/walles/moor/internal/textstyles"
-	"github.com/walles/moor/twin"
+	"github.com/walles/moor/v2/internal/textstyles"
+	"github.com/walles/moor/v2/twin"
 )
 
 // From LESS_TERMCAP_so, overrides statusbarStyle from the Chroma style if set

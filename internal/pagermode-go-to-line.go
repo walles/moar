@@ -4,9 +4,9 @@ import (
 	"strconv"
 
 	log "github.com/sirupsen/logrus"
-	"github.com/walles/moor/internal/linemetadata"
-	"github.com/walles/moor/internal/util"
-	"github.com/walles/moor/twin"
+	"github.com/walles/moor/v2/internal/linemetadata"
+	"github.com/walles/moor/v2/internal/util"
+	"github.com/walles/moor/v2/twin"
 )
 
 type PagerModeGotoLine struct {

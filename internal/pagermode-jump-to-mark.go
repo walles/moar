@@ -3,7 +3,7 @@ package internal
 import (
 	"sort"
 
-	"github.com/walles/moor/twin"
+	"github.com/walles/moor/v2/twin"
 	"golang.org/x/exp/maps"
 )
 

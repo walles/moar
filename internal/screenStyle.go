@@ -6,7 +6,7 @@ import (
 	"github.com/alecthomas/chroma/v2"
 	"github.com/alecthomas/chroma/v2/styles"
 	log "github.com/sirupsen/logrus"
-	"github.com/walles/moor/twin"
+	"github.com/walles/moor/v2/twin"
 )
 
 const defaultDarkTheme = "native"

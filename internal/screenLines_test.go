@@ -7,9 +7,9 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
-	"github.com/walles/moor/internal/linemetadata"
-	"github.com/walles/moor/internal/reader"
-	"github.com/walles/moor/twin"
+	"github.com/walles/moor/v2/internal/linemetadata"
+	"github.com/walles/moor/v2/internal/reader"
+	"github.com/walles/moor/v2/twin"
 	"gotest.tools/v3/assert"
 )
 
