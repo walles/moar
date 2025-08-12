@@ -122,7 +122,7 @@ This will [install
 :
 
 ```sh
-go install github.com/walles/moor/v2@latest
+go install github.com/walles/moor/v2/cmd/moor@latest
 ```
 
 NOTE: If you got here because there is no binary for your platform,
