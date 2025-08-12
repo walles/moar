@@ -170,10 +170,14 @@ you can send questions to <johan.walles@gmail.com>.
 
 If you package `moor`, do include [the man page](moor.1) in your package.
 
-# Embedding
+# Embedding `moor` in your app
 
-Here's one way to embed `moor` in your app:
+First, fetch your dependency:
+```
+go get github.com/walles/moor/v2
+```
 
+Then, here's how you can use the API:
 ```go
 package main
 
@@ -188,6 +192,12 @@ func main() {
 		panic(err)
 	}
 }
+```
+
+After both `go get` is done and you have calls to `moor` in your code, you may
+have to:
+```
+go mod tidy
 ```
 
 You can also `PageFromStream()` or `PageFromFile()`.
