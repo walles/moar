@@ -96,6 +96,10 @@ func (style Style) WithAttr(attr AttrMask) Style {
 	return result
 }
 
+func (style Style) HasAttr(attr AttrMask) bool {
+	return style.attrs.has(attr)
+}
+
 // Call with nil to remove the link
 func (style Style) WithHyperlink(hyperlinkURL *string) Style {
 	if hyperlinkURL != nil && *hyperlinkURL == "" {
