@@ -1,3 +1,4 @@
+// Command line launcher for moor
 package main
 
 import (

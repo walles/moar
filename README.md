@@ -5,8 +5,7 @@ the same tool.
 [![Linux CI](https://github.com/walles/moor/actions/workflows/linux-ci.yml/badge.svg?branch=master)](https://github.com/walles/moor/actions/workflows/linux-ci.yml?query=branch%3Amaster)
 [![Windows CI](https://github.com/walles/moor/actions/workflows/windows-ci.yml/badge.svg?branch=master)](https://github.com/walles/moor/actions/workflows/windows-ci.yml?query=branch%3Amaster)
 
-Moor is a pager. It reads and displays UTF-8 encoded text from files or
-pipelines.
+Moor is a pager. It reads and displays UTF-8 encoded text from files or pipes.
 
 `moor` is designed to just do the right thing without any configuration:
 
@@ -172,7 +171,9 @@ If you package `moor`, do include [the man page](moor.1) in your package.
 
 # Embedding `moor` in your app
 
-First, fetch your dependency:
+API Reference: https://pkg.go.dev/github.com/walles/moor/v2/pkg/moor
+
+For a quick start, first fetch your dependency:
 ```
 go get github.com/walles/moor/v2
 ```
