@@ -1,3 +1,4 @@
+// Public API for embedding a pager in your application
 package moor
 
 import (

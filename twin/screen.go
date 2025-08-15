@@ -1,4 +1,4 @@
-// Package twin provides Terminal Window interaction
+// Package twin provides Terminal Window Interaction
 package twin
 
 import (

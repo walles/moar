@@ -1,4 +1,3 @@
-// Package twin provides Terminal Window interaction
 package twin
 
 // Used for testing.

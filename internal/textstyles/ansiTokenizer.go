@@ -191,6 +191,50 @@ func StyledRunesFromString(plainTextStyle twin.Style, s string, lineIndex *linem
 	}
 }
 
+// Consume '_<x<x', where '<' is backspace and the result is a bold underlined 'x'
+func consumeBoldUnderline(runes []rune, index int) (int, *twin.StyledRune) {
+	if index+4 >= len(runes) {
+		// Not enough runes left for a bold underline
+		return index, nil
+	}
+
+	if runes[index] != '_' {
+		// No initial underscore
+		return index, nil
+	}
+
+	if runes[index+1] != BACKSPACE {
+		// No first backspace
+		return index, nil
+	}
+
+	if runes[index+2] != runes[index+4] {
+		// Runes don't match
+		return index, nil
+	}
+
+	if runes[index+3] != BACKSPACE {
+		// No second backspace
+		return index, nil
+	}
+
+	// Merge ManPageUnderline attributes into ManPageBold to form boldUnderline.
+	// Based on the screenshots here: https://github.com/walles/moor/issues/310
+	boldUnderline := ManPageBold
+	if ManPageUnderline.HasAttr(twin.AttrUnderline) {
+		boldUnderline = boldUnderline.WithAttr(twin.AttrUnderline)
+	}
+	if ManPageUnderline.HasAttr(twin.AttrItalic) {
+		boldUnderline = boldUnderline.WithAttr(twin.AttrItalic)
+	}
+
+	// We have a match!
+	return index + 5, &twin.StyledRune{
+		Rune:  runes[index+4],
+		Style: boldUnderline,
+	}
+}
+
 // Consume 'x<x', where '<' is backspace and the result is a bold 'x'
 func consumeBold(runes []rune, index int) (int, *twin.StyledRune) {
 	if index+2 >= len(runes) {
@@ -317,6 +361,13 @@ func tokensFromStyledString(styledString _StyledString) []twin.StyledRune {
 	// Special handling for man page formatted lines
 	for index := 0; index < len(runes); index++ {
 		nextIndex, token := consumeBullet(runes, index)
+		if nextIndex != index {
+			tokens = append(tokens, *token)
+			index = nextIndex - 1
+			continue
+		}
+
+		nextIndex, token = consumeBoldUnderline(runes, index)
 		if nextIndex != index {
 			tokens = append(tokens, *token)
 			index = nextIndex - 1
