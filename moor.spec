@@ -1,12 +1,12 @@
 %define name moor
 %define version 2.0.4
-%define release 1%{?dist}
+%define release 2%{?dist}
 
 Summary:  Moar is a pager. It's designed to just do the right thing without any configuration.
 Name:     %{name}
 Version:  %{version}
 Release:  %{release}
-License:  MIT License
+License:  BSD-2-Clause
 URL:      https://github.com/walles/moar
 Source0:  https://github.com/walles/moar/archive/refs/tags/v%{version}.tar.gz
 
@@ -50,6 +50,8 @@ install -m 644 %{name}.1.gz %{buildroot}%{_mandir}/man1
 %{_mandir}/man1/%{name}.1.gz
 
 %changelog
+* Sat Aug 23 2025 - Danie de Jager - 2.0.4-2
+- Update license
 * Fri Aug 15 2025 - Danie de Jager 2.0.4-1
 * Tue Aug 12 2025 - Danie de Jager 2.0.3-1
 * Mon Aug 11 2025 - Danie de Jager 2.0.1-1
