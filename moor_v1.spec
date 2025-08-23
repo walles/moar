@@ -15,7 +15,7 @@ displays text from files or from pipelines. It is designed to work out of
 the box with sensible defaults, without requiring user configuration.
 
 %prep
-%setup -q -n moar-%{version}
+%setup -q -n moor-%{version}
 
 %build
 %gobuild -o %{name} ./cmd/%{name}
