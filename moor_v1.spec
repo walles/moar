@@ -3,7 +3,7 @@ Summary:        Simple UTF-8 pager with sensible defaults
 Version:        2.0.4
 Release:        2%{?dist}
 License:        BSD-2-Clause
-URL:            https://github.com/walles/moar
+URL:            https://github.com/walles/moor
 Source0:        %{url}/archive/refs/tags/v%{version}.tar.gz
 
 BuildRequires:  golang
@@ -15,7 +15,7 @@ displays text from files or from pipelines. It is designed to work out of
 the box with sensible defaults, without requiring user configuration.
 
 %prep
-%autosetup -n moar-%{version}
+%setup -q -n moar-%{version}
 
 %build
 %gobuild -o %{name} ./cmd/%{name}
