@@ -3,8 +3,8 @@ Summary: Simple UTF-8 pager with sensible defaults
 Version: 2.0.4
 Release: 2%{?dist}
 License: BSD-2-Clause
-URL:     https://github.com/walles/moar
-Source0: https://github.com/walles/moar/archive/refs/tags/v%{version}.tar.gz
+URL:     https://github.com/walles/moor
+Source0: https://github.com/walles/moor/archive/refs/tags/v%{version}.tar.gz
 
 %define debug_package %{nil}
 
@@ -16,8 +16,8 @@ BuildRequires: golang
 BuildRequires: git
 
 %description
-Moar (packaged as moor) is a pager for UTF-8 encoded text. It reads and
-displays text from files or from pipelines. It is designed to work out of
+Moor is a pager for UTF-8 encoded text. It reads and displays
+text from files or from pipelines. It is designed to work out of
 the box with sensible defaults, without requiring user configuration.
 
 %prep
