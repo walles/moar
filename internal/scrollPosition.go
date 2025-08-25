@@ -132,12 +132,7 @@ func (si *scrollPositionInternal) handleNegativeDeltaScreenLines(pager *Pager) {
 // This method will not do any screen-height based clipping, so it could be that
 // the position is too far down to display after this returns.
 func (si *scrollPositionInternal) handlePositiveDeltaScreenLines(pager *Pager) {
-	maxPrefixLength := 0
-	allPossibleLines := pager.Reader().GetLines(*si.lineIndex, pager.visibleHeight())
-	if len(allPossibleLines.Lines) > 0 {
-		lastPossibleLine := allPossibleLines.Lines[len(allPossibleLines.Lines)-1]
-		maxPrefixLength = pager.getLineNumberPrefixLength(lastPossibleLine.Number)
-	}
+	maxPrefixLength := si.getMaxNumberPrefixLength(pager)
 
 	for {
 		line := pager.Reader().GetLine(*si.lineIndex)
