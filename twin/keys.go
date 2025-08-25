@@ -62,6 +62,12 @@ var escapeSequenceToKeyCode = map[string]KeyCode{
 	"\x1b\x1b[C": KeyAltRight, // Alt + right arrow
 	"\x1b\x1b[D": KeyAltLeft,  // Alt + left arrow
 
+	// macBook option-arrows
+	"\x1b[1;3A": KeyAltUp,
+	"\x1b[1;3B": KeyAltDown,
+	"\x1b[1;3C": KeyAltRight,
+	"\x1b[1;3D": KeyAltLeft,
+
 	"\x1b[H":  KeyHome,
 	"\x1b[F":  KeyEnd,
 	"\x1b[1~": KeyHome,
