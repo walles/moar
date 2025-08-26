@@ -309,7 +309,7 @@ func (reader *ReaderImpl) consumeLinesFromStream(stream io.Reader) {
 
 	reader.endsWithNewline = inspectionReader.endedWithNewline
 
-	log.Info("Stream read in ", time.Since(t0))
+	log.Info("Stream read in ", time.Since(t0), ", have ", reader.GetLineCount(), " lines")
 }
 
 func (reader *ReaderImpl) tailFile() error {

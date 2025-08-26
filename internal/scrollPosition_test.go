@@ -65,3 +65,34 @@ func TestCanonicalize1000WithoutStatusBar(t *testing.T) {
 		})
 	}
 }
+
+// Repro for https://github.com/walles/moor/issues/313: Rapid scroll
+// (deltaScreenLines > 0) crossing from 3 to 4 digits must not panic due to
+// too-short number prefix length.
+func TestFastScrollAcross1000DoesNotPanic(t *testing.T) {
+	// Create 1492 lines of single-char content
+	pager := Pager{}
+	pager.screen = twin.NewFakeScreen(80, screenHeight)
+	pager.reader = reader.NewFromTextForTesting("test", strings.Repeat("x\n", 1492))
+	pager.filteringReader = FilteringReader{
+		BackingReader: pager.reader,
+		FilterPattern: &pager.filterPattern,
+	}
+	pager.ShowLineNumbers = true
+
+	// Start more than one screen height before the line numbers get longer...
+	start := linemetadata.IndexFromZeroBased(900)
+	pager.scrollPosition = scrollPosition{
+		internalDontTouch: scrollPositionInternal{
+			name:             "TestFastScrollAcross1000DoesNotPanic",
+			lineIndex:        &start,
+			deltaScreenLines: 200, // ... and jump to after the line numbers get longer
+		},
+	}
+
+	// Trigger rendering (and canonicalization). If the prefix is miscomputed
+	// this would previously panic inside createLinePrefix().
+	lines, status := pager.renderScreenLines()
+	assert.Assert(t, lines != nil) // sanity
+	_ = status                     // not asserted here; we only care about not panicking
+}

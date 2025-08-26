@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/walles/moor/v2/internal/linemetadata"
-	"github.com/walles/moor/v2/internal/reader"
 )
 
 // Please create using newScrollPosition(name)
@@ -132,12 +131,7 @@ func (si *scrollPositionInternal) handleNegativeDeltaScreenLines(pager *Pager) {
 // This method will not do any screen-height based clipping, so it could be that
 // the position is too far down to display after this returns.
 func (si *scrollPositionInternal) handlePositiveDeltaScreenLines(pager *Pager) {
-	maxPrefixLength := 0
-	allPossibleLines := pager.Reader().GetLines(*si.lineIndex, pager.visibleHeight())
-	if len(allPossibleLines.Lines) > 0 {
-		lastPossibleLine := allPossibleLines.Lines[len(allPossibleLines.Lines)-1]
-		maxPrefixLength = pager.getLineNumberPrefixLength(lastPossibleLine.Number)
-	}
+	maxPrefixLength := si.getMaxNumberPrefixLength(pager)
 
 	for {
 		line := pager.Reader().GetLine(*si.lineIndex)
@@ -185,20 +179,7 @@ func (si *scrollPositionInternal) emptyBottomLinesCount(pager *Pager) int {
 
 	lineIndex := *si.lineIndex
 
-	var lastLine reader.NumberedLine
-	lastLineIndex := linemetadata.IndexFromZeroBased(lineIndex.Index() + pager.visibleHeight() - 1)
-	lastPossibleLineIndex := linemetadata.IndexFromLength(pager.Reader().GetLineCount())
-	if lastPossibleLineIndex != nil && lastLineIndex.IsAfter(*lastPossibleLineIndex) {
-		lastLineIndex = *lastPossibleLineIndex
-	}
-
-	maybeLastLine := pager.Reader().GetLine(lastLineIndex)
-	// This check is needed for the unlikely case that we just reformatted
-	// the input stream and it just lost some lines.
-	if maybeLastLine != nil {
-		lastLine = *maybeLastLine
-	}
-	lastLineNumberWidth := pager.getLineNumberPrefixLength(lastLine.Number)
+	lastLineNumberWidth := si.getMaxNumberPrefixLength(pager)
 
 	for {
 		line := pager.Reader().GetLine(lineIndex)
