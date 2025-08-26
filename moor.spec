@@ -1,7 +1,7 @@
 Name:    moor
 Summary: Simple UTF-8 pager with sensible defaults
-Version: 2.0.4
-Release: 2%{?dist}
+Version: 2.0.5
+Release: 1%{?dist}
 License: BSD-2-Clause
 URL:     https://github.com/walles/moor
 Source0: https://github.com/walles/moor/archive/refs/tags/v%{version}.tar.gz
@@ -44,5 +44,8 @@ install -m 644 %{name}.1.gz %{buildroot}%{_mandir}/man1
 %{_mandir}/man1/%{name}.1.gz
 
 %changelog
+* Tue Aug 26 2025 - Danie de Jager <danie.dejager@gmail.com>- 2.0.5-1
+- Fixed a crash related to intermittent problem related to scrolling around the switch from line numbers 999 to 1000.
+- Mac keyboards can now press option-arrow to scroll sideways one column at a time.
 * Sat Aug 23 2025 - Danie de Jager <danie.dejager@gmail.com>- 2.0.4-2
 - Update license
