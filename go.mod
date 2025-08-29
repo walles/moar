@@ -10,7 +10,7 @@ require (
 	github.com/klauspost/compress v1.17.4
 	github.com/rivo/uniseg v0.4.7
 	github.com/sirupsen/logrus v1.8.1
-	github.com/ulikunitz/xz v0.5.11
+	github.com/ulikunitz/xz v0.5.15
 	golang.org/x/exp v0.0.0-20240103183307-be819d1f06fc
 	golang.org/x/sys v0.1.0
 	golang.org/x/term v0.0.0-20210503060354-a79de5458b56
