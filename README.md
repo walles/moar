@@ -90,7 +90,7 @@ More info [here](https://ports.macports.org/port/moor/).
 
 ## Using [Gentoo](https://gentoo.org/)
 
-:warning: Installs legacy `moar` binary.
+:warning: [Installs legacy `moar` binary.](https://bugs.gentoo.org/961601)
 
 ```sh
 emerge --ask --verbose sys-apps/moar
