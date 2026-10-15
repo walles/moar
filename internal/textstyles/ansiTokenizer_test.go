@@ -249,6 +249,12 @@ func TestManPageEmboldened(t *testing.T) {
 			emboldened: "b<b<b<bo<o<o<ol<l<l<ld<d<d<d",
 		},
 		{
+			// From "system_var" in the getconf man page
+			name:       "bold underscore",
+			plain:      "m<m_<_v<v",
+			emboldened: "m<m<m<m_<_<_<_v<v<v<v",
+		},
+		{
 			name:       "underline",
 			plain:      "_<i_<t_<a_<l",
 			emboldened: "_<i<_<i_<t<_<t_<a<_<a_<l<_<l",
