@@ -36,6 +36,10 @@ func manPageHeadingFromString(s string) *StyledRunesWithTrailer {
 // A man page heading is all caps. Also, each character is encoded as
 // char+backspace+char, where both chars need to be the same. Whitespace is an
 // exception, they can be not bold.
+//
+// Some man pages strike more than twice, as in char+backspace+char+backspace+char.
+// That is just as bold. https://github.com/walles/moor/issues/472
+
 func parseManPageHeading(s string, reportStyledRune func(CellWithMetadata)) bool {
 	if len(s) < 3 {
 		// We don't want to match empty strings. Also, strings of length 1 and 2
@@ -48,6 +52,13 @@ func parseManPageHeading(s string, reportStyledRune func(CellWithMetadata)) bool
 		stateExpectingFirstChar stateT = iota
 		stateExpectingBackspace
 		stateExpectingSecondChar
+
+		// After a complete char+backspace+char. Either another backspace for
+		// striking the same char again, or the next first char.
+		stateAfterSecondChar
+
+		// After char+backspace+char+backspace, expecting the same char again
+		stateExpectingRepeatedChar
 	)
 
 	state := stateExpectingFirstChar
@@ -55,6 +66,16 @@ func parseManPageHeading(s string, reportStyledRune func(CellWithMetadata)) bool
 	lapCounter := -1
 	for _, char := range s {
 		lapCounter++
+
+		if state == stateAfterSecondChar {
+			if char == '\b' {
+				state = stateExpectingRepeatedChar
+				continue
+			}
+
+			// Not a repeated strike, so this is the next first char
+			state = stateExpectingFirstChar
+		}
 
 		switch state {
 		case stateExpectingFirstChar:
@@ -106,12 +127,21 @@ func parseManPageHeading(s string, reportStyledRune func(CellWithMetadata)) bool
 			}
 
 			reportStyledRune(CellWithMetadata{Rune: char, Style: ManPageHeading})
-			state = stateExpectingFirstChar
+			state = stateAfterSecondChar
+
+		case stateExpectingRepeatedChar:
+			if char != firstChar {
+				// Striking a different char on top is an error
+				return false
+			}
+
+			// Already reported, this is just more of the same bold
+			state = stateAfterSecondChar
 
 		default:
 			panic("Unknown state")
 		}
 	}
 
-	return state == stateExpectingFirstChar
+	return state == stateExpectingFirstChar || state == stateAfterSecondChar
 }

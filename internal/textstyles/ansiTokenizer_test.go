@@ -174,11 +174,13 @@ func TestManPages(t *testing.T) {
 
 	// Bold by striking more than twice, from the getconf man page on Ubuntu
 	// 22.04: https://github.com/walles/moor/issues/472
-	tokens = StyledRunesFromString(twin.StyleDefault, "ab\bb\bb\bbc", nil, 0).StyledRunes
-	assert.Equal(t, len(tokens), 3)
-	assert.Equal(t, tokens[0], CellWithMetadata{Rune: 'a', Style: twin.StyleDefault})
-	assert.Equal(t, tokens[1], CellWithMetadata{Rune: 'b', Style: twin.StyleDefault.WithAttr(twin.AttrBold)})
-	assert.Equal(t, tokens[2], CellWithMetadata{Rune: 'c', Style: twin.StyleDefault})
+	for strikes := 3; strikes <= 5; strikes++ {
+		tokens = StyledRunesFromString(twin.StyleDefault, "ab"+strings.Repeat("\bb", strikes-1)+"c", nil, 0).StyledRunes
+		assert.Equal(t, len(tokens), 3, "strikes: %d", strikes)
+		assert.Equal(t, tokens[0], CellWithMetadata{Rune: 'a', Style: twin.StyleDefault})
+		assert.Equal(t, tokens[1], CellWithMetadata{Rune: 'b', Style: twin.StyleDefault.WithAttr(twin.AttrBold)})
+		assert.Equal(t, tokens[2], CellWithMetadata{Rune: 'c', Style: twin.StyleDefault})
+	}
 
 	// Underline
 	tokens = StyledRunesFromString(twin.StyleDefault, "a_\bbc", nil, 0).StyledRunes
@@ -225,14 +227,16 @@ func TestManPageHeadings(t *testing.T) {
 
 	// Headings struck more than twice, from the getconf man page on Ubuntu
 	// 22.04: https://github.com/walles/moor/issues/472
-	multiStrikeHeading := ""
-	for _, char := range "JOHAN HELLO" {
-		multiStrikeHeading += string(char) + "\b" + string(char) + "\b" + string(char) + "\b" + string(char)
-	}
-	multiStrikeTokens := StyledRunesFromString(twin.StyleDefault, multiStrikeHeading, nil, 0).StyledRunes
-	assert.Equal(t, len(multiStrikeTokens), len("JOHAN HELLO"))
-	for _, token := range multiStrikeTokens {
-		assert.Equal(t, token.Style, ManPageHeading)
+	for strikes := 3; strikes <= 5; strikes++ {
+		multiStrikeHeading := ""
+		for _, char := range "JOHAN HELLO" {
+			multiStrikeHeading += string(char) + strings.Repeat("\b"+string(char), strikes-1)
+		}
+		multiStrikeTokens := StyledRunesFromString(twin.StyleDefault, multiStrikeHeading, nil, 0).StyledRunes
+		assert.Equal(t, len(multiStrikeTokens), len("JOHAN HELLO"), "strikes: %d", strikes)
+		for _, token := range multiStrikeTokens {
+			assert.Equal(t, token.Style, ManPageHeading)
+		}
 	}
 
 	// A line with only non-man-page bold caps should not be considered a heading

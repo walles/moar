@@ -323,6 +323,24 @@ func consumeBold(runes *lazyRunes) *twin.StyledRune {
 
 	runes.next() // Skip first rune
 	runes.next() // Skip backspace
+
+	// Some man pages strike more than twice, as in 'x<x<x<x'. That is just as
+	// bold. https://github.com/walles/moor/issues/472
+	for {
+		backspace := runes.getRelative(1)
+		if backspace == nil || *backspace != BACKSPACE {
+			break
+		}
+
+		again := runes.getRelative(2)
+		if again == nil || *again != result.Rune {
+			break
+		}
+
+		runes.next() // Skip rune
+		runes.next() // Skip backspace
+	}
+
 	// Do not skip last rune, our caller will do that
 
 	return result
