@@ -304,9 +304,9 @@ func consumeBoldUnderline(runes *lazyRunes) *twin.StyledRune {
 	}
 
 	if *runes.getRelative(2) == '_' {
-		// '_<_<_' is a bold underscore struck three times, leave that to
-		// consumeBold(). Otherwise we would leave the trailing '<_' of an
-		// emboldened '_<_<_<_' unparsed:
+		// '_<_<_' could also be the start of an emboldened bold underscore,
+		// '_<_' + '<' + '_<_'. Both look the same, so leave this to
+		// consumeBold(), which lets consumeEmboldened() take the repeat:
 		// https://github.com/walles/moor/issues/472
 		return nil
 	}

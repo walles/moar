@@ -37,8 +37,8 @@ func manPageHeadingFromString(s string) *StyledRunesWithTrailer {
 // char+backspace+char, where both chars need to be the same. Whitespace is an
 // exception, they can be not bold.
 //
-// Emboldened chars are struck more than twice, as in char+backspace+char+backspace+char.
-// That is just as bold. https://github.com/walles/moor/issues/472
+// Emboldened chars repeat the whole char+backspace+char, separated by a
+// backspace. That is just as bold. https://github.com/walles/moor/issues/472
 func parseManPageHeading(s string, reportStyledRune func(CellWithMetadata)) bool {
 	if len(s) < 3 {
 		// We don't want to match empty strings. Also, strings of length 1 and 2
