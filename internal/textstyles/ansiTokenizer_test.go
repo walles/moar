@@ -236,6 +236,8 @@ func TestManPageHeadings(t *testing.T) {
 func TestManPageEmboldened(t *testing.T) {
 	// Captured from "GROFF_NO_SGR=1 MAN_KEEP_FORMATTING=1 man -l" in an Ubuntu
 	// 22.04 container.
+	//
+	// For readability, '<' stands for backspace and is replaced before parsing.
 	testCases := []struct {
 		name       string
 		plain      string
@@ -243,40 +245,43 @@ func TestManPageEmboldened(t *testing.T) {
 	}{
 		{
 			name:       "bold",
-			plain:      "b\bbo\bol\bld\bd",
-			emboldened: "b\bb\bb\bbo\bo\bo\bol\bl\bl\bld\bd\bd\bd",
+			plain:      "b<bo<ol<ld<d",
+			emboldened: "b<b<b<bo<o<o<ol<l<l<ld<d<d<d",
 		},
 		{
 			name:       "underline",
-			plain:      "_\bi_\bt_\ba_\bl",
-			emboldened: "_\bi\b_\bi_\bt\b_\bt_\ba\b_\ba_\bl\b_\bl",
+			plain:      "_<i_<t_<a_<l",
+			emboldened: "_<i<_<i_<t<_<t_<a<_<a_<l<_<l",
 		},
 		{
 			name:       "bold underline",
-			plain:      "_\bb\bb_\bo\bo_\bl\bl_\bd\bd_\bi\bi_\bt\bt_\bl\bl",
-			emboldened: "_\bb\bb\b_\bb\bb_\bo\bo\b_\bo\bo_\bl\bl\b_\bl\bl_\bd\bd\b_\bd\bd_\bi\bi\b_\bi\bi_\bt\bt\b_\bt\bt_\bl\bl\b_\bl\bl",
+			plain:      "_<b<b_<o<o_<l<l_<d<d_<i<i_<t<t_<l<l",
+			emboldened: "_<b<b<_<b<b_<o<o<_<o<o_<l<l<_<l<l_<d<d<_<d<d_<i<i<_<i<i_<t<t<_<t<t_<l<l<_<l<l",
 		},
 		{
 			name:       "bold bullet",
-			plain:      "+\b+\bo\bo",
-			emboldened: "+\b+\bo\bo\b+\b+\bo\bo",
+			plain:      "+<+<o<o",
+			emboldened: "+<+<o<o<+<+<o<o",
 		},
 		{
 			// From the getconf man page
 			name:       "heading",
-			plain:      "N\bNA\bAM\bME\bE",
-			emboldened: "N\bN\bN\bNA\bA\bA\bAM\bM\bM\bME\bE\bE\bE",
+			plain:      "N<NA<AM<ME<E",
+			emboldened: "N<N<N<NA<A<A<AM<M<M<ME<E<E<E",
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			plain := StyledRunesFromString(twin.StyleDefault, tc.plain, nil, 0).StyledRunes
+			plainString := strings.ReplaceAll(tc.plain, "<", "\b")
+			plain := StyledRunesFromString(twin.StyleDefault, plainString, nil, 0).StyledRunes
 			for _, cell := range plain {
+				// Unparsed backspaces render as '<'
 				assert.Assert(t, cell.Rune != '<', "Plain sequence should parse without leftover backspaces")
 			}
 
-			emboldened := StyledRunesFromString(twin.StyleDefault, tc.emboldened, nil, 0).StyledRunes
+			emboldenedString := strings.ReplaceAll(tc.emboldened, "<", "\b")
+			emboldened := StyledRunesFromString(twin.StyleDefault, emboldenedString, nil, 0).StyledRunes
 			assert.DeepEqual(t, emboldened, plain)
 		})
 	}
