@@ -172,16 +172,6 @@ func TestManPages(t *testing.T) {
 	assert.Equal(t, tokens[1], CellWithMetadata{Rune: 'b', Style: twin.StyleDefault.WithAttr(twin.AttrBold)})
 	assert.Equal(t, tokens[2], CellWithMetadata{Rune: 'c', Style: twin.StyleDefault})
 
-	// Bold by striking more than twice, from the getconf man page on Ubuntu
-	// 22.04: https://github.com/walles/moor/issues/472
-	for strikes := 3; strikes <= 5; strikes++ {
-		tokens = StyledRunesFromString(twin.StyleDefault, "ab"+strings.Repeat("\bb", strikes-1)+"c", nil, 0).StyledRunes
-		assert.Equal(t, len(tokens), 3, "strikes: %d", strikes)
-		assert.Equal(t, tokens[0], CellWithMetadata{Rune: 'a', Style: twin.StyleDefault})
-		assert.Equal(t, tokens[1], CellWithMetadata{Rune: 'b', Style: twin.StyleDefault.WithAttr(twin.AttrBold)})
-		assert.Equal(t, tokens[2], CellWithMetadata{Rune: 'c', Style: twin.StyleDefault})
-	}
-
 	// Underline
 	tokens = StyledRunesFromString(twin.StyleDefault, "a_\bbc", nil, 0).StyledRunes
 	assert.Equal(t, len(tokens), 3)
@@ -225,20 +215,6 @@ func TestManPageHeadings(t *testing.T) {
 		assert.Equal(t, token.Style, ManPageHeading)
 	}
 
-	// Headings struck more than twice, from the getconf man page on Ubuntu
-	// 22.04: https://github.com/walles/moor/issues/472
-	for strikes := 3; strikes <= 5; strikes++ {
-		multiStrikeHeading := ""
-		for _, char := range "JOHAN HELLO" {
-			multiStrikeHeading += string(char) + strings.Repeat("\b"+string(char), strikes-1)
-		}
-		multiStrikeTokens := StyledRunesFromString(twin.StyleDefault, multiStrikeHeading, nil, 0).StyledRunes
-		assert.Equal(t, len(multiStrikeTokens), len("JOHAN HELLO"), "strikes: %d", strikes)
-		for _, token := range multiStrikeTokens {
-			assert.Equal(t, token.Style, ManPageHeading)
-		}
-	}
-
 	// A line with only non-man-page bold caps should not be considered a heading
 	wrongKindOfBold := "\x1b[1mJOHAN HELLO"
 	for _, token := range StyledRunesFromString(twin.StyleDefault, wrongKindOfBold, nil, 0).StyledRunes {
@@ -248,6 +224,61 @@ func TestManPageHeadings(t *testing.T) {
 	// A line with not all caps should not be considered a heading
 	for _, token := range StyledRunesFromString(twin.StyleDefault, notAllCaps, nil, 0).StyledRunes {
 		assert.Equal(t, token.Style, twin.StyleDefault.WithAttr(twin.AttrBold))
+	}
+}
+
+// Man pages can ask for artificial emboldening using ".bd", for example ".bd B
+// 3". grotty in groff 1.22.4 (Ubuntu 22.04) then repeats each overstruck cell,
+// separated by a backspace. Emboldened cells should render just like the plain
+// ones.
+//
+// https://github.com/walles/moor/issues/472
+func TestManPageEmboldened(t *testing.T) {
+	// Captured from "GROFF_NO_SGR=1 MAN_KEEP_FORMATTING=1 man -l" in an Ubuntu
+	// 22.04 container.
+	testCases := []struct {
+		name       string
+		plain      string
+		emboldened string
+	}{
+		{
+			name:       "bold",
+			plain:      "b\bbo\bol\bld\bd",
+			emboldened: "b\bb\bb\bbo\bo\bo\bol\bl\bl\bld\bd\bd\bd",
+		},
+		{
+			name:       "underline",
+			plain:      "_\bi_\bt_\ba_\bl",
+			emboldened: "_\bi\b_\bi_\bt\b_\bt_\ba\b_\ba_\bl\b_\bl",
+		},
+		{
+			name:       "bold underline",
+			plain:      "_\bb\bb_\bo\bo_\bl\bl_\bd\bd_\bi\bi_\bt\bt_\bl\bl",
+			emboldened: "_\bb\bb\b_\bb\bb_\bo\bo\b_\bo\bo_\bl\bl\b_\bl\bl_\bd\bd\b_\bd\bd_\bi\bi\b_\bi\bi_\bt\bt\b_\bt\bt_\bl\bl\b_\bl\bl",
+		},
+		{
+			name:       "bold bullet",
+			plain:      "+\b+\bo\bo",
+			emboldened: "+\b+\bo\bo\b+\b+\bo\bo",
+		},
+		{
+			// From the getconf man page
+			name:       "heading",
+			plain:      "N\bNA\bAM\bME\bE",
+			emboldened: "N\bN\bN\bNA\bA\bA\bAM\bM\bM\bME\bE\bE\bE",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			plain := StyledRunesFromString(twin.StyleDefault, tc.plain, nil, 0).StyledRunes
+			for _, cell := range plain {
+				assert.Assert(t, cell.Rune != '<', "Plain sequence should parse without leftover backspaces")
+			}
+
+			emboldened := StyledRunesFromString(twin.StyleDefault, tc.emboldened, nil, 0).StyledRunes
+			assert.DeepEqual(t, emboldened, plain)
+		})
 	}
 }
 
