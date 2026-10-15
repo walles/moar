@@ -37,9 +37,8 @@ func manPageHeadingFromString(s string) *StyledRunesWithTrailer {
 // char+backspace+char, where both chars need to be the same. Whitespace is an
 // exception, they can be not bold.
 //
-// Some man pages strike more than twice, as in char+backspace+char+backspace+char.
+// Emboldened chars are struck more than twice, as in char+backspace+char+backspace+char.
 // That is just as bold. https://github.com/walles/moor/issues/472
-
 func parseManPageHeading(s string, reportStyledRune func(CellWithMetadata)) bool {
 	if len(s) < 3 {
 		// We don't want to match empty strings. Also, strings of length 1 and 2
@@ -52,30 +51,14 @@ func parseManPageHeading(s string, reportStyledRune func(CellWithMetadata)) bool
 		stateExpectingFirstChar stateT = iota
 		stateExpectingBackspace
 		stateExpectingSecondChar
-
-		// After a complete char+backspace+char. Either another backspace for
-		// striking the same char again, or the next first char.
-		stateAfterSecondChar
-
-		// After char+backspace+char+backspace, expecting the same char again
-		stateExpectingRepeatedChar
 	)
 
 	state := stateExpectingFirstChar
 	var firstChar rune
+	repeated := false
 	lapCounter := -1
 	for _, char := range s {
 		lapCounter++
-
-		if state == stateAfterSecondChar {
-			if char == '\b' {
-				state = stateExpectingRepeatedChar
-				continue
-			}
-
-			// Not a repeated strike, so this is the next first char
-			state = stateExpectingFirstChar
-		}
 
 		switch state {
 		case stateExpectingFirstChar:
@@ -85,8 +68,15 @@ func parseManPageHeading(s string, reportStyledRune func(CellWithMetadata)) bool
 			}
 
 			if char == '\b' {
-				// Starting with backspace is an error
-				return false
+				if lapCounter == 0 {
+					// Starting with backspace is an error
+					return false
+				}
+
+				// Striking the previous char again
+				repeated = true
+				state = stateExpectingSecondChar
+				continue
 			}
 			firstChar = char
 			state = stateExpectingBackspace
@@ -126,22 +116,16 @@ func parseManPageHeading(s string, reportStyledRune func(CellWithMetadata)) bool
 				return false
 			}
 
-			reportStyledRune(CellWithMetadata{Rune: char, Style: ManPageHeading})
-			state = stateAfterSecondChar
-
-		case stateExpectingRepeatedChar:
-			if char != firstChar {
-				// Striking a different char on top is an error
-				return false
+			if !repeated {
+				reportStyledRune(CellWithMetadata{Rune: char, Style: ManPageHeading})
 			}
-
-			// Already reported, this is just more of the same bold
-			state = stateAfterSecondChar
+			repeated = false
+			state = stateExpectingFirstChar
 
 		default:
 			panic("Unknown state")
 		}
 	}
 
-	return state == stateExpectingFirstChar || state == stateAfterSecondChar
+	return state == stateExpectingFirstChar
 }
