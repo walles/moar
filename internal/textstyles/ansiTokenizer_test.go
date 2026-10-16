@@ -172,6 +172,14 @@ func TestManPages(t *testing.T) {
 	assert.Equal(t, tokens[1], CellWithMetadata{Rune: 'b', Style: twin.StyleDefault.WithAttr(twin.AttrBold)})
 	assert.Equal(t, tokens[2], CellWithMetadata{Rune: 'c', Style: twin.StyleDefault})
 
+	// Bold underlined underscore, as in a bold italic "a_b"
+	boldUnderline := ManPageBold.WithAttr(twin.AttrUnderline)
+	tokens = StyledRunesFromString(twin.StyleDefault, "_\ba\ba_\b_\b__\bb\bb", nil, 0).StyledRunes
+	assert.Equal(t, len(tokens), 3)
+	assert.Equal(t, tokens[0], CellWithMetadata{Rune: 'a', Style: boldUnderline})
+	assert.Equal(t, tokens[1], CellWithMetadata{Rune: '_', Style: boldUnderline})
+	assert.Equal(t, tokens[2], CellWithMetadata{Rune: 'b', Style: boldUnderline})
+
 	// Underline
 	tokens = StyledRunesFromString(twin.StyleDefault, "a_\bbc", nil, 0).StyledRunes
 	assert.Equal(t, len(tokens), 3)
@@ -215,6 +223,11 @@ func TestManPageHeadings(t *testing.T) {
 		assert.Equal(t, token.Style, ManPageHeading)
 	}
 
+	// Odd strike counts are not emboldened cells, so this is not a heading.
+	// https://github.com/walles/moor/issues/472
+	oddStrikes := "N\bN\bNA\bA\bA"
+	assert.Assert(t, manPageHeadingFromString(oddStrikes) == nil)
+
 	// A line with only non-man-page bold caps should not be considered a heading
 	wrongKindOfBold := "\x1b[1mJOHAN HELLO"
 	for _, token := range StyledRunesFromString(twin.StyleDefault, wrongKindOfBold, nil, 0).StyledRunes {
@@ -224,6 +237,80 @@ func TestManPageHeadings(t *testing.T) {
 	// A line with not all caps should not be considered a heading
 	for _, token := range StyledRunesFromString(twin.StyleDefault, notAllCaps, nil, 0).StyledRunes {
 		assert.Equal(t, token.Style, twin.StyleDefault.WithAttr(twin.AttrBold))
+	}
+}
+
+// Man pages can ask for artificial emboldening using ".bd", for example ".bd B
+// 3". grotty in groff 1.22.4 (Ubuntu 22.04) then repeats each overstruck cell,
+// separated by a backspace. Emboldened cells should render just like the plain
+// ones.
+//
+// https://github.com/walles/moor/issues/472
+func TestManPageEmboldened(t *testing.T) {
+	// Captured from "GROFF_NO_SGR=1 MAN_KEEP_FORMATTING=1 man -l" in an Ubuntu
+	// 22.04 container.
+	//
+	// For readability, '<' stands for backspace and is replaced before parsing.
+	testCases := []struct {
+		name       string
+		plain      string
+		emboldened string
+	}{
+		{
+			name:       "bold",
+			plain:      "b<bo<ol<ld<d",
+			emboldened: "b<b<b<bo<o<o<ol<l<l<ld<d<d<d",
+		},
+		{
+			// From "system_var" in the getconf man page
+			name:       "bold underscore",
+			plain:      "m<m_<_v<v",
+			emboldened: "m<m<m<m_<_<_<_v<v<v<v",
+		},
+		{
+			name:       "underline",
+			plain:      "_<i_<t_<a_<l",
+			emboldened: "_<i<_<i_<t<_<t_<a<_<a_<l<_<l",
+		},
+		{
+			name:       "bold underline",
+			plain:      "_<b<b_<o<o_<l<l_<d<d_<i<i_<t<t_<l<l",
+			emboldened: "_<b<b<_<b<b_<o<o<_<o<o_<l<l<_<l<l_<d<d<_<d<d_<i<i<_<i<i_<t<t<_<t<t_<l<l<_<l<l",
+		},
+		{
+			name:       "bold bullet",
+			plain:      "+<+<o<o",
+			emboldened: "+<+<o<o<+<+<o<o",
+		},
+		{
+			// From the getconf man page
+			name:       "heading",
+			plain:      "N<NA<AM<ME<E",
+			emboldened: "N<N<N<NA<A<A<AM<M<M<ME<E<E<E",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			plainString := strings.ReplaceAll(tc.plain, "<", "\b")
+			plain := StyledRunesFromString(twin.StyleDefault, plainString, nil, 0).StyledRunes
+			for _, cell := range plain {
+				// Unparsed backspaces render as '<'
+				assert.Assert(t, cell.Rune != '<', "Plain sequence should parse without leftover backspaces")
+			}
+
+			emboldenedString := strings.ReplaceAll(tc.emboldened, "<", "\b")
+			emboldened := StyledRunesFromString(twin.StyleDefault, emboldenedString, nil, 0).StyledRunes
+			assert.DeepEqual(t, emboldened, plain)
+
+			// Search uses the stripped string, so it must match what's on
+			// screen for search hits to be highlighted in the right place
+			onScreen := ""
+			for _, cell := range emboldened {
+				onScreen += string(cell.Rune)
+			}
+			assert.Equal(t, StripFormatting(emboldenedString, linemetadata.Index{}), onScreen)
+		})
 	}
 }
 

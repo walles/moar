@@ -247,6 +247,40 @@ func StyledRunesFromString(plainTextStyle twin.Style, s string, lineIndex *linem
 	}
 }
 
+// Run consume, then also consume any backspace separated repeats of the same
+// cell. That's what grotty in groff 1.22.4 emits for man pages asking for
+// artificial emboldening using ".bd", as in '_<x<_<x' for an emboldened
+// underlined 'x'. The repeats render just like the first one.
+//
+// https://github.com/walles/moor/issues/472
+func consumeEmboldened(runes *lazyRunes, consume func(*lazyRunes) *twin.StyledRune) *twin.StyledRune {
+	result := consume(runes)
+	if result == nil {
+		return nil
+	}
+
+	for {
+		backspace := runes.getRelative(1)
+		if backspace == nil || *backspace != BACKSPACE {
+			return result
+		}
+
+		// Look for a repeat in a copy, so we can back out if there is none.
+		// The copy shares lookahead storage with the original, which is fine
+		// since both decode the same string into the same positions.
+		probe := *runes
+		probe.next() // Skip last rune of the previous cell
+		probe.next() // Skip backspace
+
+		repeat := consume(&probe)
+		if repeat == nil || *repeat != *result {
+			return result
+		}
+
+		*runes = probe
+	}
+}
+
 // Consume '_<x<x', where '<' is backspace and the result is a bold underlined 'x'
 func consumeBoldUnderline(runes *lazyRunes) *twin.StyledRune {
 	if runes.getRelative(4) == nil {
@@ -266,6 +300,14 @@ func consumeBoldUnderline(runes *lazyRunes) *twin.StyledRune {
 
 	if *runes.getRelative(2) != *runes.getRelative(4) {
 		// Runes don't match
+		return nil
+	}
+
+	afterCell := runes.getRelative(5)
+	if *runes.getRelative(2) == '_' && afterCell != nil && *afterCell == BACKSPACE {
+		// '_<_<_<' is the start of an emboldened bold underscore, '_<_' + '<'
+		// + '_<_'. Leave that to consumeBold(), which lets consumeEmboldened()
+		// take the repeat: https://github.com/walles/moor/issues/472
 		return nil
 	}
 
@@ -461,25 +503,25 @@ func tokensFromStyledString(styledString _StyledString, maxCellsCount int) []twi
 			break
 		}
 
-		token := consumeBullet(&runes)
+		token := consumeEmboldened(&runes, consumeBullet)
 		if token != nil {
 			tokens = append(tokens, *token)
 			continue
 		}
 
-		token = consumeBoldUnderline(&runes)
+		token = consumeEmboldened(&runes, consumeBoldUnderline)
 		if token != nil {
 			tokens = append(tokens, *token)
 			continue
 		}
 
-		token = consumeBold(&runes)
+		token = consumeEmboldened(&runes, consumeBold)
 		if token != nil {
 			tokens = append(tokens, *token)
 			continue
 		}
 
-		token = consumeUnderline(&runes)
+		token = consumeEmboldened(&runes, consumeUnderline)
 		if token != nil {
 			tokens = append(tokens, *token)
 			continue
