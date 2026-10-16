@@ -172,6 +172,14 @@ func TestManPages(t *testing.T) {
 	assert.Equal(t, tokens[1], CellWithMetadata{Rune: 'b', Style: twin.StyleDefault.WithAttr(twin.AttrBold)})
 	assert.Equal(t, tokens[2], CellWithMetadata{Rune: 'c', Style: twin.StyleDefault})
 
+	// Bold underlined underscore, as in a bold italic "a_b"
+	boldUnderline := ManPageBold.WithAttr(twin.AttrUnderline)
+	tokens = StyledRunesFromString(twin.StyleDefault, "_\ba\ba_\b_\b__\bb\bb", nil, 0).StyledRunes
+	assert.Equal(t, len(tokens), 3)
+	assert.Equal(t, tokens[0], CellWithMetadata{Rune: 'a', Style: boldUnderline})
+	assert.Equal(t, tokens[1], CellWithMetadata{Rune: '_', Style: boldUnderline})
+	assert.Equal(t, tokens[2], CellWithMetadata{Rune: 'b', Style: boldUnderline})
+
 	// Underline
 	tokens = StyledRunesFromString(twin.StyleDefault, "a_\bbc", nil, 0).StyledRunes
 	assert.Equal(t, len(tokens), 3)
@@ -214,6 +222,12 @@ func TestManPageHeadings(t *testing.T) {
 	for _, token := range StyledRunesFromString(twin.StyleDefault, manPageHeading, nil, 0).StyledRunes {
 		assert.Equal(t, token.Style, ManPageHeading)
 	}
+
+	// Odd strike counts are not emboldened cells, and the tokenizer won't
+	// parse them. If we did, search hits would be misaligned with what's on
+	// screen. https://github.com/walles/moor/issues/472
+	oddStrikes := "N\bN\bNA\bA\bA"
+	assert.Assert(t, manPageHeadingFromString(oddStrikes) == nil)
 
 	// A line with only non-man-page bold caps should not be considered a heading
 	wrongKindOfBold := "\x1b[1mJOHAN HELLO"
@@ -289,6 +303,14 @@ func TestManPageEmboldened(t *testing.T) {
 			emboldenedString := strings.ReplaceAll(tc.emboldened, "<", "\b")
 			emboldened := StyledRunesFromString(twin.StyleDefault, emboldenedString, nil, 0).StyledRunes
 			assert.DeepEqual(t, emboldened, plain)
+
+			// Search uses the stripped string, so it must match what's on
+			// screen for search hits to be highlighted in the right place
+			onScreen := ""
+			for _, cell := range emboldened {
+				onScreen += string(cell.Rune)
+			}
+			assert.Equal(t, StripFormatting(emboldenedString, linemetadata.Index{}), onScreen)
 		})
 	}
 }
