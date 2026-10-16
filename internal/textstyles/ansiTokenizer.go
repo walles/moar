@@ -303,11 +303,11 @@ func consumeBoldUnderline(runes *lazyRunes) *twin.StyledRune {
 		return nil
 	}
 
-	if *runes.getRelative(2) == '_' {
-		// '_<_<_' could also be the start of an emboldened bold underscore,
-		// '_<_' + '<' + '_<_'. Both look the same, so leave this to
-		// consumeBold(), which lets consumeEmboldened() take the repeat:
-		// https://github.com/walles/moor/issues/472
+	afterCell := runes.getRelative(5)
+	if *runes.getRelative(2) == '_' && afterCell != nil && *afterCell == BACKSPACE {
+		// '_<_<_<' is the start of an emboldened bold underscore, '_<_' + '<'
+		// + '_<_'. Leave that to consumeBold(), which lets consumeEmboldened()
+		// take the repeat: https://github.com/walles/moor/issues/472
 		return nil
 	}
 
