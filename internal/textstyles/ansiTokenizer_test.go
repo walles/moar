@@ -223,9 +223,8 @@ func TestManPageHeadings(t *testing.T) {
 		assert.Equal(t, token.Style, ManPageHeading)
 	}
 
-	// Odd strike counts are not emboldened cells, and the tokenizer won't
-	// parse them. If we did, search hits would be misaligned with what's on
-	// screen. https://github.com/walles/moor/issues/472
+	// Odd strike counts are not emboldened cells, so this is not a heading.
+	// https://github.com/walles/moor/issues/472
 	oddStrikes := "N\bN\bNA\bA\bA"
 	assert.Assert(t, manPageHeadingFromString(oddStrikes) == nil)
 
