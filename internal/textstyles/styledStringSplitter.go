@@ -14,15 +14,16 @@ import (
 
 const esc = '\x1b'
 
-// Safe upper bound on how many input bytes can go into one screen cell. On a
-// man page, when there are no escape sequences involved: at most seven runes
-// per cell (the man page bullet '+', backspace, '+', backspace, 'o', backspace,
-// 'o'), at most utf8.UTFMax bytes per rune.
+// Safe upper bound on how many input bytes can go into one screen cell, when
+// there are no escape sequences involved. The densest cells we know of are man
+// page cells emboldened by grotty, see consumeEmboldened(). With '<' for
+// backspace:
 //
-// Loose on purpose, since those two maxima cannot co-occur: bullets are ASCII.
-// The densest cell really is a bold underlined four byte rune ('_', backspace,
-// 𝕏, backspace, 𝕏) at eleven bytes. Erring high only costs a few scanned
-// bytes, erring low renders the wrong thing.
+//   - An emboldened bold bullet, '+<+<o<o<+<+<o<o', is 15 bytes
+//   - An emboldened bold underlined four byte rune, '_<𝕏<𝕏<_<𝕏<𝕏', is 23 bytes
+//
+// Erring high only costs a few scanned bytes, erring low renders the wrong
+// thing.
 const maxBytesPerCell = 7 * utf8.UTFMax
 
 type styledStringSplitter struct {
